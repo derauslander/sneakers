@@ -302,7 +302,7 @@
 
           {/* Nav */}
           <div style={{ display:"flex", borderBottom:"1px solid #e0e0e0", background:"#f5f5f5" }}>
-            {["inventory","display","wishlist"].map(v => (
+            {["inventory", ...(isMobile ? [] : ["display"]), "wishlist"].map(v => (
               <button key={v} onClick={() => setView(v)} style={{
                 padding:"14px 28px", background:view===v?"#e63946":"transparent",
                 color:view===v?"#fff":"#666", border:"none", cursor:"pointer",
