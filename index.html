@@ -25,6 +25,16 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
+    const useIsMobile = () => {
+      const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+      useEffect(() => {
+        const handler = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener("resize", handler);
+        return () => window.removeEventListener("resize", handler);
+      }, []);
+      return isMobile;
+    };
+
     const CAT_COLORS = {
       Jordan: { bg: "#fff0f0", accent: "#e63946" },
       Nike:   { bg: "#fff0f0", accent: "#e63946" },
@@ -34,6 +44,7 @@
     function ImageSlot({ img, hoverImg, label, accent, width = 96, height = 60,
                          isGrail = false, isBeater = false, purchaseDate = null,
                          size = null, ogYear = null, wearDates = [] }) {
+      const isMobile    = useIsMobile();
       const [hovered,     setHovered]     = useState(false);
       const [showHover,   setShowHover]   = useState(false);
       const [beaterGlow,  setBeaterGlow]  = useState(false);
@@ -43,25 +54,22 @@
       const beaterRef   = useRef(null);
       const grailRef    = useRef(null);
 
-      const handleMouseEnter = () => {
+      const triggerOpen = () => {
         if (!img) return;
-        timerRef.current = setTimeout(() => {
-          setHovered(true);
-          setShowHover(false);
-          setBeaterGlow(false);
-          setGrailReveal(false);
-          if (isGrail && hoverImg) {
-            crossfadeRef.current = setTimeout(() => { setShowHover(true); setGrailReveal(true); }, 200);
-          } else if (isGrail) {
-            grailRef.current = setTimeout(() => setGrailReveal(true), 200);
-          }
-          if (isBeater) {
-            beaterRef.current = setTimeout(() => setBeaterGlow(true), 200);
-          }
-        }, 500);
+        setHovered(true);
+        setShowHover(false);
+        setBeaterGlow(false);
+        setGrailReveal(false);
+        if (isGrail && hoverImg) {
+          crossfadeRef.current = setTimeout(() => { setShowHover(true); setGrailReveal(true); }, 200);
+        } else if (isGrail) {
+          grailRef.current = setTimeout(() => setGrailReveal(true), 200);
+        }
+        if (isBeater) {
+          beaterRef.current = setTimeout(() => setBeaterGlow(true), 200);
+        }
       };
-      const handleMouseLeave = () => {
-        clearTimeout(timerRef.current);
+      const triggerClose = () => {
         clearTimeout(crossfadeRef.current);
         clearTimeout(beaterRef.current);
         clearTimeout(grailRef.current);
@@ -71,6 +79,10 @@
         setGrailReveal(false);
       };
 
+      const handleMouseEnter = () => { if (isMobile) return; timerRef.current = setTimeout(triggerOpen, 500); };
+      const handleMouseLeave = () => { if (isMobile) return; clearTimeout(timerRef.current); triggerClose(); };
+      const handleTap        = (e) => { if (!isMobile) return; e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
+
       return (
         <div style={{ position:"relative", display:"inline-block" }}>
           {img ? (
@@ -79,13 +91,15 @@
                 <img src={img} alt={label}
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
-                  style={{ width, height, objectFit:"cover", border:"none", display:"block", cursor:"zoom-in" }}
+                  onClick={handleTap}
+                  style={{ width, height, objectFit:"cover", border:"none", display:"block", cursor: isMobile ? "pointer" : "zoom-in" }}
                 />
                 {hovered && (
-                  <div style={{
+                  <div onClick={triggerClose} style={{
                     position:"fixed", top:0, left:0, width:"100vw", height:"100vh",
                     background:"rgba(0,0,0,0.85)", display:"flex", flexDirection:"column",
-                    alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents:"none",
+                    alignItems:"center", justifyContent:"center", zIndex:9999,
+                    pointerEvents: isMobile ? "auto" : "none",
                   }}>
                     <div style={{ position:"relative", maxWidth:"60vw", maxHeight:"60vh" }}>
                       <img src={img} alt={label} style={{
@@ -117,6 +131,7 @@
                     <div style={{ marginTop:"4px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>
                       Last Worn: {wearDates.length > 0 ? new Date([...wearDates].sort((a,b) => b>a?1:-1)[0]+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : "Never"}
                     </div>
+                    {isMobile && <div style={{ marginTop:"16px", fontSize:"10px", color:"#666", letterSpacing:"2px" }}>TAP TO CLOSE</div>}
                   </div>
                 )}
               </div>
@@ -135,39 +150,41 @@
     }
 
     // ── Read-only DisplayCell ────────────────────────────────────────────────
-    function DisplayCell({ c, img, hoverImg, isGrail }) {
+    function DisplayCell({ c, img, hoverImg, isGrail, cellW = 160, cellH = 100 }) {
+      const isMobile    = useIsMobile();
       const [hovered,   setHovered]   = useState(false);
       const [showHover, setShowHover] = useState(false);
       const timerRef     = useRef(null);
       const crossfadeRef = useRef(null);
 
-      const handleMouseEnter = () => {
+      const triggerOpen = () => {
         if (!img) return;
-        timerRef.current = setTimeout(() => {
-          setHovered(true);
-          setShowHover(false);
-          if (isGrail && hoverImg) {
-            crossfadeRef.current = setTimeout(() => setShowHover(true), 200);
-          }
-        }, 500);
+        setHovered(true);
+        setShowHover(false);
+        if (isGrail && hoverImg) {
+          crossfadeRef.current = setTimeout(() => setShowHover(true), 200);
+        }
       };
-      const handleMouseLeave = () => {
-        clearTimeout(timerRef.current);
+      const triggerClose = () => {
         clearTimeout(crossfadeRef.current);
         setHovered(false);
         setShowHover(false);
       };
 
+      const handleMouseEnter = () => { if (isMobile || !img) return; timerRef.current = setTimeout(triggerOpen, 500); };
+      const handleMouseLeave = () => { if (isMobile) return; clearTimeout(timerRef.current); triggerClose(); };
+      const handleTap        = (e) => { if (!isMobile) return; e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
+
       return (
-        <div style={{ width:"160px" }}>
-          <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}
+        <div style={{ width: cellW }}>
+          <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={handleTap}
             style={{
-              width:"160px", height:"100px",
+              width: cellW, height: cellH,
               background: c.empty ? "#f5f5f5" : img ? "#ffffff" : c.bg,
               border:"none",
               display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
               padding: img ? "0" : "6px", textAlign:"center",
-              overflow:"hidden", position:"relative", cursor: img ? "zoom-in" : "default",
+              overflow:"hidden", position:"relative", cursor: img ? "pointer" : "default",
             }}>
             {c.empty
               ? <span style={{color:"#ddd",fontSize:"18px"}}>·</span>
@@ -176,19 +193,21 @@
                 : <div style={{fontSize:"11px",letterSpacing:"2px",color:c.accent,fontWeight:"bold"}}>{c.label}</div>
             }
             {hovered && img && (
-              <div style={{
+              <div onClick={triggerClose} style={{
                 position:"fixed", top:0, left:0, width:"100vw", height:"100vh",
                 background:"rgba(0,0,0,0.85)", display:"flex", flexDirection:"column",
-                alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents:"none",
+                alignItems:"center", justifyContent:"center", zIndex:9999,
+                pointerEvents: isMobile ? "auto" : "none",
               }}>
-                <div style={{ position:"relative", maxWidth:"60vw", maxHeight:"60vh" }}>
-                  <img src={img} alt={c.colorway} style={{ maxWidth:"60vw", maxHeight:"60vh", objectFit:"contain", filter:"drop-shadow(0 0 8px rgba(255,255,255,0.6))", display:"block", opacity:(isGrail&&hoverImg&&showHover)?0:1, transition:"opacity 3s ease-in-out" }} />
+                <div style={{ position:"relative", maxWidth:"90vw", maxHeight:"70vh" }}>
+                  <img src={img} alt={c.colorway} style={{ maxWidth:"90vw", maxHeight:"70vh", objectFit:"contain", filter:"drop-shadow(0 0 8px rgba(255,255,255,0.6))", display:"block", opacity:(isGrail&&hoverImg&&showHover)?0:1, transition:"opacity 3s ease-in-out" }} />
                   {isGrail && hoverImg && (
-                    <img src={hoverImg} alt={c.colorway} style={{ position:"absolute", top:0, left:0, maxWidth:"60vw", maxHeight:"60vh", objectFit:"contain", filter:"drop-shadow(0 0 30px rgba(255,215,0,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.6))", opacity:showHover?1:0, transform:showHover?"scale(1)":"scale(0.95)", transition:"opacity 3s ease-in-out, transform 3s ease-in-out" }} />
+                    <img src={hoverImg} alt={c.colorway} style={{ position:"absolute", top:0, left:0, maxWidth:"90vw", maxHeight:"70vh", objectFit:"contain", filter:"drop-shadow(0 0 30px rgba(255,215,0,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.6))", opacity:showHover?1:0, transform:showHover?"scale(1)":"scale(0.95)", transition:"opacity 3s ease-in-out, transform 3s ease-in-out" }} />
                   )}
                 </div>
                 {isGrail && <div style={{ marginTop:"12px", fontSize:"11px", letterSpacing:"6px", color:"#FFD700" }}>✦ GRAIL ✦</div>}
                 <div style={{ marginTop:isGrail?"6px":"16px", fontSize:"13px", letterSpacing:"3px", color:isGrail?"#FFD700":c.accent }}>{c.colorway}</div>
+                {isMobile && <div style={{ marginTop:"16px", fontSize:"10px", color:"#666", letterSpacing:"2px" }}>TAP TO CLOSE</div>}
               </div>
             )}
           </div>
@@ -203,6 +222,7 @@
 
     // ── Main App ─────────────────────────────────────────────────────────────
     function App() {
+      const isMobile  = useIsMobile();
       const [data,    setData]    = useState(null);
       const [loading, setLoading] = useState(true);
       const [error,   setError]   = useState(null);
@@ -265,15 +285,15 @@
       return (
         <div style={{ minHeight:"100vh" }}>
           {/* Header */}
-          <div style={{ background:"#ffffff", borderBottom:"1px solid #e0e0e0", padding:"20px 32px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ background:"#ffffff", borderBottom:"1px solid #e0e0e0", padding: isMobile ? "12px 16px" : "20px 32px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <div>
-              <div style={{ fontSize:"28px", fontWeight:"bold", color:"#e63946", letterSpacing:"2px", lineHeight:1 }}>DerAusländer</div>
-              <div style={{ fontSize:"20px", letterSpacing:"8px", color:"#111", marginTop:"4px" }}>THE VAULT</div>
+              <div style={{ fontSize: isMobile ? "20px" : "28px", fontWeight:"bold", color:"#e63946", letterSpacing:"2px", lineHeight:1 }}>DerAusländer</div>
+              <div style={{ fontSize: isMobile ? "14px" : "20px", letterSpacing:"8px", color:"#111", marginTop:"4px" }}>THE VAULT</div>
             </div>
-            <div style={{ display:"flex", gap:"32px" }}>
+            <div style={{ display:"flex", gap: isMobile ? "16px" : "32px" }}>
               {[["PAIRS", total], ["OPEN BOXES", empty], ["WISHLIST", wishlist.length]].map(([label, val]) => (
                 <div key={label} style={{ textAlign:"center" }}>
-                  <div style={{ fontSize:"22px", fontWeight:"bold", color:"#e63946" }}>{val}</div>
+                  <div style={{ fontSize: isMobile ? "16px" : "22px", fontWeight:"bold", color:"#e63946" }}>{val}</div>
                   <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#888" }}>{label}</div>
                 </div>
               ))}
@@ -292,7 +312,7 @@
             ))}
           </div>
 
-          <div style={{ padding:"32px" }}>
+          <div style={{ padding: isMobile ? "16px" : "32px" }}>
 
             {/* ── INVENTORY ── */}
             {view === "inventory" && (
@@ -302,14 +322,14 @@
                   const isRotationGrail = longestUnwornColorway ? !!grailMeta[`${longestUnworn.id}_${longestUnwornColorway}`] : false;
                   const rotationImg = images[`${longestUnworn.id}_${longestUnwornColorway}`] || null;
                   return (
-                    <div style={{ background:"linear-gradient(90deg,#fff5f5,#ffe8e8)", border:"1px solid #f4a261", padding:"16px 24px", marginBottom:"24px", display:"flex", alignItems:"center", gap:"16px" }}>
+                    <div style={{ background:"linear-gradient(90deg,#fff5f5,#ffe8e8)", border:"1px solid #f4a261", padding:"16px", marginBottom:"24px", display:"flex", alignItems:"center", gap:"16px" }}>
                       <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
                         {rotationImg && <img src={rotationImg} alt={longestUnwornColorway} style={{ width:"96px", height:"60px", objectFit:"cover", flexShrink:0 }} />}
                         <div>
                           <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
                             {isRotationGrail ? <span><span style={{color:"#FFD700"}}>✦</span> GRAIL UP NEXT <span style={{color:"#FFD700"}}>✦</span></span> : "UP NEXT FOR ROTATION"}
                           </div>
-                          <div style={{ fontSize:"16px", fontWeight:"bold", color:"#111" }}>
+                          <div style={{ fontSize: isMobile ? "13px" : "16px", fontWeight:"bold", color:"#111" }}>
                             {isRotationGrail ? <span><span style={{color:"#FFD700"}}>✦</span> {longestUnworn.name}{longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""} <span style={{color:"#FFD700"}}>✦</span></span> : `${longestUnworn.name}${longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""}`}
                           </div>
                           <div style={{ fontSize:"10px", color:"#555", marginTop:"2px" }}>
@@ -324,11 +344,11 @@
                 {owned.map(shoe => {
                   const col = CAT_COLORS[shoe.category] || CAT_COLORS.Jordan;
                   const shoeColorways = colorways[shoe.shortName] || [];
-                  const imgW = shoeColorways.length === 1 ? 120 : shoeColorways.length <= 3 ? 96 : 80;
+                  const imgW = isMobile ? 72 : (shoeColorways.length === 1 ? 120 : shoeColorways.length <= 3 ? 96 : 80);
                   const imgH = Math.round(imgW * 0.625);
-                  const cardMinW = Math.max(200, shoeColorways.length * (imgW + 16) + 32);
+                  const cardMinW = isMobile ? "100%" : Math.max(200, shoeColorways.length * (imgW + 16) + 32);
                   return (
-                    <div key={shoe.id} style={{ background:"#ffffff", border:"1px solid #e0e0e0", padding:"16px", minWidth: cardMinW, flex:"0 1 auto" }}>
+                    <div key={shoe.id} style={{ background:"#ffffff", border:"1px solid #e0e0e0", padding:"16px", minWidth: cardMinW, flex: isMobile ? "1 1 100%" : "0 1 auto" }}>
                       <div style={{ fontSize:"14px", color:"#111", fontWeight:"bold", marginBottom:"12px" }}>
                         {shoe.name}{shoe.quantity > 1 ? ` — ${shoe.quantity} pairs` : ""}
                       </div>
@@ -362,18 +382,23 @@
             )}
 
             {/* ── DISPLAY ── */}
-            {view === "display" && (
-              <div style={{ display:"inline-grid", gridTemplateColumns:"repeat(5, 160px)", gap:"6px" }}>
+            {view === "display" && (() => {
+              const cellW = isMobile ? Math.floor((window.innerWidth - 32 - 4) / 2) : 160;
+              const cellH = Math.round(cellW * 0.625);
+              const cols  = isMobile ? 2 : 5;
+              return (
+              <div style={{ display:"inline-grid", gridTemplateColumns:`repeat(${cols}, ${cellW}px)`, gap:"6px" }}>
                 {displayLayout.map((row, ri) => row.map((cell, ci) => {
                   const c    = getCellStyle(cell);
                   const shoe = !c.empty ? inventory.find(s => s.shortName === cell.code) : null;
                   const img      = shoe ? images[`${shoe.id}_${cell.colorway}`]         : null;
                   const hoverImg = shoe ? images[`${shoe.id}_${cell.colorway}_hover`]   : null;
                   const isGrail  = shoe ? !!grailMeta[`${shoe.id}_${cell.colorway}`]    : false;
-                  return <DisplayCell key={`${ri}-${ci}`} c={c} img={img} hoverImg={hoverImg} isGrail={isGrail} />;
+                  return <DisplayCell key={`${ri}-${ci}`} c={c} img={img} hoverImg={hoverImg} isGrail={isGrail} cellW={cellW} cellH={cellH} />;
                 }))}
               </div>
-            )}
+              );
+            })()}
 
             {/* ── WISHLIST ── */}
             {view === "wishlist" && (
@@ -383,11 +408,11 @@
                   : wishlist.map(shoe => {
                       const col = CAT_COLORS[shoe.category] || CAT_COLORS.Jordan;
                       const shoeColorways = colorways[shoe.shortName] || [];
-                      const imgW = shoeColorways.length === 1 ? 120 : shoeColorways.length <= 3 ? 96 : 80;
+                      const imgW = isMobile ? 72 : (shoeColorways.length === 1 ? 120 : shoeColorways.length <= 3 ? 96 : 80);
                       const imgH = Math.round(imgW * 0.625);
-                      const cardMinW = Math.max(200, shoeColorways.length * (imgW + 16) + 32);
+                      const cardMinW = isMobile ? "100%" : Math.max(200, shoeColorways.length * (imgW + 16) + 32);
                       return (
-                        <div key={shoe.id} style={{ background:"#ffffff", border:"1px solid #e0e0e0", padding:"16px", minWidth: cardMinW, flex:"0 1 auto" }}>
+                        <div key={shoe.id} style={{ background:"#ffffff", border:"1px solid #e0e0e0", padding:"16px", minWidth: cardMinW, flex: isMobile ? "1 1 100%" : "0 1 auto" }}>
                           <div style={{ fontSize:"14px", color:"#111", fontWeight:"bold", marginBottom:"12px" }}>{shoe.name}</div>
                           <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
                             {shoeColorways.map(cw => {
