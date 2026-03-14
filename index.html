@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Vault — DerAusländer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #ffffff; font-family: 'Aptos', 'Segoe UI', sans-serif; color: #111111; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f0f0f0; }
+    ::-webkit-scrollbar-thumb { background: #ccc; }
+    @keyframes grailPulse {
+      0%   { opacity: 1; }
+      50%  { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const CAT_COLORS = {
+      Jordan: { bg: "#fff0f0", accent: "#e63946" },
+      Nike:   { bg: "#fff0f0", accent: "#e63946" },
+    };
+
+    // ── Read-only ImageSlot ──────────────────────────────────────────────────
+    function ImageSlot({ img, hoverImg, label, accent, width = 96, height = 60,
+                         isGrail = false, isBeater = false, purchaseDate = null,
+                         size = null, ogYear = null }) {
+      const [hovered,     setHovered]     = useState(false);
+      const [showHover,   setShowHover]   = useState(false);
+      const [beaterGlow,  setBeaterGlow]  = useState(false);
+      const [grailReveal, setGrailReveal] = useState(false);
+      const timerRef    = useRef(null);
+      const crossfadeRef= useRef(null);
+      const beaterRef   = useRef(null);
+      const grailRef    = useRef(null);
+
+      const handleMouseEnter = () => {
+        if (!img) return;
+        timerRef.current = setTimeout(() => {
+          setHovered(true);
+          setShowHover(false);
+          setBeaterGlow(false);
+          setGrailReveal(false);
+          if (isGrail && hoverImg) {
+            crossfadeRef.current = setTimeout(() => { setShowHover(true); setGrailReveal(true); }, 200);
+          } else if (isGrail) {
+            grailRef.current = setTimeout(() => setGrailReveal(true), 200);
+          }
+          if (isBeater) {
+            beaterRef.current = setTimeout(() => setBeaterGlow(true), 200);
+          }
+        }, 500);
+      };
+      const handleMouseLeave = () => {
+        clearTimeout(timerRef.current);
+        clearTimeout(crossfadeRef.current);
+        clearTimeout(beaterRef.current);
+        clearTimeout(grailRef.current);
+        setHovered(false);
+        setShowHover(false);
+        setBeaterGlow(false);
+        setGrailReveal(false);
+      };
+
+      return (
+        <div style={{ position:"relative", display:"inline-block" }}>
+          {img ? (
+            <div style={{ textAlign:"center" }}>
+              <div style={{ position:"relative", display:"inline-block" }}>
+                <img src={img} alt={label}
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                  style={{ width, height, objectFit:"cover", border:"none", display:"block", cursor:"zoom-in" }}
+                />
+                {hovered && (
+                  <div style={{
+                    position:"fixed", top:0, left:0, width:"100vw", height:"100vh",
+                    background:"rgba(0,0,0,0.85)", display:"flex", flexDirection:"column",
+                    alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents:"none",
+                  }}>
+                    <div style={{ position:"relative", maxWidth:"60vw", maxHeight:"60vh" }}>
+                      <img src={img} alt={label} style={{
+                        maxWidth:"60vw", maxHeight:"60vh", objectFit:"contain",
+                        filter: isBeater && beaterGlow
+                          ? "drop-shadow(0 0 30px rgba(180,80,20,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.3))"
+                          : "drop-shadow(0 0 8px rgba(255,255,255,0.6))",
+                        display:"block",
+                        opacity: (isGrail && hoverImg && showHover) ? 0 : 1,
+                        transition:"opacity 3s ease-in-out, filter 3s ease-in-out"
+                      }} />
+                      {isGrail && hoverImg && (
+                        <img src={hoverImg} alt={label} style={{
+                          position:"absolute", top:0, left:0, maxWidth:"60vw", maxHeight:"60vh",
+                          objectFit:"contain",
+                          filter:"drop-shadow(0 0 30px rgba(255,215,0,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.6))",
+                          opacity: showHover ? 1 : 0,
+                          transform: showHover ? "scale(1)" : "scale(0.95)",
+                          transition:"opacity 3s ease-in-out, transform 3s ease-in-out"
+                        }} />
+                      )}
+                    </div>
+                    {isGrail  && <div style={{ marginTop:"12px", fontSize:"11px", letterSpacing:"6px", color:"#FFD700", opacity: grailReveal ? 1 : 0, transition:"opacity 3s ease-in-out" }}>✦ GRAIL ✦</div>}
+                    {isBeater && <div style={{ marginTop:"12px", fontSize:"11px", letterSpacing:"6px", color:"#b45014", opacity: beaterGlow  ? 1 : 0, transition:"opacity 3s ease-in-out" }}>💀 BEATER 💀</div>}
+                    <div style={{ marginTop:(isGrail||isBeater)?"6px":"16px", fontSize:"13px", letterSpacing:"3px", color: isGrail && grailReveal ? "#FFD700" : isBeater && beaterGlow ? "#b45014" : "#fff", transition:"color 3s ease-in-out" }}>{label}</div>
+                    {ogYear && <div style={{ marginTop:"4px", fontSize:"10px", color:"#fff", letterSpacing:"1px" }}>Originally Owned in {ogYear}</div>}
+                    {purchaseDate && <div style={{ marginTop:"8px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>Purchase Date: {new Date(purchaseDate+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"})}</div>}
+                    {size && <div style={{ marginTop:"4px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>Size: {size}</div>}
+                  </div>
+                )}
+              </div>
+              <div style={{ fontSize:"11px", color:"#666", marginTop:"4px", maxWidth:width, textAlign:"center", lineHeight:"1.3", wordBreak:"break-word" }}>{label}</div>
+            </div>
+          ) : (
+            <div style={{ textAlign:"center" }}>
+              <div style={{ width, height, background:"#f5f5f5", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <div style={{ fontSize:"10px", color:"#ccc", letterSpacing:"1px" }}>—</div>
+              </div>
+              <div style={{ fontSize:"11px", color:"#666", marginTop:"4px", maxWidth:width, textAlign:"center", lineHeight:"1.3", wordBreak:"break-word" }}>{label}</div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ── Read-only DisplayCell ────────────────────────────────────────────────
+    function DisplayCell({ c, img, hoverImg, isGrail }) {
+      const [hovered,   setHovered]   = useState(false);
+      const [showHover, setShowHover] = useState(false);
+      const timerRef     = useRef(null);
+      const crossfadeRef = useRef(null);
+
+      const handleMouseEnter = () => {
+        if (!img) return;
+        timerRef.current = setTimeout(() => {
+          setHovered(true);
+          setShowHover(false);
+          if (isGrail && hoverImg) {
+            crossfadeRef.current = setTimeout(() => setShowHover(true), 200);
+          }
+        }, 500);
+      };
+      const handleMouseLeave = () => {
+        clearTimeout(timerRef.current);
+        clearTimeout(crossfadeRef.current);
+        setHovered(false);
+        setShowHover(false);
+      };
+
+      return (
+        <div style={{ width:"160px" }}>
+          <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}
+            style={{
+              width:"160px", height:"100px",
+              background: c.empty ? "#f5f5f5" : img ? "#ffffff" : c.bg,
+              border:"none",
+              display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+              padding: img ? "0" : "6px", textAlign:"center",
+              overflow:"hidden", position:"relative", cursor: img ? "zoom-in" : "default",
+            }}>
+            {c.empty
+              ? <span style={{color:"#ddd",fontSize:"18px"}}>·</span>
+              : img
+                ? <img src={img} alt={c.colorway} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                : <div style={{fontSize:"11px",letterSpacing:"2px",color:c.accent,fontWeight:"bold"}}>{c.label}</div>
+            }
+            {hovered && img && (
+              <div style={{
+                position:"fixed", top:0, left:0, width:"100vw", height:"100vh",
+                background:"rgba(0,0,0,0.85)", display:"flex", flexDirection:"column",
+                alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents:"none",
+              }}>
+                <div style={{ position:"relative", maxWidth:"60vw", maxHeight:"60vh" }}>
+                  <img src={img} alt={c.colorway} style={{ maxWidth:"60vw", maxHeight:"60vh", objectFit:"contain", filter:"drop-shadow(0 0 8px rgba(255,255,255,0.6))", display:"block", opacity:(isGrail&&hoverImg&&showHover)?0:1, transition:"opacity 3s ease-in-out" }} />
+                  {isGrail && hoverImg && (
+                    <img src={hoverImg} alt={c.colorway} style={{ position:"absolute", top:0, left:0, maxWidth:"60vw", maxHeight:"60vh", objectFit:"contain", filter:"drop-shadow(0 0 30px rgba(255,215,0,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.6))", opacity:showHover?1:0, transform:showHover?"scale(1)":"scale(0.95)", transition:"opacity 3s ease-in-out, transform 3s ease-in-out" }} />
+                  )}
+                </div>
+                {isGrail && <div style={{ marginTop:"12px", fontSize:"11px", letterSpacing:"6px", color:"#FFD700" }}>✦ GRAIL ✦</div>}
+                <div style={{ marginTop:isGrail?"6px":"16px", fontSize:"13px", letterSpacing:"3px", color:isGrail?"#FFD700":c.accent }}>{c.colorway}</div>
+              </div>
+            )}
+          </div>
+          {!c.empty && (
+            <div style={{ textAlign:"center", marginTop:"4px" }}>
+              <div style={{ fontSize:"8px", color:"#666", letterSpacing:"0.5px", overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis" }}>{c.colorway}</div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ── Main App ─────────────────────────────────────────────────────────────
+    function App() {
+      const [data,    setData]    = useState(null);
+      const [loading, setLoading] = useState(true);
+      const [error,   setError]   = useState(null);
+      const [view,    setView]    = useState("inventory");
+
+      useEffect(() => {
+        fetch("vault-data.json")
+          .then(r => { if (!r.ok) throw new Error("Could not load vault-data.json"); return r.json(); })
+          .then(d => { setData(d); setLoading(false); })
+          .catch(e => { setError(e.message); setLoading(false); });
+      }, []);
+
+      if (loading) return (
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", flexDirection:"column", gap:"16px" }}>
+          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946" }}>LOADING THE VAULT...</div>
+        </div>
+      );
+
+      if (error) return (
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", flexDirection:"column", gap:"16px" }}>
+          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946" }}>VAULT UNAVAILABLE</div>
+          <div style={{ fontSize:"10px", color:"#aaa" }}>{error}</div>
+        </div>
+      );
+
+      const { inventory = [], images = {}, colorwayMeta = {}, grailMeta = {}, beaterMeta = {}, colorways = {}, displayLayout = [] } = data;
+
+      const owned    = inventory.filter(s => !s.wishlist);
+      const wishlist = inventory.filter(s =>  s.wishlist);
+      const total    = owned.reduce((n, s) => n + s.quantity, 0);
+      const filledCells = displayLayout.flat().filter(c => c.code && c.code !== "").length;
+      const empty    = 40 - filledCells;
+
+      const getCellStyle = (cell) => {
+        if (!cell.code || cell.code === "" || cell.code === "--") return { empty: true };
+        const col = CAT_COLORS[inventory.find(s => s.shortName === cell.code)?.category] || CAT_COLORS.Jordan;
+        return { bg: col.bg, accent: col.accent, label: cell.code, colorway: cell.colorway };
+      };
+
+      return (
+        <div style={{ minHeight:"100vh" }}>
+          {/* Header */}
+          <div style={{ background:"#ffffff", borderBottom:"1px solid #e0e0e0", padding:"20px 32px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            <div>
+              <div style={{ fontSize:"28px", fontWeight:"bold", color:"#e63946", letterSpacing:"2px", lineHeight:1 }}>DerAusländer</div>
+              <div style={{ fontSize:"20px", letterSpacing:"8px", color:"#111", marginTop:"4px" }}>THE VAULT</div>
+            </div>
+            <div style={{ display:"flex", gap:"32px" }}>
+              {[["PAIRS", total], ["OPEN BOXES", empty], ["WISHLIST", wishlist.length]].map(([label, val]) => (
+                <div key={label} style={{ textAlign:"center" }}>
+                  <div style={{ fontSize:"22px", fontWeight:"bold", color:"#e63946" }}>{val}</div>
+                  <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#888" }}>{label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Nav */}
+          <div style={{ display:"flex", borderBottom:"1px solid #e0e0e0", background:"#f5f5f5" }}>
+            {["inventory","display","wishlist"].map(v => (
+              <button key={v} onClick={() => setView(v)} style={{
+                padding:"14px 28px", background:view===v?"#e63946":"transparent",
+                color:view===v?"#fff":"#666", border:"none", cursor:"pointer",
+                fontSize:"11px", letterSpacing:"4px", textTransform:"uppercase",
+                fontFamily:"'Aptos','Segoe UI',sans-serif",
+              }}>{v}</button>
+            ))}
+          </div>
+
+          <div style={{ padding:"32px" }}>
+
+            {/* ── INVENTORY ── */}
+            {view === "inventory" && (
+              <div style={{ display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" }}>
+                {owned.map(shoe => {
+                  const col = CAT_COLORS[shoe.category] || CAT_COLORS.Jordan;
+                  const shoeColorways = colorways[shoe.shortName] || [];
+                  const imgW = shoeColorways.length === 1 ? 120 : shoeColorways.length <= 3 ? 96 : 80;
+                  const imgH = Math.round(imgW * 0.625);
+                  const cardMinW = Math.max(200, shoeColorways.length * (imgW + 16) + 32);
+                  return (
+                    <div key={shoe.id} style={{ background:"#ffffff", border:"1px solid #e0e0e0", padding:"16px", minWidth: cardMinW, flex:"0 1 auto" }}>
+                      <div style={{ fontSize:"14px", color:"#111", fontWeight:"bold", marginBottom:"12px" }}>
+                        {shoe.name}{shoe.quantity > 1 ? ` — ${shoe.quantity} pairs` : ""}
+                      </div>
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
+                        {shoeColorways.map(cw => {
+                          const metaKey = `${shoe.id}_${cw}`;
+                          const meta    = colorwayMeta[metaKey] || {};
+                          return (
+                            <ImageSlot key={cw}
+                              img={images[metaKey] || null}
+                              hoverImg={images[`${metaKey}_hover`] || null}
+                              label={cw}
+                              accent={col.accent}
+                              width={imgW}
+                              height={imgH}
+                              isGrail={!!grailMeta[metaKey]}
+                              isBeater={!!beaterMeta[metaKey]}
+                              purchaseDate={meta.purchaseDate || null}
+                              size={meta.size || null}
+                              ogYear={meta.ogYear || null}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ── DISPLAY ── */}
+            {view === "display" && (
+              <div style={{ display:"inline-grid", gridTemplateColumns:"repeat(5, 160px)", gap:"6px" }}>
+                {displayLayout.map((row, ri) => row.map((cell, ci) => {
+                  const c    = getCellStyle(cell);
+                  const shoe = !c.empty ? inventory.find(s => s.shortName === cell.code) : null;
+                  const img      = shoe ? images[`${shoe.id}_${cell.colorway}`]         : null;
+                  const hoverImg = shoe ? images[`${shoe.id}_${cell.colorway}_hover`]   : null;
+                  const isGrail  = shoe ? !!grailMeta[`${shoe.id}_${cell.colorway}`]    : false;
+                  return <DisplayCell key={`${ri}-${ci}`} c={c} img={img} hoverImg={hoverImg} isGrail={isGrail} />;
+                }))}
+              </div>
+            )}
+
+            {/* ── WISHLIST ── */}
+            {view === "wishlist" && (
+              <div style={{ display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" }}>
+                {wishlist.length === 0
+                  ? <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#888" }}>NOTHING ON THE WISHLIST</div>
+                  : wishlist.map(shoe => {
+                      const col = CAT_COLORS[shoe.category] || CAT_COLORS.Jordan;
+                      const shoeColorways = colorways[shoe.shortName] || [];
+                      const imgW = shoeColorways.length === 1 ? 120 : shoeColorways.length <= 3 ? 96 : 80;
+                      const imgH = Math.round(imgW * 0.625);
+                      const cardMinW = Math.max(200, shoeColorways.length * (imgW + 16) + 32);
+                      return (
+                        <div key={shoe.id} style={{ background:"#ffffff", border:"1px solid #e0e0e0", padding:"16px", minWidth: cardMinW, flex:"0 1 auto" }}>
+                          <div style={{ fontSize:"14px", color:"#111", fontWeight:"bold", marginBottom:"12px" }}>{shoe.name}</div>
+                          <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
+                            {shoeColorways.map(cw => {
+                              const metaKey = `${shoe.id}_${cw}`;
+                              const meta    = colorwayMeta[metaKey] || {};
+                              return (
+                                <ImageSlot key={cw}
+                                  img={images[metaKey] || null}
+                                  label={cw}
+                                  accent={col.accent}
+                                  width={imgW}
+                                  height={imgH}
+                                  isGrail={!!grailMeta[metaKey]}
+                                  purchaseDate={meta.purchaseDate || null}
+                                  size={meta.size || null}
+                                  ogYear={meta.ogYear || null}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })
+                }
+              </div>
+            )}
+
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
