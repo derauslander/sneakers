@@ -33,7 +33,7 @@
     // ── Read-only ImageSlot ──────────────────────────────────────────────────
     function ImageSlot({ img, hoverImg, label, accent, width = 96, height = 60,
                          isGrail = false, isBeater = false, purchaseDate = null,
-                         size = null, ogYear = null }) {
+                         size = null, ogYear = null, wearDates = [] }) {
       const [hovered,     setHovered]     = useState(false);
       const [showHover,   setShowHover]   = useState(false);
       const [beaterGlow,  setBeaterGlow]  = useState(false);
@@ -114,6 +114,9 @@
                     {ogYear && <div style={{ marginTop:"4px", fontSize:"10px", color:"#fff", letterSpacing:"1px" }}>Originally Owned in {ogYear}</div>}
                     {purchaseDate && <div style={{ marginTop:"8px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>Purchase Date: {new Date(purchaseDate+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"})}</div>}
                     {size && <div style={{ marginTop:"4px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>Size: {size}</div>}
+                    <div style={{ marginTop:"4px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>
+                      Last Worn: {wearDates.length > 0 ? new Date([...wearDates].sort((a,b) => b>a?1:-1)[0]+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : "Never"}
+                    </div>
                   </div>
                 )}
               </div>
@@ -225,13 +228,33 @@
         </div>
       );
 
-      const { inventory = [], images = {}, colorwayMeta = {}, grailMeta = {}, beaterMeta = {}, colorways = {}, displayLayout = [] } = data;
+      const { inventory = [], wearLog = {}, images = {}, colorwayMeta = {}, grailMeta = {}, beaterMeta = {}, colorways = {}, displayLayout = [] } = data;
 
       const owned    = inventory.filter(s => !s.wishlist);
       const wishlist = inventory.filter(s =>  s.wishlist);
       const total    = owned.reduce((n, s) => n + s.quantity, 0);
       const filledCells = displayLayout.flat().filter(c => c.code && c.code !== "").length;
       const empty    = 40 - filledCells;
+
+      // Rotation banner
+      const allColorwayEntries = owned.flatMap(shoe => {
+        const shoeColorways = colorways[shoe.shortName] || [];
+        return shoeColorways.map(cw => {
+          const entries = (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
+          const lastWorn = entries.length ? [...entries].sort((a,b) => a.date < b.date ? 1 : -1)[0].date : null;
+          return { shoe, colorway: cw, lastWorn };
+        });
+      });
+      const longestUnwornEntry = allColorwayEntries.reduce((pick, entry) => {
+        if (!pick) return entry;
+        if (!pick.lastWorn && !entry.lastWorn) return pick;
+        if (!entry.lastWorn) return entry;
+        if (!pick.lastWorn) return pick;
+        return entry.lastWorn < pick.lastWorn ? entry : pick;
+      }, null);
+      const longestUnworn         = longestUnwornEntry?.shoe || null;
+      const longestUnwornColorway = longestUnwornEntry?.colorway || null;
+      const longestUnwornLastDate = longestUnwornEntry?.lastWorn || null;
 
       const getCellStyle = (cell) => {
         if (!cell.code || cell.code === "" || cell.code === "--") return { empty: true };
@@ -273,7 +296,31 @@
 
             {/* ── INVENTORY ── */}
             {view === "inventory" && (
-              <div style={{ display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" }}>
+              <div>
+                {/* Rotation Banner */}
+                {longestUnworn && (() => {
+                  const isRotationGrail = longestUnwornColorway ? !!grailMeta[`${longestUnworn.id}_${longestUnwornColorway}`] : false;
+                  const rotationImg = images[`${longestUnworn.id}_${longestUnwornColorway}`] || null;
+                  return (
+                    <div style={{ background:"linear-gradient(90deg,#fff5f5,#ffe8e8)", border:"1px solid #f4a261", padding:"16px 24px", marginBottom:"24px", display:"flex", alignItems:"center", gap:"16px" }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
+                        {rotationImg && <img src={rotationImg} alt={longestUnwornColorway} style={{ width:"96px", height:"60px", objectFit:"cover", flexShrink:0 }} />}
+                        <div>
+                          <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
+                            {isRotationGrail ? <span><span style={{color:"#FFD700"}}>✦</span> GRAIL UP NEXT <span style={{color:"#FFD700"}}>✦</span></span> : "UP NEXT FOR ROTATION"}
+                          </div>
+                          <div style={{ fontSize:"16px", fontWeight:"bold", color:"#111" }}>
+                            {isRotationGrail ? <span><span style={{color:"#FFD700"}}>✦</span> {longestUnworn.name}{longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""} <span style={{color:"#FFD700"}}>✦</span></span> : `${longestUnworn.name}${longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""}`}
+                          </div>
+                          <div style={{ fontSize:"10px", color:"#555", marginTop:"2px" }}>
+                            {longestUnwornLastDate ? `Last worn: ${longestUnwornLastDate}` : "Never worn"}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                <div style={{ display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" }}>
                 {owned.map(shoe => {
                   const col = CAT_COLORS[shoe.category] || CAT_COLORS.Jordan;
                   const shoeColorways = colorways[shoe.shortName] || [];
@@ -302,6 +349,7 @@
                               purchaseDate={meta.purchaseDate || null}
                               size={meta.size || null}
                               ogYear={meta.ogYear || null}
+                              wearDates={(wearLog[shoe.id] || []).filter(e => e.colorway === cw).map(e => e.date)}
                             />
                           );
                         })}
@@ -309,6 +357,7 @@
                     </div>
                   );
                 })}
+              </div>
               </div>
             )}
 
