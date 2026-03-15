@@ -43,16 +43,18 @@
     // ── Read-only ImageSlot ──────────────────────────────────────────────────
     function ImageSlot({ img, hoverImg, label, accent, width = 96, height = 60,
                          isGrail = false, isBeater = false, purchaseDate = null,
-                         size = null, ogYear = null, wearDates = [] }) {
+                         size = null, ogYear = null, wearDates = [], story = null }) {
       const isMobile    = useIsMobile();
       const [hovered,     setHovered]     = useState(false);
       const [showHover,   setShowHover]   = useState(false);
       const [beaterGlow,  setBeaterGlow]  = useState(false);
       const [grailReveal, setGrailReveal] = useState(false);
+      const [showStory,   setShowStory]   = useState(false);
       const timerRef    = useRef(null);
       const crossfadeRef= useRef(null);
       const beaterRef   = useRef(null);
       const grailRef    = useRef(null);
+      const storyRef    = useRef(null);
 
       const triggerOpen = () => {
         if (!img) return;
@@ -60,10 +62,15 @@
         setShowHover(false);
         setBeaterGlow(false);
         setGrailReveal(false);
+        setShowStory(false);
         if (isGrail && hoverImg) {
-          crossfadeRef.current = setTimeout(() => { setShowHover(true); setGrailReveal(true); }, 200);
+          crossfadeRef.current = setTimeout(() => { setShowHover(true); setGrailReveal(true);
+            if (story) storyRef.current = setTimeout(() => setShowStory(true), 5000);
+          }, 200);
         } else if (isGrail) {
-          grailRef.current = setTimeout(() => setGrailReveal(true), 200);
+          grailRef.current = setTimeout(() => { setGrailReveal(true);
+            if (story) storyRef.current = setTimeout(() => setShowStory(true), 5000);
+          }, 200);
         }
         if (isBeater) {
           beaterRef.current = setTimeout(() => setBeaterGlow(true), 200);
@@ -73,10 +80,12 @@
         clearTimeout(crossfadeRef.current);
         clearTimeout(beaterRef.current);
         clearTimeout(grailRef.current);
+        clearTimeout(storyRef.current);
         setHovered(false);
         setShowHover(false);
         setBeaterGlow(false);
         setGrailReveal(false);
+        setShowStory(false);
       };
 
       const handleMouseEnter = () => { if (isMobile) return; timerRef.current = setTimeout(triggerOpen, 500); };
@@ -101,37 +110,51 @@
                     alignItems:"center", justifyContent:"center", zIndex:9999,
                     pointerEvents: isMobile ? "auto" : "none",
                   }}>
-                    <div style={{ position:"relative", maxWidth:"60vw", maxHeight:"60vh" }}>
-                      <img src={img} alt={label} style={{
-                        maxWidth:"60vw", maxHeight:"60vh", objectFit:"contain",
-                        filter: isBeater && beaterGlow
-                          ? "drop-shadow(0 0 30px rgba(180,80,20,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.3))"
-                          : "drop-shadow(0 0 8px rgba(255,255,255,0.6))",
-                        display:"block",
-                        opacity: (isGrail && hoverImg && showHover) ? 0 : 1,
-                        transition:"opacity 3s ease-in-out, filter 3s ease-in-out"
-                      }} />
-                      {isGrail && hoverImg && (
-                        <img src={hoverImg} alt={label} style={{
-                          position:"absolute", top:0, left:0, maxWidth:"60vw", maxHeight:"60vh",
-                          objectFit:"contain",
-                          filter:"drop-shadow(0 0 30px rgba(255,215,0,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.6))",
-                          opacity: showHover ? 1 : 0,
-                          transform: showHover ? "scale(1)" : "scale(0.95)",
-                          transition:"opacity 3s ease-in-out, transform 3s ease-in-out"
+                    <div style={{ position:"relative", width: isMobile ? "90vw" : "50vw", maxWidth:"600px", display:"flex", flexDirection:"column", alignItems:"center" }}>
+                      {/* Image — stays fixed, never fades */}
+                      <div style={{ position:"relative", width:"100%", display:"flex", justifyContent:"center" }}>
+                        <img src={img} alt={label} style={{
+                          maxWidth: isMobile ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain",
+                          filter: isBeater && beaterGlow
+                            ? "drop-shadow(0 0 30px rgba(180,80,20,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.3))"
+                            : "drop-shadow(0 0 8px rgba(255,255,255,0.6))",
+                          display:"block",
+                          opacity: (isGrail && hoverImg && showHover) ? 0 : 1,
+                          transition:"opacity 3s ease-in-out, filter 3s ease-in-out"
                         }} />
-                      )}
+                        {isGrail && hoverImg && (
+                          <img src={hoverImg} alt={label} style={{
+                            position:"absolute", top:0, left:"50%",
+                            transform: showHover ? "translateX(-50%) scale(1)" : "translateX(-50%) scale(0.95)",
+                            maxWidth: isMobile ? "90vw" : "50vw", maxHeight:"40vh",
+                            objectFit:"contain",
+                            filter:"drop-shadow(0 0 30px rgba(255,215,0,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.6))",
+                            opacity: showHover ? 1 : 0,
+                            transition:"opacity 3s ease-in-out, transform 3s ease-in-out"
+                          }} />
+                        )}
+                      </div>
+                      {/* Text area — fixed container, info fades out, story fades in */}
+                      <div style={{ width:"100%", marginTop:"16px", textAlign:"center", position:"relative", minHeight:"80px" }}>
+                        {/* Info text */}
+                        <div style={{ position:"absolute", width:"100%", opacity: showStory ? 0 : 1, transition:"opacity 1s ease-in-out" }}>
+                          {isGrail  && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#FFD700", opacity: grailReveal ? 1 : 0, transition:"opacity 3s ease-in-out" }}>✦ GRAIL ✦</div>}
+                          {isBeater && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#b45014", marginTop:"6px", opacity: beaterGlow ? 1 : 0, transition:"opacity 3s ease-in-out" }}>💀 BEATER 💀</div>}
+                          <div style={{ marginTop:(isGrail||isBeater)?"6px":"0", fontSize:"13px", letterSpacing:"3px", color: isGrail && grailReveal ? "#FFD700" : isBeater && beaterGlow ? "#b45014" : "#fff", transition:"color 3s ease-in-out" }}>{label}</div>
+                          {ogYear && <div style={{ marginTop:"4px", fontSize:"10px", color:"#fff", letterSpacing:"1px" }}>Originally Owned in {ogYear}</div>}
+                          {purchaseDate && <div style={{ marginTop:"8px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>Purchase Date: {new Date(purchaseDate+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"})}</div>}
+                          {size && <div style={{ marginTop:"4px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>Size: {size}</div>}
+                          <div style={{ marginTop:"4px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>Last Worn: {wearDates.length > 0 ? new Date([...wearDates].sort((a,b) => b>a?1:-1)[0]+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : "Never"}</div>
+                          {isMobile && <div style={{ marginTop:"16px", fontSize:"10px", color:"#666", letterSpacing:"2px" }}>TAP TO CLOSE</div>}
+                        </div>
+                        {/* Story text */}
+                        {isGrail && story && (
+                          <div style={{ position:"absolute", width:"100%", opacity: showStory ? 1 : 0, transition:"opacity 2s ease-in-out" }}>
+                            <div style={{ fontSize:"13px", color:"#fff", lineHeight:"1.8", letterSpacing:"0.5px" }}>{story}</div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    {isGrail  && <div style={{ marginTop:"12px", fontSize:"11px", letterSpacing:"6px", color:"#FFD700", opacity: grailReveal ? 1 : 0, transition:"opacity 3s ease-in-out" }}>✦ GRAIL ✦</div>}
-                    {isBeater && <div style={{ marginTop:"12px", fontSize:"11px", letterSpacing:"6px", color:"#b45014", opacity: beaterGlow  ? 1 : 0, transition:"opacity 3s ease-in-out" }}>💀 BEATER 💀</div>}
-                    <div style={{ marginTop:(isGrail||isBeater)?"6px":"16px", fontSize:"13px", letterSpacing:"3px", color: isGrail && grailReveal ? "#FFD700" : isBeater && beaterGlow ? "#b45014" : "#fff", transition:"color 3s ease-in-out" }}>{label}</div>
-                    {ogYear && <div style={{ marginTop:"4px", fontSize:"10px", color:"#fff", letterSpacing:"1px" }}>Originally Owned in {ogYear}</div>}
-                    {purchaseDate && <div style={{ marginTop:"8px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>Purchase Date: {new Date(purchaseDate+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"})}</div>}
-                    {size && <div style={{ marginTop:"4px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>Size: {size}</div>}
-                    <div style={{ marginTop:"4px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>
-                      Last Worn: {wearDates.length > 0 ? new Date([...wearDates].sort((a,b) => b>a?1:-1)[0]+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : "Never"}
-                    </div>
-                    {isMobile && <div style={{ marginTop:"16px", fontSize:"10px", color:"#666", letterSpacing:"2px" }}>TAP TO CLOSE</div>}
                   </div>
                 )}
               </div>
@@ -302,7 +325,7 @@
 
           {/* Nav */}
           <div style={{ display:"flex", borderBottom:"1px solid #e0e0e0", background:"#f5f5f5" }}>
-            {["inventory", ...(isMobile ? [] : ["display"]), "wishlist"].map(v => (
+            {["inventory", ...(isMobile ? [] : ["display"]), "wishlist", "about"].map(v => (
               <button key={v} onClick={() => setView(v)} style={{
                 padding:"14px 28px", background:view===v?"#e63946":"transparent",
                 color:view===v?"#fff":"#666", border:"none", cursor:"pointer",
@@ -369,6 +392,7 @@
                               purchaseDate={meta.purchaseDate || null}
                               size={meta.size || null}
                               ogYear={meta.ogYear || null}
+                              story={meta.story || null}
                               wearDates={(wearLog[shoe.id] || []).filter(e => e.colorway === cw).map(e => e.date)}
                             />
                           );
@@ -437,6 +461,22 @@
                       );
                     })
                 }
+              </div>
+            )}
+
+            {/* ── ABOUT ── */}
+            {view === "about" && (
+              <div style={{ maxWidth:"640px", margin:"0 auto", padding:"16px 0" }}>
+                <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"32px" }}>ABOUT THE VAULT</div>
+                <p style={{ fontSize:"15px", color:"#333", lineHeight:"2", marginBottom:"24px", fontStyle:"italic" }}>
+                  The first time I saw the Air Jordan 4 sitting in the window of my local shoe store, I was hooked. Every trip to the mall meant one thing: making my way to Foot Locker and staring at the shoes worn by my favorite athletes — Michael Jordan, Andre Agassi, and Bo Jackson. I'd stand there daydreaming about the day I could own all of them.
+                </p>
+                <p style={{ fontSize:"15px", color:"#333", lineHeight:"2", marginBottom:"24px", fontStyle:"italic" }}>
+                  In 2023, I decided to make that childhood dream a reality.
+                </p>
+                <p style={{ fontSize:"15px", color:"#333", lineHeight:"2", fontStyle:"italic" }}>
+                  This collection is for that 10 year old boy who never stopped looking through the glass.
+                </p>
               </div>
             )}
 
