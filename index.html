@@ -367,15 +367,17 @@
                 {owned.map(shoe => {
                   const col = CAT_COLORS[shoe.category] || CAT_COLORS.Jordan;
                   const shoeColorways = colorways[shoe.shortName] || [];
-                  const imgW = isMobile ? 72 : (shoeColorways.length === 1 ? 120 : shoeColorways.length <= 3 ? 96 : 80);
+                  const perRow = isMobile ? shoeColorways.length : Math.min(shoeColorways.length, 5);
+                  const imgW = isMobile ? 72 : (perRow === 1 ? 120 : perRow <= 3 ? 96 : 80);
                   const imgH = Math.round(imgW * 0.625);
-                  const cardMinW = isMobile ? "100%" : Math.max(200, shoeColorways.length * (imgW + 16) + 32);
+                  const cardMinW = isMobile ? "100%" : Math.max(280, perRow * (imgW + 16) + 32);
                   return (
-                    <div key={shoe.id} style={{ background:"#ffffff", border:"1px solid #e0e0e0", padding:"16px", minWidth: cardMinW, flex: isMobile ? "1 1 100%" : "0 1 auto" }}>
+                    <div key={shoe.id} style={{ background:"#ffffff", border:"1px solid #e0e0e0", minWidth: cardMinW, maxWidth: isMobile ? "100%" : cardMinW, flex: isMobile ? "1 1 100%" : "0 1 auto" }}>
+                      <div style={{ padding:"16px", height: isMobile ? "auto" : "240px", overflow: isMobile ? "visible" : "hidden" }}>
                       <div style={{ fontSize:"14px", color:"#111", fontWeight:"bold", marginBottom:"12px" }}>
                         {shoe.name}{shoe.quantity > 1 ? ` — ${shoe.quantity} pairs` : ""}
                       </div>
-                      <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", maxWidth: isMobile ? "100%" : perRow * (imgW + 8) + "px" }}>
                         {shoeColorways.map(cw => {
                           const metaKey = `${shoe.id}_${cw}`;
                           const meta    = colorwayMeta[metaKey] || {};
@@ -397,6 +399,7 @@
                             />
                           );
                         })}
+                      </div>
                       </div>
                     </div>
                   );
