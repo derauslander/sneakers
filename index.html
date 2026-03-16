@@ -43,18 +43,20 @@
     // ── Read-only ImageSlot ──────────────────────────────────────────────────
     function ImageSlot({ img, hoverImg, label, accent, width = 96, height = 60,
                          isGrail = false, isBeater = false, purchaseDate = null,
-                         size = null, ogYear = null, wearDates = [], story = null }) {
+                         size = null, ogYear = null, wearDates = [], story = null, isOnIce = false }) {
       const isMobile    = useIsMobile();
       const [hovered,     setHovered]     = useState(false);
       const [showHover,   setShowHover]   = useState(false);
       const [beaterGlow,  setBeaterGlow]  = useState(false);
       const [grailReveal, setGrailReveal] = useState(false);
       const [showStory,   setShowStory]   = useState(false);
+      const [iceGlow,     setIceGlow]     = useState(false);
       const timerRef    = useRef(null);
       const crossfadeRef= useRef(null);
       const beaterRef   = useRef(null);
       const grailRef    = useRef(null);
       const storyRef    = useRef(null);
+      const iceRef      = useRef(null);
 
       const triggerOpen = () => {
         if (!img) return;
@@ -63,6 +65,7 @@
         setBeaterGlow(false);
         setGrailReveal(false);
         setShowStory(false);
+        setIceGlow(false);
         if (isGrail && hoverImg) {
           crossfadeRef.current = setTimeout(() => { setShowHover(true); setGrailReveal(true);
             if (story) storyRef.current = setTimeout(() => setShowStory(true), 5000);
@@ -71,9 +74,14 @@
           grailRef.current = setTimeout(() => { setGrailReveal(true);
             if (story) storyRef.current = setTimeout(() => setShowStory(true), 5000);
           }, 200);
+        } else if (story) {
+          storyRef.current = setTimeout(() => setShowStory(true), 5000);
         }
         if (isBeater) {
           beaterRef.current = setTimeout(() => setBeaterGlow(true), 200);
+        }
+        if (isOnIce) {
+          iceRef.current = setTimeout(() => setIceGlow(true), 200);
         }
       };
       const triggerClose = () => {
@@ -81,11 +89,13 @@
         clearTimeout(beaterRef.current);
         clearTimeout(grailRef.current);
         clearTimeout(storyRef.current);
+        clearTimeout(iceRef.current);
         setHovered(false);
         setShowHover(false);
         setBeaterGlow(false);
         setGrailReveal(false);
         setShowStory(false);
+        setIceGlow(false);
       };
 
       const handleMouseEnter = () => { if (isMobile) return; timerRef.current = setTimeout(triggerOpen, 500); };
@@ -117,6 +127,8 @@
                           maxWidth: isMobile ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain",
                           filter: isBeater && beaterGlow
                             ? "drop-shadow(0 0 30px rgba(180,80,20,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.3))"
+                            : isOnIce && iceGlow
+                            ? "drop-shadow(0 0 30px rgba(100,200,255,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.3))"
                             : "drop-shadow(0 0 8px rgba(255,255,255,0.6))",
                           display:"block",
                           opacity: (isGrail && hoverImg && showHover) ? 0 : 1,
@@ -140,7 +152,8 @@
                         <div style={{ position:"absolute", width:"100%", opacity: showStory ? 0 : 1, transition:"opacity 1s ease-in-out" }}>
                           {isGrail  && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#FFD700", opacity: grailReveal ? 1 : 0, transition:"opacity 3s ease-in-out" }}>✦ GRAIL ✦</div>}
                           {isBeater && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#b45014", marginTop:"6px", opacity: beaterGlow ? 1 : 0, transition:"opacity 3s ease-in-out" }}>💀 BEATER 💀</div>}
-                          <div style={{ marginTop:(isGrail||isBeater)?"6px":"0", fontSize:"13px", letterSpacing:"3px", color: isGrail && grailReveal ? "#FFD700" : isBeater && beaterGlow ? "#b45014" : "#fff", transition:"color 3s ease-in-out" }}>{label}</div>
+                          {isOnIce  && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#64c8ff", marginTop:"6px", opacity: iceGlow ? 1 : 0, transition:"opacity 3s ease-in-out" }}>❄️ ON ICE ❄️</div>}
+                          <div style={{ marginTop:(isGrail||isBeater||isOnIce)?"6px":"0", fontSize:"13px", letterSpacing:"3px", color: isGrail && grailReveal ? "#FFD700" : isBeater && beaterGlow ? "#b45014" : isOnIce && iceGlow ? "#64c8ff" : "#fff", transition:"color 3s ease-in-out" }}>{label}</div>
                           {ogYear && <div style={{ marginTop:"4px", fontSize:"10px", color:"#fff", letterSpacing:"1px" }}>Originally Owned in {ogYear}</div>}
                           {purchaseDate && <div style={{ marginTop:"8px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>Purchase Date: {new Date(purchaseDate+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"})}</div>}
                           {size && <div style={{ marginTop:"4px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>Size: {size}</div>}
@@ -148,7 +161,7 @@
                           {isMobile && <div style={{ marginTop:"16px", fontSize:"10px", color:"#666", letterSpacing:"2px" }}>TAP TO CLOSE</div>}
                         </div>
                         {/* Story text */}
-                        {isGrail && story && (
+                        {story && (
                           <div style={{ position:"absolute", width:"100%", opacity: showStory ? 1 : 0, transition:"opacity 2s ease-in-out" }}>
                             <div style={{ fontSize:"13px", color:"#fff", lineHeight:"1.8", letterSpacing:"0.5px" }}>{story}</div>
                           </div>
@@ -391,6 +404,7 @@
                               height={imgH}
                               isGrail={!!grailMeta[metaKey]}
                               isBeater={!!beaterMeta[metaKey]}
+                              isOnIce={(wearLog[shoe.id] || []).filter(e => e.colorway === cw).length === 0}
                               purchaseDate={meta.purchaseDate || null}
                               size={meta.size || null}
                               ogYear={meta.ogYear || null}
@@ -410,19 +424,24 @@
 
             {/* ── DISPLAY ── */}
             {view === "display" && (() => {
-              const cellW = isMobile ? Math.floor((window.innerWidth - 32 - 4) / 2) : 160;
-              const cellH = Math.round(cellW * 0.625);
-              const cols  = isMobile ? 2 : 5;
+              const gridW = 5 * 160 + 4 * 6; // 824px
+              const availW = Math.min(window.innerWidth - 64, 1200);
+              const scale = availW < gridW ? availW / gridW : 1;
               return (
-              <div style={{ display:"inline-grid", gridTemplateColumns:`repeat(${cols}, ${cellW}px)`, gap:"6px" }}>
+              <div>
+                <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#aaa", marginBottom:"16px" }}>MY COLLECTION · AS CURRENTLY DISPLAYED IN MY OFFICE</div>
+                <div style={{ transformOrigin:"top left", transform:`scale(${scale})`, width: gridW + "px", height: Math.round((8 * 100 + 7 * 6 + 8 * 20) * scale) + "px" }}>
+                <div style={{ display:"inline-grid", gridTemplateColumns:"repeat(5, 160px)", gap:"6px" }}>
                 {displayLayout.map((row, ri) => row.map((cell, ci) => {
                   const c    = getCellStyle(cell);
                   const shoe = !c.empty ? inventory.find(s => s.shortName === cell.code) : null;
                   const img      = shoe ? images[`${shoe.id}_${cell.colorway}`]         : null;
                   const hoverImg = shoe ? images[`${shoe.id}_${cell.colorway}_hover`]   : null;
                   const isGrail  = shoe ? !!grailMeta[`${shoe.id}_${cell.colorway}`]    : false;
-                  return <DisplayCell key={`${ri}-${ci}`} c={c} img={img} hoverImg={hoverImg} isGrail={isGrail} cellW={cellW} cellH={cellH} />;
+                  return <DisplayCell key={`${ri}-${ci}`} c={c} img={img} hoverImg={hoverImg} isGrail={isGrail} cellW={160} cellH={100} />;
                 }))}
+                </div>
+                </div>
               </div>
               );
             })()}
