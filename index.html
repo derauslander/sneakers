@@ -63,11 +63,6 @@
       return isMobile;
     };
 
-    const CAT_COLORS = {
-      Jordan: { bg: "#fff0f0", accent: "#e63946" },
-      Nike:   { bg: "#fff0f0", accent: "#e63946" },
-    };
-
     // ── Read-only ImageSlot ──────────────────────────────────────────────────
     function ImageSlot({ img, hoverImg, label, accent, width = 96, height = 60,
                          isGrail = false, isBeater = false, purchaseDate = null,
@@ -288,6 +283,7 @@
     function App() {
       const dark = useOSDark();
       const T = dark ? DARK : LIGHT;
+      const CAT_COLORS = { Jordan: { bg: T.categoryBg, accent: "#e63946" }, Nike: { bg: T.categoryBg, accent: "#e63946" } };
       const isMobile  = useIsMobile();
       const [data,    setData]    = useState(null);
       const [loading, setLoading] = useState(true);
