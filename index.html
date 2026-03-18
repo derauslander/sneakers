@@ -9,10 +9,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #ffffff; font-family: 'Aptos', 'Segoe UI', sans-serif; color: #111111; }
+    body { background: #ffffff; font-family: 'Aptos', 'Segoe UI', sans-serif; color: #111111; transition: background 0.3s, color 0.3s; }
+    body.dark { background: #1a1a1a; color: #f0f0f0; }
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #f0f0f0; }
+    body.dark ::-webkit-scrollbar-track { background: #2a2a2a; }
     ::-webkit-scrollbar-thumb { background: #ccc; }
+    body.dark ::-webkit-scrollbar-thumb { background: #555; }
     @keyframes grailPulse {
       0%   { opacity: 1; }
       50%  { opacity: 0.4; }
@@ -24,6 +27,31 @@
   <div id="root"></div>
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
+
+    const LIGHT = {
+      bg: "#ffffff", bg2: "#f9f9f9", bg3: "#f5f5f5", bg4: "#f0f0f0",
+      border: "#e0e0e0", border2: "#ccc",
+      text: "#111", text2: "#333", text3: "#555", text4: "#666", text5: "#888", text6: "#aaa", text7: "#bbb", text8: "#ddd",
+      navBg: "#f5f5f5", cardBg: "#ffffff", categoryBg: "#fff0f0",
+    };
+    const DARK = {
+      bg: "#1a1a1a", bg2: "#222222", bg3: "#2a2a2a", bg4: "#2f2f2f",
+      border: "#333333", border2: "#444444",
+      text: "#f0f0f0", text2: "#d0d0d0", text3: "#b0b0b0", text4: "#999", text5: "#888", text6: "#777", text7: "#666", text8: "#444",
+      navBg: "#111111", cardBg: "#222222", categoryBg: "#2a1a1a",
+    };
+
+    const useOSDark = () => {
+      const [dark, setDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
+      useEffect(() => {
+        const mq = window.matchMedia("(prefers-color-scheme: dark)");
+        const handler = e => { setDark(e.matches); document.body.classList.toggle("dark", e.matches); };
+        mq.addEventListener("change", handler);
+        document.body.classList.toggle("dark", dark);
+        return () => mq.removeEventListener("change", handler);
+      }, []);
+      return dark;
+    };
 
     const useIsMobile = () => {
       const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -43,7 +71,7 @@
     // ── Read-only ImageSlot ──────────────────────────────────────────────────
     function ImageSlot({ img, hoverImg, label, accent, width = 96, height = 60,
                          isGrail = false, isBeater = false, purchaseDate = null,
-                         size = null, ogYear = null, wearDates = [], story = null, isOnIce = false }) {
+                         size = null, ogYear = null, wearDates = [], story = null, isOnIce = false, dark = false }) {
       const isMobile    = useIsMobile();
       const [hovered,     setHovered]     = useState(false);
       const [showHover,   setShowHover]   = useState(false);
@@ -171,14 +199,14 @@
                   </div>
                 )}
               </div>
-              <div style={{ fontSize:"11px", color:"#666", marginTop:"4px", maxWidth:width, textAlign:"center", lineHeight:"1.3", wordBreak:"break-word" }}>{label}</div>
+              <div style={{ fontSize:"11px", color: dark ? "#999" : "#666", marginTop:"4px", maxWidth:width, textAlign:"center", lineHeight:"1.3", wordBreak:"break-word" }}>{label}</div>
             </div>
           ) : (
             <div style={{ textAlign:"center" }}>
-              <div style={{ width, height, background:"#f5f5f5", display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <div style={{ width, height, background: dark ? "#2a2a2a" : "#f5f5f5", display:"flex", alignItems:"center", justifyContent:"center" }}>
                 <div style={{ fontSize:"10px", color:"#ccc", letterSpacing:"1px" }}>—</div>
               </div>
-              <div style={{ fontSize:"11px", color:"#666", marginTop:"4px", maxWidth:width, textAlign:"center", lineHeight:"1.3", wordBreak:"break-word" }}>{label}</div>
+              <div style={{ fontSize:"11px", color: dark ? "#999" : "#666", marginTop:"4px", maxWidth:width, textAlign:"center", lineHeight:"1.3", wordBreak:"break-word" }}>{label}</div>
             </div>
           )}
         </div>
@@ -186,7 +214,7 @@
     }
 
     // ── Read-only DisplayCell ────────────────────────────────────────────────
-    function DisplayCell({ c, img, hoverImg, isGrail, cellW = 160, cellH = 100 }) {
+    function DisplayCell({ c, img, hoverImg, isGrail, cellW = 160, cellH = 100, dark = false }) {
       const isMobile    = useIsMobile();
       const [hovered,   setHovered]   = useState(false);
       const [showHover, setShowHover] = useState(false);
@@ -216,14 +244,14 @@
           <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={handleTap}
             style={{
               width: cellW, height: cellH,
-              background: c.empty ? "#f5f5f5" : img ? "#ffffff" : c.bg,
+              background: c.empty ? (dark?"#2a2a2a":"#f5f5f5") : img ? (dark?"#1a1a1a":"#ffffff") : c.bg,
               border:"none",
               display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
               padding: img ? "0" : "6px", textAlign:"center",
               overflow:"hidden", position:"relative", cursor: img ? "pointer" : "default",
             }}>
             {c.empty
-              ? <span style={{color:"#ddd",fontSize:"18px"}}>·</span>
+              ? <span style={{color:dark?"#555":"#ddd",fontSize:"18px"}}>·</span>
               : img
                 ? <img src={img} alt={c.colorway} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
                 : <div style={{fontSize:"11px",letterSpacing:"2px",color:c.accent,fontWeight:"bold"}}>{c.label}</div>
@@ -249,7 +277,7 @@
           </div>
           {!c.empty && (
             <div style={{ textAlign:"center", marginTop:"4px" }}>
-              <div style={{ fontSize:"8px", color:"#666", letterSpacing:"0.5px", overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis" }}>{c.colorway}</div>
+              <div style={{ fontSize:"8px", color: dark ? "#999" : "#666", letterSpacing:"0.5px", overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis" }}>{c.colorway}</div>
             </div>
           )}
         </div>
@@ -258,6 +286,8 @@
 
     // ── Main App ─────────────────────────────────────────────────────────────
     function App() {
+      const dark = useOSDark();
+      const T = dark ? DARK : LIGHT;
       const isMobile  = useIsMobile();
       const [data,    setData]    = useState(null);
       const [loading, setLoading] = useState(true);
@@ -284,7 +314,7 @@
         </div>
       );
 
-      const { inventory = [], wearLog = {}, images = {}, colorwayMeta = {}, grailMeta = {}, beaterMeta = {}, colorways = {}, displayLayout = [] } = data;
+      const { inventory = [], wearLog = {}, images = {}, colorwayMeta = {}, grailMeta = {}, beaterMeta = {}, glowMeta = {}, colorways = {}, displayLayout = [] } = data;
 
       const owned    = inventory.filter(s => !s.wishlist);
       const wishlist = inventory.filter(s =>  s.wishlist);
@@ -312,6 +342,25 @@
       const longestUnwornColorway = longestUnwornEntry?.colorway || null;
       const longestUnwornLastDate = longestUnwornEntry?.lastWorn || null;
 
+      // Anniversary computation
+      const todayStr = new Date().toISOString().split("T")[0];
+      const todayMD  = todayStr.slice(5);
+      const anniversaries = [];
+      Object.entries(colorwayMeta).forEach(([key, meta]) => {
+        if (!meta.purchaseDate) return;
+        const pd = meta.purchaseDate;
+        if (pd.slice(5) !== todayMD) return;
+        const years = parseInt(todayStr.slice(0,4)) - parseInt(pd.slice(0,4));
+        if (years <= 0) return;
+        const underIdx = key.indexOf("_");
+        const shoeId = parseInt(key.slice(0, underIdx));
+        const colorway = key.slice(underIdx + 1);
+        const shoe = inventory.find(s => s.id === shoeId);
+        if (!shoe) return;
+        anniversaries.push({ shoe, colorway, years });
+      });
+      const [anniversaryDismissed, setAnniversaryDismissed] = React.useState(false);
+
       const getCellStyle = (cell) => {
         if (!cell.code || cell.code === "" || cell.code === "--") return { empty: true };
         const col = CAT_COLORS[inventory.find(s => s.shortName === cell.code)?.category] || CAT_COLORS.Jordan;
@@ -319,60 +368,151 @@
       };
 
       return (
-        <div style={{ minHeight:"100vh" }}>
+        <div style={{ minHeight:"100vh", background:T.bg }}>
           {/* Header */}
-          <div style={{ background:"#ffffff", borderBottom:"1px solid #e0e0e0", padding: isMobile ? "12px 16px" : "20px 32px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ background:T.bg, borderBottom:`1px solid ${T.border}`, padding: isMobile ? "12px 16px" : "20px 32px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <div>
               <div style={{ fontSize: isMobile ? "20px" : "28px", fontWeight:"bold", color:"#e63946", letterSpacing:"2px", lineHeight:1 }}>DerAusländer</div>
-              <div style={{ fontSize: isMobile ? "14px" : "20px", letterSpacing:"8px", color:"#111", marginTop:"4px" }}>THE VAULT</div>
+              <div style={{ fontSize: isMobile ? "14px" : "20px", letterSpacing:"8px", color:T.text, marginTop:"4px" }}>THE VAULT</div>
             </div>
             <div style={{ display:"flex", gap: isMobile ? "16px" : "32px" }}>
               {[["PAIRS", total], ["OPEN BOXES", empty], ["WISHLIST", wishlist.length]].map(([label, val]) => (
                 <div key={label} style={{ textAlign:"center" }}>
                   <div style={{ fontSize: isMobile ? "16px" : "22px", fontWeight:"bold", color:"#e63946" }}>{val}</div>
-                  <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#888" }}>{label}</div>
+                  <div style={{ fontSize:"8px", letterSpacing:"3px", color:T.text5 }}>{label}</div>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Nav */}
-          <div style={{ display:"flex", borderBottom:"1px solid #e0e0e0", background:"#f5f5f5" }}>
+          <div style={{ display:"flex", borderBottom:`1px solid ${T.border}`, background:T.navBg }}>
             {["inventory", ...(isMobile ? [] : ["display"]), "wishlist", "about"].map(v => (
               <button key={v} onClick={() => setView(v)} style={{
                 padding:"14px 28px", background:view===v?"#e63946":"transparent",
-                color:view===v?"#fff":"#666", border:"none", cursor:"pointer",
+                color:view===v?"#fff":T.text4, border:"none", cursor:"pointer",
                 fontSize:"11px", letterSpacing:"4px", textTransform:"uppercase",
                 fontFamily:"'Aptos','Segoe UI',sans-serif",
               }}>{v}</button>
             ))}
           </div>
 
-          <div style={{ padding: isMobile ? "16px" : "32px" }}>
+          <div style={{ padding: isMobile ? "16px" : "32px", background:T.bg }}>
 
             {/* ── INVENTORY ── */}
             {view === "inventory" && (
               <div>
+                {/* Anniversary Banner */}
+                {!anniversaryDismissed && anniversaries.length > 0 && (
+                  <div style={{ background: dark ? "linear-gradient(90deg,#2a2a1a,#2a2700)" : "linear-gradient(90deg,#fffdf0,#fff8d6)", border:"1px solid #FFD700", padding:"16px 24px", marginBottom:"16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
+                      {(() => {
+                        const a = anniversaries[0];
+                        const aImg = images[`${a.shoe.id}_${a.colorway}`] || null;
+                        return aImg ? <img src={aImg} alt={a.colorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0 }} /> : null;
+                      })()}
+                      <div>
+                        <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#FFD700", marginBottom:"6px" }}>✦ PURCHASE ANNIVERSARY ✦</div>
+                        {anniversaries.map((a, i) => (
+                          <div key={i} style={{ fontSize:"15px", fontWeight:"bold", color:T.text, marginBottom: i < anniversaries.length - 1 ? "4px" : "0" }}>
+                            {a.shoe.name} — {a.colorway}
+                            <span style={{ fontSize:"11px", fontWeight:"normal", color:T.text5, marginLeft:"10px" }}>
+                              {a.years} {a.years === 1 ? "year" : "years"} ago today
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <button onClick={() => setAnniversaryDismissed(true)} style={{ background:"transparent", border:"none", color:T.text7, cursor:"pointer", fontSize:"18px", lineHeight:1, padding:"0", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>✕</button>
+                  </div>
+                )}
+
                 {/* Rotation Banner */}
                 {longestUnworn && (() => {
                   const isRotationGrail = longestUnwornColorway ? !!grailMeta[`${longestUnworn.id}_${longestUnwornColorway}`] : false;
-                  const rotationImg = images[`${longestUnworn.id}_${longestUnwornColorway}`] || null;
+                  const isRotationOnIce = longestUnwornColorway ? (wearLog[longestUnworn.id] || []).filter(e => e.colorway === longestUnwornColorway).length === 0 : false;
+                  const rotationImgKey = `${longestUnworn.id}_${longestUnwornColorway}`;
+                  const rotationImg = images[rotationImgKey] || null;
+                  const rotationHoverImg = isRotationGrail ? (images[`${rotationImgKey}_hover`] || null) : null;
+                  const bannerBg = isRotationGrail
+                    ? dark ? "linear-gradient(90deg,#2a2a1a,#2a2700)" : "linear-gradient(90deg,#fffcf0,#fff8d6)"
+                    : dark ? `linear-gradient(90deg,${T.bg2},${T.bg3})` : "linear-gradient(90deg,#fff5f5,#ffe8e8)";
+                  const bannerBorder = isRotationGrail ? "#FFD700" : "#e63946";
+                  const rotationMetaKey = `${longestUnworn.id}_${longestUnwornColorway}`;
+                  const isRotationOnIce = longestUnwornColorway ? (wearLog[longestUnworn.id] || []).filter(e => e.colorway === longestUnwornColorway).length === 0 : false;
+                  const isRotationGlow = dark && !!glowMeta[rotationMetaKey];
+                  const imgFilter = isRotationGrail
+                    ? "drop-shadow(0 0 12px rgba(255,215,0,0.6))"
+                    : dark && isRotationOnIce
+                    ? "drop-shadow(0 0 14px rgba(100,200,255,0.7))"
+                    : isRotationGlow
+                    ? "drop-shadow(0 0 14px rgba(255,255,255,0.5))"
+                    : "none";
+
+                  const sortedQueue = [...allColorwayEntries].sort((a, b) => {
+                    if (!a.lastWorn && !b.lastWorn) return 0;
+                    if (!a.lastWorn) return -1;
+                    if (!b.lastWorn) return 1;
+                    return a.lastWorn < b.lastWorn ? -1 : 1;
+                  });
+                  const upcomingQueue = sortedQueue.slice(1, 5);
+
                   return (
-                    <div style={{ background:"linear-gradient(90deg,#fff5f5,#ffe8e8)", border:"1px solid #f4a261", padding:"16px", marginBottom:"24px", display:"flex", alignItems:"center", gap:"16px" }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
-                        {rotationImg && <img src={rotationImg} alt={longestUnwornColorway} style={{ width:"96px", height:"60px", objectFit:"cover", flexShrink:0 }} />}
-                        <div>
-                          <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
-                            {isRotationGrail ? <span><span style={{color:"#FFD700"}}>✦</span> GRAIL UP NEXT <span style={{color:"#FFD700"}}>✦</span></span> : "UP NEXT FOR ROTATION"}
-                          </div>
-                          <div style={{ fontSize: isMobile ? "13px" : "16px", fontWeight:"bold", color:"#111" }}>
-                            {isRotationGrail ? <span><span style={{color:"#FFD700"}}>✦</span> {longestUnworn.name}{longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""} <span style={{color:"#FFD700"}}>✦</span></span> : `${longestUnworn.name}${longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""}`}
-                          </div>
-                          <div style={{ fontSize:"10px", color:"#555", marginTop:"2px" }}>
-                            {longestUnwornLastDate ? `Last worn: ${longestUnwornLastDate}` : "Never worn"}
+                    <div style={{ marginBottom:"24px" }}>
+                      <div style={{ background: bannerBg, border:`1px solid ${bannerBorder}`, padding:"16px", display:"flex", alignItems:"center", gap:"16px" }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
+                          {rotationImg && (() => {
+                            function RotationImg() {
+                              const [showAlt, setShowAlt] = React.useState(false);
+                              React.useEffect(() => {
+                                if (!rotationHoverImg) return;
+                                const interval = setInterval(() => setShowAlt(v => !v), 5000);
+                                return () => clearInterval(interval);
+                              }, []);
+                              return (
+                                <div style={{ position:"relative", width:"120px", height:"75px", flexShrink:0 }}>
+                                  <img src={rotationImg} alt={longestUnwornColorway} style={{ position:"absolute", top:0, left:0, width:"120px", height:"75px", objectFit:"cover", filter: imgFilter, opacity: rotationHoverImg && showAlt ? 0 : 1, transition:"opacity 2s ease-in-out" }} />
+                                  {rotationHoverImg && <img src={rotationHoverImg} alt={longestUnwornColorway} style={{ position:"absolute", top:0, left:0, width:"120px", height:"75px", objectFit:"cover", filter: imgFilter, opacity: showAlt ? 1 : 0, transition:"opacity 2s ease-in-out" }} />}
+                                </div>
+                              );
+                            }
+                            return <RotationImg />;
+                          })()}
+                          <div>
+                            <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
+                              {isRotationGrail
+                                ? <span><span style={{color:"#FFD700"}}>✦</span> GRAIL UP NEXT <span style={{color:"#FFD700"}}>✦</span></span>
+                                : isRotationOnIce
+                                ? <span><span style={{color:"#64c8ff"}}>❄️</span> TIME TO TAKE THEM OFF ICE? <span style={{color:"#64c8ff"}}>❄️</span></span>
+                                : "UP NEXT FOR ROTATION"}
+                            </div>
+                            <div style={{ fontSize: isMobile ? "13px" : "16px", fontWeight:"bold", color:T.text }}>
+                              {isRotationGrail
+                                ? <span><span style={{color:"#FFD700"}}>✦</span> {longestUnworn.name}{longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""} <span style={{color:"#FFD700"}}>✦</span></span>
+                                : isRotationOnIce
+                                ? <span><span style={{color:"#64c8ff"}}>❄️</span> {longestUnworn.name}{longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""} <span style={{color:"#64c8ff"}}>❄️</span></span>
+                                : `${longestUnworn.name}${longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""}`}
+                            </div>
+                            <div style={{ fontSize:"10px", color:T.text3, marginTop:"2px" }}>
+                              {longestUnwornLastDate ? `Last worn: ${longestUnwornLastDate}` : "Never worn"}
+                            </div>
                           </div>
                         </div>
                       </div>
+                      {/* Upcoming queue */}
+                      {upcomingQueue.length > 0 && (
+                        <div style={{ background:"#fff8f8", border:"1px solid #e63946", borderTop:"none", padding:"10px 24px", display:"flex", gap:"16px", alignItems:"center" }}>
+                          <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0 }}>COMING UP</div>
+                          <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
+                            {upcomingQueue.map((entry, i) => {
+                              const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
+                              return qImg ? (
+                                <img key={i} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width:"48px", height:"30px", objectFit:"cover", opacity:0.7 }} />
+                              ) : null;
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -381,15 +521,17 @@
                   const col = CAT_COLORS[shoe.category] || CAT_COLORS.Jordan;
                   const shoeColorways = colorways[shoe.shortName] || [];
                   const perRow = isMobile ? shoeColorways.length : Math.min(shoeColorways.length, 5);
-                  const imgW = isMobile ? 72 : (perRow === 1 ? 120 : perRow <= 3 ? 96 : 80);
+                  const imgW = isMobile ? 72 : 120;
                   const imgH = Math.round(imgW * 0.625);
                   const cardMinW = isMobile ? "100%" : Math.max(280, perRow * (imgW + 16) + 32);
                   return (
-                    <div key={shoe.id} style={{ background:"#ffffff", border:"1px solid #e0e0e0", minWidth: cardMinW, maxWidth: isMobile ? "100%" : cardMinW, flex: isMobile ? "1 1 100%" : "0 1 auto" }}>
-                      <div style={{ padding:"16px", height: isMobile ? "auto" : "240px", overflow: isMobile ? "visible" : "hidden" }}>
-                      <div style={{ fontSize:"14px", color:"#111", fontWeight:"bold", marginBottom:"12px" }}>
-                        {shoe.name}{shoe.quantity > 1 ? ` — ${shoe.quantity} pairs` : ""}
+                    <div key={shoe.id} style={{ background:T.cardBg, border:`1px solid ${T.border}`, minWidth: cardMinW, maxWidth: isMobile ? "100%" : cardMinW, flex: isMobile ? "1 1 100%" : "0 1 auto" }}>
+                      <div style={{ padding: isMobile ? "16px" : "16px 16px 0 16px", marginBottom: isMobile ? "0" : "8px" }}>
+                        <div style={{ fontSize:"14px", color:T.text, fontWeight:"bold", whiteSpace: isMobile ? "normal" : "nowrap" }}>
+                          {shoe.name}{shoe.quantity > 1 ? ` — ${shoe.quantity} pairs` : ""}
+                        </div>
                       </div>
+                      <div style={{ padding: isMobile ? "0 16px 16px 16px" : "0 16px 16px 16px", height: isMobile ? "auto" : "240px", overflow: isMobile ? "visible" : "hidden" }}>
                       <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", maxWidth: isMobile ? "100%" : perRow * (imgW + 8) + "px" }}>
                         {shoeColorways.map(cw => {
                           const metaKey = `${shoe.id}_${cw}`;
@@ -405,6 +547,7 @@
                               isGrail={!!grailMeta[metaKey]}
                               isBeater={!!beaterMeta[metaKey]}
                               isOnIce={(wearLog[shoe.id] || []).filter(e => e.colorway === cw).length === 0}
+                              dark={dark}
                               purchaseDate={meta.purchaseDate || null}
                               size={meta.size || null}
                               ogYear={meta.ogYear || null}
@@ -429,7 +572,7 @@
               const scale = availW < gridW ? availW / gridW : 1;
               return (
               <div>
-                <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#aaa", marginBottom:"16px" }}>MY COLLECTION · AS CURRENTLY DISPLAYED IN MY OFFICE</div>
+                <div style={{ fontSize:"9px", letterSpacing:"4px", color:T.text6, marginBottom:"16px" }}>MY COLLECTION · AS CURRENTLY DISPLAYED IN MY OFFICE</div>
                 <div style={{ transformOrigin:"top left", transform:`scale(${scale})`, width: gridW + "px", height: Math.round((8 * 100 + 7 * 6 + 8 * 20) * scale) + "px" }}>
                 <div style={{ display:"inline-grid", gridTemplateColumns:"repeat(5, 160px)", gap:"6px" }}>
                 {displayLayout.map((row, ri) => row.map((cell, ci) => {
@@ -438,7 +581,7 @@
                   const img      = shoe ? images[`${shoe.id}_${cell.colorway}`]         : null;
                   const hoverImg = shoe ? images[`${shoe.id}_${cell.colorway}_hover`]   : null;
                   const isGrail  = shoe ? !!grailMeta[`${shoe.id}_${cell.colorway}`]    : false;
-                  return <DisplayCell key={`${ri}-${ci}`} c={c} img={img} hoverImg={hoverImg} isGrail={isGrail} cellW={160} cellH={100} />;
+                  return <DisplayCell key={`${ri}-${ci}`} c={c} img={img} hoverImg={hoverImg} isGrail={isGrail} cellW={160} cellH={100} dark={dark} />;
                 }))}
                 </div>
                 </div>
@@ -450,7 +593,7 @@
             {view === "wishlist" && (
               <div style={{ display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" }}>
                 {wishlist.length === 0
-                  ? <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#888" }}>NOTHING ON THE WISHLIST</div>
+                  ? <div style={{ fontSize:"11px", letterSpacing:"4px", color:T.text5 }}>NOTHING ON THE WISHLIST</div>
                   : wishlist.map(shoe => {
                       const col = CAT_COLORS[shoe.category] || CAT_COLORS.Jordan;
                       const shoeColorways = colorways[shoe.shortName] || [];
@@ -458,8 +601,8 @@
                       const imgH = Math.round(imgW * 0.625);
                       const cardMinW = isMobile ? "100%" : Math.max(200, shoeColorways.length * (imgW + 16) + 32);
                       return (
-                        <div key={shoe.id} style={{ background:"#ffffff", border:"1px solid #e0e0e0", padding:"16px", minWidth: cardMinW, flex: isMobile ? "1 1 100%" : "0 1 auto" }}>
-                          <div style={{ fontSize:"14px", color:"#111", fontWeight:"bold", marginBottom:"12px" }}>{shoe.name}</div>
+                        <div key={shoe.id} style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding:"16px", minWidth: cardMinW, flex: isMobile ? "1 1 100%" : "0 1 auto" }}>
+                          <div style={{ fontSize:"14px", color:T.text, fontWeight:"bold", marginBottom:"12px" }}>{shoe.name}</div>
                           <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
                             {shoeColorways.map(cw => {
                               const metaKey = `${shoe.id}_${cw}`;
@@ -475,6 +618,7 @@
                                   purchaseDate={meta.purchaseDate || null}
                                   size={meta.size || null}
                                   ogYear={meta.ogYear || null}
+                                  dark={dark}
                                 />
                               );
                             })}
@@ -490,13 +634,13 @@
             {view === "about" && (
               <div style={{ maxWidth:"640px", margin:"0 auto", padding:"16px 0" }}>
                 <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"32px" }}>ABOUT THE VAULT</div>
-                <p style={{ fontSize:"15px", color:"#333", lineHeight:"2", marginBottom:"24px", fontStyle:"italic" }}>
+                <p style={{ fontSize:"15px", color:T.text2, lineHeight:"2", marginBottom:"24px", fontStyle:"italic" }}>
                   The first time I saw the Air Jordan 4 sitting in the window of my local shoe store, I was hooked. Every trip to the mall meant one thing: making my way to Foot Locker and staring at the shoes worn by my favorite athletes — Michael Jordan, Andre Agassi, and Bo Jackson. I'd stand there daydreaming about the day I could own all of them.
                 </p>
-                <p style={{ fontSize:"15px", color:"#333", lineHeight:"2", marginBottom:"24px", fontStyle:"italic" }}>
+                <p style={{ fontSize:"15px", color:T.text2, lineHeight:"2", marginBottom:"24px", fontStyle:"italic" }}>
                   In 2023, I decided to make that childhood dream a reality.
                 </p>
-                <p style={{ fontSize:"15px", color:"#333", lineHeight:"2", fontStyle:"italic" }}>
+                <p style={{ fontSize:"15px", color:T.text2, lineHeight:"2", fontStyle:"italic" }}>
                   This collection is for that 10 year old boy who never stopped looking through the glass.
                 </p>
               </div>
