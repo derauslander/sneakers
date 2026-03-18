@@ -293,6 +293,7 @@
       const [loading, setLoading] = useState(true);
       const [error,   setError]   = useState(null);
       const [view,    setView]    = useState("inventory");
+      const [anniversaryDismissed, setAnniversaryDismissed] = useState(false);
 
       useEffect(() => {
         fetch("vault-data.json")
@@ -359,7 +360,6 @@
         if (!shoe) return;
         anniversaries.push({ shoe, colorway, years });
       });
-      const [anniversaryDismissed, setAnniversaryDismissed] = React.useState(false);
 
       const getCellStyle = (cell) => {
         if (!cell.code || cell.code === "" || cell.code === "--") return { empty: true };
