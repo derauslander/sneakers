@@ -434,9 +434,7 @@
                     ? dark ? "linear-gradient(90deg,#2a2a1a,#2a2700)" : "linear-gradient(90deg,#fffcf0,#fff8d6)"
                     : dark ? `linear-gradient(90deg,${T.bg2},${T.bg3})` : "linear-gradient(90deg,#fff5f5,#ffe8e8)";
                   const bannerBorder = isRotationGrail ? "#FFD700" : "#e63946";
-                  const rotationMetaKey = `${longestUnworn.id}_${longestUnwornColorway}`;
-                  const isRotationOnIce = longestUnwornColorway ? (wearLog[longestUnworn.id] || []).filter(e => e.colorway === longestUnwornColorway).length === 0 : false;
-                  const isRotationGlow = dark && !!glowMeta[rotationMetaKey];
+                  const isRotationGlow = dark && !!glowMeta[rotationImgKey];
                   const imgFilter = isRotationGrail
                     ? "drop-shadow(0 0 12px rgba(255,215,0,0.6))"
                     : dark && isRotationOnIce
