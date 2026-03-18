@@ -41,6 +41,8 @@
       navBg: "#111111", cardBg: "#222222", categoryBg: "#2a1a1a",
     };
 
+    const localDateStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+
     const useOSDark = () => {
       const [dark, setDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
       useEffect(() => {
@@ -340,7 +342,7 @@
       const longestUnwornLastDate = longestUnwornEntry?.lastWorn || null;
 
       // Anniversary computation
-      const todayStr = new Date().toISOString().split("T")[0];
+      const todayStr = localDateStr();
       const todayMD  = todayStr.slice(5);
       const anniversaries = [];
       Object.entries(colorwayMeta).forEach(([key, meta]) => {
@@ -399,29 +401,38 @@
             {view === "inventory" && (
               <div>
                 {/* Anniversary Banner */}
-                {!anniversaryDismissed && anniversaries.length > 0 && (
-                  <div style={{ background: dark ? "linear-gradient(90deg,#2a2a1a,#2a2700)" : "linear-gradient(90deg,#fffdf0,#fff8d6)", border:"1px solid #FFD700", padding:"16px 24px", marginBottom:"16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px" }}>
-                    <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
-                      {(() => {
-                        const a = anniversaries[0];
-                        const aImg = images[`${a.shoe.id}_${a.colorway}`] || null;
-                        return aImg ? <img src={aImg} alt={a.colorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0 }} /> : null;
-                      })()}
-                      <div>
-                        <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#FFD700", marginBottom:"6px" }}>✦ PURCHASE ANNIVERSARY ✦</div>
-                        {anniversaries.map((a, i) => (
-                          <div key={i} style={{ fontSize:"15px", fontWeight:"bold", color:T.text, marginBottom: i < anniversaries.length - 1 ? "4px" : "0" }}>
-                            {a.shoe.name} — {a.colorway}
-                            <span style={{ fontSize:"11px", fontWeight:"normal", color:T.text5, marginLeft:"10px" }}>
+                {!anniversaryDismissed && anniversaries.length > 0 && (() => {
+                  function AnniversaryBanner() {
+                    const [idx, setIdx] = React.useState(0);
+                    React.useEffect(() => {
+                      if (anniversaries.length <= 1) return;
+                      const interval = setInterval(() => setIdx(i => (i + 1) % anniversaries.length), 4000);
+                      return () => clearInterval(interval);
+                    }, []);
+                    const a = anniversaries[idx];
+                    const aImg = images[`${a.shoe.id}_${a.colorway}`] || null;
+                    return (
+                      <div style={{ background: dark ? "linear-gradient(90deg,#2a2a1a,#2a2700)" : "linear-gradient(90deg,#fffdf0,#fff8d6)", border:"1px solid #FFD700", padding:"16px 24px", marginBottom:"16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px" }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
+                          {aImg && <img src={aImg} alt={a.colorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0 }} />}
+                          <div>
+                            <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#FFD700", marginBottom:"6px" }}>
+                              ✦ PURCHASE ANNIVERSARY {anniversaries.length > 1 ? `(${idx + 1}/${anniversaries.length})` : ""} ✦
+                            </div>
+                            <div style={{ fontSize:"15px", fontWeight:"bold", color:T.text }}>
+                              {a.shoe.name} — {a.colorway}
+                            </div>
+                            <div style={{ fontSize:"11px", color:T.text5, marginTop:"4px" }}>
                               {a.years} {a.years === 1 ? "year" : "years"} ago today
-                            </span>
+                            </div>
                           </div>
-                        ))}
+                        </div>
+                        <button onClick={() => setAnniversaryDismissed(true)} style={{ background:"transparent", border:"none", color:T.text7, cursor:"pointer", fontSize:"18px", lineHeight:1, padding:"0", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>✕</button>
                       </div>
-                    </div>
-                    <button onClick={() => setAnniversaryDismissed(true)} style={{ background:"transparent", border:"none", color:T.text7, cursor:"pointer", fontSize:"18px", lineHeight:1, padding:"0", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>✕</button>
-                  </div>
-                )}
+                    );
+                  }
+                  return <AnniversaryBanner />;
+                })()}
 
                 {/* Rotation Banner */}
                 {longestUnworn && (() => {
