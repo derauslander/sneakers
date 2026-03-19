@@ -66,9 +66,9 @@
     };
 
     // ── Read-only ImageSlot ──────────────────────────────────────────────────
-    function ImageSlot({ img, hoverImg, label, accent, width = 96, height = 60,
+    function ImageSlot({ img, hoverImg, label, accent, width = 96, height = 96,
                          isGrail = false, isBeater = false, purchaseDate = null,
-                         size = null, ogYear = null, wearDates = [], story = null, isOnIce = false, dark = false }) {
+                         size = null, ogYear = null, wearDates = [], story = null, isOnIce = false, dark = false, shoeName = null }) {
       const isMobile    = useIsMobile();
       const [hovered,     setHovered]     = useState(false);
       const [showHover,   setShowHover]   = useState(false);
@@ -178,7 +178,9 @@
                           {isGrail  && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#FFD700", opacity: grailReveal ? 1 : 0, transition:"opacity 3s ease-in-out" }}>✦ GRAIL ✦</div>}
                           {isBeater && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#b45014", marginTop:"6px", opacity: beaterGlow ? 1 : 0, transition:"opacity 3s ease-in-out" }}>💀 BEATER 💀</div>}
                           {isOnIce  && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#64c8ff", marginTop:"6px", opacity: iceGlow ? 1 : 0, transition:"opacity 3s ease-in-out" }}>❄️ ON ICE ❄️</div>}
-                          <div style={{ marginTop:(isGrail||isBeater||isOnIce)?"6px":"0", fontSize:"13px", letterSpacing:"3px", color: isGrail && grailReveal ? "#FFD700" : isBeater && beaterGlow ? "#b45014" : isOnIce && iceGlow ? "#64c8ff" : "#fff", transition:"color 3s ease-in-out" }}>{label}</div>
+                          <div style={{ marginTop:(isGrail||isBeater||isOnIce)?"6px":"0", fontSize:"13px", letterSpacing:"3px", color: isGrail && grailReveal ? "#FFD700" : isBeater && beaterGlow ? "#b45014" : isOnIce && iceGlow ? "#64c8ff" : "#fff", transition:"color 3s ease-in-out" }}>
+                            {shoeName ? `${shoeName} — ${label}` : label}
+                          </div>
                           {ogYear && <div style={{ marginTop:"4px", fontSize:"10px", color:"#fff", letterSpacing:"1px" }}>Originally Owned in {ogYear}</div>}
                           {purchaseDate && <div style={{ marginTop:"8px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>Purchase Date: {new Date(purchaseDate+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"})}</div>}
                           {size && <div style={{ marginTop:"4px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>Size: {size}</div>}
@@ -512,7 +514,7 @@
                             {upcomingQueue.map((entry, i) => {
                               const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
                               return qImg ? (
-                                <img key={i} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width:"48px", height:"30px", objectFit:"cover", opacity:0.7 }} />
+                                <img key={i} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width:"48px", height:"30px", objectFit:"cover" }} />
                               ) : null;
                             })}
                           </div>
@@ -528,7 +530,7 @@
                   const perRow = isMobile ? shoeColorways.length : Math.min(shoeColorways.length, 5);
                   const imgW = isMobile ? 72 : 120;
                   const imgH = Math.round(imgW * 0.625);
-                  const cardMinW = isMobile ? "100%" : Math.max(280, perRow * (imgW + 16) + 32);
+                  const cardMinW = isMobile ? "100%" : Math.max(240, perRow * (imgW + 16) + 32);
                   return (
                     <div key={shoe.id} style={{ background:T.cardBg, border:`1px solid ${T.border}`, minWidth: cardMinW, maxWidth: isMobile ? "100%" : cardMinW, flex: isMobile ? "1 1 100%" : "0 1 auto" }}>
                       <div style={{ padding: isMobile ? "16px" : "16px 16px 0 16px", marginBottom: isMobile ? "0" : "8px" }}>
@@ -552,6 +554,7 @@
                               isGrail={!!grailMeta[metaKey]}
                               isBeater={!!beaterMeta[metaKey]}
                               isOnIce={(wearLog[shoe.id] || []).filter(e => e.colorway === cw).length === 0}
+                              shoeName={shoe.name}
                               dark={dark}
                               purchaseDate={meta.purchaseDate || null}
                               size={meta.size || null}
