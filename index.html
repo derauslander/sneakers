@@ -393,7 +393,7 @@
               <div style={{ fontSize: isMobile ? "14px" : "20px", letterSpacing:"8px", color:T.text, marginTop:"4px" }}>THE VAULT</div>
             </div>
             <div style={{ display:"flex", gap: isMobile ? "16px" : "32px" }}>
-              {[["PAIRS", total], ["OPEN BOXES", empty], ["WISHLIST", wishlist.length]].map(([label, val]) => (
+              {[["PAIRS", total], ["WISHLIST", wishlist.length]].map(([label, val]) => (
                 <div key={label} style={{ textAlign:"center" }}>
                   <div style={{ fontSize: isMobile ? "16px" : "22px", fontWeight:"bold", color:"#e63946" }}>{val}</div>
                   <div style={{ fontSize:"8px", letterSpacing:"3px", color:T.text5 }}>{label}</div>

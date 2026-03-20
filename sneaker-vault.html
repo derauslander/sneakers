@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Vault — Sneaker Collection</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #ffffff; font-family: 'Aptos', 'Segoe UI', sans-serif; color: #111111; transition: background 0.3s, color 0.3s; }
+    body.dark { background: #1a1a1a; color: #f0f0f0; }
+    input[type=date]::-webkit-calendar-picker-indicator { filter: none; }
+    body.dark input[type=date]::-webkit-calendar-picker-indicator { filter: invert(1); }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f0f0f0; }
+    body.dark ::-webkit-scrollbar-track { background: #2a2a2a; }
+    ::-webkit-scrollbar-thumb { background: #ccc; }
+    body.dark ::-webkit-scrollbar-thumb { background: #555; }
+    select option { background: #ffffff; color: #111; }
+    body.dark select option { background: #2a2a2a; color: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const LIGHT = {
+      bg: "#ffffff", bg2: "#f9f9f9", bg3: "#f5f5f5", bg4: "#f0f0f0",
+      border: "#e0e0e0", border2: "#ccc",
+      text: "#111", text2: "#333", text3: "#555", text4: "#666", text5: "#888", text6: "#aaa", text7: "#bbb", text8: "#ddd",
+      navBg: "#f5f5f5", cardBg: "#ffffff",
+      inputBg: "#f5f5f5", inputBorder: "#ccc", inputText: "#111",
+      overlayText: "#fff",
+      categoryBg: "#fff0f0",
+    };
+    const DARK = {
+      bg: "#1a1a1a", bg2: "#222222", bg3: "#2a2a2a", bg4: "#2f2f2f",
+      border: "#333333", border2: "#444444",
+      text: "#f0f0f0", text2: "#d0d0d0", text3: "#b0b0b0", text4: "#999", text5: "#888", text6: "#777", text7: "#666", text8: "#444",
+      navBg: "#111111", cardBg: "#222222",
+      inputBg: "#2a2a2a", inputBorder: "#444", inputText: "#f0f0f0",
+      overlayText: "#fff",
+      categoryBg: "#2a1a1a",
+    };
+
+    const useDarkMode = () => {
+      const [dark, setDark] = useState(() => {
+        try { return localStorage.getItem("vault_dark") === "true"; } catch { return false; }
+      });
+      useEffect(() => {
+        document.body.classList.toggle("dark", dark);
+        try { localStorage.setItem("vault_dark", dark); } catch {}
+      }, [dark]);
+      return [dark, setDark];
+    };
+
+        const COLORWAYS = {};
+
+    const CAT_COLORS = {
+      Jordan: { bg: "#fff0f0", accent: "#e63946" },
+      Nike:   { bg: "#fff0f0", accent: "#e63946" },
+    };
+
+    const load = (key, fallback) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } };
+    const save = (key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.error(e); } };
+    const localDateStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+
+    function ImageSlot({ img, hoverImg, label, accent, bg, onUpload, onClear, width = 96, height = 60, wearDates = [], isGrail = false, purchaseDate = null, size = null, isBeater = false, ogYear = null, story = null, isOnIce = false, dark = false, shoeName = null }) {
+      const fileRef = useRef();
+      const [hovered, setHovered] = useState(false);
+      const [showHover, setShowHover] = useState(false);
+      const [beaterGlow, setBeaterGlow] = useState(false);
+      const [grailReveal, setGrailReveal] = useState(false);
+      const [showStory, setShowStory] = useState(false);
+      const [iceGlow, setIceGlow] = useState(false);
+      const overlayBg = "rgba(0,0,0,0.85)";
+      const timerRef = useRef(null);
+      const crossfadeRef = useRef(null);
+      const beaterRef = useRef(null);
+      const grailRef = useRef(null);
+      const storyRef = useRef(null);
+      const iceRef = useRef(null);
+
+      const handleMouseEnter = () => {
+        timerRef.current = setTimeout(() => {
+          setHovered(true);
+          setShowHover(false);
+          setBeaterGlow(false);
+          setGrailReveal(false);
+          setShowStory(false);
+          setIceGlow(false);
+          if (isGrail && hoverImg) {
+            crossfadeRef.current = setTimeout(() => { setShowHover(true); setGrailReveal(true);
+              if (story) storyRef.current = setTimeout(() => setShowStory(true), 5000);
+            }, 200);
+          } else if (isGrail) {
+            grailRef.current = setTimeout(() => { setGrailReveal(true);
+              if (story) storyRef.current = setTimeout(() => setShowStory(true), 5000);
+            }, 200);
+          } else if (story) {
+            storyRef.current = setTimeout(() => setShowStory(true), 5000);
+          }
+          if (isBeater) {
+            beaterRef.current = setTimeout(() => setBeaterGlow(true), 200);
+          }
+          if (isOnIce) {
+            iceRef.current = setTimeout(() => setIceGlow(true), 200);
+          }
+        }, 500);
+      };
+      const handleMouseLeave = () => {
+        clearTimeout(timerRef.current);
+        clearTimeout(crossfadeRef.current);
+        clearTimeout(beaterRef.current);
+        clearTimeout(grailRef.current);
+        clearTimeout(storyRef.current);
+        clearTimeout(iceRef.current);
+        setHovered(false);
+        setShowHover(false);
+        setBeaterGlow(false);
+        setGrailReveal(false);
+        setShowStory(false);
+        setIceGlow(false);
+      };
+
+      const sortedDates = [...wearDates].sort((a, b) => b > a ? 1 : -1);
+
+      return (
+        <div style={{ position:"relative", display:"inline-block" }}>
+          {img ? (
+            <div style={{ textAlign:"center" }}>
+              <div style={{ position:"relative", display:"inline-block" }}>
+                <img
+                  src={img} alt={label}
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                  style={{ width, height, objectFit:"cover", border:"none", display:"block", cursor:"zoom-in", transition:"opacity 0.15s" }}
+                />
+                {hovered && (
+                  <div style={{
+                    position:"fixed", top:0, left:0, width:"100vw", height:"100vh",
+                    background: overlayBg, display:"flex", flexDirection:"column",
+                    alignItems:"center", justifyContent:"center", zIndex:9999,
+                    pointerEvents:"none",
+                  }}>
+                    <div style={{ position:"relative", width:"50vw", maxWidth:"600px", display:"flex", flexDirection:"column", alignItems:"center" }}>
+                      {/* Image — stays fixed, never fades */}
+                      <div style={{ position:"relative", width:"100%", display:"flex", justifyContent:"center" }}>
+                        <img src={img} alt={label} style={{ maxWidth:"50vw", maxHeight:"40vh", objectFit:"contain", filter: isBeater && beaterGlow ? "drop-shadow(0 0 30px rgba(180,80,20,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.3))" : isOnIce && iceGlow ? "drop-shadow(0 0 30px rgba(100,200,255,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.3))" : "drop-shadow(0 0 8px rgba(255,255,255,0.6))", display:"block", opacity: (isGrail && hoverImg && showHover) ? 0 : 1, transition:"opacity 3s ease-in-out, filter 3s ease-in-out" }} />
+                        {isGrail && hoverImg && (
+                          <img src={hoverImg} alt={label} style={{ position:"absolute", top:0, left:"50%", transform: showHover ? "translateX(-50%) scale(1)" : "translateX(-50%) scale(0.95)", maxWidth:"50vw", maxHeight:"40vh", objectFit:"contain", filter:"drop-shadow(0 0 30px rgba(255,215,0,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.6))", opacity: showHover ? 1 : 0, transition:"opacity 3s ease-in-out, transform 3s ease-in-out" }} />
+                        )}
+                      </div>
+                      {/* Text area — fixed height container, info fades out, story fades in */}
+                      <div style={{ width:"100%", marginTop:"16px", textAlign:"center", position:"relative", minHeight:"80px" }}>
+                        {/* Info text */}
+                        <div style={{ position:"absolute", width:"100%", opacity: showStory ? 0 : 1, transition:"opacity 1s ease-in-out" }}>
+                          {isGrail && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#FFD700", opacity: grailReveal ? 1 : 0, transition:"opacity 3s ease-in-out" }}>✦ GRAIL ✦</div>}
+                          {isBeater && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#b45014", marginTop:"6px", opacity: beaterGlow ? 1 : 0, transition:"opacity 3s ease-in-out" }}>💀 BEATER 💀</div>}
+                          {isOnIce && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#64c8ff", marginTop:"6px", opacity: iceGlow ? 1 : 0, transition:"opacity 3s ease-in-out" }}>❄️ ON ICE ❄️</div>}
+                          <div style={{ marginTop:(isGrail||isBeater||isOnIce)?"6px":"0", fontSize:"13px", letterSpacing:"3px", color: isGrail && grailReveal ? "#FFD700" : isBeater && beaterGlow ? "#b45014" : isOnIce && iceGlow ? "#64c8ff" : "#fff", transition:"color 3s ease-in-out" }}>
+                            {shoeName ? `${shoeName} — ${label}` : label}
+                          </div>
+                          {ogYear && <div style={{ marginTop:"4px", fontSize:"10px", color:"#fff", letterSpacing:"1px" }}>Originally Owned in {ogYear}</div>}
+                          {purchaseDate && <div style={{ marginTop:"8px", fontSize:"10px", color: dark ? "#777" : "#aaa", letterSpacing:"1px" }}>Purchase Date: {new Date(purchaseDate + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}</div>}
+                          {size && <div style={{ marginTop:"4px", fontSize:"10px", color: dark ? "#777" : "#aaa", letterSpacing:"1px" }}>Size: {size}</div>}
+                          <div style={{ marginTop:"4px", fontSize:"10px", color: dark ? "#777" : "#aaa", letterSpacing:"1px" }}>Last Worn: {sortedDates.length > 0 ? new Date(sortedDates[0] + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" }) : "Never"}</div>
+                        </div>
+                        {/* Story text */}
+                        {story && (
+                          <div style={{ position:"absolute", width:"100%", opacity: showStory ? 1 : 0, transition:"opacity 2s ease-in-out" }}>
+                            <div style={{ fontSize:"13px", color:"#fff", lineHeight:"1.8", letterSpacing:"0.5px" }}>{story}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div style={{ fontSize:"11px", color:"#666", marginTop:"4px", maxWidth:width, textAlign:"center", lineHeight:"1.3", wordBreak:"break-word" }}>{label}</div>
+              
+            </div>
+          ) : (
+            <div style={{ textAlign:"center" }}>
+              <div onClick={() => fileRef.current.click()} title={`Upload: ${label}`} style={{
+                width, height, background:bg, border:`1px dashed ${accent}`,
+                display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+                cursor:"pointer",
+              }}>
+                <div style={{ fontSize:"18px", color:accent, lineHeight:1 }}>+</div>
+              </div>
+              <div style={{ fontSize:"11px", color:"#666", marginTop:"4px", maxWidth:width, textAlign:"center", lineHeight:"1.3", wordBreak:"break-word" }}>{label}</div>
+              
+            </div>
+          )}
+          <input ref={fileRef} type="file" accept="image/*" style={{ display:"none" }}
+            onChange={e => { if (e.target.files[0]) onUpload(e.target.files[0]); e.target.value = ""; }} />
+        </div>
+      );
+    }
+
+    function DisplayCell({ c, img, hoverImg, ri, onEdit, isEditing, isGrail, dark = false }) {
+      const [hovered, setHovered] = useState(false);
+      const [showHover, setShowHover] = useState(false);
+      const timerRef = useRef(null);
+      const crossfadeRef = useRef(null);
+
+      const handleMouseEnter = () => {
+        if (img) timerRef.current = setTimeout(() => {
+          setHovered(true);
+          setShowHover(false);
+          if (isGrail && hoverImg) {
+            crossfadeRef.current = setTimeout(() => setShowHover(true), 200);
+          }
+        }, 500);
+      };
+      const handleMouseLeave = () => {
+        clearTimeout(timerRef.current);
+        clearTimeout(crossfadeRef.current);
+        setHovered(false);
+        setShowHover(false);
+      };
+
+      return (
+        <div
+          onClick={onEdit}
+          style={{ width:"160px", cursor:"pointer" }}>
+          <div
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            className=""
+            style={{
+              width:"160px", height:"100px",
+              background: c.empty ? (dark ? "#2a2a2a" : "#f5f5f5") : img ? (dark ? "#1a1a1a" : "#ffffff") : c.bg,
+              border: isEditing ? "2px solid #f4a261" : "none",
+              display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+              padding: img ? "0" : "6px", textAlign:"center",
+              overflow:"hidden", position:"relative",
+            }}>
+            {c.empty
+              ? <span style={{color: dark ? "#555" : "#ddd",fontSize:"18px"}}>·</span>
+              : img
+                  ? <img src={img} alt={c.colorway} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                  : <>
+                      <div style={{fontSize:"11px",letterSpacing:"2px",color:c.accent,fontWeight:"bold"}}>{c.label}</div>
+                    </>
+            }
+            {hovered && img && (
+              <div style={{
+                position:"fixed", top:0, left:0, width:"100vw", height:"100vh",
+                background:"rgba(0,0,0,0.85)", display:"flex", flexDirection:"column",
+                alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents:"none",
+              }}>
+                <div style={{ position:"relative", maxWidth:"60vw", maxHeight:"60vh" }}>
+                  <img src={img} alt={c.colorway} style={{ maxWidth:"60vw", maxHeight:"60vh", objectFit:"contain", filter:"drop-shadow(0 0 8px rgba(255,255,255,0.6))", display:"block", opacity: (isGrail && hoverImg && showHover) ? 0 : 1, transition:"opacity 3s ease-in-out" }} />
+                  {isGrail && hoverImg && (
+                    <img src={hoverImg} alt={c.colorway} style={{ position:"absolute", top:0, left:0, maxWidth:"60vw", maxHeight:"60vh", objectFit:"contain", filter:"drop-shadow(0 0 30px rgba(255,215,0,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.6))", opacity: showHover ? 1 : 0, transform: showHover ? "scale(1)" : "scale(0.95)", transition:"opacity 3s ease-in-out, transform 3s ease-in-out" }} />
+                  )}
+                </div>
+                {isGrail && <div style={{ marginTop:"12px", fontSize:"11px", letterSpacing:"6px", color:"#FFD700" }}>✦ GRAIL ✦</div>}
+                <div style={{ marginTop: isGrail ? "6px" : "16px", fontSize:"13px", letterSpacing:"3px", color: isGrail ? "#FFD700" : c.accent }}>{c.colorway}</div>
+              </div>
+            )}
+          </div>
+          {!c.empty && (
+            <div style={{ textAlign:"center", marginTop:"4px" }}>
+              <div style={{ fontSize:"8px", color: dark ? "#999" : "#666", letterSpacing:"0.5px", overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis" }}>{c.colorway}</div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    function App() {
+      const [dark, setDark] = useDarkMode();
+      const T = dark ? DARK : LIGHT;
+      const [inventory,    setInventory]    = useState(() => load("vault_inventory", []));
+      const importRef = useRef();
+      const [importMsg, setImportMsg] = useState(null);
+      const [wearLog,        setWearLog]        = useState(() => load("vault_wearlog_v3", {}));
+      const [images,         setImages]         = useState(() => load("vault_images", {}));
+      const [colorwayMeta,   setColorwayMeta]   = useState(() => load("vault_colorway_meta", {}));
+      const [grailMeta,      setGrailMeta]      = useState(() => load("vault_grail_meta", {}));
+      const [beaterMeta,     setBeaterMeta]     = useState(() => load("vault_beater_meta", {}));
+      const [glowMeta,       setGlowMeta]       = useState(() => load("vault_glow_meta", {}));
+      const [colorways,      setColorways]      = useState(() => load("vault_colorways", COLORWAYS));
+      const [displayLayout,  setDisplayLayout]  = useState(() => load("vault_display_layout", []));
+      const [editingCell,    setEditingCell]    = useState(null);
+      const [editShoe,       setEditShoe]       = useState("");
+      const [editCw,         setEditCw]         = useState("");
+      const [view,           setView]           = useState("inventory");
+      const [showForm,       setShowForm]       = useState(false);
+      const [quickLog,       setQuickLog]       = useState(false);
+      const [quickShoeId,    setQuickShoeId]    = useState("");
+      const [quickColorway,  setQuickColorway]  = useState("");
+      const [quickDate,      setQuickDate]      = useState(() => localDateStr());
+      const [editId,         setEditId]         = useState(null);
+      const [newShoe,        setNewShoe]        = useState({ name:"", shortName:"", category:"Jordan", quantity:1, wishlist:false });
+      const [editColorways,  setEditColorways]  = useState([]);
+      const [newColorway,    setNewColorway]    = useState("");
+      const [renamingColorwayIdx, setRenamingColorwayIdx] = useState(null);
+      const [loggingId,      setLoggingId]      = useState(null);
+      const [wearDate,       setWearDate]       = useState(() => localDateStr());
+      const [wearColorway,   setWearColorway]   = useState("");
+      const [sortCol,        setSortCol]        = useState("date");
+      const [sortDir,        setSortDir]        = useState("desc");
+      const [editingMeta,    setEditingMeta]    = useState(null);
+      const [metaForm,       setMetaForm]       = useState({ purchaseDate:"", purchasePrice:"", retailer:"", size:"", notes:"", ogYear:"", story:"" });
+      const [anniversaryDismissed, setAnniversaryDismissed] = useState(false);
+      const [bannerShowUpNext, setBannerShowUpNext] = useState(true);
+
+      useEffect(() => {
+        const interval = setInterval(() => setBannerShowUpNext(v => !v), 5000);
+        return () => clearInterval(interval);
+      }, []);
+
+      useEffect(() => save("vault_inventory",      inventory),    [inventory]);
+      useEffect(() => save("vault_wearlog_v3",     wearLog),      [wearLog]);
+      useEffect(() => save("vault_images",         images),       [images]);
+      useEffect(() => save("vault_colorway_meta",  colorwayMeta), [colorwayMeta]);
+      useEffect(() => save("vault_grail_meta",     grailMeta),    [grailMeta]);
+      useEffect(() => save("vault_beater_meta",    beaterMeta),   [beaterMeta]);
+      useEffect(() => save("vault_glow_meta",      glowMeta),     [glowMeta]);
+      useEffect(() => save("vault_colorways",      colorways),    [colorways]);
+
+      useEffect(() => {
+        const handler = (e) => {
+          if (e.key !== "Escape") return;
+          if (showForm)      { setShowForm(false); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan",quantity:1,wishlist:false}); setEditColorways([]); setNewColorway(""); }
+          if (quickLog)      { setQuickLog(false); }
+          if (loggingId)     { setLoggingId(null); }
+          if (editingMeta)   { setEditingMeta(null); }
+          if (editingCell)   { setEditingCell(null); }
+          if (importMsg)     { setImportMsg(null); }
+        };
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+      }, [showForm, loggingId, editingMeta, editingCell, importMsg]);
+
+      const owned    = inventory.filter(s => !s.wishlist);
+      const wishlist = inventory.filter(s => s.wishlist);
+      const total    = owned.reduce((n, s) => n + s.quantity, 0);
+      const filledCells = displayLayout.flat().filter(c => c.code && c.code !== "").length;
+      const empty    = 40 - filledCells;
+
+      // Build a flat list of { shoe, colorway, lastWorn } for every owned colorway
+      const allColorwayEntries = owned.flatMap(shoe => {
+        const shoeColorways = colorways[shoe.shortName] || [];
+        return shoeColorways.map(cw => {
+          const entries = (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
+          const lastWorn = entries.length ? [...entries].sort((a,b) => a.date < b.date ? 1 : -1)[0].date : null;
+          return { shoe, colorway: cw, lastWorn };
+        });
+      });
+
+      const longestUnwornEntry = allColorwayEntries.reduce((pick, entry) => {
+        if (!pick) return entry;
+        if (!pick.lastWorn && !entry.lastWorn) return pick;
+        if (!entry.lastWorn) return entry;
+        if (!pick.lastWorn) return pick;
+        return entry.lastWorn < pick.lastWorn ? entry : pick;
+      }, null);
+
+      const longestUnworn = longestUnwornEntry?.shoe || null;
+      const longestUnwornColorway = longestUnwornEntry?.colorway || null;
+      const longestUnwornLastDate = longestUnwornEntry?.lastWorn || null;
+
+      // Most recently worn
+      const mostRecentEntry = allColorwayEntries
+        .filter(e => e.lastWorn)
+        .reduce((pick, entry) => {
+          if (!pick) return entry;
+          return entry.lastWorn > pick.lastWorn ? entry : pick;
+        }, null);
+      const lastWornShoe = mostRecentEntry?.shoe || null;
+      const lastWornColorway = mostRecentEntry?.colorway || null;
+      const lastWornDate = mostRecentEntry?.lastWorn || null;
+
+      // Anniversary computation — find colorways purchased on today's month/day in past years
+      const todayStr = localDateStr(); // YYYY-MM-DD
+      const todayMD = todayStr.slice(5); // MM-DD
+      const anniversaries = [];
+      Object.entries(colorwayMeta).forEach(([key, meta]) => {
+        if (!meta.purchaseDate) return;
+        const pd = meta.purchaseDate;
+        if (pd.slice(5) !== todayMD) return;
+        const purchaseYear = parseInt(pd.slice(0, 4));
+        const todayYear = parseInt(todayStr.slice(0, 4));
+        const years = todayYear - purchaseYear;
+        if (years <= 0) return;
+        // Find shoe name from key (shoeId_colorway)
+        const underIdx = key.indexOf("_");
+        const shoeId = parseInt(key.slice(0, underIdx));
+        const colorway = key.slice(underIdx + 1);
+        const shoe = inventory.find(s => s.id === shoeId);
+        if (!shoe) return;
+        anniversaries.push({ shoe, colorway, years });
+      });
+
+      const openLogForm = (shoe) => {
+        setLoggingId(shoe.id);
+        setWearDate(localDateStr());
+        const cw = colorways[shoe.shortName];
+        setWearColorway(cw ? cw[0] : "");
+      };
+
+      const logWear = () => {
+        if (!wearColorway || wearColorway === "__custom") return;
+        const entry = { date: wearDate, colorway: wearColorway };
+        setWearLog(log => ({ ...log, [loggingId]: [...(log[loggingId] || []), entry] }));
+        setLoggingId(null);
+      };
+
+      const handleSaveColorways = (shortName) => {
+        setColorways(cws => ({ ...cws, [shortName]: editColorways }));
+      };
+
+      const handleImageUpload = (shoeId, colorway, file, kind = "main") => {
+        const key = `${shoeId}_${colorway}`;
+        const storageKey = kind === "hover" ? `${key}_hover` : key;
+        const arrayBuffer = file.arrayBuffer().then(buffer => {
+          fetch(`/upload?key=${encodeURIComponent(key)}&type=${kind}`, {
+            method: "POST",
+            headers: { "Content-Type": file.type || "image/png" },
+            body: buffer,
+          })
+          .then(r => r.json())
+          .then(data => {
+            if (data.path) {
+              setImages(imgs => ({ ...imgs, [storageKey]: data.path }));
+            }
+          })
+          .catch(() => {
+            // Fallback to base64 if server not available
+            const reader = new FileReader();
+            reader.onload = (e) => setImages(imgs => ({ ...imgs, [storageKey]: e.target.result }));
+            reader.readAsDataURL(file);
+          });
+        });
+      };
+
+      const handleAdd = () => {
+        if (!newShoe.name || !newShoe.shortName) return;
+        if (editId !== null) {
+          setInventory(inv => inv.map(s => s.id === editId ? { ...s, ...newShoe } : s));
+          setEditId(null);
+        } else {
+          setInventory(inv => [...inv, { ...newShoe, id: Date.now() }]);
+        }
+        handleSaveColorways(newShoe.shortName);
+        setNewShoe({ name:"", shortName:"", category:"Jordan", quantity:1, wishlist:false });
+        setEditColorways([]);
+        setNewColorway("");
+        setShowForm(false);
+      };
+
+      const reorderShoe = (id, dir) => {
+        setInventory(inv => {
+          const idx = inv.findIndex(s => s.id === id);
+          const newIdx = idx + dir;
+          if (newIdx < 0 || newIdx >= inv.length) return inv;
+          const n = [...inv];
+          [n[idx], n[newIdx]] = [n[newIdx], n[idx]];
+          return n;
+        });
+      };
+
+      const handleEdit = (shoe) => {
+        setNewShoe({ name:shoe.name, shortName:shoe.shortName, category:shoe.category, quantity:shoe.quantity, wishlist:shoe.wishlist });
+        setEditColorways([...(colorways[shoe.shortName] || [])]);
+        setNewColorway("");
+        setEditId(shoe.id);
+        setShowForm(true);
+      };
+
+      const handleDeleteColorway = (shoe, cw) => {
+        const hasWear = (wearLog[shoe.id] || []).some(e => e.colorway === cw);
+        const hasImage = !!images[`${shoe.id}_${cw}`];
+        const hasMeta = !!colorwayMeta[`${shoe.id}_${cw}`];
+        if (hasWear || hasImage || hasMeta) {
+          const msg = [hasWear && "wear history", hasImage && "an image", hasMeta && "details"].filter(Boolean).join(", ");
+          if (!window.confirm(`"${cw}" has ${msg} attached. Deleting it will remove all of that data. Are you sure?`)) return;
+          if (hasWear) setWearLog(log => ({ ...log, [shoe.id]: (log[shoe.id] || []).filter(e => e.colorway !== cw) }));
+          if (hasImage) setImages(imgs => { const n = {...imgs}; delete n[`${shoe.id}_${cw}`]; return n; });
+          if (hasMeta) setColorwayMeta(m => { const n = {...m}; delete n[`${shoe.id}_${cw}`]; return n; });
+        }
+        setEditColorways(cws => cws.filter(c => c !== cw));
+      };
+
+      const exportJSON = () => {
+        const data = { inventory, wearLog, images, colorwayMeta, grailMeta, beaterMeta, glowMeta, colorways, displayLayout, exportedAt: new Date().toISOString() };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type:"application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const date = localDateStr();
+        a.href = url; a.download = `sneaker-vault-backup-${date}.json`;
+        a.click(); URL.revokeObjectURL(url);
+      };
+
+      const importJSON = (file) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (data.inventory)     { setInventory(data.inventory);         save("vault_inventory",       data.inventory); }
+            if (data.wearLog)       { setWearLog(data.wearLog);             save("vault_wearlog_v3",      data.wearLog); }
+            if (data.images)        { setImages(data.images);               save("vault_images",          data.images); }
+            if (data.colorwayMeta)  { setColorwayMeta(data.colorwayMeta);   save("vault_colorway_meta",   data.colorwayMeta); }
+            if (data.grailMeta)     { setGrailMeta(data.grailMeta);         save("vault_grail_meta",      data.grailMeta); }
+            if (data.beaterMeta)    { setBeaterMeta(data.beaterMeta);       save("vault_beater_meta",     data.beaterMeta); }
+            if (data.glowMeta)      { setGlowMeta(data.glowMeta);           save("vault_glow_meta",       data.glowMeta); }
+            if (data.colorways)     { setColorways(data.colorways);         save("vault_colorways",       data.colorways); }
+            if (data.displayLayout) { setDisplayLayout(data.displayLayout); save("vault_display_layout",  data.displayLayout); }
+            setImportMsg({ type:"success", text:"Backup restored successfully!" });
+          } catch {
+            setImportMsg({ type:"error", text:"Invalid backup file. Please use a Vault JSON backup." });
+          }
+          setTimeout(() => setImportMsg(null), 4000);
+        };
+        reader.readAsText(file);
+      };
+
+      const getCellStyle = (cell) => {
+        if (!cell.code || cell.code === "") return { empty: true };
+        if (cell.code === "--") return { empty: true };
+        const col = CAT_COLORS[inventory.find(s => s.shortName === cell.code)?.category] || CAT_COLORS.Jordan;
+        return { bg: col.bg, accent: col.accent, label: cell.code, colorway: cell.colorway };
+      };
+
+      const IS = { background: T.inputBg, border:`1px solid ${T.inputBorder}`, color: T.inputText, padding:"8px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontSize:"13px", width:"100%" };
+      const CAT = { Jordan: { bg: T.categoryBg, accent: "#e63946" }, Nike: { bg: T.categoryBg, accent: "#e63946" } };
+
+      const Btn = ({ label, onClick, color, solid }) => (
+        <button onClick={onClick} style={{
+          background: solid ? color : "transparent",
+          border: `1px solid ${color}`,
+          color: solid ? "#fff" : color,
+          padding:"5px 12px", cursor:"pointer", fontSize:"10px",
+          fontFamily:"'Aptos','Segoe UI',sans-serif", fontWeight: solid ? "bold" : "normal",
+          whiteSpace:"nowrap",
+        }}>{label}</button>
+      );
+
+      return (
+        <div style={{ minHeight:"100vh", background: T.bg }}>
+
+          {/* Header */}
+          <div style={{ background: dark ? `linear-gradient(135deg,${T.bg},#2a1a1a,${T.bg})` : "linear-gradient(135deg,#ffffff,#fff5f5,#ffffff)", borderBottom:"2px solid #e63946", padding:"24px 32px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            <div>
+              <div style={{ fontSize:"28px", letterSpacing:"6px", color:"#e63946", marginBottom:"4px", fontWeight:"bold" }}>DerAusländer</div>
+              <div style={{ fontSize:"20px", fontWeight:"bold", letterSpacing:"2px", color: T.text }}>THE VAULT</div>
+            </div>
+            <div style={{ display:"flex", gap:"24px", textAlign:"center", alignItems:"center" }}>
+              {[["PAIRS",total,"#e63946"],["OPEN BOXES",empty,"#e63946"],["WISHLIST",wishlist.length,"#e63946"]].map(([label,val,color])=>(
+                <div key={label}>
+                  <div style={{ fontSize:"32px", fontWeight:"bold", color }}>{val}</div>
+                  <div style={{ fontSize:"10px", letterSpacing:"3px", color: T.text3 }}>{label}</div>
+                </div>
+              ))}
+              <div style={{ width:"1px", height:"48px", background: T.border }} />
+              <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
+                <button onClick={exportJSON} style={{ background:"#e63946", color:"#000", border:"none", padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontWeight:"bold", whiteSpace:"nowrap" }}>⬇ BACKUP</button>
+                <button onClick={() => importRef.current.click()} style={{ background:"transparent", color:"#e63946", border:"1px solid #4cc9f0", padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>⬆ RESTORE</button>
+                <button onClick={() => { if (window.confirm("Clear all images? This cannot be undone.")) { setImages({}); save("vault_images", {}); } }} style={{ background:"transparent", color: T.text5, border:`1px solid ${T.text5}`, padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>✕ CLEAR IMAGES</button>
+                <input ref={importRef} type="file" accept=".json" style={{ display:"none" }}
+                  onChange={e => { if (e.target.files[0]) importJSON(e.target.files[0]); e.target.value=""; }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Import message */}
+          {importMsg && (
+            <div style={{ background: importMsg.type==="success" ? "#0a2a0a" : "#2a0a0a", borderBottom:`1px solid #e63946`, padding:"12px 32px", fontSize:"11px", letterSpacing:"2px", color:"#e63946", textAlign:"center" }}>
+              {importMsg.text}
+            </div>
+          )}
+
+          {/* Nav */}
+          <div style={{ display:"flex", borderBottom:`1px solid ${T.border}`, background: T.navBg, alignItems:"center" }}>
+            {["inventory","display","wishlist","history","about"].map(v => (
+              <button key={v} onClick={() => setView(v)} style={{
+                padding:"14px 28px", background:view===v?"#e63946":"transparent",
+                color:view===v?"#fff": T.text4, border:"none", cursor:"pointer",
+                fontSize:"11px", letterSpacing:"4px", textTransform:"uppercase", fontFamily:"'Aptos','Segoe UI',sans-serif",
+              }}>{v}</button>
+            ))}
+            <div style={{ marginLeft:"auto" }}>
+              <button onClick={() => setDark(d => !d)} style={{ background:"transparent", border:"none", color: T.text4, cursor:"pointer", fontSize:"16px", padding:"14px 20px", lineHeight:1 }} title={dark ? "Switch to light mode" : "Switch to dark mode"}>{dark ? "☀" : "☾"}</button>
+            </div>
+          </div>
+
+          <div style={{ padding:"32px" }}>
+
+            {/* ── INVENTORY ── */}
+            {view === "inventory" && (
+              <div>
+                {/* Anniversary Banner */}
+                {!anniversaryDismissed && anniversaries.length > 0 && (() => {
+                  function AnniversaryBanner() {
+                    const [idx, setIdx] = React.useState(0);
+                    React.useEffect(() => {
+                      if (anniversaries.length <= 1) return;
+                      const interval = setInterval(() => setIdx(i => (i + 1) % anniversaries.length), 4000);
+                      return () => clearInterval(interval);
+                    }, []);
+                    const a = anniversaries[idx];
+                    const aImg = images[`${a.shoe.id}_${a.colorway}`] || null;
+                    return (
+                      <div style={{ background: dark ? "linear-gradient(90deg,#2a2a1a,#2a2700)" : "linear-gradient(90deg,#fffdf0,#fff8d6)", border:"1px solid #FFD700", padding:"16px 24px", marginBottom:"16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px" }}>
+                        <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
+                          {aImg && <img src={aImg} alt={a.colorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0, transition:"opacity 0.5s" }} />}
+                          <div>
+                            <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#FFD700", marginBottom:"6px" }}>
+                              ✦ PURCHASE ANNIVERSARY {anniversaries.length > 1 ? `(${idx + 1}/${anniversaries.length})` : ""} ✦
+                            </div>
+                            <div style={{ fontSize:"15px", fontWeight:"bold", color: T.text }}>
+                              {a.shoe.name} — {a.colorway}
+                            </div>
+                            <div style={{ fontSize:"11px", color: T.text5, marginTop:"4px" }}>
+                              {a.years} {a.years === 1 ? "year" : "years"} ago today
+                            </div>
+                          </div>
+                        </div>
+                        <button onClick={() => setAnniversaryDismissed(true)} style={{ background:"transparent", border:"none", color: T.text7, cursor:"pointer", fontSize:"18px", lineHeight:1, padding:"0", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>✕</button>
+                      </div>
+                    );
+                  }
+                  return <AnniversaryBanner />;
+                })()}
+
+                {/* Rotation Banner */}
+                {longestUnworn && (() => {
+                  // UP NEXT data
+                  const isRotationGrail = longestUnwornColorway ? !!grailMeta[`${longestUnworn.id}_${longestUnwornColorway}`] : false;
+                  const isRotationOnIce = longestUnwornColorway ? (wearLog[longestUnworn.id] || []).filter(e => e.colorway === longestUnwornColorway).length === 0 : false;
+                  const rotationImgKey = `${longestUnworn.id}_${longestUnwornColorway}`;
+                  const rotationImg = images[rotationImgKey] || null;
+                  const rotationHoverImg = isRotationGrail ? (images[`${rotationImgKey}_hover`] || null) : null;
+
+                  // LAST WORN data
+                  const isLastWornGrail = lastWornColorway ? !!grailMeta[`${lastWornShoe?.id}_${lastWornColorway}`] : false;
+                  const lastWornImg = lastWornShoe ? images[`${lastWornShoe.id}_${lastWornColorway}`] || null : null;
+
+                  const bannerBg = isRotationGrail
+                    ? dark ? "linear-gradient(90deg,#2a2a1a,#2a2700)" : "linear-gradient(90deg,#fffcf0,#fff8d6)"
+                    : dark ? `linear-gradient(90deg,${T.bg2},${T.bg3})` : "linear-gradient(90deg,#fff5f5,#ffe8e8)";
+                  const bannerBorder = isRotationGrail ? "#FFD700" : "#e63946";
+                  const rotationMetaKey = `${longestUnworn.id}_${longestUnwornColorway}`;
+                  const isRotationGlow = dark && !!glowMeta[rotationMetaKey];
+                  const imgFilter = isRotationGrail
+                    ? "drop-shadow(0 0 12px rgba(255,215,0,0.6))"
+                    : dark && isRotationOnIce
+                    ? "drop-shadow(0 0 14px rgba(100,200,255,0.7))"
+                    : isRotationGlow
+                    ? "drop-shadow(0 0 14px rgba(255,255,255,0.5))"
+                    : "none";
+
+                  // Next 4 in queue (after the first)
+                  const sortedQueue = [...allColorwayEntries].sort((a, b) => {
+                    if (!a.lastWorn && !b.lastWorn) return 0;
+                    if (!a.lastWorn) return -1;
+                    if (!b.lastWorn) return 1;
+                    return a.lastWorn < b.lastWorn ? -1 : 1;
+                  });
+                  const upcomingQueue = sortedQueue.slice(1, 5);
+
+                  return (
+                  <div style={{ marginBottom:"24px" }}>
+                    <div style={{ background: bannerBg, border:`1px solid ${bannerBorder}`, padding:"16px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px", position:"relative", minHeight:"90px" }}>
+                      {/* UP NEXT */}
+                      <div style={{ display:"flex", alignItems:"center", gap:"16px", position:"absolute", opacity: bannerShowUpNext ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "auto" : "none" }}>
+                        {rotationImg && (() => {
+                          function RotationImg() {
+                            const [showAlt, setShowAlt] = React.useState(false);
+                            React.useEffect(() => {
+                              if (!rotationHoverImg) return;
+                              const interval = setInterval(() => setShowAlt(v => !v), 5000);
+                              return () => clearInterval(interval);
+                            }, []);
+                            return (
+                              <div style={{ position:"relative", width:"120px", height:"75px", flexShrink:0 }}>
+                                <img src={rotationImg} alt={longestUnwornColorway} style={{ position:"absolute", top:0, left:0, width:"120px", height:"75px", objectFit:"cover", filter: imgFilter, opacity: rotationHoverImg && showAlt ? 0 : 1, transition:"opacity 2s ease-in-out" }} />
+                                {rotationHoverImg && <img src={rotationHoverImg} alt={longestUnwornColorway} style={{ position:"absolute", top:0, left:0, width:"120px", height:"75px", objectFit:"cover", filter: imgFilter, opacity: showAlt ? 1 : 0, transition:"opacity 2s ease-in-out" }} />}
+                              </div>
+                            );
+                          }
+                          return <RotationImg />;
+                        })()}
+                        <div>
+                          <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
+                            {isRotationGrail
+                              ? <span><span style={{color:"#FFD700"}}>✦</span> GRAIL UP NEXT <span style={{color:"#FFD700"}}>✦</span></span>
+                              : isRotationOnIce
+                              ? <span><span style={{color:"#64c8ff"}}>❄️</span> TIME TO TAKE THEM OFF ICE? <span style={{color:"#64c8ff"}}>❄️</span></span>
+                              : "UP NEXT FOR ROTATION"}
+                          </div>
+                          <div style={{ fontSize:"16px", fontWeight:"bold", color: T.text }}>
+                            {isRotationGrail
+                              ? <span><span style={{color:"#FFD700"}}>✦</span> {longestUnworn.name}{longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""} <span style={{color:"#FFD700"}}>✦</span></span>
+                              : isRotationOnIce
+                              ? <span><span style={{color:"#64c8ff"}}>❄️</span> {longestUnworn.name}{longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""} <span style={{color:"#64c8ff"}}>❄️</span></span>
+                              : `${longestUnworn.name}${longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""}`}
+                          </div>
+                          <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>
+                            {longestUnwornLastDate ? `Last worn: ${longestUnwornLastDate}` : "Never worn"}
+                          </div>
+                        </div>
+                      </div>
+                      {/* LAST WORN */}
+                      {lastWornShoe && (
+                        <div style={{ display:"flex", alignItems:"center", gap:"16px", position:"absolute", opacity: bannerShowUpNext ? 0 : 1, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "none" : "auto" }}>
+                          {lastWornImg && <img src={lastWornImg} alt={lastWornColorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0, filter: isLastWornGrail ? "drop-shadow(0 0 12px rgba(255,215,0,0.6))" : "none" }} />}
+                          <div>
+                            <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
+                              {isLastWornGrail ? <span><span style={{color:"#FFD700"}}>✦</span> LAST WORN <span style={{color:"#FFD700"}}>✦</span></span> : "LAST WORN"}
+                            </div>
+                            <div style={{ fontSize:"16px", fontWeight:"bold", color: isLastWornGrail ? "#FFD700" : T.text }}>
+                              {lastWornShoe.name}{lastWornColorway ? ` — ${lastWornColorway}` : ""}
+                            </div>
+                            <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>
+                              {lastWornDate}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {/* LOG WEAR button — only show when UP NEXT visible */}
+                      <div style={{ marginLeft:"auto", opacity: bannerShowUpNext ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "auto" : "none" }}>
+                        <Btn label="LOG WEAR" onClick={() => { setLoggingId(longestUnworn.id); setWearDate(localDateStr()); setWearColorway(longestUnwornColorway || (colorways[longestUnworn.shortName]?.[0] ?? "")); }} color="#e63946" solid />
+                      </div>
+                    </div>
+                    {/* Upcoming queue — only show when UP NEXT visible */}
+                    {upcomingQueue.length > 0 && (
+                      <div style={{ background: T.bg2, border:"1px solid #e63946", borderTop:"none", padding:"10px 24px", display:"flex", gap:"16px", alignItems:"center" }}>
+                        <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0 }}>COMING UP</div>
+                        <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
+                          {upcomingQueue.map((entry, i) => {
+                            const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
+                            return qImg ? (
+                              <img key={i} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width:"72px", height:"45px", objectFit:"cover" }} />
+                            ) : null;
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  );
+                })()}
+
+                {/* Wear Log Form */}
+                {loggingId && (() => {
+                  const shoe = inventory.find(s => s.id === loggingId);
+                  const shoeColorways = colorways[shoe?.shortName] || [];
+                  return (
+                    <div style={{ background: T.bg4, border:"1px solid #f4a261", padding:"16px 24px", marginBottom:"24px", display:"flex", alignItems:"center", gap:"12px", flexWrap:"wrap" }}>
+                      <div style={{ fontSize:"10px", letterSpacing:"3px", color:"#e63946", marginRight:"4px" }}>LOGGING: {shoe?.name}</div>
+                      <select value={wearColorway} onChange={e => setWearColorway(e.target.value)}
+                        style={{ ...IS, width:"auto", minWidth:"180px" }}>
+                        {shoeColorways.map(cw => <option key={cw} value={cw}>{cw}</option>)}
+                      </select>
+                      <input type="date" value={wearDate} onChange={e => setWearDate(e.target.value)}
+                        style={{ ...IS, width:"auto" }} />
+                      <Btn label="CONFIRM" onClick={logWear} color="#e63946" solid />
+                      <Btn label="CANCEL"  onClick={() => setLoggingId(null)} color="#666" />
+                    </div>
+                  );
+                })()}
+
+                {/* Add shoe header */}
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
+                  <div></div>
+                  <button onClick={() => { setShowForm(!showForm); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan",quantity:1,wishlist:false}); }} style={{
+                    background:"#e63946", color:T.text, border:"none", padding:"10px 20px",
+                    cursor:"pointer", fontSize:"11px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
+                  }}>+ ADD SHOE</button>
+                </div>
+
+                {showForm && (
+                  <div style={{ background:T.bg4, border:`1px solid ${T.border2}`, padding:"24px", marginBottom:"24px" }}>
+                    <div style={{ display:"flex", gap:"12px", flexWrap:"wrap", alignItems:"flex-end" }}>
+                      {[["FULL NAME","name"],["SHORT CODE","shortName"]].map(([label,key]) => (
+                        <div key={key} style={{ flex:"1 1 160px" }}>
+                          <div style={{ fontSize:"10px", letterSpacing:"3px", color:T.text4, marginBottom:"6px" }}>{label}</div>
+                          <input value={newShoe[key]} onChange={e => setNewShoe(s => ({...s,[key]:e.target.value}))} style={IS} />
+                        </div>
+                      ))}
+                      <div style={{ flex:"0 0 120px" }}>
+                        <div style={{ fontSize:"10px", letterSpacing:"3px", color:T.text4, marginBottom:"6px" }}>CATEGORY</div>
+                        <select value={newShoe.category} onChange={e => setNewShoe(s => ({...s,category:e.target.value}))} style={IS}>
+                          <option>Jordan</option><option>Nike</option>
+                        </select>
+                      </div>
+                      <div style={{ flex:"0 0 70px" }}>
+                        <div style={{ fontSize:"10px", letterSpacing:"3px", color:T.text4, marginBottom:"6px" }}>QTY</div>
+                        <input type="number" min="0" value={newShoe.quantity} onChange={e => setNewShoe(s => ({...s,quantity:parseInt(e.target.value)||0}))} style={IS} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize:"10px", letterSpacing:"3px", color:T.text4, marginBottom:"6px" }}>WISHLIST</div>
+                        <input type="checkbox" checked={newShoe.wishlist} onChange={e => setNewShoe(s => ({...s,wishlist:e.target.checked}))} style={{ width:"20px",height:"20px",cursor:"pointer" }} />
+                      </div>
+                    </div>
+                    {/* Colorway management */}
+                    <div style={{ marginTop:"16px", borderTop:"1px solid #ddd", paddingTop:"16px" }}>
+                      <div style={{ fontSize:"10px", letterSpacing:"3px", color:T.text4, marginBottom:"10px" }}>COLORWAYS</div>
+                      {editColorways.map((cw, i) => {
+                        const isRenaming = renamingColorwayIdx === i;
+                        return (
+                        <div key={i} style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"6px" }}>
+                          {isRenaming ? (
+                            <input autoFocus type="text" defaultValue={cw}
+                              onBlur={e => {
+                                const newName = e.target.value.trim();
+                                if (newName && newName !== cw) {
+                                  // Rename colorway — update all related data
+                                  const shoe = editId !== null ? inventory.find(s => s.id === editId) : null;
+                                  setEditColorways(cws => { const n=[...cws]; n[i]=newName; return n; });
+                                  if (shoe) {
+                                    const oldKey = `${shoe.id}_${cw}`;
+                                    const newKey = `${shoe.id}_${newName}`;
+                                    // Migrate wear log
+                                    setWearLog(log => ({ ...log, [shoe.id]: (log[shoe.id]||[]).map(e => e.colorway===cw ? {...e,colorway:newName} : e) }));
+                                    // Migrate images
+                                    setImages(imgs => { const n={...imgs}; if(n[oldKey]){n[newKey]=n[oldKey];delete n[oldKey];} if(n[`${oldKey}_hover`]){n[`${newKey}_hover`]=n[`${oldKey}_hover`];delete n[`${oldKey}_hover`];} return n; });
+                                    // Migrate colorwayMeta
+                                    setColorwayMeta(m => { const n={...m}; if(n[oldKey]){n[newKey]=n[oldKey];delete n[oldKey];} return n; });
+                                    // Migrate grailMeta
+                                    setGrailMeta(g => { const n={...g}; if(n[oldKey]){n[newKey]=n[oldKey];delete n[oldKey];} return n; });
+                                    // Migrate beaterMeta
+                                    setBeaterMeta(b => { const n={...b}; if(n[oldKey]){n[newKey]=n[oldKey];delete n[oldKey];} return n; });
+                                    // Migrate display layout
+                                    setDisplayLayout(dl => dl.map(row => row.map(cell => cell.code===shoe.shortName && cell.colorway===cw ? {...cell,colorway:newName} : cell)));
+                                  }
+                                }
+                                setRenamingColorwayIdx(null);
+                              }}
+                              onKeyDown={e => { if(e.key==="Enter") e.target.blur(); if(e.key==="Escape") setRenamingColorwayIdx(null); }}
+                              style={{...IS, flex:1, fontSize:"12px", padding:"2px 6px"}} />
+                          ) : (
+                            <span style={{ flex:1, fontSize:"12px", color:T.text }}>{cw}</span>
+                          )}
+                          <button onClick={() => setRenamingColorwayIdx(isRenaming ? null : i)} title="Rename"
+                            style={{ background:"transparent", border:`1px solid ${T.border2}`, color: isRenaming ? "#e63946" : T.text4, padding:"2px 8px", cursor:"pointer", fontSize:"11px" }}>✎</button>
+                          <button onClick={() => setEditColorways(cws => { const n=[...cws]; [n[i-1],n[i]]=[n[i],n[i-1]]; return n; })} disabled={i===0}
+                            style={{ background:"transparent", border:`1px solid ${T.border2}`, color: i===0 ? T.text8 : T.text4, padding:"2px 8px", cursor: i===0?"default":"pointer", fontSize:"11px" }}>↑</button>
+                          <button onClick={() => setEditColorways(cws => { const n=[...cws]; [n[i],n[i+1]]=[n[i+1],n[i]]; return n; })} disabled={i===editColorways.length-1}
+                            style={{ background:"transparent", border:`1px solid ${T.border2}`, color: i===editColorways.length-1 ? T.text8 : T.text4, padding:"2px 8px", cursor: i===editColorways.length-1?"default":"pointer", fontSize:"11px" }}>↓</button>
+                          <button onClick={() => {
+                            const shoe = editId !== null ? inventory.find(s => s.id === editId) : null;
+                            if (shoe) { handleDeleteColorway(shoe, cw); } else { setEditColorways(cws => cws.filter((_,j) => j!==i)); }
+                          }} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"2px 8px", cursor:"pointer", fontSize:"11px" }}>✕</button>
+                        </div>
+                        );
+                      })}
+                      <div style={{ display:"flex", gap:"8px", marginTop:"8px" }}>
+                        <input type="text" placeholder="Add colorway..." value={newColorway} onChange={e => setNewColorway(e.target.value)}
+                          onKeyDown={e => { if (e.key==="Enter" && newColorway.trim()) { setEditColorways(cws => [...cws, newColorway.trim()]); setNewColorway(""); }}}
+                          style={{...IS, flex:1}} />
+                        <button onClick={() => { if (newColorway.trim()) { setEditColorways(cws => [...cws, newColorway.trim()]); setNewColorway(""); }}}
+                          style={{ background:"#e63946", color:"#fff", border:"none", padding:"8px 14px", cursor:"pointer", fontSize:"11px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>+ ADD</button>
+                      </div>
+                    </div>
+                    <div style={{ display:"flex", gap:"8px", marginTop:"16px" }}>
+                      <button onClick={handleAdd} style={{ background:"#e63946", color:T.text, border:"none", padding:"10px 16px", cursor:"pointer", fontSize:"11px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>
+                        {editId !== null ? "SAVE" : "ADD"}
+                      </button>
+                      <button onClick={() => { setShowForm(false); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan",quantity:1,wishlist:false}); setEditColorways([]); setNewColorway(""); }} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"10px 16px", cursor:"pointer", fontSize:"11px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>
+                        CANCEL
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Shoe Cards */}
+                <div style={{ display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" }}>
+                  {owned.map(shoe => {
+                    const col = CAT[shoe.category] || CAT.Jordan;
+                    const shoeColorways = colorways[shoe.shortName] || [];
+                    const perRow = Math.min(shoeColorways.length, 5);
+                    const imgW = 120;
+                    const imgH = Math.round(imgW * 0.625);
+                    const cardMinW = Math.max(240, perRow * (imgW + 16) + 32);
+                    return (
+                      <div key={shoe.id} style={{ background:T.cardBg, border:`1px solid ${T.border}`, minWidth: cardMinW, flex:"0 1 auto", position:"relative" }}>
+                        {/* Top: info + buttons — outside fixed height area */}
+                        <div style={{ padding:"16px 16px 0 16px", display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:"8px" }}>
+                          <div style={{ fontSize:"14px", color:T.text, fontWeight:"bold", whiteSpace:"nowrap" }}>{shoe.name}{shoe.quantity > 1 ? ` — ${shoe.quantity} pairs` : ""}</div>
+                          <div style={{ display:"flex", gap:"6px", flexShrink:0, marginLeft:"12px" }}>
+                            <Btn label="EDIT" onClick={() => handleEdit(shoe)} color="#888" />
+                            <Btn label="X" onClick={() => { if (window.confirm(`Remove ${shoe.name} from your collection? This cannot be undone.`)) setInventory(inv => inv.filter(s => s.id !== shoe.id)); }} color="#bbb" />
+                          </div>
+                        </div>
+                        {/* Fixed height content area */}
+                        <div style={{ padding:"0 16px 16px 16px", height:"240px", overflow:"hidden", position:"relative" }}>
+                        {/* Reorder arrows */}
+                        <div style={{ position:"absolute", bottom:"6px", right:"6px", display:"flex", flexDirection:"column", gap:"1px" }}>
+                          <button onClick={() => reorderShoe(shoe.id, -1)} style={{ background:"transparent", border:"none", color:T.text8, cursor:"pointer", fontSize:"9px", padding:"1px 3px", lineHeight:1 }}>▲</button>
+                          <button onClick={() => reorderShoe(shoe.id, 1)} style={{ background:"transparent", border:"none", color:T.text8, cursor:"pointer", fontSize:"9px", padding:"1px 3px", lineHeight:1 }}>▼</button>
+                        </div>
+                        {/* Images row */}
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", maxWidth: perRow * (imgW + 8) + "px" }}>
+                          {shoeColorways.map(cw => {
+                            const metaKey = `${shoe.id}_${cw}`;
+                            const meta = colorwayMeta[metaKey] || {};
+                            const isEditingThis = editingMeta && editingMeta.shoeId === shoe.id && editingMeta.colorway === cw;
+                            return (
+                              <div key={cw}>
+                                <ImageSlot
+                                  img={images[metaKey] || null}
+                                  hoverImg={images[`${metaKey}_hover`] || null}
+                                  label={cw}
+                                  accent={col.accent}
+                                  bg={col.bg}
+                                  width={imgW}
+                                  height={imgH}
+                                  wearDates={(wearLog[shoe.id] || []).filter(e => e.colorway === cw).map(e => e.date)}
+                                  isGrail={!!grailMeta[metaKey]}
+                                  isBeater={!!beaterMeta[metaKey]}
+                                  isOnIce={(wearLog[shoe.id] || []).filter(e => e.colorway === cw).length === 0}
+                                  shoeName={shoe.name}
+                                  dark={dark}
+                                  purchaseDate={(colorwayMeta[metaKey] || {}).purchaseDate || null}
+                                  size={(colorwayMeta[metaKey] || {}).size || null}
+                                  ogYear={(colorwayMeta[metaKey] || {}).ogYear || null}
+                                  story={(colorwayMeta[metaKey] || {}).story || null}
+                                  onUpload={file => handleImageUpload(shoe.id, cw, file)}
+                                  onClear={() => setImages(imgs => { const n={...imgs}; delete n[metaKey]; return n; })}
+                                />
+                                {/* Meta summary + edit trigger */}
+                                <div
+                                  onClick={() => {
+                                    setEditingMeta({ shoeId: shoe.id, colorway: cw });
+                                    setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"" });
+                                  }}
+                                  title="Edit details"
+                                  style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : ((meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? T.text3 : T.text6), marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
+                                  {(meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? `sz ${meta.size}` : "· · ·"}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        </div>{/* end fixed height area */}
+                        {/* Colorway meta edit form */}
+                        {editingMeta && editingMeta.shoeId === shoe.id && (
+                          <div style={{ padding:"0 16px 16px 16px" }}>
+                          <div style={{ background:T.bg2, border:`1px solid ${T.border}`, padding:"12px" }}>
+                            <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"8px" }}>
+                              {editingMeta.colorway} — DETAILS
+                            </div>
+                            {/* Grail toggle */}
+                            <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"8px" }}>
+                              <input type="checkbox" id="grail-check"
+                                checked={!!grailMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`]}
+                                onChange={e => {
+                                  const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
+                                  setGrailMeta(g => { const n={...g}; if (e.target.checked) n[key]=true; else delete n[key]; return n; });
+                                }}
+                                style={{ width:"14px", height:"14px", cursor:"pointer", accentColor:"#FFD700" }} />
+                              <label htmlFor="grail-check" style={{ fontSize:"10px", letterSpacing:"3px", color:"#FFD700", cursor:"pointer" }}>✦ GRAIL</label>
+                            </div>
+                            {/* Beater toggle */}
+                            <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"8px" }}>
+                              <input type="checkbox" id="beater-check"
+                                checked={!!beaterMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`]}
+                                onChange={e => {
+                                  const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
+                                  setBeaterMeta(b => { const n={...b}; if (e.target.checked) n[key]=true; else delete n[key]; return n; });
+                                }}
+                                style={{ width:"14px", height:"14px", cursor:"pointer", accentColor:"#b45014" }} />
+                              <label htmlFor="beater-check" style={{ fontSize:"10px", letterSpacing:"3px", color:"#b45014", cursor:"pointer" }}>💀 BEATER</label>
+                            </div>
+                            {/* Dark mode glow toggle */}
+                            <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"10px" }}>
+                              <input type="checkbox" id="glow-check"
+                                checked={!!glowMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`]}
+                                onChange={e => {
+                                  const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
+                                  setGlowMeta(g => { const n={...g}; if (e.target.checked) n[key]=true; else delete n[key]; return n; });
+                                }}
+                                style={{ width:"14px", height:"14px", cursor:"pointer", accentColor:"#64c8ff" }} />
+                              <label htmlFor="glow-check" style={{ fontSize:"10px", letterSpacing:"3px", color: T.text5, cursor:"pointer" }}>☾ DARK GLOW</label>
+                            </div>
+                            {/* Hover image upload — grails only */}
+                            {!!grailMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`] && (() => {
+                              const hoverKey = `${editingMeta.shoeId}_${editingMeta.colorway}_hover`;
+                              const hoverImgVal = images[hoverKey];
+                              return (
+                                <div style={{ marginBottom:"10px" }}>
+                                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#FFD700", marginBottom:"6px" }}>✦ HOVER IMAGE</div>
+                                  <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                                    {hoverImgVal
+                                      ? <img src={hoverImgVal} alt="hover" style={{ width:"80px", height:"50px", objectFit:"cover", border:"1px solid #FFD700" }} />
+                                      : <div style={{ width:"80px", height:"50px", background: dark ? "#2a2a2a" : "#f0f0f0", border:"1px dashed #FFD700", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px", color:"#FFD700", cursor:"pointer" }}
+                                          onClick={() => document.getElementById("hover-img-upload").click()}>+</div>
+                                    }
+                                    <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
+                                      <button onClick={() => document.getElementById("hover-img-upload").click()}
+                                        style={{ background:"transparent", border:"1px solid #FFD700", color:"#FFD700", padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
+                                        {hoverImgVal ? "REPLACE" : "UPLOAD"}
+                                      </button>
+                                      {hoverImgVal && (
+                                        <button onClick={() => setImages(imgs => { const n={...imgs}; delete n[hoverKey]; return n; })}
+                                          style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
+                                          REMOVE
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <input id="hover-img-upload" type="file" accept="image/*" style={{ display:"none" }}
+                                    onChange={e => {
+                                      const file = e.target.files[0];
+                                      if (!file) return;
+                                      handleImageUpload(editingMeta.shoeId, editingMeta.colorway, file, "hover");
+                                      e.target.value = "";
+                                    }} />
+                                </div>
+                              );
+                            })()}
+                            <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", alignItems:"flex-end" }}>
+                              <div style={{ flex:"0 0 130px" }}>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>PURCHASE DATE</div>
+                                <input type="date" value={metaForm.purchaseDate} onChange={e => setMetaForm(f => ({...f, purchaseDate:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                              </div>
+                              <div style={{ flex:"0 0 100px" }}>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>PRICE</div>
+                                <input type="text" placeholder="$0.00" value={metaForm.purchasePrice} onChange={e => setMetaForm(f => ({...f, purchasePrice:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                              </div>
+                              <div style={{ flex:"1 1 140px" }}>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>RETAILER</div>
+                                <input type="text" placeholder="e.g. SNKRS, GOAT" value={metaForm.retailer} onChange={e => setMetaForm(f => ({...f, retailer:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                              </div>
+                              <div style={{ flex:"0 0 65px" }}>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>SIZE</div>
+                                <input type="text" placeholder="12.5" value={metaForm.size} onChange={e => setMetaForm(f => ({...f, size:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                              </div>
+                              <div style={{ flex:"0 0 65px" }}>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>OG YEAR</div>
+                                <input type="text" placeholder="1995" value={metaForm.ogYear} onChange={e => setMetaForm(f => ({...f, ogYear:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                              </div>
+                              <div style={{ flex:"1 1 160px" }}>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>NOTES</div>
+                                <input type="text" placeholder="Any notes..." value={metaForm.notes} onChange={e => setMetaForm(f => ({...f, notes:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                              </div>
+                            </div>
+                            <div style={{ marginTop:"10px" }}>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>STORY</div>
+                                <textarea placeholder="Tell the story of this shoe..." value={metaForm.story} onChange={e => setMetaForm(f => ({...f, story:e.target.value}))}
+                                  style={{...IS, fontSize:"11px", padding:"5px", minHeight:"80px", resize:"vertical", width:"100%"}} />
+                              </div>
+                            <div style={{ display:"flex", gap:"8px", marginTop:"10px", flexWrap:"wrap" }}>
+                              <button onClick={() => {
+                                const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
+                                setColorwayMeta(m => ({ ...m, [key]: { ...metaForm } }));
+                                setEditingMeta(null);
+                              }} style={{ background:"#e63946", color:"#fff", border:"none", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>SAVE</button>
+                              <button onClick={() => setEditingMeta(null)} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>CANCEL</button>
+                              {images[`${editingMeta.shoeId}_${editingMeta.colorway}`] && (
+                                <button onClick={() => {
+                                    const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
+                                    setImages(imgs => { const n={...imgs}; delete n[key]; return n; });
+                                    setEditingMeta(null);
+                                }} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>REMOVE PHOTO</button>
+                              )}
+                            </div>
+                          </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── DISPLAY ── */}
+            {view === "display" && (
+              <div>
+                {/* Edit panel */}
+                {editingCell && (
+                  <div style={{ background:T.bg4, border:"1px solid #f4a261", padding:"16px 24px", marginBottom:"24px", display:"flex", alignItems:"center", gap:"12px", flexWrap:"wrap" }}>
+                    <div style={{ fontSize:"10px", letterSpacing:"3px", color:"#e63946" }}>EDITING BOX {editingCell.ri + 1}-{editingCell.ci + 1}</div>
+                    <select value={editShoe} onChange={e => { setEditShoe(e.target.value); setEditCw(colorways[e.target.value]?.[0] || ""); }}
+                      style={{ background:T.inputBg, border:`1px solid ${T.inputBorder}`, color:T.inputText, padding:"8px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontSize:"13px", minWidth:"160px" }}>
+                      <option value="">— Empty —</option>
+                      {[...new Set(owned.map(s => s.shortName))].map(sn => {
+                        const shoe = inventory.find(s => s.shortName === sn);
+                        return <option key={sn} value={sn}>{shoe?.name || sn}</option>;
+                      })}
+                      </select>
+                    {editShoe && editShoe !== "--" && (colorways[editShoe] || []).length > 0 && (
+                      <select value={editCw} onChange={e => setEditCw(e.target.value)}
+                        style={{ background:T.inputBg, border:`1px solid ${T.inputBorder}`, color:T.inputText, padding:"8px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontSize:"13px", minWidth:"180px" }}>
+                        {(colorways[editShoe] || []).map(cw => <option key={cw} value={cw}>{cw}</option>)}
+                      </select>
+                    )}
+                    <Btn label="SAVE" onClick={() => {
+                      const newLayout = displayLayout.map((row, ri) =>
+                        row.map((cell, ci) =>
+                          ri === editingCell.ri && ci === editingCell.ci
+                            ? { code: editShoe, colorway: editCw }
+                            : cell
+                        )
+                      );
+                      setDisplayLayout(newLayout);
+                      save("vault_display_layout", newLayout);
+                      setEditingCell(null);
+                    }} color="#e63946" solid />
+                    <Btn label="CANCEL" onClick={() => setEditingCell(null)} color="#666" />
+                  </div>
+                )}
+
+                <div style={{ fontSize:"9px", letterSpacing:"4px", color:T.text6, marginBottom:"16px" }}>MY COLLECTION · AS CURRENTLY DISPLAYED IN MY OFFICE</div>
+                {(() => {
+                  const gridW = 5 * 160 + 4 * 6;
+                  const availW = Math.min(window.innerWidth - 64, 1200);
+                  const scale = availW < gridW ? availW / gridW : 1;
+                  return (
+                    <div style={{ transformOrigin:"top left", transform:`scale(${scale})`, width: gridW + "px", height: Math.round((8 * 100 + 7 * 6 + 8 * 20) * scale) + "px" }}>
+                    <div style={{ display:"inline-grid", gridTemplateColumns:"repeat(5, 160px)", gap:"6px" }}>
+                  {displayLayout.map((row, ri) => row.map((cell, ci) => {
+                    const c = getCellStyle(cell);
+                    const shoe = !c.empty ? inventory.find(s => s.shortName === cell.code) : null;
+                    const img = shoe ? images[`${shoe.id}_${cell.colorway}`] : null;
+                    const hoverImg = shoe ? images[`${shoe.id}_${cell.colorway}_hover`] : null;
+                    const isEditing = editingCell && editingCell.ri === ri && editingCell.ci === ci;
+                    const isGrail = shoe ? !!grailMeta[`${shoe.id}_${cell.colorway}`] : false;
+                    return (
+                      <DisplayCell key={`${ri}-${ci}`} c={c} img={img} hoverImg={hoverImg} ri={ri} dark={dark}
+                        isEditing={isEditing}
+                        isGrail={isGrail}
+                        onEdit={() => {
+                          setEditingCell({ri, ci});
+                          setEditShoe(cell.code || "");
+                          setEditCw(cell.colorway || "");
+                        }}
+                      />
+                    );
+                  }))}
+                </div>
+                </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* ── WISHLIST ── */}
+            {view === "wishlist" && (
+              <div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(340px,1fr))", gap:"12px" }}>
+                  {wishlist.map(shoe => {
+                    const shoeColorways = colorways[shoe.shortName] || [shoe.shortName];
+                    const col = CAT[shoe.category] || CAT.Jordan;
+                    const imgW = shoeColorways.length === 1 ? 120 : shoeColorways.length <= 3 ? 96 : 80;
+                    const imgH = Math.round(imgW * 0.625);
+                    return (
+                      <div key={shoe.id} style={{ background:T.cardBg, border:`1px dashed ${T.border2}`, padding:"16px" }}>
+                        {/* Top: info + buttons */}
+                        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:"12px" }}>
+                          <div>
+                            <div style={{ fontSize:"14px", color:T.text, fontWeight:"bold", marginBottom:"3px" }}>{shoe.name}</div>
+                            <div style={{ fontSize:"11px", color:"#e63946", letterSpacing:"1px" }}>{shoeColorways.join(", ")}</div>
+                          </div>
+                          <div style={{ display:"flex", gap:"6px", flexShrink:0, marginLeft:"12px" }}>
+                            <Btn label="GOT IT" onClick={() => setInventory(inv => inv.map(s => s.id===shoe.id ? {...s,wishlist:false,quantity:1} : s))} color="#e63946" />
+                            <Btn label="X" onClick={() => { if (window.confirm(`Remove ${shoe.name} from your wishlist?`)) setInventory(inv => inv.filter(s => s.id!==shoe.id)); }} color="#bbb" />
+                          </div>
+                        </div>
+                        {/* Image slots */}
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
+                          {shoeColorways.map(cw => {
+                            const metaKey = `${shoe.id}_${cw}`;
+                            const meta = colorwayMeta[metaKey] || {};
+                            const isEditingThis = editingMeta && editingMeta.shoeId === shoe.id && editingMeta.colorway === cw;
+                            return (
+                              <div key={cw}>
+                                <ImageSlot
+                                  img={images[metaKey] || null}
+                                  label={cw}
+                                  accent={col.accent}
+                                  bg="#f5f5f5"
+                                  width={imgW}
+                                  height={imgH}
+                                  isGrail={!!grailMeta[metaKey]}
+                                  dark={dark}
+                                  onUpload={file => handleImageUpload(shoe.id, cw, file)}
+                                  onClear={() => setImages(imgs => { const n={...imgs}; delete n[metaKey]; return n; })}
+                                />
+                                <div
+                                  onClick={() => {
+                                    setEditingMeta({ shoeId: shoe.id, colorway: cw });
+                                    setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"" });
+                                  }}
+                                  title="Edit details"
+                                  style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : ((meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? T.text3 : T.text6), marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
+                                  {(meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? `sz ${meta.size}` : "· · ·"}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {/* Colorway meta edit form */}
+                        {editingMeta && editingMeta.shoeId === shoe.id && (
+                          <div style={{ background:T.bg2, border:`1px solid ${T.border}`, padding:"12px", marginTop:"10px" }}>
+                            <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"8px" }}>
+                              {editingMeta.colorway} — DETAILS
+                            </div>
+                            <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"10px" }}>
+                              <input type="checkbox" id="grail-check-wl"
+                                checked={!!grailMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`]}
+                                onChange={e => {
+                                  const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
+                                  setGrailMeta(g => { const n={...g}; if (e.target.checked) n[key]=true; else delete n[key]; return n; });
+                                }}
+                                style={{ width:"14px", height:"14px", cursor:"pointer", accentColor:"#FFD700" }} />
+                              <label htmlFor="grail-check-wl" style={{ fontSize:"10px", letterSpacing:"3px", color:"#FFD700", cursor:"pointer" }}>✦ GRAIL</label>
+                            </div>
+                            <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", alignItems:"flex-end" }}>
+                              {[["DATE","date","purchaseDate"],["PRICE","text","purchasePrice"],["RETAILER","text","retailer"],["SIZE","text","size"],["NOTES","text","notes"]].map(([label,type,field]) => (
+                                <div key={field} style={{ flex:"1 1 80px" }}>
+                                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>{label}</div>
+                                  <input type={type} value={metaForm[field]} onChange={e => setMetaForm(f => ({...f,[field]:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                                </div>
+                              ))}
+                            </div>
+                            <div style={{ display:"flex", gap:"8px", marginTop:"10px", flexWrap:"wrap" }}>
+                              <button onClick={() => {
+                                const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
+                                setColorwayMeta(m => ({ ...m, [key]: { ...metaForm } }));
+                                setEditingMeta(null);
+                              }} style={{ background:"#e63946", color:"#fff", border:"none", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>SAVE</button>
+                              <button onClick={() => setEditingMeta(null)} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>CANCEL</button>
+                              {images[`${editingMeta.shoeId}_${editingMeta.colorway}`] && (
+                                <button onClick={() => {
+                                  const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
+                                  setImages(imgs => { const n={...imgs}; delete n[key]; return n; });
+                                  setEditingMeta(null);
+                                }} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>REMOVE PHOTO</button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── HISTORY ── */}
+            {view === "history" && (() => {
+              // Build flat list of all wear entries
+              const allEntries = owned.flatMap(shoe =>
+                (wearLog[shoe.id] || []).map((entry, idx) => ({
+                  shoe: shoe.name,
+                  shortName: shoe.shortName,
+                  category: shoe.category,
+                  colorway: entry.colorway,
+                  date: entry.date,
+                  shoeId: shoe.id,
+                  idx,
+                }))
+              );
+
+              const getShoeSortKey = (entry) => {
+                if (entry.category === "Jordan") {
+                  const match = entry.shoe.match(/(\d+)/);
+                  return match ? parseInt(match[1]) : 9998;
+                }
+                return 9999;
+              };
+
+              const sorted = [...allEntries].sort((a, b) => {
+                let av, bv;
+                if (sortCol === "shoe") {
+                  av = getShoeSortKey(a);
+                  bv = getShoeSortKey(b);
+                  if (av !== bv) return sortDir === "asc" ? av - bv : bv - av;
+                  av = a.shoe; bv = b.shoe;
+                } else {
+                  av = a[sortCol] || ""; bv = b[sortCol] || "";
+                }
+                if (av < bv) return sortDir === "asc" ? -1 : 1;
+                if (av > bv) return sortDir === "asc" ? 1 : -1;
+                return 0;
+              });
+
+              const handleSort = (col) => {
+                if (sortCol === col) setSortDir(d => d === "asc" ? "desc" : "asc");
+                else { setSortCol(col); setSortDir("asc"); }
+              };
+
+              const exportCSV = () => {
+                const header = "Date,Shoe,Colorway,Category";
+                const rows = sorted.map(e => `${e.date},"${e.shoe}","${e.colorway}",${e.category}`);
+                const csv = [header, ...rows].join("\n");
+                const blob = new Blob([csv], { type:"text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url; a.download = "sneaker-wear-history.csv";
+                a.click(); URL.revokeObjectURL(url);
+              };
+
+              const colStyle = (col) => ({
+                padding:"10px 16px", fontSize:"10px", letterSpacing:"3px", color: sortCol===col ? "#e63946" : T.text,
+                cursor:"pointer", userSelect:"none", textAlign:"left", background:"transparent",
+                border:"none", fontFamily:"'Aptos','Segoe UI',sans-serif", borderBottom: sortCol===col ? "2px solid #e63946" : "2px solid transparent",
+                whiteSpace:"nowrap",
+              });
+
+              const arrow = (col) => sortCol===col ? (sortDir==="asc" ? " ↑" : " ↓") : "";
+
+              return (
+                <div>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
+                    <div>
+                      <div style={{ fontSize:"11px", letterSpacing:"4px", color:T.text4 }}>WEAR HISTORY</div>
+                      <div style={{ fontSize:"10px", color:T.text3, marginTop:"4px" }}>{allEntries.length} total wears</div>
+                    </div>
+                    <Btn label="EXPORT CSV" onClick={exportCSV} color="#e63946" />
+                  </div>
+                  <div style={{ overflowX:"auto" }}>
+                    <table style={{ width:"100%", borderCollapse:"collapse", fontSize:"12px" }}>
+                      <thead>
+                        <tr style={{ borderBottom:`1px solid ${T.border}` }}>
+                          {[["date","DATE"],["shoe","SHOE"],["colorway","COLORWAY"],["category","CATEGORY"]].map(([col,label]) => (
+                            <th key={col} style={colStyle(col)} onClick={() => handleSort(col)}>{label}{arrow(col)}</th>
+                          ))}
+                          <th style={{ padding:"10px 16px", width:"40px", fontSize:"10px", letterSpacing:"3px", color:T.text4, textAlign:"center" }}>DEL</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sorted.map((entry, i) => {
+                          const col = CAT[entry.category] || CAT.Jordan;
+                          return (
+                            <tr key={i} style={{ borderBottom:`1px solid ${T.border}`, background: i%2===0 ? T.bg2 : T.cardBg }}>
+                              <td style={{ padding:"10px 16px", color:T.text3, whiteSpace:"nowrap" }}>{entry.date}</td>
+                              <td style={{ padding:"10px 16px", color:T.text, fontWeight:"bold" }}>{entry.shoe}</td>
+                              <td style={{ padding:"10px 16px", color:col.accent }}>{entry.colorway}</td>
+                              <td style={{ padding:"10px 16px" }}>
+                                <span style={{ fontSize:"9px", letterSpacing:"2px", color:col.accent, border:`1px solid ${col.accent}`, padding:"2px 6px" }}>{entry.category.toUpperCase()}</span>
+                              </td>
+                              <td style={{ padding:"6px 16px", textAlign:"center" }}>
+                                <button onClick={() => {
+                                  if (window.confirm(`Delete this wear entry?\n${entry.shoe} · ${entry.colorway} · ${entry.date}`)) {
+                                    setWearLog(log => ({ ...log, [entry.shoeId]: (log[entry.shoeId] || []).filter((_, j) => j !== entry.idx) }));
+                                  }
+                                }} style={{ background:"transparent", border:"none", color:T.text7, cursor:"pointer", fontSize:"12px", padding:"2px 4px" }}>✕</button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        {sorted.length === 0 && (
+                          <tr><td colSpan="5" style={{ padding:"32px", textAlign:"center", color:T.text2, letterSpacing:"3px", fontSize:"11px" }}>NO WEARS LOGGED YET</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── ABOUT ── */}
+            {view === "about" && (
+              <div style={{ maxWidth:"640px", margin:"0 auto", padding:"16px 0" }}>
+                <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"32px" }}>ABOUT THE VAULT</div>
+                <p style={{ fontSize:"15px", color:T.text2, lineHeight:"2", marginBottom:"24px", fontStyle:"italic" }}>
+                  The first time I saw the Air Jordan 4 sitting in the window of my local shoe store, I was hooked. Every trip to the mall meant one thing: making my way to Foot Locker and staring at the shoes worn by my favorite athletes — Michael Jordan, Andre Agassi, and Bo Jackson. I'd stand there daydreaming about the day I could own all of them.
+                </p>
+                <p style={{ fontSize:"15px", color:T.text2, lineHeight:"2", marginBottom:"24px", fontStyle:"italic" }}>
+                  In 2023, I decided to make that childhood dream a reality.
+                </p>
+                <p style={{ fontSize:"15px", color:T.text2, lineHeight:"2", fontStyle:"italic" }}>
+                  This collection is for that 10 year old boy who never stopped looking through the glass.
+                </p>
+              </div>
+            )}
+
+          </div>
+
+          {/* Floating LOG WEAR button */}
+          <button onClick={() => {
+            setQuickLog(true);
+            setQuickDate(localDateStr());
+            const firstOwned = owned[0];
+            if (firstOwned) {
+              setQuickShoeId(String(firstOwned.id));
+              setQuickColorway(colorways[firstOwned.shortName]?.[0] || "");
+            }
+          }} style={{
+            position:"fixed", bottom:"28px", right:"28px", zIndex:8888,
+            background:"#e63946", color:"#fff", border:"none", borderRadius:"50%",
+            width:"56px", height:"56px", fontSize:"22px", cursor:"pointer",
+            boxShadow:"0 4px 16px rgba(0,0,0,0.3)", display:"flex", alignItems:"center", justifyContent:"center",
+            fontFamily:"'Aptos','Segoe UI',sans-serif",
+          }} title="Log a wear">👟</button>
+
+          {/* Quick Log Modal */}
+          {quickLog && (() => {
+            const qShoe = owned.find(s => String(s.id) === String(quickShoeId));
+            const qColorways = qShoe ? (colorways[qShoe.shortName] || []) : [];
+            return (
+              <div onClick={() => setQuickLog(false)} style={{
+                position:"fixed", top:0, left:0, width:"100vw", height:"100vh",
+                background:"rgba(0,0,0,0.6)", zIndex:9000, display:"flex", alignItems:"center", justifyContent:"center",
+              }}>
+                <div onClick={e => e.stopPropagation()} style={{
+                  background: T.bg, border:`1px solid ${T.border}`, padding:"28px", minWidth:"320px", maxWidth:"440px", width:"90vw",
+                }}>
+                  <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"20px" }}>LOG A WEAR</div>
+                  <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
+                    <div>
+                      <div style={{ fontSize:"9px", letterSpacing:"2px", color: T.text5, marginBottom:"6px" }}>SHOE</div>
+                      <select value={quickShoeId} onChange={e => {
+                        setQuickShoeId(e.target.value);
+                        const s = owned.find(sh => String(sh.id) === e.target.value);
+                        setQuickColorway(s ? (colorways[s.shortName]?.[0] || "") : "");
+                      }} style={{ ...IS, width:"100%" }}>
+                        {owned.map(s => <option key={s.id} value={String(s.id)}>{s.name}</option>)}
+                      </select>
+                    </div>
+                    {qColorways.length > 0 && (
+                      <div>
+                        <div style={{ fontSize:"9px", letterSpacing:"2px", color: T.text5, marginBottom:"6px" }}>COLORWAY</div>
+                        <select value={quickColorway} onChange={e => setQuickColorway(e.target.value)} style={{ ...IS, width:"100%" }}>
+                          {qColorways.map(cw => <option key={cw} value={cw}>{cw}</option>)}
+                        </select>
+                      </div>
+                    )}
+                    <div>
+                      <div style={{ fontSize:"9px", letterSpacing:"2px", color: T.text5, marginBottom:"6px" }}>DATE</div>
+                      <input type="date" value={quickDate} onChange={e => setQuickDate(e.target.value)} style={{ ...IS, width:"100%" }} />
+                    </div>
+                    <div style={{ display:"flex", gap:"8px", marginTop:"8px" }}>
+                      <button onClick={() => {
+                        if (!quickShoeId || !quickColorway) return;
+                        const entry = { date: quickDate, colorway: quickColorway };
+                        setWearLog(log => ({ ...log, [quickShoeId]: [...(log[quickShoeId] || []), entry] }));
+                        setQuickLog(false);
+                      }} style={{ background:"#e63946", color:"#fff", border:"none", padding:"10px 20px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", flex:1 }}>CONFIRM</button>
+                      <button onClick={() => setQuickLog(false)} style={{ background:"transparent", border:`1px solid ${T.border}`, color: T.text4, padding:"10px 20px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>CANCEL</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
