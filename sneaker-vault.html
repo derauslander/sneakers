@@ -548,16 +548,13 @@
         <div style={{ minHeight:"100vh", background: T.bg }}>
 
           {/* Header */}
-          <div style={{ background: dark ? `linear-gradient(135deg,${T.bg},#2a1a1a,${T.bg})` : "linear-gradient(135deg,#ffffff,#fff5f5,#ffffff)", borderBottom:"2px solid #e63946", padding:"24px 32px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-            <div>
-              <div style={{ fontSize:"28px", letterSpacing:"6px", color:"#e63946", marginBottom:"4px", fontWeight:"bold" }}>DerAusländer</div>
-              <div style={{ fontSize:"20px", fontWeight:"bold", letterSpacing:"2px", color: T.text }}>THE VAULT</div>
-            </div>
+          <div style={{ background:"#000000", borderBottom:"2px solid #e63946", padding:"0 32px 0 0", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            <img src="banner.png" alt="Der Ausländer — The Vault" style={{ height:"100px", objectFit:"contain" }} />
             <div style={{ display:"flex", gap:"24px", textAlign:"center", alignItems:"center" }}>
               {[["PAIRS",total,"#e63946"],["OPEN BOXES",empty,"#e63946"],["WISHLIST",wishlist.length,"#e63946"]].map(([label,val,color])=>(
                 <div key={label}>
                   <div style={{ fontSize:"32px", fontWeight:"bold", color }}>{val}</div>
-                  <div style={{ fontSize:"10px", letterSpacing:"3px", color: T.text3 }}>{label}</div>
+                  <div style={{ fontSize:"10px", letterSpacing:"3px", color:"#888" }}>{label}</div>
                 </div>
               ))}
               <div style={{ width:"1px", height:"48px", background: T.border }} />
