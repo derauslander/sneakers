@@ -294,6 +294,12 @@
       const [error,   setError]   = useState(null);
       const [view,    setView]    = useState("inventory");
       const [anniversaryDismissed, setAnniversaryDismissed] = useState(false);
+      const [bannerShowUpNext, setBannerShowUpNext] = useState(true);
+
+      useEffect(() => {
+        const interval = setInterval(() => setBannerShowUpNext(v => !v), 5000);
+        return () => clearInterval(interval);
+      }, []);
 
       useEffect(() => {
         fetch("vault-data.json")
@@ -342,6 +348,17 @@
       const longestUnworn         = longestUnwornEntry?.shoe || null;
       const longestUnwornColorway = longestUnwornEntry?.colorway || null;
       const longestUnwornLastDate = longestUnwornEntry?.lastWorn || null;
+
+      // Most recently worn
+      const mostRecentEntry = allColorwayEntries
+        .filter(e => e.lastWorn)
+        .reduce((pick, entry) => {
+          if (!pick) return entry;
+          return entry.lastWorn > pick.lastWorn ? entry : pick;
+        }, null);
+      const lastWornShoe     = mostRecentEntry?.shoe || null;
+      const lastWornColorway = mostRecentEntry?.colorway || null;
+      const lastWornDate     = mostRecentEntry?.lastWorn || null;
 
       // Anniversary computation
       const todayStr = localDateStr();
@@ -443,6 +460,8 @@
                   const rotationImgKey = `${longestUnworn.id}_${longestUnwornColorway}`;
                   const rotationImg = images[rotationImgKey] || null;
                   const rotationHoverImg = isRotationGrail ? (images[`${rotationImgKey}_hover`] || null) : null;
+                  const isLastWornGrail = lastWornColorway ? !!grailMeta[`${lastWornShoe?.id}_${lastWornColorway}`] : false;
+                  const lastWornImg = lastWornShoe ? images[`${lastWornShoe.id}_${lastWornColorway}`] || null : null;
                   const bannerBg = isRotationGrail
                     ? dark ? "linear-gradient(90deg,#2a2a1a,#2a2700)" : "linear-gradient(90deg,#fffcf0,#fff8d6)"
                     : dark ? `linear-gradient(90deg,${T.bg2},${T.bg3})` : "linear-gradient(90deg,#fff5f5,#ffe8e8)";
@@ -455,7 +474,6 @@
                     : isRotationGlow
                     ? "drop-shadow(0 0 14px rgba(255,255,255,0.5))"
                     : "none";
-
                   const sortedQueue = [...allColorwayEntries].sort((a, b) => {
                     if (!a.lastWorn && !b.lastWorn) return 0;
                     if (!a.lastWorn) return -1;
@@ -463,11 +481,11 @@
                     return a.lastWorn < b.lastWorn ? -1 : 1;
                   });
                   const upcomingQueue = sortedQueue.slice(1, 5);
-
                   return (
                     <div style={{ marginBottom:"24px" }}>
-                      <div style={{ background: bannerBg, border:`1px solid ${bannerBorder}`, padding:"16px", display:"flex", alignItems:"center", gap:"16px" }}>
-                        <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
+                      <div style={{ background: bannerBg, border:`1px solid ${bannerBorder}`, padding:"16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px", position:"relative", minHeight:"107px" }}>
+                        {/* UP NEXT */}
+                        <div style={{ display:"flex", alignItems:"center", gap:"16px", position:"absolute", opacity: bannerShowUpNext ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "auto" : "none" }}>
                           {rotationImg && (() => {
                             function RotationImg() {
                               const [showAlt, setShowAlt] = React.useState(false);
@@ -505,9 +523,24 @@
                             </div>
                           </div>
                         </div>
+                        {/* LAST WORN */}
+                        {lastWornShoe && (
+                          <div style={{ display:"flex", alignItems:"center", gap:"16px", position:"absolute", opacity: bannerShowUpNext ? 0 : 1, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "none" : "auto" }}>
+                            {lastWornImg && <img src={lastWornImg} alt={lastWornColorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0, filter: isLastWornGrail ? "drop-shadow(0 0 12px rgba(255,215,0,0.6))" : "none" }} />}
+                            <div>
+                              <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
+                                {isLastWornGrail ? <span><span style={{color:"#FFD700"}}>✦</span> LAST WORN <span style={{color:"#FFD700"}}>✦</span></span> : "LAST WORN"}
+                              </div>
+                              <div style={{ fontSize: isMobile ? "13px" : "16px", fontWeight:"bold", color: isLastWornGrail ? "#FFD700" : T.text }}>
+                                {lastWornShoe.name}{lastWornColorway ? ` — ${lastWornColorway}` : ""}
+                              </div>
+                              <div style={{ fontSize:"10px", color:T.text3, marginTop:"2px" }}>{lastWornDate}</div>
+                            </div>
+                          </div>
+                        )}
+                        <div style={{ marginLeft:"auto" }} />
                       </div>
-                      {/* Upcoming queue */}
-                      {upcomingQueue.length > 0 && (
+                      {upcomingQueue.length > 0 && bannerShowUpNext && (
                         <div style={{ background: T.bg2, border:"1px solid #e63946", borderTop:"none", padding:"10px 24px", display:"flex", gap:"16px", alignItems:"center" }}>
                           <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0 }}>COMING UP</div>
                           <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
