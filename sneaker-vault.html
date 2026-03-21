@@ -44,6 +44,7 @@
       inputBg: "#2a2a2a", inputBorder: "#444", inputText: "#f0f0f0",
       overlayText: "#fff",
       categoryBg: "#2a1a1a",
+      cardText: "#f0f0f0", cardText2: "#d0d0d0", cardText3: "#b0b0b0", cardText4: "#999999", cardText5: "#888888", cardText6: "#777777", cardText7: "#666666",
     };
 
     const useDarkMode = () => {
@@ -357,8 +358,8 @@
             )}
           </div>
           {/* Card text — clean, no story fade */}
-          <div style={{ fontSize:"11px", fontWeight:"bold", color: T.text, marginBottom:"2px", textAlign:"center" }}>{entry.shoeName}</div>
-          <div style={{ fontSize:"10px", color: T.text4, textAlign:"center" }}>{entry.colorway}</div>
+          <div style={{ fontSize:"11px", fontWeight:"bold", color: CT.text, marginBottom:"2px", textAlign:"center" }}>{entry.shoeName}</div>
+          <div style={{ fontSize:"10px", color: CT.text4, textAlign:"center" }}>{entry.colorway}</div>
           <button onClick={() => { if (window.confirm(`Restore ${entry.shoeName} — ${entry.colorway} to your collection?`)) {
             setColorways(cws => ({ ...cws, [entry.shortName]: [...(cws[entry.shortName]||[]), entry.colorway] }));
             setGraveyardMeta(g => { const n={...g}; delete n[entryKey]; return n; });
@@ -370,6 +371,8 @@
     function App() {
       const [dark, setDark] = useDarkMode();
       const T = dark ? DARK : LIGHT;
+      // CT = card text colors (always dark on light cards, light on dark cards)
+      const CT = dark ? T : { text:"#111", text2:"#333", text3:"#555", text4:"#666", text5:"#888", text6:"#aaa", text7:"#bbb", text8:"#ddd", border:`1px solid #e0e0e0`, border2:"#ccc" };
       const [inventory,    setInventory]    = useState(() => load("vault_inventory", []));
       const importRef = useRef();
       const [importMsg, setImportMsg] = useState(null);
@@ -716,15 +719,15 @@
                             <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#FFD700", marginBottom:"6px" }}>
                               ✦ PURCHASE ANNIVERSARY {anniversaries.length > 1 ? `(${idx + 1}/${anniversaries.length})` : ""} ✦
                             </div>
-                            <div style={{ fontSize:"15px", fontWeight:"bold", color: T.text }}>
+                            <div style={{ fontSize:"15px", fontWeight:"bold", color: CT.text }}>
                               {a.shoe.name} — {a.colorway}
                             </div>
-                            <div style={{ fontSize:"11px", color: T.text5, marginTop:"4px" }}>
+                            <div style={{ fontSize:"11px", color: CT.text5, marginTop:"4px" }}>
                               {a.years} {a.years === 1 ? "year" : "years"} ago today
                             </div>
                           </div>
                         </div>
-                        <button onClick={() => setAnniversaryDismissed(true)} style={{ background:"transparent", border:"none", color: T.text7, cursor:"pointer", fontSize:"18px", lineHeight:1, padding:"0", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>✕</button>
+                        <button onClick={() => setAnniversaryDismissed(true)} style={{ background:"transparent", border:"none", color: CT.text7, cursor:"pointer", fontSize:"18px", lineHeight:1, padding:"0", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>✕</button>
                       </div>
                     );
                   }
@@ -983,7 +986,7 @@
                       <div key={shoe.id} style={{ background:T.cardBg, border:`1px solid ${T.border}`, minWidth: cardMinW, flex:"0 1 auto", position:"relative" }}>
                         {/* Top: info + buttons — outside fixed height area */}
                         <div style={{ padding:"16px 16px 0 16px", display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:"8px" }}>
-                          <div style={{ fontSize:"14px", color:T.text, fontWeight:"bold", whiteSpace:"nowrap" }}>{shoe.name}{shoe.quantity > 1 ? ` — ${shoe.quantity} pairs` : ""}</div>
+                          <div style={{ fontSize:"14px", color:CT.text, fontWeight:"bold", whiteSpace:"nowrap" }}>{shoe.name}{shoe.quantity > 1 ? ` — ${shoe.quantity} pairs` : ""}</div>
                           <div style={{ display:"flex", gap:"6px", flexShrink:0, marginLeft:"12px" }}>
                             <Btn label="EDIT" onClick={() => handleEdit(shoe)} color="#888" />
                             <Btn label="X" onClick={() => { if (window.confirm(`Remove ${shoe.name} from your collection? This cannot be undone.`)) setInventory(inv => inv.filter(s => s.id !== shoe.id)); }} color="#bbb" />
@@ -993,8 +996,8 @@
                         <div style={{ padding:"0 16px 16px 16px", height:"240px", overflow:"hidden", position:"relative" }}>
                         {/* Reorder arrows */}
                         <div style={{ position:"absolute", bottom:"6px", right:"6px", display:"flex", flexDirection:"column", gap:"1px" }}>
-                          <button onClick={() => reorderShoe(shoe.id, -1)} style={{ background:"transparent", border:"none", color:T.text8, cursor:"pointer", fontSize:"9px", padding:"1px 3px", lineHeight:1 }}>▲</button>
-                          <button onClick={() => reorderShoe(shoe.id, 1)} style={{ background:"transparent", border:"none", color:T.text8, cursor:"pointer", fontSize:"9px", padding:"1px 3px", lineHeight:1 }}>▼</button>
+                          <button onClick={() => reorderShoe(shoe.id, -1)} style={{ background:"transparent", border:"none", color:CT.text8, cursor:"pointer", fontSize:"9px", padding:"1px 3px", lineHeight:1 }}>▲</button>
+                          <button onClick={() => reorderShoe(shoe.id, 1)} style={{ background:"transparent", border:"none", color:CT.text8, cursor:"pointer", fontSize:"9px", padding:"1px 3px", lineHeight:1 }}>▼</button>
                         </div>
                         {/* Images row */}
                         <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", maxWidth: perRow * (imgW + 8) + "px" }}>
@@ -1078,7 +1081,7 @@
                                   setGlowMeta(g => { const n={...g}; if (e.target.checked) n[key]=true; else delete n[key]; return n; });
                                 }}
                                 style={{ width:"14px", height:"14px", cursor:"pointer", accentColor:"#64c8ff" }} />
-                              <label htmlFor="glow-check" style={{ fontSize:"10px", letterSpacing:"3px", color: T.text5, cursor:"pointer" }}>☾ DARK GLOW</label>
+                              <label htmlFor="glow-check" style={{ fontSize:"10px", letterSpacing:"3px", color: CT.text5, cursor:"pointer" }}>☾ DARK GLOW</label>
                             </div>
                             {/* Hover image upload — grails only */}
                             {!!grailMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`] && (() => {
@@ -1100,7 +1103,7 @@
                                       </button>
                                       {hoverImgVal && (
                                         <button onClick={() => setImages(imgs => { const n={...imgs}; delete n[hoverKey]; return n; })}
-                                          style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
+                                          style={{ background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
                                           REMOVE
                                         </button>
                                       )}
@@ -1118,32 +1121,32 @@
                             })()}
                             <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", alignItems:"flex-end" }}>
                               <div style={{ flex:"0 0 130px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>PURCHASE DATE</div>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>PURCHASE DATE</div>
                                 <input type="date" value={metaForm.purchaseDate} onChange={e => setMetaForm(f => ({...f, purchaseDate:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
                               </div>
                               <div style={{ flex:"0 0 100px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>PRICE</div>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>PRICE</div>
                                 <input type="text" placeholder="$0.00" value={metaForm.purchasePrice} onChange={e => setMetaForm(f => ({...f, purchasePrice:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
                               </div>
                               <div style={{ flex:"1 1 140px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>RETAILER</div>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>RETAILER</div>
                                 <input type="text" placeholder="e.g. SNKRS, GOAT" value={metaForm.retailer} onChange={e => setMetaForm(f => ({...f, retailer:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
                               </div>
                               <div style={{ flex:"0 0 65px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>SIZE</div>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>SIZE</div>
                                 <input type="text" placeholder="12.5" value={metaForm.size} onChange={e => setMetaForm(f => ({...f, size:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
                               </div>
                               <div style={{ flex:"0 0 65px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>OG YEAR</div>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>OG YEAR</div>
                                 <input type="text" placeholder="1995" value={metaForm.ogYear} onChange={e => setMetaForm(f => ({...f, ogYear:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
                               </div>
                               <div style={{ flex:"1 1 160px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>NOTES</div>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>NOTES</div>
                                 <input type="text" placeholder="Any notes..." value={metaForm.notes} onChange={e => setMetaForm(f => ({...f, notes:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
                               </div>
                             </div>
                             <div style={{ marginTop:"10px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>STORY</div>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>STORY</div>
                                 <textarea placeholder="Tell the story of this shoe..." value={metaForm.story} onChange={e => setMetaForm(f => ({...f, story:e.target.value}))}
                                   style={{...IS, fontSize:"11px", padding:"5px", minHeight:"80px", resize:"vertical", width:"100%"}} />
                               </div>
@@ -1153,13 +1156,13 @@
                                 setColorwayMeta(m => ({ ...m, [key]: { ...metaForm } }));
                                 setEditingMeta(null);
                               }} style={{ background:"#e63946", color:"#fff", border:"none", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>SAVE</button>
-                              <button onClick={() => setEditingMeta(null)} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>CANCEL</button>
+                              <button onClick={() => setEditingMeta(null)} style={{ background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>CANCEL</button>
                               {images[`${editingMeta.shoeId}_${editingMeta.colorway}`] && (
                                 <button onClick={() => {
                                     const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
                                     setImages(imgs => { const n={...imgs}; delete n[key]; return n; });
                                     setEditingMeta(null);
-                                }} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>REMOVE PHOTO</button>
+                                }} style={{ background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>REMOVE PHOTO</button>
                               )}
                               <button onClick={() => {
                                 setRetiringMeta({ shoeId: editingMeta.shoeId, colorway: editingMeta.colorway });
@@ -1176,7 +1179,7 @@
                             <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#888", marginBottom:"10px" }}>🪦 RETIRE — {retiringMeta.colorway}</div>
                             <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", marginBottom:"10px" }}>
                               <div style={{ flex:"0 0 120px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>REASON</div>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>REASON</div>
                                 <select value={retireForm.reason} onChange={e => setRetireForm(f => ({...f, reason:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}}>
                                   <option>Sold</option>
                                   <option>Worn Out</option>
@@ -1185,12 +1188,12 @@
                                 </select>
                               </div>
                               <div style={{ flex:"0 0 140px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>DATE RETIRED</div>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>DATE RETIRED</div>
                                 <input type="date" value={retireForm.dateRetired} onChange={e => setRetireForm(f => ({...f, dateRetired:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
                               </div>
                             </div>
                             <div style={{ marginBottom:"10px" }}>
-                              <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>FAREWELL STORY</div>
+                              <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>FAREWELL STORY</div>
                               <textarea placeholder="Tell the story of this shoe's retirement..." value={retireForm.story} onChange={e => setRetireForm(f => ({...f, story:e.target.value}))}
                                 style={{...IS, fontSize:"11px", padding:"5px", minHeight:"60px", resize:"vertical", width:"100%"}} />
                             </div>
@@ -1221,7 +1224,7 @@
                                 setColorways(cws => ({ ...cws, [rShoe.shortName]: newCws }));
                                 setRetiringMeta(null);
                               }} style={{ background:"#888", color:"#fff", border:"none", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>🪦 CONFIRM RETIREMENT</button>
-                              <button onClick={() => setRetiringMeta(null)} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>CANCEL</button>
+                              <button onClick={() => setRetiringMeta(null)} style={{ background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>CANCEL</button>
                             </div>
                           </div>
                         )}
