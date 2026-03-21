@@ -28,13 +28,13 @@
     const { useState, useEffect, useRef } = React;
 
     const LIGHT = {
-      bg: "#ffffff", bg2: "#f9f9f9", bg3: "#f5f5f5", bg4: "#f0f0f0",
-      border: "#e0e0e0", border2: "#ccc",
-      text: "#111", text2: "#333", text3: "#555", text4: "#666", text5: "#888", text6: "#aaa", text7: "#bbb", text8: "#ddd",
-      navBg: "#f5f5f5", cardBg: "#ffffff",
-      inputBg: "#f5f5f5", inputBorder: "#ccc", inputText: "#111",
+      bg: "#faf8f5", bg2: "#f5f2ee", bg3: "#ede9e3", bg4: "#e8e3dc",
+      border: "#ddd8d0", border2: "#c8c2b8",
+      text: "#1a1612", text2: "#2e2a24", text3: "#4a4540", text4: "#6b6560", text5: "#8c8680", text6: "#aaa49e", text7: "#c4beb8", text8: "#dedad4",
+      navBg: "#f0ece6", cardBg: "#ffffff",
+      inputBg: "#f0ece6", inputBorder: "#c8c2b8", inputText: "#1a1612",
       overlayText: "#fff",
-      categoryBg: "#fff0f0",
+      categoryBg: "#fff4f2",
     };
     const DARK = {
       bg: "#1a1a1a", bg2: "#222222", bg3: "#2a2a2a", bg4: "#2f2f2f",
@@ -645,17 +645,22 @@
       return (
         <div style={{ minHeight:"100vh", background: T.bg }}>
 
-          {/* Header */}
-          <div style={{ background:"#000000", borderBottom:"2px solid #e63946", padding:"0 32px 0 0", display:"flex", alignItems:"center", justifyContent:"space-between", position:"relative", minHeight:"200px" }}>
-            <img src="banner.png" alt="Der Ausländer — The Vault" style={{ height:"200px", objectFit:"contain", position:"static" }} />
-            <div style={{ display:"flex", gap:"24px", textAlign:"center", alignItems:"center" }}>
+          <div style={{ background:"#000000", borderBottom:"2px solid #e63946", position:"relative", minHeight:"200px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            <img src="banner.png" alt="" style={{ position:"absolute", top:0, left:0, width:"100%", height:"200px", objectFit:"cover", objectPosition:"center" }} />
+            {/* Text overlay — centered with dark backdrop */}
+            <div style={{ position:"absolute", left:"50%", top:"50%", transform:"translate(-50%,-50%)", textAlign:"center", zIndex:2, pointerEvents:"none", background:"rgba(0,0,0,0.55)", padding:"14px 28px", borderRadius:"2px" }}>
+              <div style={{ fontSize:"36px", fontWeight:"bold", color:"#e63946", letterSpacing:"8px", lineHeight:1 }}>DERAUSLÄNDER</div>
+              <div style={{ fontSize:"16px", letterSpacing:"12px", color:"#ffffff", marginTop:"6px" }}>THE VAULT</div>
+            </div>
+            {/* Stats + buttons — solid black panel */}
+            <div style={{ position:"relative", zIndex:2, marginLeft:"auto", display:"flex", gap:"24px", textAlign:"center", alignItems:"center", background:"#000000", borderLeft:"2px solid #e63946", padding:"16px 32px", height:"200px" }}>
               {[["PAIRS",total,"#e63946"],["OPEN BOXES",empty,"#e63946"],["WISHLIST",wishlist.length,"#e63946"]].map(([label,val,color])=>(
                 <div key={label}>
                   <div style={{ fontSize:"32px", fontWeight:"bold", color }}>{val}</div>
                   <div style={{ fontSize:"10px", letterSpacing:"3px", color:"#888" }}>{label}</div>
                 </div>
               ))}
-              <div style={{ width:"1px", height:"48px", background: T.border }} />
+              <div style={{ width:"1px", height:"48px", background:"#333" }} />
               <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
                 <button onClick={exportJSON} style={{ background:"#e63946", color:"#000", border:"none", padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontWeight:"bold", whiteSpace:"nowrap" }}>⬇ BACKUP</button>
                 <button onClick={() => importRef.current.click()} style={{ background:"transparent", color:"#e63946", border:"1px solid #4cc9f0", padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>⬆ RESTORE</button>
