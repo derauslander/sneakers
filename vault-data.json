@@ -9,6 +9,14 @@
       "wishlist": false
     },
     {
+      "id": 2,
+      "name": "Air Jordan 2",
+      "shortName": "AJ2",
+      "quantity": 1,
+      "category": "Jordan",
+      "wishlist": false
+    },
+    {
       "id": 3,
       "name": "Air Jordan 3",
       "shortName": "AJ3",
@@ -759,73 +767,15 @@
     "9_Black Olive": true,
     "11_Flu Game": true
   },
-  "graveyardMeta": {
-    "4_Fire Red": {
-      "shoeName": "Air Jordan 4",
-      "colorway": "Fire Red",
-      "shortName": "AJ4",
-      "category": "Jordan",
-      "isGrail": true,
-      "isBeater": false,
-      "purchaseDate": "2023-01-07",
-      "retireDate": "2026-03-21",
-      "reason": "Sold",
-      "story": "Hopefully i retire these to get a size 12.5.",
-      "lastWorn": "2026-01-16",
-      "img": "Shoes/4_Fire Red.png",
-      "hoverImg": "Shoes/4_Fire Red_hover.png"
-    },
-    "2_Black Cement": {
-      "shoeName": "Air Jordan 2",
-      "colorway": "Black Cement",
-      "shortName": "AJ2",
-      "category": "Jordan",
-      "isGrail": false,
-      "isBeater": false,
-      "purchaseDate": "2023-09-23",
-      "retireDate": "2026-03-21",
-      "reason": "Sold",
-      "story": "Test, to see if this works",
-      "lastWorn": "2025-09-11",
-      "img": "Shoes/2_Black Cement.png",
-      "hoverImg": null
-    },
-    "1_Wolf Grey": {
-      "shoeName": "Air Jordan 1",
-      "colorway": "Wolf Grey",
-      "shortName": "AJ1",
-      "category": "Jordan",
-      "isGrail": false,
-      "isBeater": true,
-      "purchaseDate": "2024-07-20",
-      "retireDate": "2026-03-21",
-      "reason": "Sold",
-      "story": "Test to see if the beater works",
-      "lastWorn": "2026-03-21",
-      "img": "Shoes/1_Barons.png",
-      "hoverImg": null
-    },
-    "1773621809428_Sea Salt": {
-      "shoeName": "NB 1080 V14",
-      "colorway": "Sea Salt",
-      "shortName": "NB FF",
-      "category": "Jordan",
-      "isGrail": false,
-      "isBeater": true,
-      "purchaseDate": "2026-03-02",
-      "retireDate": "2026-03-21",
-      "reason": "Sold",
-      "story": "Ran too much",
-      "lastWorn": "2026-03-15",
-      "img": "Shoes/1773621809428_Sea Salt.png",
-      "hoverImg": null
-    }
-  },
+  "graveyardMeta": {},
   "colorways": {
     "AJ1": [
-      "Royal Reimagined"
+      "Royal Reimagined",
+      "Wolf Grey"
     ],
-    "AJ2": [],
+    "AJ2": [
+      "Black Cement"
+    ],
     "AJ3": [
       "White Cement Reimagined",
       "Black Cement",
@@ -834,6 +784,7 @@
       "A Ma Maniere WYWS"
     ],
     "AJ4": [
+      "Fire Red",
       "Black Cement",
       "White Cement",
       "Military Blue",
@@ -901,7 +852,9 @@
     "AFMCB": [
       "Purple"
     ],
-    "NB FF": [],
+    "NB FF": [
+      "Sea Salt"
+    ],
     "ACF": [
       "Billy Hoyle"
     ]
@@ -914,7 +867,7 @@
       },
       {
         "code": "ATC2",
-        "colorway": "McEnroe"
+        "colorway": "Stone Blue"
       },
       {
         "code": "AJ40",
@@ -1084,5 +1037,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-21T15:23:00.484Z"
+  "exportedAt": "2026-03-21T15:34:04.881Z"
 }
