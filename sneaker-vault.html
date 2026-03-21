@@ -274,6 +274,98 @@
       );
     }
 
+    function GraveyardCard({ entryKey, entry, T, dark, setColorways, setGraveyardMeta }) {
+      const [hovered,    setHovered]    = useState(false);
+      const [showHover,  setShowHover]  = useState(false);
+      const [glowOn,     setGlowOn]     = useState(false);
+      const timerRef     = useRef(null);
+      const crossfadeRef = useRef(null);
+      const glowRef      = useRef(null);
+
+      const handleMouseEnter = () => {
+        if (!entry.img) return;
+        timerRef.current = setTimeout(() => {
+          setHovered(true); setShowHover(false); setGlowOn(false);
+          if (entry.isGrail && entry.hoverImg) {
+            crossfadeRef.current = setTimeout(() => { setShowHover(true); setGlowOn(true); }, 200);
+          } else {
+            glowRef.current = setTimeout(() => setGlowOn(true), 200);
+          }
+        }, 500);
+      };
+      const handleMouseLeave = () => {
+        clearTimeout(timerRef.current); clearTimeout(crossfadeRef.current); clearTimeout(glowRef.current);
+        setHovered(false); setShowHover(false); setGlowOn(false);
+      };
+
+      const glowColor  = entry.isGrail ? "rgba(255,215,0,0.7)" : entry.isBeater ? "rgba(180,80,20,0.8)" : "rgba(150,150,150,0.6)";
+      const labelColor = entry.isGrail ? "#FFD700" : entry.isBeater ? "#b45014" : "#aaa";
+      const purchaseDate = entry.purchaseDate ? new Date(entry.purchaseDate+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : null;
+      const retireDate   = entry.retireDate   ? new Date(entry.retireDate+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : null;
+
+      return (
+        <div style={{ background: dark ? T.cardBg : "#f9f9f9", border:`1px solid ${T.border}`, padding:"16px", width:"200px", flex:"0 0 auto" }}>
+          {/* Image */}
+          <div style={{ position:"relative", width:"168px", height:"105px", marginBottom:"10px" }}>
+            {entry.img ? (
+              <>
+                <img src={entry.img} alt={entry.colorway} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}
+                  style={{ width:"168px", height:"105px", objectFit:"cover", display:"block", cursor:"zoom-in",
+                    filter: glowOn ? `drop-shadow(0 0 20px ${glowColor})` : "none",
+                    opacity: entry.isGrail && entry.hoverImg && showHover ? 0 : 1,
+                    transition:"opacity 3s ease-in-out, filter 3s ease-in-out" }} />
+                {entry.isGrail && entry.hoverImg && (
+                  <img src={entry.hoverImg} alt={entry.colorway} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}
+                    style={{ position:"absolute", top:0, left:0, width:"168px", height:"105px", objectFit:"cover",
+                      filter:`drop-shadow(0 0 20px ${glowColor})`,
+                      opacity: showHover ? 1 : 0, transform: showHover ? "scale(1)" : "scale(0.95)",
+                      transition:"opacity 3s ease-in-out, transform 3s ease-in-out" }} />
+                )}
+              </>
+            ) : (
+              <div style={{ width:"168px", height:"105px", background:T.bg3, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <span style={{ fontSize:"32px" }}>🪦</span>
+              </div>
+            )}
+            {/* Hover overlay */}
+            {hovered && entry.img && (
+              <div style={{ position:"fixed", top:0, left:0, width:"100vw", height:"100vh", background:"rgba(0,0,0,0.85)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents:"none" }}>
+                <div style={{ position:"relative", width:"50vw", maxWidth:"600px", display:"flex", flexDirection:"column", alignItems:"center" }}>
+                  {/* Image */}
+                  <div style={{ position:"relative", width:"100%", display:"flex", justifyContent:"center" }}>
+                    <img src={entry.img} alt={entry.colorway} style={{ maxWidth:"50vw", maxHeight:"40vh", objectFit:"contain", filter:`drop-shadow(0 0 8px rgba(255,255,255,0.4))`, display:"block", opacity: entry.isGrail && entry.hoverImg && showHover ? 0 : 1, transition:"opacity 3s ease-in-out" }} />
+                    {entry.isGrail && entry.hoverImg && (
+                      <img src={entry.hoverImg} alt={entry.colorway} style={{ position:"absolute", top:0, left:"50%", transform: showHover ? "translateX(-50%) scale(1)" : "translateX(-50%) scale(0.95)", maxWidth:"50vw", maxHeight:"40vh", objectFit:"contain", filter:`drop-shadow(0 0 20px ${glowColor})`, opacity: showHover ? 1 : 0, transition:"opacity 3s ease-in-out, transform 3s ease-in-out" }} />
+                    )}
+                  </div>
+                  {/* Text area */}
+                  <div style={{ width:"100%", marginTop:"16px", textAlign:"center" }}>
+                    {entry.isGrail && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#FFD700", marginBottom:"6px", opacity: glowOn ? 1 : 0, transition:"opacity 3s ease-in-out" }}>✦ R.I.P. ✦</div>}
+                    <div style={{ fontSize:"13px", letterSpacing:"3px", color: entry.isGrail && glowOn ? "#FFD700" : entry.isBeater && glowOn ? "#b45014" : "#fff", transition:"color 3s ease-in-out" }}>{entry.shoeName} — {entry.colorway}</div>
+                    {(purchaseDate || retireDate) && (
+                      <div style={{ marginTop:"8px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>
+                        🪦 {purchaseDate || "?"} — {retireDate || "?"} 🪦
+                      </div>
+                    )}
+                    {entry.story && (
+                      <div style={{ marginTop:"12px", fontSize:"13px", color:"#fff", lineHeight:"1.8", letterSpacing:"0.5px" }}>{entry.story}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          {/* Card text — clean, no story fade */}
+          <div style={{ fontSize:"11px", fontWeight:"bold", color: T.text, marginBottom:"2px", textAlign:"center" }}>{entry.shoeName}</div>
+          <div style={{ fontSize:"10px", color: T.text4, textAlign:"center" }}>{entry.colorway}</div>
+          <button onClick={() => { if (window.confirm(`Restore ${entry.shoeName} — ${entry.colorway} to your collection?`)) {
+            setColorways(cws => ({ ...cws, [entry.shortName]: [...(cws[entry.shortName]||[]), entry.colorway] }));
+            setGraveyardMeta(g => { const n={...g}; delete n[entryKey]; return n; });
+          }}} style={{ marginTop:"10px", background:"transparent", border:`1px solid ${T.border2}`, color:T.text5, padding:"3px 8px", cursor:"pointer", fontSize:"8px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>RESTORE</button>
+        </div>
+      );
+    }
+
     function App() {
       const [dark, setDark] = useDarkMode();
       const T = dark ? DARK : LIGHT;
@@ -286,6 +378,7 @@
       const [grailMeta,      setGrailMeta]      = useState(() => load("vault_grail_meta", {}));
       const [beaterMeta,     setBeaterMeta]     = useState(() => load("vault_beater_meta", {}));
       const [glowMeta,       setGlowMeta]       = useState(() => load("vault_glow_meta", {}));
+      const [graveyardMeta,  setGraveyardMeta]  = useState(() => load("vault_graveyard_meta", {}));
       const [colorways,      setColorways]      = useState(() => load("vault_colorways", COLORWAYS));
       const [displayLayout,  setDisplayLayout]  = useState(() => load("vault_display_layout", []));
       const [editingCell,    setEditingCell]    = useState(null);
@@ -302,6 +395,8 @@
       const [editColorways,  setEditColorways]  = useState([]);
       const [newColorway,    setNewColorway]    = useState("");
       const [renamingColorwayIdx, setRenamingColorwayIdx] = useState(null);
+      const [retiringMeta, setRetiringMeta] = useState(null); // { shoeId, colorway }
+      const [retireForm, setRetireForm] = useState({ reason:"Sold", dateRetired:"", story:"" });
       const [loggingId,      setLoggingId]      = useState(null);
       const [wearDate,       setWearDate]       = useState(() => localDateStr());
       const [wearColorway,   setWearColorway]   = useState("");
@@ -324,6 +419,7 @@
       useEffect(() => save("vault_grail_meta",     grailMeta),    [grailMeta]);
       useEffect(() => save("vault_beater_meta",    beaterMeta),   [beaterMeta]);
       useEffect(() => save("vault_glow_meta",      glowMeta),     [glowMeta]);
+      useEffect(() => save("vault_graveyard_meta", graveyardMeta),[graveyardMeta]);
       useEffect(() => save("vault_colorways",      colorways),    [colorways]);
 
       useEffect(() => {
@@ -491,7 +587,7 @@
       };
 
       const exportJSON = () => {
-        const data = { inventory, wearLog, images, colorwayMeta, grailMeta, beaterMeta, glowMeta, colorways, displayLayout, exportedAt: new Date().toISOString() };
+        const data = { inventory, wearLog, images, colorwayMeta, grailMeta, beaterMeta, glowMeta, graveyardMeta, colorways, displayLayout, exportedAt: new Date().toISOString() };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type:"application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -512,6 +608,7 @@
             if (data.grailMeta)     { setGrailMeta(data.grailMeta);         save("vault_grail_meta",      data.grailMeta); }
             if (data.beaterMeta)    { setBeaterMeta(data.beaterMeta);       save("vault_beater_meta",     data.beaterMeta); }
             if (data.glowMeta)      { setGlowMeta(data.glowMeta);           save("vault_glow_meta",       data.glowMeta); }
+            if (data.graveyardMeta) { setGraveyardMeta(data.graveyardMeta); save("vault_graveyard_meta",  data.graveyardMeta); }
             if (data.colorways)     { setColorways(data.colorways);         save("vault_colorways",       data.colorways); }
             if (data.displayLayout) { setDisplayLayout(data.displayLayout); save("vault_display_layout",  data.displayLayout); }
             setImportMsg({ type:"success", text:"Backup restored successfully!" });
@@ -577,7 +674,7 @@
 
           {/* Nav */}
           <div style={{ display:"flex", borderBottom:`1px solid ${T.border}`, background: T.navBg, alignItems:"center" }}>
-            {["inventory","display","wishlist","history","about"].map(v => (
+            {["inventory","display","wishlist","graveyard","history","about"].map(v => (
               <button key={v} onClick={() => setView(v)} style={{
                 padding:"14px 28px", background:view===v?"#e63946":"transparent",
                 color:view===v?"#fff": T.text4, border:"none", cursor:"pointer",
@@ -1060,8 +1157,68 @@
                                     setEditingMeta(null);
                                 }} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>REMOVE PHOTO</button>
                               )}
+                              <button onClick={() => {
+                                setRetiringMeta({ shoeId: editingMeta.shoeId, colorway: editingMeta.colorway });
+                                setRetireForm({ reason:"Sold", dateRetired: localDateStr(), story:"" });
+                                setEditingMeta(null);
+                              }} style={{ background:"transparent", border:"1px solid #888", color:"#888", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>🪦 RETIRE</button>
                             </div>
                           </div>
+                          </div>
+                        )}
+                        {/* Retire form */}
+                        {retiringMeta && retiringMeta.shoeId === shoe.id && (
+                          <div style={{ background:T.bg4, border:"1px solid #888", padding:"12px", marginTop:"8px" }}>
+                            <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#888", marginBottom:"10px" }}>🪦 RETIRE — {retiringMeta.colorway}</div>
+                            <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", marginBottom:"10px" }}>
+                              <div style={{ flex:"0 0 120px" }}>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>REASON</div>
+                                <select value={retireForm.reason} onChange={e => setRetireForm(f => ({...f, reason:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}}>
+                                  <option>Sold</option>
+                                  <option>Worn Out</option>
+                                  <option>Donated</option>
+                                  <option>Other</option>
+                                </select>
+                              </div>
+                              <div style={{ flex:"0 0 140px" }}>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>DATE RETIRED</div>
+                                <input type="date" value={retireForm.dateRetired} onChange={e => setRetireForm(f => ({...f, dateRetired:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                              </div>
+                            </div>
+                            <div style={{ marginBottom:"10px" }}>
+                              <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>FAREWELL STORY</div>
+                              <textarea placeholder="Tell the story of this shoe's retirement..." value={retireForm.story} onChange={e => setRetireForm(f => ({...f, story:e.target.value}))}
+                                style={{...IS, fontSize:"11px", padding:"5px", minHeight:"60px", resize:"vertical", width:"100%"}} />
+                            </div>
+                            <div style={{ display:"flex", gap:"8px" }}>
+                              <button onClick={() => {
+                                const rShoeId = retiringMeta.shoeId;
+                                const rCw = retiringMeta.colorway;
+                                const rShoe = inventory.find(s => s.id === rShoeId);
+                                if (!rShoe) return;
+                                if (!window.confirm(`Retire ${rShoe.name} — ${rCw}? This will move it to the Graveyard.`)) return;
+                                const key = `${rShoeId}_${rCw}`;
+                                const meta = colorwayMeta[key] || {};
+                                const wears = (wearLog[rShoeId] || []).filter(e => e.colorway === rCw);
+                                const lastWorn = wears.length ? [...wears].sort((a,b) => b.date > a.date ? 1 : -1)[0].date : null;
+                                setGraveyardMeta(g => ({ ...g, [key]: {
+                                  shoeName: rShoe.name, colorway: rCw, shortName: rShoe.shortName,
+                                  category: rShoe.category,
+                                  isGrail: !!grailMeta[key], isBeater: !!beaterMeta[key],
+                                  purchaseDate: meta.purchaseDate || null,
+                                  retireDate: retireForm.dateRetired,
+                                  reason: retireForm.reason,
+                                  story: retireForm.story,
+                                  lastWorn,
+                                  img: images[key] || null,
+                                  hoverImg: images[`${key}_hover`] || null,
+                                }}));
+                                const newCws = (colorways[rShoe.shortName] || []).filter(c => c !== rCw);
+                                setColorways(cws => ({ ...cws, [rShoe.shortName]: newCws }));
+                                setRetiringMeta(null);
+                              }} style={{ background:"#888", color:"#fff", border:"none", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>🪦 CONFIRM RETIREMENT</button>
+                              <button onClick={() => setRetiringMeta(null)} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>CANCEL</button>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -1374,9 +1531,53 @@
               </div>
             )}
 
+            {/* ── GRAVEYARD ── */}
+            {view === "graveyard" && (() => {
+              const entries = Object.entries(graveyardMeta);
+              const grails  = entries.filter(([,e]) => e.isGrail && !e.isBeater);
+              const beaters = entries.filter(([,e]) => e.isBeater);
+              const regular = entries.filter(([,e]) => !e.isGrail && !e.isBeater);
+              const SectionHeader = ({ label, color }) => (
+                <div style={{ fontSize:"10px", letterSpacing:"4px", color, marginBottom:"16px", marginTop:"8px" }}>{label}</div>
+              );
+              return (
+                <div>
+                  {entries.length === 0 ? (
+                    <div style={{ fontSize:"11px", letterSpacing:"4px", color:T.text5 }}>🪦 THE GRAVEYARD IS EMPTY</div>
+                  ) : (
+                    <>
+                      {grails.length > 0 && (
+                        <div style={{ marginBottom:"32px" }}>
+                          <SectionHeader label="✦ RETIRED GRAILS ✦" color="#FFD700" />
+                          <div style={{ display:"flex", flexWrap:"wrap", gap:"12px" }}>
+                            {grails.map(([k,e]) => <GraveyardCard key={k} entryKey={k} entry={e} T={T} dark={dark} setColorways={setColorways} setGraveyardMeta={setGraveyardMeta} />)}
+                          </div>
+                        </div>
+                      )}
+                      {regular.length > 0 && (
+                        <div style={{ marginBottom:"32px" }}>
+                          <SectionHeader label="🪦 RETIRED" color={T.text4} />
+                          <div style={{ display:"flex", flexWrap:"wrap", gap:"12px" }}>
+                            {regular.map(([k,e]) => <GraveyardCard key={k} entryKey={k} entry={e} T={T} dark={dark} setColorways={setColorways} setGraveyardMeta={setGraveyardMeta} />)}
+                          </div>
+                        </div>
+                      )}
+                      {beaters.length > 0 && (
+                        <div style={{ marginBottom:"32px" }}>
+                          <SectionHeader label="💀 RETIRED BEATERS 💀" color="#b45014" />
+                          <div style={{ display:"flex", flexWrap:"wrap", gap:"12px" }}>
+                            {beaters.map(([k,e]) => <GraveyardCard key={k} entryKey={k} entry={e} T={T} dark={dark} setColorways={setColorways} setGraveyardMeta={setGraveyardMeta} />)}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+
           </div>
 
-          {/* Floating LOG WEAR button */}
           <button onClick={() => {
             setQuickLog(true);
             setQuickDate(localDateStr());
