@@ -42,6 +42,7 @@
     };
 
     const localDateStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+    const formatDate = (iso) => iso ? new Date(iso+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : null;
 
     const useOSDark = () => {
       const [dark, setDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
@@ -516,7 +517,7 @@
                                 : `${longestUnworn.name}${longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""}`}
                             </div>
                             <div style={{ fontSize:"10px", color:T.text3, marginTop:"2px" }}>
-                              {longestUnwornLastDate ? `Last worn: ${longestUnwornLastDate}` : "Never worn"}
+                              {longestUnwornLastDate ? `Last worn: ${formatDate(longestUnwornLastDate)}` : "Never worn"}
                             </div>
                           </div>
                         </div>
@@ -531,7 +532,7 @@
                               <div style={{ fontSize: isMobile ? "13px" : "16px", fontWeight:"bold", color: isLastWornGrail ? "#FFD700" : T.text }}>
                                 {lastWornShoe.name}{lastWornColorway ? ` — ${lastWornColorway}` : ""}
                               </div>
-                              <div style={{ fontSize:"10px", color:T.text3, marginTop:"2px" }}>{lastWornDate}</div>
+                              <div style={{ fontSize:"10px", color:T.text3, marginTop:"2px" }}>{lastWornDate ? `Worn on ${formatDate(lastWornDate)}` : ""}</div>
                             </div>
                           </div>
                         )}

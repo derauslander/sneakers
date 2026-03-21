@@ -67,6 +67,7 @@
     const load = (key, fallback) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } };
     const save = (key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.error(e); } };
     const localDateStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+    const formatDate = (iso) => iso ? new Date(iso+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : null;
 
     function ImageSlot({ img, hoverImg, label, accent, bg, onUpload, onClear, width = 96, height = 60, wearDates = [], isGrail = false, purchaseDate = null, size = null, isBeater = false, ogYear = null, story = null, isOnIce = false, dark = false, shoeName = null }) {
       const fileRef = useRef();
@@ -799,7 +800,7 @@
                               : `${longestUnworn.name}${longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""}`}
                           </div>
                           <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>
-                            {longestUnwornLastDate ? `Last worn: ${longestUnwornLastDate}` : "Never worn"}
+                            {longestUnwornLastDate ? `Last worn: ${formatDate(longestUnwornLastDate)}` : "Never worn"}
                           </div>
                         </div>
                       </div>
@@ -814,9 +815,7 @@
                             <div style={{ fontSize:"16px", fontWeight:"bold", color: isLastWornGrail ? "#FFD700" : T.text }}>
                               {lastWornShoe.name}{lastWornColorway ? ` — ${lastWornColorway}` : ""}
                             </div>
-                            <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>
-                              {lastWornDate}
-                            </div>
+                            <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{lastWornDate ? `Worn on ${formatDate(lastWornDate)}` : ""}</div>
                           </div>
                         </div>
                       )}
