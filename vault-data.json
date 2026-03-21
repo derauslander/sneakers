@@ -9,14 +9,6 @@
       "wishlist": false
     },
     {
-      "id": 2,
-      "name": "Air Jordan 2",
-      "shortName": "AJ2",
-      "quantity": 1,
-      "category": "Jordan",
-      "wishlist": false
-    },
-    {
       "id": 3,
       "name": "Air Jordan 3",
       "shortName": "AJ3",
@@ -153,14 +145,6 @@
       "wishlist": true
     },
     {
-      "id": 20,
-      "name": "Air Force Command",
-      "shortName": "AFC",
-      "quantity": 0,
-      "category": "Nike",
-      "wishlist": true
-    },
-    {
       "id": 21,
       "name": "Air Force Max CB",
       "shortName": "AFMCB",
@@ -175,6 +159,14 @@
       "quantity": 1,
       "wishlist": false,
       "id": 1773621809428
+    },
+    {
+      "name": "Air Command Force",
+      "shortName": "ACF",
+      "category": "Nike",
+      "quantity": 1,
+      "wishlist": true,
+      "id": 1774096319133
     }
   ],
   "wearLog": {
@@ -185,11 +177,15 @@
       },
       {
         "date": "2026-03-08",
-        "colorway": "Barons"
+        "colorway": "Wolf Grey"
       },
       {
         "date": "2026-03-15",
-        "colorway": "Barons"
+        "colorway": "Wolf Grey"
+      },
+      {
+        "date": "2026-03-21",
+        "colorway": "Wolf Grey"
       }
     ],
     "2": [
@@ -348,7 +344,7 @@
         "date": "2025-06-20"
       },
       {
-        "colorway": "McEnroe",
+        "colorway": "Stone Blue",
         "date": "2025-08-08"
       },
       {
@@ -377,7 +373,6 @@
   },
   "images": {
     "1_Royal Reimagined": "Shoes/1_Royal Reimagined.png",
-    "1_Barons": "Shoes/1_Barons.png",
     "2_Black Cement": "Shoes/2_Black Cement.png",
     "3_White Cement Reimagined": "Shoes/3_White Cement Reimagined.png",
     "3_Black Cement": "Shoes/3_Black Cement.png",
@@ -413,7 +408,6 @@
     "14_Chicago": "Shoes/14_Chicago.png",
     "15_Hot Lava": "Shoes/15_Hot Lava.png",
     "15_Hot Lava_hover": "Shoes/15_Hot Lava_hover.png",
-    "15_McEnroe": "Shoes/15_McEnroe.png",
     "15_Pixel Court": "Shoes/15_Pixel Court.png",
     "16_Volt": "Shoes/16_Volt.png",
     "16_Volt_hover": "Shoes/16_Volt_hover.png",
@@ -422,7 +416,10 @@
     "18_Space Jam": "Shoes/18_Space Jam.png",
     "19_Volt": "Shoes/19_Volt.png",
     "20_Billy Hoyle": "Shoes/20_Billy Hoyle.png",
-    "21_Purple": "Shoes/21_Purple.png"
+    "21_Purple": "Shoes/21_Purple.png",
+    "1_Wolf Grey": "Shoes/1_Barons.png",
+    "15_Stone Blue": "Shoes/15_McEnroe.png",
+    "1774096319133_Billy Hoyle": "Shoes/1774096319133_Billy Hoyle.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -624,13 +621,6 @@
       "notes": "",
       "ogYear": "1994"
     },
-    "15_McEnroe": {
-      "purchaseDate": "2025-06-30",
-      "purchasePrice": "193.09",
-      "retailer": "GOAT",
-      "size": "12.5",
-      "notes": ""
-    },
     "11_Flu Game": {
       "purchaseDate": "2025-05-02",
       "purchasePrice": "293.03",
@@ -711,13 +701,6 @@
       "size": "12.5",
       "notes": "LR hit on SNKRS."
     },
-    "1_Barons": {
-      "purchaseDate": "2024-07-20",
-      "purchasePrice": "152.08",
-      "retailer": "SNKRS",
-      "size": "12.5",
-      "notes": ""
-    },
     "21_Purple": {
       "purchaseDate": "",
       "purchasePrice": "",
@@ -733,6 +716,20 @@
       "notes": "",
       "ogYear": "",
       "story": ""
+    },
+    "1_Wolf Grey": {
+      "purchaseDate": "2024-07-20",
+      "purchasePrice": "152.08",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": ""
+    },
+    "15_Stone Blue": {
+      "purchaseDate": "2025-06-30",
+      "purchasePrice": "193.09",
+      "retailer": "GOAT",
+      "size": "12.5",
+      "notes": ""
     }
   },
   "grailMeta": {
@@ -744,9 +741,9 @@
     "4_Fire Red": true
   },
   "beaterMeta": {
-    "1_Barons": true,
     "4_Red Cement": true,
-    "1773621809428_Sea Salt": true
+    "1773621809428_Sea Salt": true,
+    "1_Wolf Grey": true
   },
   "glowMeta": {
     "6_Reverse Infrared": true,
@@ -762,14 +759,73 @@
     "9_Black Olive": true,
     "11_Flu Game": true
   },
+  "graveyardMeta": {
+    "4_Fire Red": {
+      "shoeName": "Air Jordan 4",
+      "colorway": "Fire Red",
+      "shortName": "AJ4",
+      "category": "Jordan",
+      "isGrail": true,
+      "isBeater": false,
+      "purchaseDate": "2023-01-07",
+      "retireDate": "2026-03-21",
+      "reason": "Sold",
+      "story": "Hopefully i retire these to get a size 12.5.",
+      "lastWorn": "2026-01-16",
+      "img": "Shoes/4_Fire Red.png",
+      "hoverImg": "Shoes/4_Fire Red_hover.png"
+    },
+    "2_Black Cement": {
+      "shoeName": "Air Jordan 2",
+      "colorway": "Black Cement",
+      "shortName": "AJ2",
+      "category": "Jordan",
+      "isGrail": false,
+      "isBeater": false,
+      "purchaseDate": "2023-09-23",
+      "retireDate": "2026-03-21",
+      "reason": "Sold",
+      "story": "Test, to see if this works",
+      "lastWorn": "2025-09-11",
+      "img": "Shoes/2_Black Cement.png",
+      "hoverImg": null
+    },
+    "1_Wolf Grey": {
+      "shoeName": "Air Jordan 1",
+      "colorway": "Wolf Grey",
+      "shortName": "AJ1",
+      "category": "Jordan",
+      "isGrail": false,
+      "isBeater": true,
+      "purchaseDate": "2024-07-20",
+      "retireDate": "2026-03-21",
+      "reason": "Sold",
+      "story": "Test to see if the beater works",
+      "lastWorn": "2026-03-21",
+      "img": "Shoes/1_Barons.png",
+      "hoverImg": null
+    },
+    "1773621809428_Sea Salt": {
+      "shoeName": "NB 1080 V14",
+      "colorway": "Sea Salt",
+      "shortName": "NB FF",
+      "category": "Jordan",
+      "isGrail": false,
+      "isBeater": true,
+      "purchaseDate": "2026-03-02",
+      "retireDate": "2026-03-21",
+      "reason": "Sold",
+      "story": "Ran too much",
+      "lastWorn": "2026-03-15",
+      "img": "Shoes/1773621809428_Sea Salt.png",
+      "hoverImg": null
+    }
+  },
   "colorways": {
     "AJ1": [
-      "Royal Reimagined",
-      "Barons"
+      "Royal Reimagined"
     ],
-    "AJ2": [
-      "Black Cement"
-    ],
+    "AJ2": [],
     "AJ3": [
       "White Cement Reimagined",
       "Black Cement",
@@ -778,7 +834,6 @@
       "A Ma Maniere WYWS"
     ],
     "AJ4": [
-      "Fire Red",
       "Black Cement",
       "White Cement",
       "Military Blue",
@@ -825,7 +880,7 @@
     ],
     "ATC2": [
       "Hot Lava",
-      "McEnroe",
+      "Stone Blue",
       "Pixel Court"
     ],
     "SC2": [
@@ -846,8 +901,9 @@
     "AFMCB": [
       "Purple"
     ],
-    "NB FF": [
-      "Sea Salt"
+    "NB FF": [],
+    "ACF": [
+      "Billy Hoyle"
     ]
   },
   "displayLayout": [
@@ -1028,5 +1084,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-20T11:55:51.920Z"
+  "exportedAt": "2026-03-21T15:23:00.484Z"
 }
