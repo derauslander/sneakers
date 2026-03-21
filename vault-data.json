@@ -306,13 +306,13 @@
     ],
     "8": [
       {
-        "colorway": "Playoff",
+        "colorway": "Playoffs",
         "date": "2025-07-17"
       }
     ],
     "9": [
       {
-        "colorway": "Black Olive",
+        "colorway": "Olive",
         "date": "2025-07-24"
       }
     ],
@@ -407,8 +407,6 @@
     "6_Infrared": "Shoes/6_Infrared.png",
     "6_Reverse Infrared": "Shoes/6_Reverse Infrared.png",
     "7_Cardinal": "Shoes/7_Cardinal.png",
-    "8_Playoff": "Shoes/8_Playoff.png",
-    "9_Black Olive": "Shoes/9_Black Olive.png",
     "10_Steel": "Shoes/10_Steel.png",
     "11_Flu Game": "Shoes/11_Flu Game.png",
     "12_Black Flint": "Shoes/12_Black Flint.png",
@@ -427,7 +425,9 @@
     "21_Purple": "Shoes/21_Purple.png",
     "1_Wolf Grey": "Shoes/1_Barons.png",
     "15_Stone Blue": "Shoes/15_McEnroe.png",
-    "1774096319133_Billy Hoyle": "Shoes/1774096319133_Billy Hoyle.png"
+    "1774096319133_Billy Hoyle": "Shoes/1774096319133_Billy Hoyle.png",
+    "8_Playoffs": "Shoes/8_Playoffs.png",
+    "9_Olive": "Shoes/9_Olive.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -482,15 +482,6 @@
       "retailer": "EBAY",
       "size": "12.5",
       "notes": ""
-    },
-    "8_Playoff": {
-      "purchaseDate": "2023-10-20",
-      "purchasePrice": "309.52",
-      "retailer": "EBAY",
-      "size": "12.5",
-      "notes": "",
-      "ogYear": "1993",
-      "story": "In 1993, I went with my father to look for the Air Force Max CB.  After hitting about five stores, I \"settled\" for these."
     },
     "16_Volt": {
       "purchaseDate": "2023-01-22",
@@ -557,15 +548,6 @@
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": ""
-    },
-    "9_Black Olive": {
-      "purchaseDate": "2024-11-09",
-      "purchasePrice": "228.11",
-      "retailer": "SNKRS",
-      "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "I had these in French Blue in 2002."
     },
     "13_Flint Grey": {
       "purchaseDate": "2024-03-20",
@@ -738,6 +720,24 @@
       "retailer": "GOAT",
       "size": "12.5",
       "notes": ""
+    },
+    "8_Playoffs": {
+      "purchaseDate": "2023-10-20",
+      "purchasePrice": "309.52",
+      "retailer": "EBAY",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "1993",
+      "story": "In 1993, I went with my father to look for the Air Force Max CB.  After hitting about five stores, I \"settled\" for these."
+    },
+    "9_Olive": {
+      "purchaseDate": "2024-11-09",
+      "purchasePrice": "228.11",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "I had these in French Blue in 2002."
     }
   },
   "grailMeta": {
@@ -809,10 +809,10 @@
       "Cardinal"
     ],
     "AJ8": [
-      "Playoff"
+      "Playoffs"
     ],
     "AJ9": [
-      "Black Olive"
+      "Olive"
     ],
     "AJ10": [
       "Steel"
@@ -985,11 +985,11 @@
       },
       {
         "code": "AJ8",
-        "colorway": "Playoff"
+        "colorway": "Playoffs"
       },
       {
         "code": "AJ9",
-        "colorway": "Black Olive"
+        "colorway": "Olive"
       }
     ],
     [
@@ -1037,5 +1037,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-21T15:34:04.881Z"
+  "exportedAt": "2026-03-21T19:11:42.507Z"
 }
