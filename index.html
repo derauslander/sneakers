@@ -389,12 +389,14 @@
       return (
         <div style={{ minHeight:"100vh", background:T.bg }}>
           {/* Header */}
-          <div style={{ background:"#000000", borderBottom:"1px solid #222", position:"relative", minHeight: isMobile ? "80px" : "200px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ background:"#000000", borderBottom:"1px solid #222", position:"relative", minHeight: isMobile ? "80px" : "200px", display:"flex", alignItems:"center" }}>
             <img src="banner.png" alt="" style={{ position:"absolute", top:0, left:0, width:"100%", height:"100%", objectFit:"cover", objectPosition:"center" }} />
-            {/* Title image overlay — centered */}
-            <img src="title.png" alt="DerAusländer The Vault" style={{ position:"absolute", left:0, right: isMobile ? "90px" : "180px", top:"50%", transform:"translateY(-50%)", height: isMobile ? "40px" : "120px", objectFit:"contain", zIndex:2, pointerEvents:"none", filter:"none" }} />
+            {/* Title — fills remaining space and centers */}
+            <div style={{ flex:1, display:"flex", justifyContent:"center", alignItems:"center", position:"relative", zIndex:2, pointerEvents:"none" }}>
+              <img src="title.png" alt="DerAusländer The Vault" style={{ height: isMobile ? "40px" : "120px", objectFit:"contain", filter:"none" }} />
+            </div>
             {/* Stats — solid black panel */}
-            <div style={{ position:"relative", zIndex:2, marginLeft:"auto", display:"flex", gap: isMobile ? "16px" : "32px", background:"#000000", borderLeft:"2px solid #e63946", padding: isMobile ? "0 16px" : "0 32px", height: isMobile ? "80px" : "200px", alignItems:"center" }}>
+            <div style={{ position:"relative", zIndex:2, flexShrink:0, display:"flex", gap: isMobile ? "16px" : "32px", background:"#000000", borderLeft:"2px solid #e63946", padding: isMobile ? "0 16px" : "0 32px", height: isMobile ? "80px" : "200px", alignItems:"center" }}>
               {[["PAIRS", total], ["WISHLIST", wishlist.length]].map(([label, val]) => (
                 <div key={label} style={{ textAlign:"center" }}>
                   <div style={{ fontSize: isMobile ? "16px" : "22px", fontWeight:"bold", color:"#e63946" }}>{val}</div>
