@@ -454,11 +454,13 @@
       // Build a flat list of { shoe, colorway, lastWorn } for every owned colorway
       const allColorwayEntries = owned.flatMap(shoe => {
         const shoeColorways = colorways[shoe.shortName] || [];
-        return shoeColorways.map(cw => {
-          const entries = (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
-          const lastWorn = entries.length ? [...entries].sort((a,b) => a.date < b.date ? 1 : -1)[0].date : null;
-          return { shoe, colorway: cw, lastWorn };
-        });
+        return shoeColorways
+          .filter(cw => !beaterMeta[`${shoe.id}_${cw}`])
+          .map(cw => {
+            const entries = (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
+            const lastWorn = entries.length ? [...entries].sort((a,b) => a.date < b.date ? 1 : -1)[0].date : null;
+            return { shoe, colorway: cw, lastWorn };
+          });
       });
 
       const longestUnwornEntry = allColorwayEntries.reduce((pick, entry) => {
