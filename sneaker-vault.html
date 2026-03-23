@@ -34,6 +34,12 @@
 <body>
   <div id="root"></div>
   <script type="text/babel">
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ADMIN_MODE — true for local admin app, false for public site
+    // build.bat flips this to false when generating index.html
+    // ═══════════════════════════════════════════════════════════════════════════
+    const ADMIN_MODE = true;
+
     const { useState, useEffect, useRef } = React;
 
     const LIGHT = {
@@ -67,6 +73,38 @@
       return [dark, setDark];
     };
 
+    const useDarkModePublic = () => {
+      const [dark, setDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
+      useEffect(() => {
+        const mq = window.matchMedia("(prefers-color-scheme: dark)");
+        const handler = e => { setDark(e.matches); document.body.classList.toggle("dark", e.matches); };
+        mq.addEventListener("change", handler);
+        document.body.classList.toggle("dark", dark);
+        return () => mq.removeEventListener("change", handler);
+      }, []);
+      return [dark, () => {}];
+    };
+
+    const useIsMobile = () => {
+      const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+      useEffect(() => {
+        const handler = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener("resize", handler);
+        return () => window.removeEventListener("resize", handler);
+      }, []);
+      return isMobile;
+    };
+
+    // ── Anniversary check helper ─────────────────────────────────────────
+    const isAnniversaryToday = (purchaseDate) => {
+      if (!purchaseDate) return false;
+      const todayStr = localDateStr();
+      const todayMD = todayStr.slice(5);
+      if (purchaseDate.slice(5) !== todayMD) return false;
+      const years = parseInt(todayStr.slice(0,4)) - parseInt(purchaseDate.slice(0,4));
+      return years > 0;
+    };
+
         const COLORWAYS = {};
 
     const CAT_COLORS = {
@@ -75,7 +113,7 @@
     };
 
     const load = (key, fallback) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } };
-    const save = (key, val) => { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.error(e); } };
+    const save = (key, val) => { if (!ADMIN_MODE) return; try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.error(e); } };
     const localDateStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
     const formatDate = (iso) => iso ? new Date(iso+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : null;
 
@@ -95,6 +133,13 @@
       const storyRef = useRef(null);
       const iceRef = useRef(null);
 
+      // Determine if hover image should crossfade:
+      // - Grails: always crossfade when hoverImg exists
+      // - Non-grails: only on purchase anniversary
+      const isAnniversary = isAnniversaryToday(purchaseDate);
+      const shouldCrossfade = hoverImg && (isGrail || isAnniversary);
+      const anniversaryGlow = !isGrail && isAnniversary && shouldCrossfade;
+
       const handleMouseEnter = () => {
         timerRef.current = setTimeout(() => {
           setHovered(true);
@@ -103,12 +148,17 @@
           setGrailReveal(false);
           setShowStory(false);
           setIceGlow(false);
-          if (isGrail && hoverImg) {
+          if (isGrail && shouldCrossfade) {
             crossfadeRef.current = setTimeout(() => { setShowHover(true); setGrailReveal(true);
               if (story) storyRef.current = setTimeout(() => setShowStory(true), 5000);
             }, 200);
           } else if (isGrail) {
             grailRef.current = setTimeout(() => { setGrailReveal(true);
+              if (story) storyRef.current = setTimeout(() => setShowStory(true), 5000);
+            }, 200);
+          } else if (shouldCrossfade) {
+            // Non-grail anniversary crossfade
+            crossfadeRef.current = setTimeout(() => { setShowHover(true);
               if (story) storyRef.current = setTimeout(() => setShowStory(true), 5000);
             }, 200);
           } else if (story) {
@@ -160,8 +210,8 @@
                     <div style={{ position:"relative", width:"50vw", maxWidth:"600px", display:"flex", flexDirection:"column", alignItems:"center" }}>
                       {/* Image — stays fixed, never fades */}
                       <div style={{ position:"relative", width:"100%", display:"flex", justifyContent:"center" }}>
-                        <img src={img} alt={label} style={{ maxWidth:"50vw", maxHeight:"40vh", objectFit:"contain", filter: isBeater && beaterGlow ? "drop-shadow(0 0 30px rgba(180,80,20,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.3))" : isOnIce && iceGlow ? "drop-shadow(0 0 30px rgba(100,200,255,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.3))" : "drop-shadow(0 0 8px rgba(255,255,255,0.6))", display:"block", opacity: (isGrail && hoverImg && showHover) ? 0 : 1, transition:"opacity 3s ease-in-out, filter 3s ease-in-out" }} />
-                        {isGrail && hoverImg && (
+                        <img src={img} alt={label} style={{ maxWidth:"50vw", maxHeight:"40vh", objectFit:"contain", filter: isBeater && beaterGlow ? "drop-shadow(0 0 30px rgba(180,80,20,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.3))" : isOnIce && iceGlow ? "drop-shadow(0 0 30px rgba(100,200,255,0.8)) drop-shadow(0 0 8px rgba(255,255,255,0.3))" : "drop-shadow(0 0 8px rgba(255,255,255,0.6))", display:"block", opacity: (shouldCrossfade && showHover) ? 0 : 1, transition:"opacity 3s ease-in-out, filter 3s ease-in-out" }} />
+                        {shouldCrossfade && (
                           <img src={hoverImg} alt={label} style={{ position:"absolute", top:0, left:"50%", transform: showHover ? "translateX(-50%) scale(1)" : "translateX(-50%) scale(0.95)", maxWidth:"50vw", maxHeight:"40vh", objectFit:"contain", filter:"drop-shadow(0 0 30px rgba(255,215,0,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.6))", opacity: showHover ? 1 : 0, transition:"opacity 3s ease-in-out, transform 3s ease-in-out" }} />
                         )}
                       </div>
@@ -172,7 +222,8 @@
                           {isGrail && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#FFD700", opacity: grailReveal ? 1 : 0, transition:"opacity 3s ease-in-out" }}>✦ GRAIL ✦</div>}
                           {isBeater && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#b45014", marginTop:"6px", opacity: beaterGlow ? 1 : 0, transition:"opacity 3s ease-in-out" }}>💀 BEATER 💀</div>}
                           {isOnIce && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#64c8ff", marginTop:"6px", opacity: iceGlow ? 1 : 0, transition:"opacity 3s ease-in-out" }}>❄️ ON ICE ❄️</div>}
-                          <div style={{ marginTop:(isGrail||isBeater||isOnIce)?"6px":"0", fontSize:"13px", letterSpacing:"3px", color: isGrail && grailReveal ? "#FFD700" : isBeater && beaterGlow ? "#b45014" : isOnIce && iceGlow ? "#64c8ff" : "#fff", transition:"color 3s ease-in-out" }}>
+                          {anniversaryGlow && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#FFD700", marginTop:"6px", opacity: showHover ? 1 : 0, transition:"opacity 3s ease-in-out" }}>✦ ANNIVERSARY ✦</div>}
+                          <div style={{ marginTop:(isGrail||isBeater||isOnIce||anniversaryGlow)?"6px":"0", fontSize:"13px", letterSpacing:"3px", color: isGrail && grailReveal ? "#FFD700" : isBeater && beaterGlow ? "#b45014" : isOnIce && iceGlow ? "#64c8ff" : anniversaryGlow && showHover ? "#FFD700" : "#fff", transition:"color 3s ease-in-out" }}>
                             {shoeName ? `${shoeName} — ${label}` : label}
                           </div>
                           {ogYear && <div style={{ marginTop:"4px", fontSize:"10px", color:"#fff", letterSpacing:"1px" }}>Originally Owned in {ogYear}</div>}
@@ -237,8 +288,8 @@
 
       return (
         <div
-          onClick={onEdit}
-          style={{ width:"160px", cursor:"pointer" }}>
+          onClick={ADMIN_MODE ? onEdit : undefined}
+          style={{ width:"160px", cursor: ADMIN_MODE ? "pointer" : "default" }}>
           <div
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -369,31 +420,45 @@
           {/* Card text — clean, no story fade */}
           <div style={{ fontSize:"11px", fontWeight:"bold", color: CT.text, marginBottom:"2px", textAlign:"center" }}>{entry.shoeName}</div>
           <div style={{ fontSize:"10px", color: CT.text4, textAlign:"center" }}>{entry.colorway}</div>
-          <button onClick={() => { if (window.confirm(`Restore ${entry.shoeName} — ${entry.colorway} to your collection?`)) {
+          {ADMIN_MODE && <button onClick={() => { if (window.confirm(`Restore ${entry.shoeName} — ${entry.colorway} to your collection?`)) {
             setColorways(cws => ({ ...cws, [entry.shortName]: [...(cws[entry.shortName]||[]), entry.colorway] }));
             setGraveyardMeta(g => { const n={...g}; delete n[entryKey]; return n; });
-          }}} style={{ marginTop:"10px", background:"transparent", border:`1px solid ${T.border2}`, color:T.text5, padding:"3px 8px", cursor:"pointer", fontSize:"8px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>RESTORE</button>
+          }}} style={{ marginTop:"10px", background:"transparent", border:`1px solid ${T.border2}`, color:T.text5, padding:"3px 8px", cursor:"pointer", fontSize:"8px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>RESTORE</button>}
         </div>
       );
     }
 
     function App() {
-      const [dark, setDark] = useDarkMode();
+      const isMobile = useIsMobile();
+      const [dark, setDark] = ADMIN_MODE ? useDarkMode() : useDarkModePublic();
       const T = dark ? DARK : LIGHT;
       // CT = card text colors (always dark on light cards, light on dark cards)
       const CT = dark ? T : { text:"#111", text2:"#333", text3:"#555", text4:"#666", text5:"#888", text6:"#aaa", text7:"#bbb", text8:"#ddd", border:`1px solid #e0e0e0`, border2:"#ccc" };
-      const [inventory,    setInventory]    = useState(() => load("vault_inventory", []));
+      // ── Public data loading ──────────────────────────────────────────────
+      const [publicData, setPublicData] = useState(null);
+      const [publicLoading, setPublicLoading] = useState(!ADMIN_MODE);
+      const [publicError, setPublicError] = useState(null);
+
+      useEffect(() => {
+        if (ADMIN_MODE) return;
+        fetch("vault-data.json")
+          .then(r => { if (!r.ok) throw new Error("Could not load vault-data.json"); return r.json(); })
+          .then(d => { setPublicData(d); setPublicLoading(false); })
+          .catch(e => { setPublicError(e.message); setPublicLoading(false); });
+      }, []);
+
+      const [inventory,    setInventory]    = useState(() => ADMIN_MODE ? load("vault_inventory", []) : []);
       const importRef = useRef();
       const [importMsg, setImportMsg] = useState(null);
-      const [wearLog,        setWearLog]        = useState(() => load("vault_wearlog_v3", {}));
-      const [images,         setImages]         = useState(() => load("vault_images", {}));
-      const [colorwayMeta,   setColorwayMeta]   = useState(() => load("vault_colorway_meta", {}));
-      const [grailMeta,      setGrailMeta]      = useState(() => load("vault_grail_meta", {}));
-      const [beaterMeta,     setBeaterMeta]     = useState(() => load("vault_beater_meta", {}));
-      const [glowMeta,       setGlowMeta]       = useState(() => load("vault_glow_meta", {}));
-      const [graveyardMeta,  setGraveyardMeta]  = useState(() => load("vault_graveyard_meta", {}));
-      const [colorways,      setColorways]      = useState(() => load("vault_colorways", COLORWAYS));
-      const [displayLayout,  setDisplayLayout]  = useState(() => load("vault_display_layout", []));
+      const [wearLog,        setWearLog]        = useState(() => ADMIN_MODE ? load("vault_wearlog_v3", {}) : {});
+      const [images,         setImages]         = useState(() => ADMIN_MODE ? load("vault_images", {}) : {});
+      const [colorwayMeta,   setColorwayMeta]   = useState(() => ADMIN_MODE ? load("vault_colorway_meta", {}) : {});
+      const [grailMeta,      setGrailMeta]      = useState(() => ADMIN_MODE ? load("vault_grail_meta", {}) : {});
+      const [beaterMeta,     setBeaterMeta]     = useState(() => ADMIN_MODE ? load("vault_beater_meta", {}) : {});
+      const [glowMeta,       setGlowMeta]       = useState(() => ADMIN_MODE ? load("vault_glow_meta", {}) : {});
+      const [graveyardMeta,  setGraveyardMeta]  = useState(() => ADMIN_MODE ? load("vault_graveyard_meta", {}) : {});
+      const [colorways,      setColorways]      = useState(() => ADMIN_MODE ? load("vault_colorways", COLORWAYS) : {});
+      const [displayLayout,  setDisplayLayout]  = useState(() => ADMIN_MODE ? load("vault_display_layout", []) : []);
       const [editingCell,    setEditingCell]    = useState(null);
       const [editShoe,       setEditShoe]       = useState("");
       const [editCw,         setEditCw]         = useState("");
@@ -426,6 +491,22 @@
         return () => clearInterval(interval);
       }, []);
 
+      // Apply public data once loaded
+      useEffect(() => {
+        if (ADMIN_MODE || !publicData) return;
+        setInventory(publicData.inventory || []);
+        setWearLog(publicData.wearLog || {});
+        setImages(publicData.images || {});
+        setColorwayMeta(publicData.colorwayMeta || {});
+        setGrailMeta(publicData.grailMeta || {});
+        setBeaterMeta(publicData.beaterMeta || {});
+        setGlowMeta(publicData.glowMeta || {});
+        setGraveyardMeta(publicData.graveyardMeta || {});
+        setColorways(publicData.colorways || {});
+        setDisplayLayout(publicData.displayLayout || []);
+      }, [publicData]);
+
+      // Admin: persist to localStorage
       useEffect(() => save("vault_inventory",      inventory),    [inventory]);
       useEffect(() => save("vault_wearlog_v3",     wearLog),      [wearLog]);
       useEffect(() => save("vault_images",         images),       [images]);
@@ -437,6 +518,7 @@
       useEffect(() => save("vault_colorways",      colorways),    [colorways]);
 
       useEffect(() => {
+        if (!ADMIN_MODE) return;
         const handler = (e) => {
           if (e.key !== "Escape") return;
           if (showForm)      { setShowForm(false); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan",quantity:1,wishlist:false}); setEditColorways([]); setNewColorway(""); }
@@ -449,6 +531,19 @@
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
       }, [showForm, loggingId, editingMeta, editingCell, importMsg]);
+
+      // Loading / error screens (public only)
+      if (!ADMIN_MODE && publicLoading) return (
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", flexDirection:"column", gap:"16px" }}>
+          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946" }}>LOADING THE VAULT...</div>
+        </div>
+      );
+      if (!ADMIN_MODE && publicError) return (
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", flexDirection:"column", gap:"16px" }}>
+          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946" }}>VAULT UNAVAILABLE</div>
+          <div style={{ fontSize:"10px", color:"#aaa" }}>{publicError}</div>
+        </div>
+      );
 
       const owned    = inventory.filter(s => !s.wishlist);
       const wishlist = inventory.filter(s => s.wishlist);
@@ -691,25 +786,25 @@
             </div>
             {/* Stats + buttons — solid black panel */}
             <div style={{ position:"relative", zIndex:2, marginLeft:"auto", display:"flex", gap:"24px", textAlign:"center", alignItems:"center", background:"#000000", borderLeft:"2px solid #e63946", padding:"16px 32px", height:"200px" }}>
-              {[["PAIRS",total,"#e63946"],["OPEN BOXES",empty,"#e63946"],["WISHLIST",wishlist.length,"#e63946"]].map(([label,val,color])=>(
+              {(ADMIN_MODE ? [["PAIRS",total,"#e63946"],["OPEN BOXES",empty,"#e63946"],["WISHLIST",wishlist.length,"#e63946"]] : [["PAIRS",total,"#e63946"],["WISHLIST",wishlist.length,"#e63946"]]).map(([label,val,color])=>(
                 <div key={label}>
                   <div style={{ fontSize:"32px", fontWeight:"bold", color }}>{val}</div>
                   <div style={{ fontSize:"10px", letterSpacing:"3px", color:"#888" }}>{label}</div>
                 </div>
               ))}
-              <div style={{ width:"1px", height:"48px", background:"#333" }} />
+              {ADMIN_MODE && <><div style={{ width:"1px", height:"48px", background:"#333" }} />
               <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
                 <button onClick={exportJSON} style={{ background:"#e63946", color:"#000", border:"none", padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontWeight:"bold", whiteSpace:"nowrap" }}>⬇ BACKUP</button>
                 <button onClick={() => importRef.current.click()} style={{ background:"transparent", color:"#e63946", border:"1px solid #4cc9f0", padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>⬆ RESTORE</button>
                 <button onClick={() => { if (window.confirm("Clear all images? This cannot be undone.")) { setImages({}); save("vault_images", {}); } }} style={{ background:"transparent", color: T.text5, border:`1px solid ${T.text5}`, padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>✕ CLEAR IMAGES</button>
                 <input ref={importRef} type="file" accept=".json" style={{ display:"none" }}
                   onChange={e => { if (e.target.files[0]) importJSON(e.target.files[0]); e.target.value=""; }} />
-              </div>
+              </div></>}
             </div>
           </div>
 
           {/* Import message */}
-          {importMsg && (
+          {ADMIN_MODE && importMsg && (
             <div style={{ background: importMsg.type==="success" ? "#0a2a0a" : "#2a0a0a", borderBottom:`1px solid #e63946`, padding:"12px 32px", fontSize:"11px", letterSpacing:"2px", color:"#e63946", textAlign:"center" }}>
               {importMsg.text}
             </div>
@@ -717,7 +812,7 @@
 
           {/* Nav */}
           <div style={{ display:"flex", borderBottom:`1px solid ${T.border}`, background: T.navBg, alignItems:"center" }}>
-            {["inventory","display","wishlist","graveyard","history","about"].map(v => (
+            {(ADMIN_MODE ? ["inventory","display","wishlist","graveyard","history","about"] : ["inventory", ...(!isMobile ? ["display"] : []), "wishlist", ...(Object.keys(graveyardMeta).length > 0 ? ["graveyard"] : []), "about"]).map(v => (
               <button key={v} onClick={() => setView(v)} style={{
                 padding:"14px 28px", background:view===v?"#e63946":"transparent",
                 color:view===v?"#fff": T.text4, border:"none", cursor:"pointer",
@@ -725,9 +820,9 @@
                 animation: v==="wishlist" && wishlistHasSale && view!=="wishlist" ? "saleGlow 1.5s ease-in-out infinite" : "none",
               }}>{v}</button>
             ))}
-            <div style={{ marginLeft:"auto" }}>
+            {ADMIN_MODE && <div style={{ marginLeft:"auto" }}>
               <button onClick={() => setDark(d => !d)} style={{ background:"transparent", border:"none", color: T.text4, cursor:"pointer", fontSize:"16px", padding:"14px 20px", lineHeight:1 }} title={dark ? "Switch to light mode" : "Switch to dark mode"}>{dark ? "☀" : "☾"}</button>
-            </div>
+            </div>}
           </div>
 
           <div style={{ padding:"32px" }}>
@@ -749,7 +844,24 @@
                     return (
                       <div style={{ background: dark ? "linear-gradient(90deg,#2a2a1a,#2a2700)" : "linear-gradient(90deg,#fffdf0,#fff8d6)", border:"1px solid #FFD700", padding:"16px 24px", marginBottom:"16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px" }}>
                         <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
-                          {aImg && <img src={aImg} alt={a.colorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0, transition:"opacity 0.5s" }} />}
+                          {aImg && (() => {
+                            const aHoverImg = images[`${a.shoe.id}_${a.colorway}_hover`] || null;
+                            function AnnivImg() {
+                              const [showAlt, setShowAlt] = React.useState(false);
+                              React.useEffect(() => {
+                                if (!aHoverImg) { setShowAlt(false); return; }
+                                const interval = setInterval(() => setShowAlt(v => !v), 5000);
+                                return () => clearInterval(interval);
+                              }, [aHoverImg]);
+                              return (
+                                <div style={{ position:"relative", width:"120px", height:"75px", flexShrink:0 }}>
+                                  <img src={aImg} alt={a.colorway} style={{ position:"absolute", top:0, left:0, width:"120px", height:"75px", objectFit:"cover", opacity: aHoverImg && showAlt ? 0 : 1, transition:"opacity 2s ease-in-out" }} />
+                                  {aHoverImg && <img src={aHoverImg} alt={a.colorway} style={{ position:"absolute", top:0, left:0, width:"120px", height:"75px", objectFit:"cover", opacity: showAlt ? 1 : 0, transition:"opacity 2s ease-in-out" }} />}
+                                </div>
+                              );
+                            }
+                            return <AnnivImg />;
+                          })()}
                           <div>
                             <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#FFD700", marginBottom:"6px" }}>
                               ✦ PURCHASE ANNIVERSARY {anniversaries.length > 1 ? `(${idx + 1}/${anniversaries.length})` : ""} ✦
@@ -885,9 +997,10 @@
                         </div>
                       )}
                       {/* LOG WEAR button — only show when UP NEXT visible */}
-                      <div style={{ marginLeft:"auto", opacity: bannerShowUpNext ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "auto" : "none" }}>
+                      {ADMIN_MODE && <div style={{ marginLeft:"auto", opacity: bannerShowUpNext ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "auto" : "none" }}>
                         <Btn label="LOG WEAR" onClick={() => { setLoggingId(longestUnworn.id); setWearDate(localDateStr()); setWearColorway(longestUnwornColorway || (colorways[longestUnworn.shortName]?.[0] ?? "")); }} color="#e63946" solid />
-                      </div>
+                      </div>}
+                      {!ADMIN_MODE && <div style={{ marginLeft:"auto" }} />}
                     </div>
                     {/* Upcoming queue — only show when UP NEXT visible */}
                     {upcomingQueue.length > 0 && (
@@ -926,16 +1039,16 @@
                   );
                 })()}
 
-                {/* Add shoe header */}
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
+                {/* Add shoe header — admin only */}
+                {ADMIN_MODE && <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
                   <div></div>
                   <button onClick={() => { setShowForm(!showForm); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan",quantity:1,wishlist:false}); }} style={{
                     background:"#e63946", color:T.text, border:"none", padding:"10px 20px",
                     cursor:"pointer", fontSize:"11px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
                   }}>+ ADD SHOE</button>
-                </div>
+                </div>}
 
-                {showForm && (
+                {ADMIN_MODE && showForm && (
                   <div style={{ background:T.bg4, border:`1px solid ${T.border2}`, padding:"24px", marginBottom:"24px" }}>
                     <div style={{ display:"flex", gap:"12px", flexWrap:"wrap", alignItems:"flex-end" }}>
                       {[["FULL NAME","name"],["SHORT CODE","shortName"]].map(([label,key]) => (
@@ -1047,15 +1160,15 @@
                           <div style={{ display:"flex", gap:"6px", flexShrink:0, marginLeft:"12px" }}>
                             <Btn label="EDIT" onClick={() => handleEdit(shoe)} color="#888" />
                             <Btn label="X" onClick={() => { if (window.confirm(`Remove ${shoe.name} from your collection? This cannot be undone.`)) setInventory(inv => inv.filter(s => s.id !== shoe.id)); }} color="#bbb" />
-                          </div>
+                          </div>}
                         </div>
                         {/* Fixed height content area */}
                         <div style={{ padding:"0 16px 16px 16px", height:"240px", overflow:"hidden", position:"relative" }}>
                         {/* Reorder arrows */}
-                        <div style={{ position:"absolute", bottom:"6px", right:"6px", display:"flex", flexDirection:"column", gap:"1px" }}>
+                        {ADMIN_MODE && <div style={{ position:"absolute", bottom:"6px", right:"6px", display:"flex", flexDirection:"column", gap:"1px" }}>
                           <button onClick={() => reorderShoe(shoe.id, -1)} style={{ background:"transparent", border:"none", color:CT.text8, cursor:"pointer", fontSize:"9px", padding:"1px 3px", lineHeight:1 }}>▲</button>
                           <button onClick={() => reorderShoe(shoe.id, 1)} style={{ background:"transparent", border:"none", color:CT.text8, cursor:"pointer", fontSize:"9px", padding:"1px 3px", lineHeight:1 }}>▼</button>
-                        </div>
+                        </div>}
                         {/* Images row */}
                         <div style={{ display:"flex", flexWrap:"wrap", gap:"8px", maxWidth: perRow * (imgW + 8) + "px" }}>
                           {shoeColorways.map(cw => {
@@ -1086,7 +1199,7 @@
                                   onClear={() => setImages(imgs => { const n={...imgs}; delete n[metaKey]; return n; })}
                                 />
                                 {/* Meta summary + edit trigger */}
-                                <div
+                                {ADMIN_MODE && <div
                                   onClick={() => {
                                     setEditingMeta({ shoeId: shoe.id, colorway: cw });
                                     setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"" });
@@ -1094,14 +1207,14 @@
                                   title="Edit details"
                                   style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : ((meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? T.text3 : T.text6), marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
                                   {(meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? `sz ${meta.size}` : "· · ·"}
-                                </div>
+                                </div>}
                               </div>
                             );
                           })}
                         </div>
                         </div>{/* end fixed height area */}
                         {/* Colorway meta edit form */}
-                        {editingMeta && editingMeta.shoeId === shoe.id && (
+                        {ADMIN_MODE && editingMeta && editingMeta.shoeId === shoe.id && (
                           <div style={{ padding:"0 16px 16px 16px" }}>
                           <div style={{ background:T.bg2, border:`1px solid ${T.border}`, padding:"12px" }}>
                             <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"8px" }}>
@@ -1141,12 +1254,12 @@
                               <label htmlFor="glow-check" style={{ fontSize:"10px", letterSpacing:"3px", color: CT.text5, cursor:"pointer" }}>☾ DARK GLOW</label>
                             </div>
                             {/* Hover image upload — grails only */}
-                            {!!grailMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`] && (() => {
+                            {(() => {
                               const hoverKey = `${editingMeta.shoeId}_${editingMeta.colorway}_hover`;
                               const hoverImgVal = images[hoverKey];
                               return (
                                 <div style={{ marginBottom:"10px" }}>
-                                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#FFD700", marginBottom:"6px" }}>✦ HOVER IMAGE</div>
+                                  {(() => { const isGrailCw = !!grailMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`]; return <div style={{ fontSize:"9px", letterSpacing:"2px", color: isGrailCw ? "#FFD700" : "#e63946", marginBottom:"6px" }}>{isGrailCw ? "✦ HOVER IMAGE" : "✦ 2ND IMAGE (ANNIVERSARY)"}</div>; })()}
                                   <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
                                     {hoverImgVal
                                       ? <img src={hoverImgVal} alt="hover" style={{ width:"80px", height:"50px", objectFit:"cover", border:"1px solid #FFD700" }} />
@@ -1166,6 +1279,7 @@
                                       )}
                                     </div>
                                   </div>
+                                  {!grailMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`] && <div style={{ fontSize:"8px", color: CT.text6, marginTop:"4px", letterSpacing:"1px" }}>Shows on hover only on purchase anniversary</div>}
                                   <input id="hover-img-upload" type="file" accept="image/*" style={{ display:"none" }}
                                     onChange={e => {
                                       const file = e.target.files[0];
@@ -1231,7 +1345,7 @@
                           </div>
                         )}
                         {/* Retire form */}
-                        {retiringMeta && retiringMeta.shoeId === shoe.id && (
+                        {ADMIN_MODE && retiringMeta && retiringMeta.shoeId === shoe.id && (
                           <div style={{ background:T.bg4, border:"1px solid #888", padding:"12px", marginTop:"8px" }}>
                             <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#888", marginBottom:"10px" }}>🪦 RETIRE — {retiringMeta.colorway}</div>
                             <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", marginBottom:"10px" }}>
@@ -1296,7 +1410,7 @@
             {view === "display" && (
               <div>
                 {/* Edit panel */}
-                {editingCell && (
+                {ADMIN_MODE && editingCell && (
                   <div style={{ background:T.bg4, border:"1px solid #f4a261", padding:"16px 24px", marginBottom:"24px", display:"flex", alignItems:"center", gap:"12px", flexWrap:"wrap" }}>
                     <div style={{ fontSize:"10px", letterSpacing:"3px", color:"#e63946" }}>EDITING BOX {editingCell.ri + 1}-{editingCell.ci + 1}</div>
                     <select value={editShoe} onChange={e => { setEditShoe(e.target.value); setEditCw(colorways[e.target.value]?.[0] || ""); }}
@@ -1382,8 +1496,8 @@
                             <div style={{ fontSize:"11px", color:"#e63946", letterSpacing:"1px" }}>{shoeColorways.join(", ")}</div>
                           </div>
                           <div style={{ display:"flex", gap:"6px", flexShrink:0, marginLeft:"12px" }}>
-                            <Btn label="GOT IT" onClick={() => setInventory(inv => inv.map(s => s.id===shoe.id ? {...s,wishlist:false,quantity:1} : s))} color="#e63946" />
-                            <Btn label="X" onClick={() => { if (window.confirm(`Remove ${shoe.name} from your wishlist?`)) setInventory(inv => inv.filter(s => s.id!==shoe.id)); }} color="#bbb" />
+                            {ADMIN_MODE && <><Btn label="GOT IT" onClick={() => setInventory(inv => inv.map(s => s.id===shoe.id ? {...s,wishlist:false,quantity:1} : s))} color="#e63946" />
+                            <Btn label="X" onClick={() => { if (window.confirm(`Remove ${shoe.name} from your wishlist?`)) setInventory(inv => inv.filter(s => s.id!==shoe.id)); }} color="#bbb" /></>}
                           </div>
                         </div>
                         {/* Image slots */}
@@ -1406,7 +1520,7 @@
                                   onUpload={file => handleImageUpload(shoe.id, cw, file)}
                                   onClear={() => setImages(imgs => { const n={...imgs}; delete n[metaKey]; return n; })}
                                 />
-                                <div
+                                {ADMIN_MODE && <div
                                   onClick={() => {
                                     setEditingMeta({ shoeId: shoe.id, colorway: cw });
                                     setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"" });
@@ -1414,13 +1528,13 @@
                                   title="Edit details"
                                   style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : ((meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? T.text3 : T.text4), marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
                                   {(meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? `sz ${meta.size}` : "· · ·"}
-                                </div>
+                                </div>}
                               </div>
                             );
                           })}
                         </div>
                         {/* Colorway meta edit form */}
-                        {editingMeta && editingMeta.shoeId === shoe.id && (
+                        {ADMIN_MODE && editingMeta && editingMeta.shoeId === shoe.id && (
                           <div style={{ background:T.bg2, border:`1px solid ${T.border}`, padding:"12px", marginTop:"10px" }}>
                             <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"8px" }}>
                               {editingMeta.colorway} — DETAILS
@@ -1478,7 +1592,7 @@
             )}
 
             {/* ── HISTORY ── */}
-            {view === "history" && (() => {
+            {ADMIN_MODE && view === "history" && (() => {
               // Build flat list of all wear entries
               const allEntries = owned.flatMap(shoe =>
                 (wearLog[shoe.id] || []).map((entry, idx) => ({
@@ -1653,7 +1767,7 @@
 
           </div>
 
-          <button onClick={() => {
+          {ADMIN_MODE && <><button onClick={() => {
             setQuickLog(true);
             setQuickDate(localDateStr());
             const firstOwned = owned[0];
@@ -1718,7 +1832,7 @@
                 </div>
               </div>
             );
-          })()}
+          })()}</>}
 
         </div>
       );
