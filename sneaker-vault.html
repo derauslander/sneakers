@@ -25,6 +25,10 @@
       from { opacity: 0; transform: translateY(6px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+    @keyframes saleGlow {
+      0%, 100% { box-shadow: 0 0 4px rgba(230,180,0,0.4); }
+      50%       { box-shadow: 0 0 14px rgba(230,180,0,0.9); }
+    }
   </style>
 </head>
 <body>
@@ -412,8 +416,9 @@
       const [sortCol,        setSortCol]        = useState("date");
       const [sortDir,        setSortDir]        = useState("desc");
       const [editingMeta,    setEditingMeta]    = useState(null);
-      const [metaForm,       setMetaForm]       = useState({ purchaseDate:"", purchasePrice:"", retailer:"", size:"", notes:"", ogYear:"", story:"" });
+      const [metaForm,       setMetaForm]       = useState({ purchaseDate:"", purchasePrice:"", retailer:"", size:"", notes:"", ogYear:"", story:"", saleDate:"", saleTime:"" });
       const [anniversaryDismissed, setAnniversaryDismissed] = useState(false);
+      const [saleDismissed, setSaleDismissed] = useState(false);
       const [bannerShowUpNext, setBannerShowUpNext] = useState(true);
 
       useEffect(() => {
@@ -506,6 +511,28 @@
         if (!shoe) return;
         anniversaries.push({ shoe, colorway, years });
       });
+
+      // Sale alerts — wishlist colorways with a sale within the next 24 hours
+      const nowMs = Date.now();
+      const saleAlerts = [];
+      const saleGlowKeys = new Set(); // colorway keys with sale within 7 days
+      wishlist.forEach(shoe => {
+        const shoeColorways = colorways[shoe.shortName] || [];
+        shoeColorways.forEach(cw => {
+          const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
+          if (!meta.saleDate) return;
+          const saleDateTime = new Date(`${meta.saleDate}T${meta.saleTime || "00:00"}`).getTime();
+          const hoursUntil = (saleDateTime - nowMs) / (1000 * 60 * 60);
+          if (hoursUntil >= 0 && hoursUntil <= 168) { // 7 days
+            saleGlowKeys.add(`${shoe.id}_${cw}`);
+          }
+          if (hoursUntil >= 0 && hoursUntil <= 24) {
+            const img = images[`${shoe.id}_${cw}`] || null;
+            saleAlerts.push({ shoe, colorway: cw, saleDateTime, hoursUntil, img });
+          }
+        });
+      });
+      const wishlistHasSale = saleGlowKeys.size > 0;
 
       const openLogForm = (shoe) => {
         setLoggingId(shoe.id);
@@ -695,6 +722,7 @@
                 padding:"14px 28px", background:view===v?"#e63946":"transparent",
                 color:view===v?"#fff": T.text4, border:"none", cursor:"pointer",
                 fontSize:"11px", letterSpacing:"4px", textTransform:"uppercase", fontFamily:"'Aptos','Segoe UI',sans-serif",
+                animation: v==="wishlist" && wishlistHasSale && view!=="wishlist" ? "saleGlow 1.5s ease-in-out infinite" : "none",
               }}>{v}</button>
             ))}
             <div style={{ marginLeft:"auto" }}>
@@ -740,6 +768,28 @@
                   }
                   return <AnniversaryBanner />;
                 })()}
+
+                {/* Sale Alert Banner */}
+                {!saleDismissed && saleAlerts.length > 0 && (
+                  <div style={{ background: dark ? "linear-gradient(90deg,#1a1a0a,#1a1500)" : "linear-gradient(90deg,#fffef0,#fff8cc)", border:"1px solid #e6b800", padding:"16px 24px", marginBottom:"16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
+                      {saleAlerts[0].img && <img src={saleAlerts[0].img} alt={saleAlerts[0].colorway} style={{ width:"72px", height:"45px", objectFit:"cover", flexShrink:0 }} />}
+                      <div>
+                        <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e6b800", marginBottom:"4px" }}>🛒 SALE ALERT</div>
+                        <div style={{ fontSize:"15px", fontWeight:"bold", color: T.text }}>
+                          {saleAlerts[0].shoe.name} — {saleAlerts[0].colorway}
+                        </div>
+                        <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>
+                          {saleAlerts[0].hoursUntil < 1
+                            ? `Sale starts in ${Math.round(saleAlerts[0].hoursUntil * 60)} minutes`
+                            : `Sale starts in ${Math.round(saleAlerts[0].hoursUntil)} hours`}
+                          {saleAlerts.length > 1 && <span style={{ color: T.text5, marginLeft:"8px" }}>+{saleAlerts.length - 1} more</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <button onClick={() => setSaleDismissed(true)} style={{ background:"transparent", border:"none", color: T.text7, cursor:"pointer", fontSize:"18px", lineHeight:1, padding:"0", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>✕</button>
+                  </div>
+                )}
 
                 {/* Rotation Banner */}
                 {longestUnworn && (() => {
@@ -1039,7 +1089,7 @@
                                 <div
                                   onClick={() => {
                                     setEditingMeta({ shoeId: shoe.id, colorway: cw });
-                                    setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"" });
+                                    setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"" });
                                   }}
                                   title="Edit details"
                                   style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : ((meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? T.text3 : T.text6), marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
@@ -1322,8 +1372,9 @@
                     const col = CAT[shoe.category] || CAT.Jordan;
                     const imgW = shoeColorways.length === 1 ? 120 : shoeColorways.length <= 3 ? 96 : 80;
                     const imgH = Math.round(imgW * 0.625);
+                    const cardHasSale = (colorways[shoe.shortName] || [shoe.shortName]).some(cw => saleGlowKeys.has(`${shoe.id}_${cw}`));
                     return (
-                      <div key={shoe.id} style={{ background:T.cardBg, border:`1px dashed ${T.border2}`, padding:"16px" }}>
+                      <div key={shoe.id} style={{ background:T.cardBg, border:`1px dashed ${T.border2}`, padding:"16px", animation: cardHasSale ? "saleGlow 1.5s ease-in-out infinite" : "none" }}>
                         {/* Top: info + buttons */}
                         <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:"12px" }}>
                           <div>
@@ -1347,7 +1398,7 @@
                                   img={images[metaKey] || null}
                                   label={cw}
                                   accent={col.accent}
-                                  bg="#f5f5f5"
+                                  bg={T.bg3}
                                   width={imgW}
                                   height={imgH}
                                   isGrail={!!grailMeta[metaKey]}
@@ -1358,10 +1409,10 @@
                                 <div
                                   onClick={() => {
                                     setEditingMeta({ shoeId: shoe.id, colorway: cw });
-                                    setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"" });
+                                    setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"" });
                                   }}
                                   title="Edit details"
-                                  style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : ((meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? T.text3 : T.text6), marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
+                                  style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : ((meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? T.text3 : T.text4), marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
                                   {(meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? `sz ${meta.size}` : "· · ·"}
                                 </div>
                               </div>
@@ -1391,6 +1442,16 @@
                                   <input type={type} value={metaForm[field]} onChange={e => setMetaForm(f => ({...f,[field]:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
                                 </div>
                               ))}
+                            </div>
+                            <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", alignItems:"flex-end", marginTop:"8px" }}>
+                              <div style={{ flex:"1 1 120px" }}>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginBottom:"4px" }}>🛒 SALE DATE</div>
+                                <input type="date" value={metaForm.saleDate} onChange={e => setMetaForm(f => ({...f, saleDate:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                              </div>
+                              <div style={{ flex:"1 1 100px" }}>
+                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginBottom:"4px" }}>🛒 SALE TIME</div>
+                                <input type="time" value={metaForm.saleTime} onChange={e => setMetaForm(f => ({...f, saleTime:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                              </div>
                             </div>
                             <div style={{ display:"flex", gap:"8px", marginTop:"10px", flexWrap:"wrap" }}>
                               <button onClick={() => {

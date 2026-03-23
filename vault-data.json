@@ -175,6 +175,14 @@
       "quantity": 1,
       "wishlist": true,
       "id": 1774096319133
+    },
+    {
+      "name": "Air Max 90",
+      "shortName": "AM90",
+      "category": "Nike",
+      "quantity": 1,
+      "wishlist": true,
+      "id": 1774297239173
     }
   ],
   "wearLog": {
@@ -427,7 +435,8 @@
     "15_Stone Blue": "Shoes/15_McEnroe.png",
     "1774096319133_Billy Hoyle": "Shoes/1774096319133_Billy Hoyle.png",
     "8_Playoffs": "Shoes/8_Playoffs.png",
-    "9_Olive": "Shoes/9_Olive.png"
+    "9_Olive": "Shoes/9_Olive.png",
+    "1774297239173_Infrared 3M": "Shoes/1774297239173_Infrared 3M.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -738,6 +747,17 @@
       "notes": "",
       "ogYear": "",
       "story": "I had these in French Blue in 2002."
+    },
+    "1774297239173_Infrared 3M": {
+      "purchaseDate": "",
+      "purchasePrice": "",
+      "retailer": "",
+      "size": "",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "2026-03-26",
+      "saleTime": "10:00"
     }
   },
   "grailMeta": {
@@ -857,6 +877,9 @@
     ],
     "ACF": [
       "Billy Hoyle"
+    ],
+    "AM90": [
+      "Infrared 3M"
     ]
   },
   "displayLayout": [
@@ -1037,5 +1060,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-21T23:05:14.344Z"
+  "exportedAt": "2026-03-23T22:07:42.437Z"
 }
