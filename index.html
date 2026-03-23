@@ -1157,7 +1157,7 @@
                         {/* Top: info + buttons — outside fixed height area */}
                         <div style={{ padding:"16px 16px 0 16px", display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:"8px" }}>
                           <div style={{ fontSize:"14px", color:CT.text, fontWeight:"bold", whiteSpace:"nowrap" }}>{shoe.name}{shoe.quantity > 1 ? ` — ${shoe.quantity} pairs` : ""}</div>
-                          <div style={{ display:"flex", gap:"6px", flexShrink:0, marginLeft:"12px" }}>
+                          {ADMIN_MODE && <div style={{ display:"flex", gap:"6px", flexShrink:0, marginLeft:"12px" }}>
                             <Btn label="EDIT" onClick={() => handleEdit(shoe)} color="#888" />
                             <Btn label="X" onClick={() => { if (window.confirm(`Remove ${shoe.name} from your collection? This cannot be undone.`)) setInventory(inv => inv.filter(s => s.id !== shoe.id)); }} color="#bbb" />
                           </div>}
