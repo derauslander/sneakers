@@ -38,7 +38,7 @@
     // ADMIN_MODE — true for local admin app, false for public site
     // build.bat flips this to false when generating index.html
     // ═══════════════════════════════════════════════════════════════════════════
-    const ADMIN_MODE = true;
+    const ADMIN_MODE = false;
 
     const { useState, useEffect, useRef } = React;
 
@@ -117,44 +117,6 @@
     const localDateStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
     const formatDate = (iso) => iso ? new Date(iso+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : null;
 
-    function SaleCountdown({ saleDate, saleTime }) {
-      const [now, setNow] = useState(Date.now());
-      useEffect(() => {
-        const interval = setInterval(() => setNow(Date.now()), 1000);
-        return () => clearInterval(interval);
-      }, []);
-      const target = new Date(`${saleDate}T${saleTime || "00:00"}`).getTime();
-      const diff = target - now;
-      if (diff <= 0) return <span style={{ fontSize:"10px", letterSpacing:"2px", color:"#e6b800", fontWeight:"bold" }}>LIVE NOW</span>;
-      const days = Math.floor(diff / 86400000);
-      const hrs  = Math.floor((diff % 86400000) / 3600000);
-      const mins = Math.floor((diff % 3600000) / 60000);
-      const secs = Math.floor((diff % 60000) / 1000);
-      return (
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"2px" }}>
-          <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e6b800", marginBottom:"2px" }}>DROPS IN</div>
-          <div style={{ display:"flex", gap:"6px", alignItems:"baseline" }}>
-            {days > 0 && <div style={{ textAlign:"center" }}>
-              <div style={{ fontSize:"16px", fontWeight:"bold", color:"#e6b800", fontVariantNumeric:"tabular-nums" }}>{days}</div>
-              <div style={{ fontSize:"7px", letterSpacing:"1px", color:"#999" }}>DAY{days !== 1 ? "S" : ""}</div>
-            </div>}
-            <div style={{ textAlign:"center" }}>
-              <div style={{ fontSize:"16px", fontWeight:"bold", color:"#e6b800", fontVariantNumeric:"tabular-nums" }}>{String(hrs).padStart(2,"0")}</div>
-              <div style={{ fontSize:"7px", letterSpacing:"1px", color:"#999" }}>HR</div>
-            </div>
-            <div style={{ textAlign:"center" }}>
-              <div style={{ fontSize:"16px", fontWeight:"bold", color:"#e6b800", fontVariantNumeric:"tabular-nums" }}>{String(mins).padStart(2,"0")}</div>
-              <div style={{ fontSize:"7px", letterSpacing:"1px", color:"#999" }}>MIN</div>
-            </div>
-            <div style={{ textAlign:"center" }}>
-              <div style={{ fontSize:"16px", fontWeight:"bold", color:"#e6b800", fontVariantNumeric:"tabular-nums" }}>{String(secs).padStart(2,"0")}</div>
-              <div style={{ fontSize:"7px", letterSpacing:"1px", color:"#999" }}>SEC</div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
     function ImageSlot({ img, hoverImg, label, accent, bg, onUpload, onClear, width = 96, height = 60, wearDates = [], isGrail = false, purchaseDate = null, size = null, isBeater = false, ogYear = null, story = null, isOnIce = false, dark = false, shoeName = null, isMobilePublic = false }) {
       const fileRef = useRef();
       const [hovered, setHovered] = useState(false);
@@ -231,13 +193,13 @@
         <div style={{ position:"relative", display:"inline-block" }}>
           {img ? (
             <div style={{ textAlign:"center" }}>
-              <div style={{ position:"relative", display:"inline-block", width, height, overflow:"hidden", background: dark ? "#222222" : "#ffffff" }}>
+              <div style={{ position:"relative", display:"inline-block" }}>
                 <img
                   src={img} alt={label}
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
                   onClick={handleTap}
-                  style={{ width, height, objectFit:"contain", border:"none", display:"block", cursor: isMobilePublic ? "pointer" : "zoom-in", transition:"opacity 0.15s" }}
+                  style={{ width, height, objectFit:"cover", border:"none", display:"block", cursor: isMobilePublic ? "pointer" : "zoom-in", transition:"opacity 0.15s" }}
                 />
                 {hovered && (
                   <div onClick={triggerClose} style={{
@@ -1582,7 +1544,7 @@
                   {wishlist.map(shoe => {
                     const shoeColorways = colorways[shoe.shortName] || [shoe.shortName];
                     const col = CAT[shoe.category] || CAT.Jordan;
-                    const imgW = isMobilePublic ? 72 : 120;
+                    const imgW = isMobilePublic ? 72 : (shoeColorways.length === 1 ? 120 : shoeColorways.length <= 3 ? 96 : 80);
                     const imgH = Math.round(imgW * 0.625);
                     const cardMinW = isMobilePublic ? "100%" : Math.max(200, shoeColorways.length * (imgW + 16) + 32);
                     const cardHasSale = (colorways[shoe.shortName] || [shoe.shortName]).some(cw => saleGlowKeys.has(`${shoe.id}_${cw}`));
@@ -1605,24 +1567,22 @@
                             const metaKey = `${shoe.id}_${cw}`;
                             const meta = colorwayMeta[metaKey] || {};
                             const isEditingThis = editingMeta && editingMeta.shoeId === shoe.id && editingMeta.colorway === cw;
-                            const hasSaleCountdown = saleGlowKeys.has(metaKey) && meta.saleDate;
                             return (
-                              <div key={cw} style={{ display:"flex", alignItems:"flex-start", gap:"12px" }}>
-                                <div>
-                                  <ImageSlot
-                                    img={images[metaKey] || null}
-                                    label={cw}
-                                    accent={col.accent}
-                                    bg={T.bg3}
-                                    width={imgW}
-                                    height={imgH}
-                                    isGrail={!!grailMeta[metaKey]}
-                                    dark={dark}
-                                    isMobilePublic={isMobilePublic}
-                                    onUpload={file => handleImageUpload(shoe.id, cw, file)}
-                                    onClear={() => setImages(imgs => { const n={...imgs}; delete n[metaKey]; return n; })}
-                                  />
-                                  {ADMIN_MODE && <div
+                              <div key={cw}>
+                                <ImageSlot
+                                  img={images[metaKey] || null}
+                                  label={cw}
+                                  accent={col.accent}
+                                  bg={T.bg3}
+                                  width={imgW}
+                                  height={imgH}
+                                  isGrail={!!grailMeta[metaKey]}
+                                  dark={dark}
+                                  isMobilePublic={isMobilePublic}
+                                  onUpload={file => handleImageUpload(shoe.id, cw, file)}
+                                  onClear={() => setImages(imgs => { const n={...imgs}; delete n[metaKey]; return n; })}
+                                />
+                                {ADMIN_MODE && <div
                                   onClick={() => {
                                     setEditingMeta({ shoeId: shoe.id, colorway: cw });
                                     setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"" });
@@ -1630,10 +1590,6 @@
                                   title="Edit details"
                                   style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : ((meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? T.text3 : T.text4), marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
                                   {(meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? `sz ${meta.size}` : "· · ·"}
-                                </div>}
-                                </div>
-                                {hasSaleCountdown && <div style={{ display:"flex", alignItems:"center", paddingTop:"24px", marginLeft:"40px" }}>
-                                  <SaleCountdown saleDate={meta.saleDate} saleTime={meta.saleTime} />
                                 </div>}
                               </div>
                             );

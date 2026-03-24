@@ -763,17 +763,6 @@
       "story": "",
       "saleDate": "2026-03-26",
       "saleTime": "10:00"
-    },
-    "18_Space Jam": {
-      "purchaseDate": "",
-      "purchasePrice": "",
-      "retailer": "",
-      "size": "",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "2026-12-12",
-      "saleTime": "10:00"
     }
   },
   "grailMeta": {
@@ -1076,5 +1065,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-24T22:53:50.482Z"
+  "exportedAt": "2026-03-24T03:03:38.524Z"
 }
