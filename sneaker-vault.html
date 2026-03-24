@@ -117,10 +117,8 @@
     const localDateStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
     const formatDate = (iso) => iso ? new Date(iso+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : null;
 
-    function ImageSlot({ img, hoverImg, label, accent, bg, onUpload, onClear, width = 96, height = 60, wearDates = [], isGrail = false, purchaseDate = null, size = null, isBeater = false, ogYear = null, story = null, isOnIce = false, dark = false, shoeName = null }) {
+    function ImageSlot({ img, hoverImg, label, accent, bg, onUpload, onClear, width = 96, height = 60, wearDates = [], isGrail = false, purchaseDate = null, size = null, isBeater = false, ogYear = null, story = null, isOnIce = false, dark = false, shoeName = null, isMobilePublic = false }) {
       const fileRef = useRef();
-      const isMobile = useIsMobile();
-      const isMobilePublic = !ADMIN_MODE && isMobile;
       const [hovered, setHovered] = useState(false);
       const [showHover, setShowHover] = useState(false);
       const [beaterGlow, setBeaterGlow] = useState(false);
@@ -268,9 +266,7 @@
       );
     }
 
-    function DisplayCell({ c, img, hoverImg, ri, onEdit, isEditing, isGrail, dark = false }) {
-      const isMobile = useIsMobile();
-      const isMobilePublic = !ADMIN_MODE && isMobile;
+    function DisplayCell({ c, img, hoverImg, ri, onEdit, isEditing, isGrail, dark = false, isMobilePublic = false }) {
       const [hovered, setHovered] = useState(false);
       const [showHover, setShowHover] = useState(false);
       const timerRef = useRef(null);
@@ -345,9 +341,7 @@
       );
     }
 
-    function GraveyardCard({ entryKey, entry, T, dark, setColorways, setGraveyardMeta }) {
-      const isMobile = useIsMobile();
-      const isMobilePublic = !ADMIN_MODE && isMobile;
+    function GraveyardCard({ entryKey, entry, T, CT, dark, setColorways, setGraveyardMeta, isMobilePublic = false }) {
       const [hovered,    setHovered]    = useState(false);
       const [showHover,  setShowHover]  = useState(false);
       const [glowOn,     setGlowOn]     = useState(false);
@@ -356,7 +350,6 @@
       const glowRef      = useRef(null);
 
       const glowColor  = entry.isGrail ? "rgba(255,215,0,0.7)" : entry.isBeater ? "rgba(180,80,20,0.8)" : "rgba(150,150,150,0.6)";
-      const labelColor = entry.isGrail ? "#FFD700" : entry.isBeater ? "#b45014" : "#aaa";
       const purchaseDate = entry.purchaseDate ? new Date(entry.purchaseDate+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : null;
       const retireDate   = entry.retireDate   ? new Date(entry.retireDate+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : null;
 
@@ -380,9 +373,6 @@
       const cardW = isMobilePublic ? "140px" : "200px";
       const imgW = isMobilePublic ? "108px" : "168px";
       const imgH = isMobilePublic ? "68px" : "105px";
-
-      // CT for card text
-      const CT = dark ? T : { text:"#111", text2:"#333", text3:"#555", text4:"#666", text5:"#888", text6:"#aaa", text7:"#bbb", text8:"#ddd" };
 
       return (
         <div style={{ background: dark ? T.cardBg : "#f9f9f9", border:`1px solid ${T.border}`, padding:"16px", width: cardW, flex:"0 0 auto" }}>
@@ -831,23 +821,16 @@
               <img src="title2.png" alt="DerAusländer" style={{ display:"block", height: isMobilePublic ? "28px" : "90px", objectFit:"contain" }} />
               <img src="title1.png" alt="The Vault" style={{ position:"absolute", display:"block", height: isMobilePublic ? "20px" : "60px", objectFit:"contain", animation:"fadeInTitle 1.5s ease-in-out 1s both", filter:"drop-shadow(0px 0px 4px rgba(0,0,0,1)) drop-shadow(0px 0px 8px rgba(0,0,0,1))" }} />
             </div>
-            {/* Stats + buttons — solid black panel */}
-            <div style={{ position:"relative", zIndex:2, flexShrink:0, display:"flex", gap: isMobilePublic ? "16px" : "24px", textAlign:"center", alignItems:"center", background:"#000000", borderLeft:"2px solid #e63946", padding: isMobilePublic ? "0 16px" : "16px 32px", height: isMobilePublic ? "80px" : "200px" }}>
-              {(ADMIN_MODE ? [["PAIRS",total,"#e63946"],["OPEN BOXES",empty,"#e63946"],["WISHLIST",wishlist.length,"#e63946"]] : [["PAIRS",total,"#e63946"],["WISHLIST",wishlist.length,"#e63946"]]).map(([label,val,color])=>(
-                <div key={label}>
-                  <div style={{ fontSize: isMobilePublic ? "16px" : "32px", fontWeight:"bold", color }}>{val}</div>
-                  <div style={{ fontSize: isMobilePublic ? "8px" : "10px", letterSpacing:"3px", color:"#888" }}>{label}</div>
-                </div>
-              ))}
-              {ADMIN_MODE && <><div style={{ width:"1px", height:"48px", background:"#333" }} />
+            {/* Admin buttons — solid black panel */}
+            {ADMIN_MODE && <div style={{ position:"relative", zIndex:2, flexShrink:0, display:"flex", gap:"24px", textAlign:"center", alignItems:"center", background:"#000000", borderLeft:"2px solid #e63946", padding:"16px 32px", height:"200px" }}>
               <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
                 <button onClick={exportJSON} style={{ background:"#e63946", color:"#000", border:"none", padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontWeight:"bold", whiteSpace:"nowrap" }}>⬇ BACKUP</button>
                 <button onClick={() => importRef.current.click()} style={{ background:"transparent", color:"#e63946", border:"1px solid #4cc9f0", padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>⬆ RESTORE</button>
                 <button onClick={() => { if (window.confirm("Clear all images? This cannot be undone.")) { setImages({}); save("vault_images", {}); } }} style={{ background:"transparent", color: T.text5, border:`1px solid ${T.text5}`, padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>✕ CLEAR IMAGES</button>
                 <input ref={importRef} type="file" accept=".json" style={{ display:"none" }}
                   onChange={e => { if (e.target.files[0]) importJSON(e.target.files[0]); e.target.value=""; }} />
-              </div></>}
-            </div>
+              </div>
+            </div>}
           </div>
 
           {/* Import message */}
@@ -858,19 +841,47 @@
           )}
 
           {/* Nav */}
-          <div style={{ display:"flex", borderBottom:`1px solid ${T.border}`, background: T.navBg, alignItems:"center" }}>
+          <div style={{ display:"flex", borderBottom: isMobilePublic ? `1px solid ${T.border}` : "none", background: T.navBg, alignItems:"center" }}>
             {(ADMIN_MODE ? ["inventory","display","wishlist","graveyard","history","about"] : ["inventory", ...(!isMobile ? ["display"] : []), "wishlist", ...(Object.keys(graveyardMeta).length > 0 ? ["graveyard"] : []), "about"]).map(v => (
               <button key={v} onClick={() => setView(v)} style={{
-                padding:"14px 28px", background:view===v?"#e63946":"transparent",
+                padding: isMobilePublic ? "12px 0" : "14px 28px",
+                flex: isMobilePublic ? "1 1 0" : undefined,
+                background:view===v?"#e63946":"transparent",
                 color:view===v?"#fff": T.text4, border:"none", cursor:"pointer",
-                fontSize:"11px", letterSpacing:"4px", textTransform:"uppercase", fontFamily:"'Aptos','Segoe UI',sans-serif",
+                fontSize: isMobilePublic ? "9px" : "11px",
+                letterSpacing: isMobilePublic ? "2px" : "4px",
+                textTransform:"uppercase", fontFamily:"'Aptos','Segoe UI',sans-serif",
+                textAlign: isMobilePublic ? "center" : undefined,
                 animation: v==="wishlist" && wishlistHasSale && view!=="wishlist" ? "saleGlow 1.5s ease-in-out infinite" : "none",
               }}>{v}</button>
             ))}
-            {ADMIN_MODE && <div style={{ marginLeft:"auto" }}>
-              <button onClick={() => setDark(d => !d)} style={{ background:"transparent", border:"none", color: T.text4, cursor:"pointer", fontSize:"16px", padding:"14px 20px", lineHeight:1 }} title={dark ? "Switch to light mode" : "Switch to dark mode"}>{dark ? "☀" : "☾"}</button>
+            {/* Desktop: stats + dark mode toggle right-aligned in nav */}
+            {!isMobilePublic && <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:"20px", padding:"0 20px" }}>
+              <div style={{ display:"flex", gap:"16px", alignItems:"center" }}>
+                {(ADMIN_MODE ? [["PAIRS",total],["OPEN BOXES",empty],["WISHLIST",wishlist.length]] : [["PAIRS",total],["WISHLIST",wishlist.length]]).map(([label,val]) => (
+                  <div key={label} style={{ display:"flex", alignItems:"center", gap:"6px" }}>
+                    <span style={{ fontSize:"14px", fontWeight:"bold", color:"#e63946" }}>{val}</span>
+                    <span style={{ fontSize:"9px", letterSpacing:"2px", color: T.text5 }}>{label}</span>
+                  </div>
+                ))}
+              </div>
+              {ADMIN_MODE && <button onClick={() => setDark(d => !d)} style={{ background:"transparent", border:"none", color: T.text4, cursor:"pointer", fontSize:"16px", padding:"0", lineHeight:1 }} title={dark ? "Switch to light mode" : "Switch to dark mode"}>{dark ? "☀" : "☾"}</button>}
             </div>}
           </div>
+          {/* Desktop: border below nav (after stats) */}
+          {!isMobilePublic && <div style={{ borderBottom:`1px solid ${T.border}` }} />}
+
+          {/* Mobile: stats strip below nav */}
+          {isMobilePublic && (
+            <div style={{ display:"flex", justifyContent:"center", gap:"20px", padding:"8px 16px", background: T.navBg, borderBottom:`1px solid ${T.border}` }}>
+              {[["PAIRS",total],["WISHLIST",wishlist.length]].map(([label,val]) => (
+                <div key={label} style={{ display:"flex", alignItems:"center", gap:"5px" }}>
+                  <span style={{ fontSize:"12px", fontWeight:"bold", color:"#e63946" }}>{val}</span>
+                  <span style={{ fontSize:"8px", letterSpacing:"2px", color: T.text5 }}>{label}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div style={{ padding: isMobilePublic ? "16px" : "32px" }}>
 
@@ -1238,6 +1249,7 @@
                                   isOnIce={(wearLog[shoe.id] || []).filter(e => e.colorway === cw).length === 0}
                                   shoeName={shoe.name}
                                   dark={dark}
+                                  isMobilePublic={isMobilePublic}
                                   purchaseDate={(colorwayMeta[metaKey] || {}).purchaseDate || null}
                                   size={(colorwayMeta[metaKey] || {}).size || null}
                                   ogYear={(colorwayMeta[metaKey] || {}).ogYear || null}
@@ -1509,6 +1521,7 @@
                       <DisplayCell key={`${ri}-${ci}`} c={c} img={img} hoverImg={hoverImg} ri={ri} dark={dark}
                         isEditing={isEditing}
                         isGrail={isGrail}
+                        isMobilePublic={isMobilePublic}
                         onEdit={() => {
                           setEditingCell({ri, ci});
                           setEditShoe(cell.code || "");
@@ -1527,7 +1540,7 @@
             {/* ── WISHLIST ── */}
             {view === "wishlist" && (
               <div>
-                <div style={{ display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" }}>
+                <div style={isMobilePublic ? { display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" } : { display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(340px,1fr))", gap:"12px" }}>
                   {wishlist.map(shoe => {
                     const shoeColorways = colorways[shoe.shortName] || [shoe.shortName];
                     const col = CAT[shoe.category] || CAT.Jordan;
@@ -1565,6 +1578,7 @@
                                   height={imgH}
                                   isGrail={!!grailMeta[metaKey]}
                                   dark={dark}
+                                  isMobilePublic={isMobilePublic}
                                   onUpload={file => handleImageUpload(shoe.id, cw, file)}
                                   onClear={() => setImages(imgs => { const n={...imgs}; delete n[metaKey]; return n; })}
                                 />
@@ -1787,7 +1801,7 @@
                         <div style={{ marginBottom:"32px" }}>
                           <SectionHeader label="✦ RETIRED GRAILS ✦" color="#FFD700" />
                           <div style={{ display:"flex", flexWrap:"wrap", gap:"12px" }}>
-                            {grails.map(([k,e]) => <GraveyardCard key={k} entryKey={k} entry={e} T={T} dark={dark} setColorways={setColorways} setGraveyardMeta={setGraveyardMeta} />)}
+                            {grails.map(([k,e]) => <GraveyardCard key={k} entryKey={k} entry={e} T={T} CT={CT} dark={dark} setColorways={setColorways} setGraveyardMeta={setGraveyardMeta} isMobilePublic={isMobilePublic} />)}
                           </div>
                         </div>
                       )}
@@ -1795,7 +1809,7 @@
                         <div style={{ marginBottom:"32px" }}>
                           <SectionHeader label="🪦 RETIRED" color={T.text4} />
                           <div style={{ display:"flex", flexWrap:"wrap", gap:"12px" }}>
-                            {regular.map(([k,e]) => <GraveyardCard key={k} entryKey={k} entry={e} T={T} dark={dark} setColorways={setColorways} setGraveyardMeta={setGraveyardMeta} />)}
+                            {regular.map(([k,e]) => <GraveyardCard key={k} entryKey={k} entry={e} T={T} CT={CT} dark={dark} setColorways={setColorways} setGraveyardMeta={setGraveyardMeta} isMobilePublic={isMobilePublic} />)}
                           </div>
                         </div>
                       )}
@@ -1803,7 +1817,7 @@
                         <div style={{ marginBottom:"32px" }}>
                           <SectionHeader label="💀 RETIRED BEATERS 💀" color="#b45014" />
                           <div style={{ display:"flex", flexWrap:"wrap", gap:"12px" }}>
-                            {beaters.map(([k,e]) => <GraveyardCard key={k} entryKey={k} entry={e} T={T} dark={dark} setColorways={setColorways} setGraveyardMeta={setGraveyardMeta} />)}
+                            {beaters.map(([k,e]) => <GraveyardCard key={k} entryKey={k} entry={e} T={T} CT={CT} dark={dark} setColorways={setColorways} setGraveyardMeta={setGraveyardMeta} isMobilePublic={isMobilePublic} />)}
                           </div>
                         </div>
                       )}
