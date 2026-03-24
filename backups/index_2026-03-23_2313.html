@@ -229,7 +229,7 @@
                           {ogYear && <div style={{ marginTop:"4px", fontSize:"10px", color:"#fff", letterSpacing:"1px" }}>Originally Owned in {ogYear}</div>}
                           {purchaseDate && <div style={{ marginTop:"8px", fontSize:"10px", color: dark ? "#777" : "#aaa", letterSpacing:"1px" }}>Purchase Date: {new Date(purchaseDate + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}</div>}
                           {size && <div style={{ marginTop:"4px", fontSize:"10px", color: dark ? "#777" : "#aaa", letterSpacing:"1px" }}>Size: {size}</div>}
-                          {sortedDates.length > 0 && <div style={{ marginTop:"4px", fontSize:"10px", color: dark ? "#777" : "#aaa", letterSpacing:"1px" }}>Last Worn: {new Date(sortedDates[0] + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}</div>}
+                          <div style={{ marginTop:"4px", fontSize:"10px", color: dark ? "#777" : "#aaa", letterSpacing:"1px" }}>Last Worn: {sortedDates.length > 0 ? new Date(sortedDates[0] + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" }) : "Never"}</div>
                         </div>
                         {/* Story text */}
                         {story && (
@@ -721,38 +721,12 @@
 
       const exportJSON = () => {
         const data = { inventory, wearLog, images, colorwayMeta, grailMeta, beaterMeta, glowMeta, graveyardMeta, colorways, displayLayout, exportedAt: new Date().toISOString() };
-        const json = JSON.stringify(data, null, 2);
-        if (ADMIN_MODE) {
-          // Save via server — backs up old vault-data.json, writes new one
-          fetch("/backup", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: json,
-          })
-          .then(r => r.json())
-          .then(result => {
-            if (result.success) {
-              setImportMsg({ type:"success", text: result.message || "Backup saved!" });
-            } else {
-              setImportMsg({ type:"error", text: result.error || "Backup failed." });
-            }
-            setTimeout(() => setImportMsg(null), 4000);
-          })
-          .catch(() => {
-            // Fallback to browser download if server unavailable
-            const blob = new Blob([json], { type:"application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url; a.download = `sneaker-vault-backup-${localDateStr()}.json`;
-            a.click(); URL.revokeObjectURL(url);
-          });
-        } else {
-          const blob = new Blob([json], { type:"application/json" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url; a.download = `sneaker-vault-backup-${localDateStr()}.json`;
-          a.click(); URL.revokeObjectURL(url);
-        }
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type:"application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const date = localDateStr();
+        a.href = url; a.download = `sneaker-vault-backup-${date}.json`;
+        a.click(); URL.revokeObjectURL(url);
       };
 
       const importJSON = (file) => {
