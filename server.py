@@ -10,10 +10,12 @@ import http.server
 import json
 import os
 import shutil
+from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 
 PORT = 8000
 SHOES_DIR = "Shoes"
+BACKUPS_DIR = "backups"
 
 class VaultHandler(http.server.SimpleHTTPRequestHandler):
 
@@ -47,6 +49,9 @@ class VaultHandler(http.server.SimpleHTTPRequestHandler):
 
             self._respond(200, {"path": f"Shoes/{filename}", "key": key})
 
+        elif self.path.startswith("/backup"):
+            self._handle_backup()
+
         elif self.path.startswith("/delete"):
             """Handle image delete: POST /delete?key=4_Fire+Red&type=main"""
             parsed = urlparse(self.path)
@@ -65,6 +70,38 @@ class VaultHandler(http.server.SimpleHTTPRequestHandler):
                 self._respond(404, {"error": "File not found"})
         else:
             self._respond(404, {"error": "Not found"})
+
+    def _handle_backup(self):
+        """Handle backup: POST /backup — saves vault-data.json, archives old one"""
+        length = int(self.headers.get("Content-Length", 0))
+        raw = self.rfile.read(length)
+
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            self._respond(400, {"success": False, "error": "Invalid JSON"})
+            return
+
+        os.makedirs(BACKUPS_DIR, exist_ok=True)
+
+        # If vault-data.json exists, move it to backups with timestamp
+        vault_file = "vault-data.json"
+        backup_msg = ""
+        if os.path.exists(vault_file):
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H%M")
+            backup_name = f"vault-data_{timestamp}.json"
+            backup_path = os.path.join(BACKUPS_DIR, backup_name)
+            shutil.copy2(vault_file, backup_path)
+            backup_msg = f"Old data backed up to {BACKUPS_DIR}/{backup_name}. "
+
+        # Write new vault-data.json
+        with open(vault_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+
+        self._respond(200, {
+            "success": True,
+            "message": f"{backup_msg}vault-data.json updated."
+        })
 
     def _respond(self, status, data):
         body = json.dumps(data).encode()
