@@ -824,15 +824,15 @@
       return (
         <div style={{ minHeight:"100vh", background: T.bg }}>
 
-          <div style={{ background:"#000000", borderBottom:"2px solid #e63946", position:"relative", minHeight: isMobilePublic ? "80px" : "200px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ background:"#000000", borderBottom:"2px solid #e63946", position:"relative", minHeight: isMobilePublic ? "80px" : "200px", display:"flex", alignItems:"center" }}>
             <img src="banner.png" alt="" style={{ position:"absolute", top:0, left:0, width:"100%", height: isMobilePublic ? "80px" : "200px", objectFit:"cover", objectPosition:"center" }} />
-            {/* Title images — layered, centered */}
-            <div style={{ position:"absolute", left:"50%", top:"50%", transform:"translate(-50%,-50%)", zIndex:2, pointerEvents:"none", display:"flex", alignItems:"center", justifyContent:"center" }}>
+            {/* Title — fills remaining space, layered */}
+            <div style={{ flex:1, display:"flex", justifyContent:"center", alignItems:"center", position:"relative", zIndex:2, pointerEvents:"none" }}>
               <img src="title2.png" alt="DerAusländer" style={{ display:"block", height: isMobilePublic ? "28px" : "90px", objectFit:"contain" }} />
               <img src="title1.png" alt="The Vault" style={{ position:"absolute", display:"block", height: isMobilePublic ? "20px" : "60px", objectFit:"contain", animation:"fadeInTitle 1.5s ease-in-out 1s both", filter:"drop-shadow(0px 0px 4px rgba(0,0,0,1)) drop-shadow(0px 0px 8px rgba(0,0,0,1))" }} />
             </div>
             {/* Stats + buttons — solid black panel */}
-            <div style={{ position:"relative", zIndex:2, marginLeft:"auto", display:"flex", gap: isMobilePublic ? "16px" : "24px", textAlign:"center", alignItems:"center", background:"#000000", borderLeft:"2px solid #e63946", padding: isMobilePublic ? "0 16px" : "16px 32px", height: isMobilePublic ? "80px" : "200px" }}>
+            <div style={{ position:"relative", zIndex:2, flexShrink:0, display:"flex", gap: isMobilePublic ? "16px" : "24px", textAlign:"center", alignItems:"center", background:"#000000", borderLeft:"2px solid #e63946", padding: isMobilePublic ? "0 16px" : "16px 32px", height: isMobilePublic ? "80px" : "200px" }}>
               {(ADMIN_MODE ? [["PAIRS",total,"#e63946"],["OPEN BOXES",empty,"#e63946"],["WISHLIST",wishlist.length,"#e63946"]] : [["PAIRS",total,"#e63946"],["WISHLIST",wishlist.length,"#e63946"]]).map(([label,val,color])=>(
                 <div key={label}>
                   <div style={{ fontSize: isMobilePublic ? "16px" : "32px", fontWeight:"bold", color }}>{val}</div>
@@ -1527,15 +1527,16 @@
             {/* ── WISHLIST ── */}
             {view === "wishlist" && (
               <div>
-                <div style={{ display: isMobilePublic ? "flex" : "grid", flexDirection: isMobilePublic ? "column" : undefined, gridTemplateColumns: isMobilePublic ? undefined : "repeat(auto-fill, minmax(340px,1fr))", flexWrap: isMobilePublic ? "wrap" : undefined, gap:"12px", alignItems: isMobilePublic ? "flex-start" : undefined }}>
+                <div style={{ display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" }}>
                   {wishlist.map(shoe => {
                     const shoeColorways = colorways[shoe.shortName] || [shoe.shortName];
                     const col = CAT[shoe.category] || CAT.Jordan;
                     const imgW = isMobilePublic ? 72 : (shoeColorways.length === 1 ? 120 : shoeColorways.length <= 3 ? 96 : 80);
                     const imgH = Math.round(imgW * 0.625);
+                    const cardMinW = isMobilePublic ? "100%" : Math.max(200, shoeColorways.length * (imgW + 16) + 32);
                     const cardHasSale = (colorways[shoe.shortName] || [shoe.shortName]).some(cw => saleGlowKeys.has(`${shoe.id}_${cw}`));
                     return (
-                      <div key={shoe.id} style={{ background:T.cardBg, border:`1px dashed ${T.border2}`, padding:"16px", flex: isMobilePublic ? "1 1 100%" : undefined, animation: cardHasSale ? "saleGlow 1.5s ease-in-out infinite" : "none" }}>
+                      <div key={shoe.id} style={{ background:T.cardBg, border:`1px dashed ${T.border2}`, padding:"16px", minWidth: cardMinW, flex: isMobilePublic ? "1 1 100%" : "0 1 auto", animation: cardHasSale ? "saleGlow 1.5s ease-in-out infinite" : "none" }}>
                         {/* Top: info + buttons */}
                         <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:"12px" }}>
                           <div>
