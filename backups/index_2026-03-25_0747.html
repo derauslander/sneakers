@@ -76,15 +76,13 @@
     const useDarkModePublic = () => {
       const [dark, setDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
       useEffect(() => {
-        document.body.classList.toggle("dark", dark);
-      }, [dark]);
-      useEffect(() => {
         const mq = window.matchMedia("(prefers-color-scheme: dark)");
-        const handler = e => { setDark(e.matches); };
+        const handler = e => { setDark(e.matches); document.body.classList.toggle("dark", e.matches); };
         mq.addEventListener("change", handler);
+        document.body.classList.toggle("dark", dark);
         return () => mq.removeEventListener("change", handler);
       }, []);
-      return [dark, setDark];
+      return [dark, () => {}];
     };
 
     const useIsMobile = () => {
@@ -905,7 +903,7 @@
                   </div>
                 ))}
               </div>
-              <button onClick={() => setDark(d => !d)} style={{ background:"transparent", border:"none", color: T.text4, cursor:"pointer", fontSize:"16px", padding:"0", lineHeight:1 }} title={dark ? "Switch to light mode" : "Switch to dark mode"}>{dark ? "☀" : "☾"}</button>
+              {ADMIN_MODE && <button onClick={() => setDark(d => !d)} style={{ background:"transparent", border:"none", color: T.text4, cursor:"pointer", fontSize:"16px", padding:"0", lineHeight:1 }} title={dark ? "Switch to light mode" : "Switch to dark mode"}>{dark ? "☀" : "☾"}</button>}
             </div>}
           </div>
           {/* Desktop: border below nav (after stats) */}
@@ -913,14 +911,13 @@
 
           {/* Mobile: stats strip below nav */}
           {isMobilePublic && (
-            <div style={{ display:"flex", justifyContent:"center", alignItems:"center", gap:"20px", padding:"8px 16px", background: T.navBg, borderBottom:`1px solid ${T.border}` }}>
+            <div style={{ display:"flex", justifyContent:"center", gap:"20px", padding:"8px 16px", background: T.navBg, borderBottom:`1px solid ${T.border}` }}>
               {[["PAIRS",total],["WISHLIST",wishlist.length]].map(([label,val]) => (
                 <div key={label} style={{ display:"flex", alignItems:"center", gap:"5px" }}>
                   <span style={{ fontSize:"12px", fontWeight:"bold", color:"#e63946" }}>{val}</span>
                   <span style={{ fontSize:"8px", letterSpacing:"2px", color: T.text5 }}>{label}</span>
                 </div>
               ))}
-              <button onClick={() => setDark(d => !d)} style={{ background:"transparent", border:"none", color: T.text4, cursor:"pointer", fontSize:"14px", padding:"0", lineHeight:1 }} title={dark ? "Switch to light mode" : "Switch to dark mode"}>{dark ? "☀" : "☾"}</button>
             </div>
           )}
 
