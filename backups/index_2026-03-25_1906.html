@@ -38,7 +38,7 @@
     // ADMIN_MODE — true for local admin app, false for public site
     // build.bat flips this to false when generating index.html
     // ═══════════════════════════════════════════════════════════════════════════
-    const ADMIN_MODE = true;
+    const ADMIN_MODE = false;
 
     const { useState, useEffect, useRef } = React;
 
@@ -107,15 +107,6 @@
       return years > 0;
     };
 
-    // ── New pickup check helper (within 7 days of purchase) ───────────────
-    const isNewPickupCheck = (purchaseDate) => {
-      if (!purchaseDate) return false;
-      const today = new Date(localDateStr() + "T00:00:00").getTime();
-      const purchase = new Date(purchaseDate + "T00:00:00").getTime();
-      const diff = today - purchase;
-      return diff >= 0 && diff <= 7 * 86400000;
-    };
-
         const COLORWAYS = {};
 
     const CAT_COLORS = {
@@ -166,7 +157,7 @@
       );
     }
 
-    function ImageSlot({ img, hoverImg, label, accent, bg, onUpload, onClear, width = 96, height = 60, wearDates = [], isGrail = false, purchaseDate = null, size = null, isBeater = false, ogYear = null, story = null, isOnIce = false, dark = false, shoeName = null, isMobilePublic = false, isNewPickup = false }) {
+    function ImageSlot({ img, hoverImg, label, accent, bg, onUpload, onClear, width = 96, height = 60, wearDates = [], isGrail = false, purchaseDate = null, size = null, isBeater = false, ogYear = null, story = null, isOnIce = false, dark = false, shoeName = null, isMobilePublic = false }) {
       const fileRef = useRef();
       const [hovered, setHovered] = useState(false);
       const [showHover, setShowHover] = useState(false);
@@ -273,8 +264,7 @@
                           {isBeater && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#b45014", marginTop:"6px", opacity: beaterGlow ? 1 : 0, transition:"opacity 3s ease-in-out" }}>💀 BEATER 💀</div>}
                           {isOnIce && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#64c8ff", marginTop:"6px", opacity: iceGlow ? 1 : 0, transition:"opacity 3s ease-in-out" }}>❄️ ON ICE ❄️</div>}
                           {anniversaryGlow && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#FFD700", marginTop:"6px", opacity: showHover ? 1 : 0, transition:"opacity 3s ease-in-out" }}>✦ ANNIVERSARY ✦</div>}
-                          {isNewPickup && !isGrail && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#FFD700", marginTop:"6px" }}>✦ NEW PICKUP ✦</div>}
-                          <div style={{ marginTop:(isGrail||isBeater||isOnIce||anniversaryGlow||isNewPickup)?"6px":"0", fontSize:"13px", letterSpacing:"3px", color: isGrail && grailReveal ? "#FFD700" : isBeater && beaterGlow ? "#b45014" : isOnIce && iceGlow ? "#64c8ff" : anniversaryGlow && showHover ? "#FFD700" : isNewPickup ? "#FFD700" : "#fff", transition:"color 3s ease-in-out" }}>
+                          <div style={{ marginTop:(isGrail||isBeater||isOnIce||anniversaryGlow)?"6px":"0", fontSize:"13px", letterSpacing:"3px", color: isGrail && grailReveal ? "#FFD700" : isBeater && beaterGlow ? "#b45014" : isOnIce && iceGlow ? "#64c8ff" : anniversaryGlow && showHover ? "#FFD700" : "#fff", transition:"color 3s ease-in-out" }}>
                             {shoeName ? `${shoeName} — ${label}` : label}
                           </div>
                           {ogYear && <div style={{ marginTop:"4px", fontSize:"10px", color:"#fff", letterSpacing:"1px" }}>Originally Owned in {ogYear}</div>}
@@ -294,7 +284,7 @@
                   </div>
                 )}
               </div>
-              <div style={{ fontSize:"11px", color:"#666", marginTop:"4px", maxWidth:width, textAlign:"center", lineHeight:"1.3", wordBreak:"break-word" }}>{label}{isNewPickup && <span style={{ fontSize:"9px", letterSpacing:"2px", color:"#FFD700", fontWeight:"bold", marginLeft:"5px" }}>NEW</span>}</div>
+              <div style={{ fontSize:"11px", color:"#666", marginTop:"4px", maxWidth:width, textAlign:"center", lineHeight:"1.3", wordBreak:"break-word" }}>{label}</div>
               
             </div>
           ) : (
@@ -523,7 +513,7 @@
       const [editingCell,    setEditingCell]    = useState(null);
       const [editShoe,       setEditShoe]       = useState("");
       const [editCw,         setEditCw]         = useState("");
-      const [view,           setView]           = useState("collection");
+      const [view,           setView]           = useState("inventory");
       const [showForm,       setShowForm]       = useState(false);
       const [quickLog,       setQuickLog]       = useState(false);
       const [quickShoeId,    setQuickShoeId]    = useState("");
@@ -892,7 +882,7 @@
 
           {/* Nav */}
           <div style={{ display:"flex", borderBottom: isMobilePublic ? `1px solid ${T.border}` : "none", background: T.navBg, alignItems:"center" }}>
-            {(ADMIN_MODE ? ["collection","display","wishlist","graveyard","history","about"] : ["collection", ...(!isMobile ? ["display"] : []), "wishlist", ...(Object.keys(graveyardMeta).length > 0 ? ["graveyard"] : []), "about"]).map(v => (
+            {(ADMIN_MODE ? ["inventory","display","wishlist","graveyard","history","about"] : ["inventory", ...(!isMobile ? ["display"] : []), "wishlist", ...(Object.keys(graveyardMeta).length > 0 ? ["graveyard"] : []), "about"]).map(v => (
               <button key={v} onClick={() => setView(v)} style={{
                 padding: isMobilePublic ? "12px 0" : "14px 28px",
                 flex: isMobilePublic ? "1 1 0" : undefined,
@@ -936,8 +926,8 @@
 
           <div style={{ padding: isMobilePublic ? "16px" : "32px" }}>
 
-            {/* ── COLLECTION ── */}
-            {view === "collection" && (
+            {/* ── INVENTORY ── */}
+            {view === "inventory" && (
               <div>
                 {/* Anniversary Banner */}
                 {!anniversaryDismissed && anniversaries.length > 0 && (() => {
@@ -994,7 +984,7 @@
                 {!saleDismissed && saleAlerts.length > 0 && (
                   <div style={{ background: dark ? "linear-gradient(90deg,#1a1a0a,#1a1500)" : "linear-gradient(90deg,#fffef0,#fff8cc)", border:"1px solid #e6b800", padding:"16px 24px", marginBottom:"16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px" }}>
                     <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
-                      {saleAlerts[0].img && <img src={saleAlerts[0].img} alt={saleAlerts[0].colorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0 }} />}
+                      {saleAlerts[0].img && <img src={saleAlerts[0].img} alt={saleAlerts[0].colorway} style={{ width:"72px", height:"45px", objectFit:"cover", flexShrink:0 }} />}
                       <div>
                         <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e6b800", marginBottom:"4px" }}>🛒 SALE ALERT</div>
                         <div style={{ fontSize:"15px", fontWeight:"bold", color: T.text }}>
@@ -1298,7 +1288,6 @@
                                   isGrail={!!grailMeta[metaKey]}
                                   isBeater={!!beaterMeta[metaKey]}
                                   isOnIce={(wearLog[shoe.id] || []).filter(e => e.colorway === cw).length === 0}
-                                  isNewPickup={isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate)}
                                   shoeName={shoe.name}
                                   dark={dark}
                                   isMobilePublic={isMobilePublic}
@@ -1631,7 +1620,6 @@
                                     width={imgW}
                                     height={imgH}
                                     isGrail={!!grailMeta[metaKey]}
-                                    isNewPickup={isNewPickupCheck(meta.purchaseDate)}
                                     dark={dark}
                                     isMobilePublic={isMobilePublic}
                                     onUpload={file => handleImageUpload(shoe.id, cw, file)}
