@@ -175,6 +175,14 @@
       "quantity": 1,
       "wishlist": true,
       "id": 1774096319133
+    },
+    {
+      "name": "Air Max 90",
+      "shortName": "AM90",
+      "category": "Nike",
+      "quantity": 1,
+      "wishlist": true,
+      "id": 1774297239173
     }
   ],
   "wearLog": {
@@ -572,9 +580,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "story": ""
     },
     "2_Black Cement": {
       "purchaseDate": "2023-09-23",
@@ -1070,5 +1076,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-26T21:34:38.800Z"
+  "exportedAt": "2026-03-24T22:53:50.482Z"
 }
