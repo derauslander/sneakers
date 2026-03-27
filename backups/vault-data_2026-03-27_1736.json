@@ -432,12 +432,7 @@
     "4_White Cement_hover": "Shoes/4_White Cement_hover.png",
     "4_What the 4_hover": "Shoes/4_What the 4_hover.png",
     "4_Military Blue_hover": "Shoes/4_Military Blue_hover.png",
-    "8_Playoffs_hover": "Shoes/8_Playoffs_hover.png",
-    "12_Black Flint_hover": "Shoes/12_Black Flint_hover.png",
-    "11_Flu Game_hover": "Shoes/11_Flu Game_hover.png",
-    "5_A Ma Maniere Dawn_hover": "Shoes/5_A Ma Maniere Dawn_hover.png",
-    "6_Infrared_hover": "Shoes/6_Infrared_hover.png",
-    "6_Reverse Infrared_hover": "Shoes/6_Reverse Infrared_hover.png"
+    "8_Playoffs_hover": "Shoes/8_Playoffs_hover.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -452,11 +447,7 @@
       "purchasePrice": "217.25",
       "retailer": "SNKRS",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "5_Grape": {
       "purchaseDate": "2025-06-21",
@@ -472,9 +463,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "story": ""
     },
     "14_Chicago": {
       "purchaseDate": "2025-11-01",
@@ -695,9 +684,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "story": ""
     },
     "4_What the 4": {
       "purchaseDate": "2023-03-28",
@@ -722,11 +709,7 @@
       "purchasePrice": "244.41",
       "retailer": "SNKRS",
       "size": "12.5",
-      "notes": "LR hit on SNKRS",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": "LR hit on SNKRS"
     },
     "4_Military Blue": {
       "purchaseDate": "2024-05-04",
@@ -1112,5 +1095,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-27T23:08:28.736Z"
+  "exportedAt": "2026-03-27T19:48:43.859Z"
 }

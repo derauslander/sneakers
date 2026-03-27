@@ -62,25 +62,23 @@
       cardText: "#f0f0f0", cardText2: "#d0d0d0", cardText3: "#b0b0b0", cardText4: "#999999", cardText5: "#888888", cardText6: "#777777", cardText7: "#666666",
     };
 
-    const useDarkMode = () => {
+    const useDarkMode = (isAdmin) => {
       const [dark, setDark] = useState(() => {
-        try { return localStorage.getItem("vault_dark") === "true"; } catch { return false; }
+        if (isAdmin) {
+          try { return localStorage.getItem("vault_dark") === "true"; } catch { return false; }
+        }
+        return window.matchMedia("(prefers-color-scheme: dark)").matches;
       });
       useEffect(() => {
         document.body.classList.toggle("dark", dark);
-        try { localStorage.setItem("vault_dark", dark); } catch {}
-      }, [dark]);
-      return [dark, setDark];
-    };
-
-    const useDarkModePublic = () => {
-      const [dark, setDark] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches);
-      useEffect(() => {
-        document.body.classList.toggle("dark", dark);
+        if (isAdmin) {
+          try { localStorage.setItem("vault_dark", dark); } catch {}
+        }
       }, [dark]);
       useEffect(() => {
+        if (isAdmin) return;
         const mq = window.matchMedia("(prefers-color-scheme: dark)");
-        const handler = e => { setDark(e.matches); };
+        const handler = e => setDark(e.matches);
         mq.addEventListener("change", handler);
         return () => mq.removeEventListener("change", handler);
       }, []);
@@ -489,10 +487,172 @@
       );
     }
 
+    function MetaEditForm({ editingMeta, metaForm, setMetaForm, setColorwayMeta, setEditingMeta, setGrailMeta, grailMeta, setBeaterMeta, beaterMeta, setGlowMeta, glowMeta, setImages, images, handleImageUpload, setRetiringMeta, setRetireForm, IS, CT, T, dark, isWishlist = false }) {
+      const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
+      const hoverKey = `${key}_hover`;
+      const hoverImgVal = images[hoverKey];
+      const isGrailCw = !!grailMeta[key];
+      const hoverUploadRef = useRef();
+      const btnStyle = { background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" };
+      return (
+        <div style={{ background:T.bg2, border:`1px solid ${T.border}`, padding:"12px", marginTop: isWishlist ? "10px" : undefined }}>
+          <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"8px" }}>
+            {editingMeta.colorway} — DETAILS
+          </div>
+          {/* Grail toggle */}
+          <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom: isWishlist ? "10px" : "8px" }}>
+            <input type="checkbox"
+              checked={isGrailCw}
+              onChange={e => {
+                setGrailMeta(g => { const n={...g}; if (e.target.checked) n[key]=true; else delete n[key]; return n; });
+              }}
+              style={{ width:"14px", height:"14px", cursor:"pointer", accentColor:"#FFD700" }} />
+            <span style={{ fontSize:"10px", letterSpacing:"3px", color:"#FFD700", cursor:"pointer" }}>✦ GRAIL</span>
+          </div>
+          {/* Beater toggle — collection only */}
+          {!isWishlist && (
+            <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"8px" }}>
+              <input type="checkbox"
+                checked={!!beaterMeta[key]}
+                onChange={e => {
+                  setBeaterMeta(b => { const n={...b}; if (e.target.checked) n[key]=true; else delete n[key]; return n; });
+                }}
+                style={{ width:"14px", height:"14px", cursor:"pointer", accentColor:"#b45014" }} />
+              <span style={{ fontSize:"10px", letterSpacing:"3px", color:"#b45014", cursor:"pointer" }}>💀 BEATER</span>
+            </div>
+          )}
+          {/* Dark mode glow toggle — collection only */}
+          {!isWishlist && (
+            <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"10px" }}>
+              <input type="checkbox"
+                checked={!!glowMeta[key]}
+                onChange={e => {
+                  setGlowMeta(g => { const n={...g}; if (e.target.checked) n[key]=true; else delete n[key]; return n; });
+                }}
+                style={{ width:"14px", height:"14px", cursor:"pointer", accentColor:"#64c8ff" }} />
+              <span style={{ fontSize:"10px", letterSpacing:"3px", color: CT.text5, cursor:"pointer" }}>☾ DARK GLOW</span>
+            </div>
+          )}
+          {/* Hover image upload — collection only */}
+          {!isWishlist && (
+            <div style={{ marginBottom:"10px" }}>
+              <div style={{ fontSize:"9px", letterSpacing:"2px", color: isGrailCw ? "#FFD700" : "#e63946", marginBottom:"6px" }}>{isGrailCw ? "✦ HOVER IMAGE" : "✦ 2ND IMAGE (ANNIVERSARY)"}</div>
+              <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                {hoverImgVal
+                  ? <img src={hoverImgVal} alt="hover" style={{ width:"80px", height:"50px", objectFit:"cover", border:"1px solid #FFD700" }} />
+                  : <div style={{ width:"80px", height:"50px", background: dark ? "#2a2a2a" : "#f0f0f0", border:"1px dashed #FFD700", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px", color:"#FFD700", cursor:"pointer" }}
+                      onClick={() => hoverUploadRef.current.click()}>+</div>
+                }
+                <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
+                  <button onClick={() => hoverUploadRef.current.click()}
+                    style={{ background:"transparent", border:"1px solid #FFD700", color:"#FFD700", padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
+                    {hoverImgVal ? "REPLACE" : "UPLOAD"}
+                  </button>
+                  {hoverImgVal && (
+                    <button onClick={() => setImages(imgs => { const n={...imgs}; delete n[hoverKey]; return n; })}
+                      style={{ background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
+                      REMOVE
+                    </button>
+                  )}
+                </div>
+              </div>
+              {!isGrailCw && <div style={{ fontSize:"8px", color: CT.text6, marginTop:"4px", letterSpacing:"1px" }}>Shows on hover only on purchase anniversary</div>}
+              <input ref={hoverUploadRef} type="file" accept="image/*" style={{ display:"none" }}
+                onChange={e => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  handleImageUpload(editingMeta.shoeId, editingMeta.colorway, file, "hover");
+                  e.target.value = "";
+                }} />
+            </div>
+          )}
+          {/* Fields */}
+          {isWishlist ? (
+            <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", alignItems:"flex-end" }}>
+              {[["DATE","date","purchaseDate"],["PRICE","text","purchasePrice"],["RETAILER","text","retailer"],["SIZE","text","size"],["NOTES","text","notes"]].map(([label,type,field]) => (
+                <div key={field} style={{ flex:"1 1 80px" }}>
+                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>{label}</div>
+                  <input type={type} value={metaForm[field]} onChange={e => setMetaForm(f => ({...f,[field]:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", alignItems:"flex-end" }}>
+                <div style={{ flex:"0 0 130px" }}>
+                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>PURCHASE DATE</div>
+                  <input type="date" value={metaForm.purchaseDate} onChange={e => setMetaForm(f => ({...f, purchaseDate:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                </div>
+                <div style={{ flex:"0 0 100px" }}>
+                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>PRICE</div>
+                  <input type="text" placeholder="$0.00" value={metaForm.purchasePrice} onChange={e => setMetaForm(f => ({...f, purchasePrice:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                </div>
+                <div style={{ flex:"1 1 140px" }}>
+                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>RETAILER</div>
+                  <input type="text" placeholder="e.g. SNKRS, GOAT" value={metaForm.retailer} onChange={e => setMetaForm(f => ({...f, retailer:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                </div>
+                <div style={{ flex:"0 0 65px" }}>
+                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>SIZE</div>
+                  <input type="text" placeholder="12.5" value={metaForm.size} onChange={e => setMetaForm(f => ({...f, size:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                </div>
+                <div style={{ flex:"0 0 65px" }}>
+                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>OG YEAR</div>
+                  <input type="text" placeholder="1995" value={metaForm.ogYear} onChange={e => setMetaForm(f => ({...f, ogYear:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                </div>
+                <div style={{ flex:"1 1 160px" }}>
+                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>NOTES</div>
+                  <input type="text" placeholder="Any notes..." value={metaForm.notes} onChange={e => setMetaForm(f => ({...f, notes:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                </div>
+              </div>
+              <div style={{ marginTop:"10px" }}>
+                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>STORY</div>
+                <textarea placeholder="Tell the story of this shoe..." value={metaForm.story} onChange={e => setMetaForm(f => ({...f, story:e.target.value}))}
+                  style={{...IS, fontSize:"11px", padding:"5px", minHeight:"80px", resize:"vertical", width:"100%"}} />
+              </div>
+            </>
+          )}
+          {/* Sale date/time — wishlist only */}
+          {isWishlist && (
+            <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", alignItems:"flex-end", marginTop:"8px" }}>
+              <div style={{ flex:"1 1 120px" }}>
+                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginBottom:"4px" }}>🛒 SALE DATE</div>
+                <input type="date" value={metaForm.saleDate} onChange={e => setMetaForm(f => ({...f, saleDate:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+              </div>
+              <div style={{ flex:"1 1 100px" }}>
+                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginBottom:"4px" }}>🛒 SALE TIME</div>
+                <input type="time" value={metaForm.saleTime} onChange={e => setMetaForm(f => ({...f, saleTime:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+              </div>
+            </div>
+          )}
+          {/* Action buttons */}
+          <div style={{ display:"flex", gap:"8px", marginTop:"10px", flexWrap:"wrap" }}>
+            <button onClick={() => {
+              setColorwayMeta(m => ({ ...m, [key]: { ...metaForm } }));
+              setEditingMeta(null);
+            }} style={{ background:"#e63946", color:"#fff", border:"none", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>SAVE</button>
+            <button onClick={() => setEditingMeta(null)} style={btnStyle}>CANCEL</button>
+            {images[key] && (
+              <button onClick={() => {
+                setImages(imgs => { const n={...imgs}; delete n[key]; return n; });
+                setEditingMeta(null);
+              }} style={btnStyle}>REMOVE PHOTO</button>
+            )}
+            {!isWishlist && (
+              <button onClick={() => {
+                setRetiringMeta({ shoeId: editingMeta.shoeId, colorway: editingMeta.colorway });
+                setRetireForm({ reason:"Sold", dateRetired: localDateStr(), story:"" });
+                setEditingMeta(null);
+              }} style={{ background:"transparent", border:"1px solid #888", color:"#888", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>🪦 RETIRE</button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     function App() {
       const isMobile = useIsMobile();
       const isMobilePublic = !ADMIN_MODE && isMobile;
-      const [dark, setDark] = ADMIN_MODE ? useDarkMode() : useDarkModePublic();
+      const [dark, setDark] = useDarkMode(ADMIN_MODE);
       const T = dark ? DARK : LIGHT;
       // CT = card text colors (always dark on light cards, light on dark cards)
       const CT = dark ? T : { text:"#111", text2:"#333", text3:"#555", text4:"#666", text5:"#888", text6:"#aaa", text7:"#bbb", text8:"#ddd", border:`1px solid #e0e0e0`, border2:"#ccc" };
@@ -793,15 +953,23 @@
       };
 
       const handleDeleteColorway = (shoe, cw) => {
+        const key = `${shoe.id}_${cw}`;
         const hasWear = (wearLog[shoe.id] || []).some(e => e.colorway === cw);
-        const hasImage = !!images[`${shoe.id}_${cw}`];
-        const hasMeta = !!colorwayMeta[`${shoe.id}_${cw}`];
-        if (hasWear || hasImage || hasMeta) {
-          const msg = [hasWear && "wear history", hasImage && "an image", hasMeta && "details"].filter(Boolean).join(", ");
+        const hasImage = !!images[key];
+        const hasMeta = !!colorwayMeta[key];
+        const hasGrail = !!grailMeta[key];
+        const hasBeater = !!beaterMeta[key];
+        const hasGlow = !!glowMeta[key];
+        const hasHoverImg = !!images[`${key}_hover`];
+        if (hasWear || hasImage || hasMeta || hasGrail || hasBeater || hasGlow || hasHoverImg) {
+          const msg = [hasWear && "wear history", (hasImage || hasHoverImg) && "image(s)", hasMeta && "details"].filter(Boolean).join(", ");
           if (!window.confirm(`"${cw}" has ${msg} attached. Deleting it will remove all of that data. Are you sure?`)) return;
           if (hasWear) setWearLog(log => ({ ...log, [shoe.id]: (log[shoe.id] || []).filter(e => e.colorway !== cw) }));
-          if (hasImage) setImages(imgs => { const n = {...imgs}; delete n[`${shoe.id}_${cw}`]; return n; });
-          if (hasMeta) setColorwayMeta(m => { const n = {...m}; delete n[`${shoe.id}_${cw}`]; return n; });
+          if (hasImage || hasHoverImg) setImages(imgs => { const n = {...imgs}; delete n[key]; delete n[`${key}_hover`]; return n; });
+          if (hasMeta) setColorwayMeta(m => { const n = {...m}; delete n[key]; return n; });
+          if (hasGrail) setGrailMeta(g => { const n = {...g}; delete n[key]; return n; });
+          if (hasBeater) setBeaterMeta(b => { const n = {...b}; delete n[key]; return n; });
+          if (hasGlow) setGlowMeta(g => { const n = {...g}; delete n[key]; return n; });
         }
         setEditColorways(cws => cws.filter(c => c !== cw));
       };
@@ -1366,132 +1534,7 @@
                         {/* Colorway meta edit form */}
                         {ADMIN_MODE && editingMeta && editingMeta.shoeId === shoe.id && (
                           <div style={{ padding:"0 16px 16px 16px" }}>
-                          <div style={{ background:T.bg2, border:`1px solid ${T.border}`, padding:"12px" }}>
-                            <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"8px" }}>
-                              {editingMeta.colorway} — DETAILS
-                            </div>
-                            {/* Grail toggle */}
-                            <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"8px" }}>
-                              <input type="checkbox" id="grail-check"
-                                checked={!!grailMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`]}
-                                onChange={e => {
-                                  const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
-                                  setGrailMeta(g => { const n={...g}; if (e.target.checked) n[key]=true; else delete n[key]; return n; });
-                                }}
-                                style={{ width:"14px", height:"14px", cursor:"pointer", accentColor:"#FFD700" }} />
-                              <label htmlFor="grail-check" style={{ fontSize:"10px", letterSpacing:"3px", color:"#FFD700", cursor:"pointer" }}>✦ GRAIL</label>
-                            </div>
-                            {/* Beater toggle */}
-                            <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"8px" }}>
-                              <input type="checkbox" id="beater-check"
-                                checked={!!beaterMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`]}
-                                onChange={e => {
-                                  const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
-                                  setBeaterMeta(b => { const n={...b}; if (e.target.checked) n[key]=true; else delete n[key]; return n; });
-                                }}
-                                style={{ width:"14px", height:"14px", cursor:"pointer", accentColor:"#b45014" }} />
-                              <label htmlFor="beater-check" style={{ fontSize:"10px", letterSpacing:"3px", color:"#b45014", cursor:"pointer" }}>💀 BEATER</label>
-                            </div>
-                            {/* Dark mode glow toggle */}
-                            <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"10px" }}>
-                              <input type="checkbox" id="glow-check"
-                                checked={!!glowMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`]}
-                                onChange={e => {
-                                  const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
-                                  setGlowMeta(g => { const n={...g}; if (e.target.checked) n[key]=true; else delete n[key]; return n; });
-                                }}
-                                style={{ width:"14px", height:"14px", cursor:"pointer", accentColor:"#64c8ff" }} />
-                              <label htmlFor="glow-check" style={{ fontSize:"10px", letterSpacing:"3px", color: CT.text5, cursor:"pointer" }}>☾ DARK GLOW</label>
-                            </div>
-                            {/* Hover image upload — grails only */}
-                            {(() => {
-                              const hoverKey = `${editingMeta.shoeId}_${editingMeta.colorway}_hover`;
-                              const hoverImgVal = images[hoverKey];
-                              return (
-                                <div style={{ marginBottom:"10px" }}>
-                                  {(() => { const isGrailCw = !!grailMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`]; return <div style={{ fontSize:"9px", letterSpacing:"2px", color: isGrailCw ? "#FFD700" : "#e63946", marginBottom:"6px" }}>{isGrailCw ? "✦ HOVER IMAGE" : "✦ 2ND IMAGE (ANNIVERSARY)"}</div>; })()}
-                                  <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-                                    {hoverImgVal
-                                      ? <img src={hoverImgVal} alt="hover" style={{ width:"80px", height:"50px", objectFit:"cover", border:"1px solid #FFD700" }} />
-                                      : <div style={{ width:"80px", height:"50px", background: dark ? "#2a2a2a" : "#f0f0f0", border:"1px dashed #FFD700", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px", color:"#FFD700", cursor:"pointer" }}
-                                          onClick={() => document.getElementById("hover-img-upload").click()}>+</div>
-                                    }
-                                    <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
-                                      <button onClick={() => document.getElementById("hover-img-upload").click()}
-                                        style={{ background:"transparent", border:"1px solid #FFD700", color:"#FFD700", padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
-                                        {hoverImgVal ? "REPLACE" : "UPLOAD"}
-                                      </button>
-                                      {hoverImgVal && (
-                                        <button onClick={() => setImages(imgs => { const n={...imgs}; delete n[hoverKey]; return n; })}
-                                          style={{ background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
-                                          REMOVE
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                  {!grailMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`] && <div style={{ fontSize:"8px", color: CT.text6, marginTop:"4px", letterSpacing:"1px" }}>Shows on hover only on purchase anniversary</div>}
-                                  <input id="hover-img-upload" type="file" accept="image/*" style={{ display:"none" }}
-                                    onChange={e => {
-                                      const file = e.target.files[0];
-                                      if (!file) return;
-                                      handleImageUpload(editingMeta.shoeId, editingMeta.colorway, file, "hover");
-                                      e.target.value = "";
-                                    }} />
-                                </div>
-                              );
-                            })()}
-                            <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", alignItems:"flex-end" }}>
-                              <div style={{ flex:"0 0 130px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>PURCHASE DATE</div>
-                                <input type="date" value={metaForm.purchaseDate} onChange={e => setMetaForm(f => ({...f, purchaseDate:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
-                              </div>
-                              <div style={{ flex:"0 0 100px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>PRICE</div>
-                                <input type="text" placeholder="$0.00" value={metaForm.purchasePrice} onChange={e => setMetaForm(f => ({...f, purchasePrice:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
-                              </div>
-                              <div style={{ flex:"1 1 140px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>RETAILER</div>
-                                <input type="text" placeholder="e.g. SNKRS, GOAT" value={metaForm.retailer} onChange={e => setMetaForm(f => ({...f, retailer:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
-                              </div>
-                              <div style={{ flex:"0 0 65px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>SIZE</div>
-                                <input type="text" placeholder="12.5" value={metaForm.size} onChange={e => setMetaForm(f => ({...f, size:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
-                              </div>
-                              <div style={{ flex:"0 0 65px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>OG YEAR</div>
-                                <input type="text" placeholder="1995" value={metaForm.ogYear} onChange={e => setMetaForm(f => ({...f, ogYear:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
-                              </div>
-                              <div style={{ flex:"1 1 160px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>NOTES</div>
-                                <input type="text" placeholder="Any notes..." value={metaForm.notes} onChange={e => setMetaForm(f => ({...f, notes:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
-                              </div>
-                            </div>
-                            <div style={{ marginTop:"10px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>STORY</div>
-                                <textarea placeholder="Tell the story of this shoe..." value={metaForm.story} onChange={e => setMetaForm(f => ({...f, story:e.target.value}))}
-                                  style={{...IS, fontSize:"11px", padding:"5px", minHeight:"80px", resize:"vertical", width:"100%"}} />
-                              </div>
-                            <div style={{ display:"flex", gap:"8px", marginTop:"10px", flexWrap:"wrap" }}>
-                              <button onClick={() => {
-                                const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
-                                setColorwayMeta(m => ({ ...m, [key]: { ...metaForm } }));
-                                setEditingMeta(null);
-                              }} style={{ background:"#e63946", color:"#fff", border:"none", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>SAVE</button>
-                              <button onClick={() => setEditingMeta(null)} style={{ background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>CANCEL</button>
-                              {images[`${editingMeta.shoeId}_${editingMeta.colorway}`] && (
-                                <button onClick={() => {
-                                    const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
-                                    setImages(imgs => { const n={...imgs}; delete n[key]; return n; });
-                                    setEditingMeta(null);
-                                }} style={{ background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>REMOVE PHOTO</button>
-                              )}
-                              <button onClick={() => {
-                                setRetiringMeta({ shoeId: editingMeta.shoeId, colorway: editingMeta.colorway });
-                                setRetireForm({ reason:"Sold", dateRetired: localDateStr(), story:"" });
-                                setEditingMeta(null);
-                              }} style={{ background:"transparent", border:"1px solid #888", color:"#888", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>🪦 RETIRE</button>
-                            </div>
-                          </div>
+                          <MetaEditForm editingMeta={editingMeta} metaForm={metaForm} setMetaForm={setMetaForm} setColorwayMeta={setColorwayMeta} setEditingMeta={setEditingMeta} setGrailMeta={setGrailMeta} grailMeta={grailMeta} setBeaterMeta={setBeaterMeta} beaterMeta={beaterMeta} setGlowMeta={setGlowMeta} glowMeta={glowMeta} setImages={setImages} images={images} handleImageUpload={handleImageUpload} setRetiringMeta={setRetiringMeta} setRetireForm={setRetireForm} IS={IS} CT={CT} T={T} dark={dark} />
                           </div>
                         )}
                         {/* Retire form */}
@@ -1698,54 +1741,7 @@
                         </div>
                         {/* Colorway meta edit form */}
                         {ADMIN_MODE && editingMeta && editingMeta.shoeId === shoe.id && (
-                          <div style={{ background:T.bg2, border:`1px solid ${T.border}`, padding:"12px", marginTop:"10px" }}>
-                            <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"8px" }}>
-                              {editingMeta.colorway} — DETAILS
-                            </div>
-                            <div style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"10px" }}>
-                              <input type="checkbox" id="grail-check-wl"
-                                checked={!!grailMeta[`${editingMeta.shoeId}_${editingMeta.colorway}`]}
-                                onChange={e => {
-                                  const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
-                                  setGrailMeta(g => { const n={...g}; if (e.target.checked) n[key]=true; else delete n[key]; return n; });
-                                }}
-                                style={{ width:"14px", height:"14px", cursor:"pointer", accentColor:"#FFD700" }} />
-                              <label htmlFor="grail-check-wl" style={{ fontSize:"10px", letterSpacing:"3px", color:"#FFD700", cursor:"pointer" }}>✦ GRAIL</label>
-                            </div>
-                            <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", alignItems:"flex-end" }}>
-                              {[["DATE","date","purchaseDate"],["PRICE","text","purchasePrice"],["RETAILER","text","retailer"],["SIZE","text","size"],["NOTES","text","notes"]].map(([label,type,field]) => (
-                                <div key={field} style={{ flex:"1 1 80px" }}>
-                                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>{label}</div>
-                                  <input type={type} value={metaForm[field]} onChange={e => setMetaForm(f => ({...f,[field]:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
-                                </div>
-                              ))}
-                            </div>
-                            <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", alignItems:"flex-end", marginTop:"8px" }}>
-                              <div style={{ flex:"1 1 120px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginBottom:"4px" }}>🛒 SALE DATE</div>
-                                <input type="date" value={metaForm.saleDate} onChange={e => setMetaForm(f => ({...f, saleDate:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
-                              </div>
-                              <div style={{ flex:"1 1 100px" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginBottom:"4px" }}>🛒 SALE TIME</div>
-                                <input type="time" value={metaForm.saleTime} onChange={e => setMetaForm(f => ({...f, saleTime:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
-                              </div>
-                            </div>
-                            <div style={{ display:"flex", gap:"8px", marginTop:"10px", flexWrap:"wrap" }}>
-                              <button onClick={() => {
-                                const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
-                                setColorwayMeta(m => ({ ...m, [key]: { ...metaForm } }));
-                                setEditingMeta(null);
-                              }} style={{ background:"#e63946", color:"#fff", border:"none", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>SAVE</button>
-                              <button onClick={() => setEditingMeta(null)} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>CANCEL</button>
-                              {images[`${editingMeta.shoeId}_${editingMeta.colorway}`] && (
-                                <button onClick={() => {
-                                  const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
-                                  setImages(imgs => { const n={...imgs}; delete n[key]; return n; });
-                                  setEditingMeta(null);
-                                }} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>REMOVE PHOTO</button>
-                              )}
-                            </div>
-                          </div>
+                          <MetaEditForm editingMeta={editingMeta} metaForm={metaForm} setMetaForm={setMetaForm} setColorwayMeta={setColorwayMeta} setEditingMeta={setEditingMeta} setGrailMeta={setGrailMeta} grailMeta={grailMeta} setBeaterMeta={setBeaterMeta} beaterMeta={beaterMeta} setGlowMeta={setGlowMeta} glowMeta={glowMeta} setImages={setImages} images={images} handleImageUpload={handleImageUpload} setRetiringMeta={setRetiringMeta} setRetireForm={setRetireForm} IS={IS} CT={CT} T={T} dark={dark} isWishlist />
                         )}
                       </div>
                     );

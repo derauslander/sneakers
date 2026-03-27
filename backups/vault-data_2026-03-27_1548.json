@@ -163,7 +163,7 @@
     {
       "name": "NB 1080 V14",
       "shortName": "NB FF",
-      "category": "New Balance",
+      "category": "Jordan",
       "quantity": 1,
       "wishlist": false,
       "id": 1773621809428
@@ -430,14 +430,7 @@
     "9_Olive": "Shoes/9_Olive.png",
     "1774297239173_Infrared 3M": "Shoes/1774297239173_Infrared 3M.png",
     "4_White Cement_hover": "Shoes/4_White Cement_hover.png",
-    "4_What the 4_hover": "Shoes/4_What the 4_hover.png",
-    "4_Military Blue_hover": "Shoes/4_Military Blue_hover.png",
-    "8_Playoffs_hover": "Shoes/8_Playoffs_hover.png",
-    "12_Black Flint_hover": "Shoes/12_Black Flint_hover.png",
-    "11_Flu Game_hover": "Shoes/11_Flu Game_hover.png",
-    "5_A Ma Maniere Dawn_hover": "Shoes/5_A Ma Maniere Dawn_hover.png",
-    "6_Infrared_hover": "Shoes/6_Infrared_hover.png",
-    "6_Reverse Infrared_hover": "Shoes/6_Reverse Infrared_hover.png"
+    "4_What the 4_hover": "Shoes/4_What the 4_hover.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -452,11 +445,7 @@
       "purchasePrice": "217.25",
       "retailer": "SNKRS",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "5_Grape": {
       "purchaseDate": "2025-06-21",
@@ -472,9 +461,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "story": ""
     },
     "14_Chicago": {
       "purchaseDate": "2025-11-01",
@@ -490,9 +477,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "1990",
-      "story": "My first Jordans.  They were a birthday gift from my parents in November 1990.",
-      "saleDate": "",
-      "saleTime": ""
+      "story": "My first Air Jordans.  They were a birthday gift from my parents in November 1990."
     },
     "5_Fire Red": {
       "purchaseDate": "2025-01-04",
@@ -508,9 +493,7 @@
       "size": "12",
       "notes": "",
       "ogYear": "",
-      "story": "I really loved these shoes when i first saw them in 1989.  I believe the colorway that was released was Citron, but in my memory they looked like this, which is why I have this colorway in my collection.",
-      "saleDate": "",
-      "saleTime": ""
+      "story": "I really loved these shoes when i first saw them in 1989.  I believe the colorway that was released was Citron, but in my memory they looked like this, which is why i have this colorway in my collection."
     },
     "4_Black Cement": {
       "purchaseDate": "2023-01-15",
@@ -519,9 +502,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "Although the Fire Red 4s were my first love, these are a close second.",
-      "saleDate": "",
-      "saleTime": ""
+      "story": "Although the Fire Red 4s were my first love, these are a close second."
     },
     "4_Fire Red": {
       "purchaseDate": "2023-01-07",
@@ -530,9 +511,7 @@
       "size": "12",
       "notes": "",
       "ogYear": "",
-      "story": "I first saw this shoe in 1989 in my local shoe store and immediately fell in love.  This was the first sneaker I bought when I started this collection.",
-      "saleDate": "",
-      "saleTime": ""
+      "story": "I first saw this shoe in 1989 in my local shoe store and immediately fell in love.  Unfortunately the $115 price tag, and the fact that I was growing like a weed made convincing my parents to buy them impossible."
     },
     "4_Cave Stone": {
       "purchaseDate": "2025-09-06",
@@ -675,9 +654,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "1990",
-      "story": "The first pair of Nike with an air bubble that I owned. My parents bought these for me as a graduation gift from elementary school in June 1990.",
-      "saleDate": "",
-      "saleTime": ""
+      "story": "The first pair of Nike Air shoes I owned. My parents bought these for me as a graduation gift from elementary school."
     },
     "3_A Ma Maniere WYWS": {
       "purchaseDate": "2024-08-27",
@@ -695,9 +672,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "story": ""
     },
     "4_What the 4": {
       "purchaseDate": "2023-03-28",
@@ -722,22 +697,14 @@
       "purchasePrice": "244.41",
       "retailer": "SNKRS",
       "size": "12.5",
-      "notes": "LR hit on SNKRS",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": "LR hit on SNKRS"
     },
     "4_Military Blue": {
       "purchaseDate": "2024-05-04",
       "purchasePrice": "233.54",
       "retailer": "SNKRS",
       "size": "12.5",
-      "notes": "LR hit on SNKRS.",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": "LR hit on SNKRS."
     },
     "21_Purple": {
       "purchaseDate": "",
@@ -776,9 +743,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "1993",
-      "story": "In 1993, I went with my father to look for the Air Force Max CB.  After hitting about five stores, I \"settled\" for these.",
-      "saleDate": "",
-      "saleTime": ""
+      "story": "In 1993, I went with my father to look for the Air Force Max CB.  After hitting about five stores, I \"settled\" for these."
     },
     "9_Olive": {
       "purchaseDate": "2024-11-09",
@@ -1112,5 +1077,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-27T23:08:28.736Z"
+  "exportedAt": "2026-03-26T23:05:09.563Z"
 }
