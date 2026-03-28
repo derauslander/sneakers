@@ -667,11 +667,7 @@
       "purchasePrice": "233.54",
       "retailer": "SNKRS",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "6_Reverse Infrared": {
       "purchaseDate": "2026-02-14",
@@ -711,11 +707,7 @@
       "purchasePrice": "281.28",
       "retailer": "EBAY",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "16_Volt": {
       "purchaseDate": "2023-01-22",
@@ -771,9 +763,7 @@
       "size": "13",
       "notes": "",
       "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "story": ""
     },
     "3_Rare Air": {
       "purchaseDate": "2025-06-04",
@@ -809,11 +799,7 @@
       "purchasePrice": "162.94",
       "retailer": "SNKRS",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "1_Royal Reimagined": {
       "purchaseDate": "2023-11-04",
@@ -850,11 +836,7 @@
       "purchasePrice": "463.29",
       "retailer": "GOAT",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "7_Cardinal": {
       "purchaseDate": "2025-12-08",
@@ -896,20 +878,14 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "story": ""
     },
     "3_A Ma Maniere": {
       "purchaseDate": "2025-01-03",
       "purchasePrice": "359.29",
       "retailer": "GOAT",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "15_Hot Lava": {
       "purchaseDate": "2024-08-30",
@@ -1010,11 +986,7 @@
       "purchasePrice": "193.09",
       "retailer": "GOAT",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "8_Playoffs": {
       "purchaseDate": "2023-10-20",
@@ -1061,49 +1033,18 @@
       "saleTime": "10:00"
     }
   },
-  "tierMeta": {
-    "1_Royal Reimagined": "gold",
-    "1_Wolf Grey": "bronze",
-    "2_Black Cement": "gold",
-    "3_White Cement Reimagined": "platinum",
-    "3_Black Cement": "platinum",
-    "3_A Ma Maniere": "gold",
-    "3_Rare Air": "silver",
-    "3_A Ma Maniere WYWS": "silver",
-    "4_Fire Red": "diamond",
-    "4_Black Cement": "diamond",
-    "4_White Cement": "platinum",
-    "4_Military Blue": "gold",
-    "4_What the 4": "gold",
-    "4_A Ma Maniere": "gold",
-    "4_A Ma Maniere WYWS": "silver",
-    "4_Cave Stone": "silver",
-    "4_Red Cement": "bronze",
-    "5_Black Tongue": "diamond",
-    "5_Black Metallic Reimagined": "platinum",
-    "5_Fire Red": "gold",
-    "5_Grape": "gold",
-    "5_A Ma Maniere Dawn": "silver",
-    "6_Infrared": "platinum",
-    "6_Reverse Infrared": "silver",
-    "7_Cardinal": "silver",
-    "8_Playoffs": "platinum",
-    "9_Olive": "gold",
-    "10_Steel": "platinum",
-    "11_Flu Game": "gold",
-    "12_Black Flint": "gold",
-    "13_Flint Grey": "silver",
-    "14_Chicago": "gold",
-    "15_Hot Lava": "diamond",
-    "15_Stone Blue": "gold",
-    "15_Pixel Court": "silver",
-    "16_Volt": "diamond",
-    "17_Air Max Day (Royal Volt)": "gold",
-    "18_Space Jam": "silver",
-    "19_Volt": "silver",
-    "21_Purple": "diamond",
-    "1773621809428_Sea Salt": "bronze",
-    "1774096319133_Billy Hoyle": "silver"
+  "grailMeta": {
+    "5_Black Tongue": true,
+    "15_Hot Lava": true,
+    "4_Black Cement": true,
+    "21_Purple": true,
+    "16_Volt": true,
+    "4_Fire Red": true
+  },
+  "beaterMeta": {
+    "4_Red Cement": true,
+    "1773621809428_Sea Salt": true,
+    "1_Wolf Grey": true
   },
   "glowMeta": {
     "6_Reverse Infrared": true,
@@ -1392,5 +1333,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-28T18:26:33.551Z"
+  "exportedAt": "2026-03-28T18:08:00.923Z"
 }
