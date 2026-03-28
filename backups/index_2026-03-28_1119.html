@@ -38,7 +38,7 @@
     // ADMIN_MODE — true for local admin app, false for public site
     // build.bat flips this to false when generating index.html
     // ═══════════════════════════════════════════════════════════════════════════
-    const ADMIN_MODE = true;
+    const ADMIN_MODE = false;
 
     const { useState, useEffect, useRef } = React;
 
@@ -2171,7 +2171,7 @@
                   )}
                   {/* 8-9-10 compact row */}
                   {rest.slice(4).length > 0 && (
-                    <div style={{ display:"flex", gap:"12px", marginTop:"12px", justifyContent:"flex-start", flexDirection: isMobilePublic ? "column" : "row" }}>
+                    <div style={{ display:"flex", gap:"12px", marginTop:"12px", justifyContent: isMobilePublic ? "center" : "flex-start", flexWrap:"wrap" }}>
                       {rest.slice(4).map((entry, i) => {
                         const metaKey = `${entry.shoe.id}_${entry.colorway}`;
                         const img = images[metaKey] || null;

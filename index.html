@@ -2171,7 +2171,7 @@
                   )}
                   {/* 8-9-10 compact row */}
                   {rest.slice(4).length > 0 && (
-                    <div style={{ display:"flex", gap:"12px", marginTop:"12px", justifyContent: isMobilePublic ? "center" : "flex-start", flexWrap:"wrap" }}>
+                    <div style={{ display:"flex", gap:"12px", marginTop:"12px", justifyContent:"flex-start", flexDirection: isMobilePublic ? "column" : "row" }}>
                       {rest.slice(4).map((entry, i) => {
                         const metaKey = `${entry.shoe.id}_${entry.colorway}`;
                         const img = images[metaKey] || null;
