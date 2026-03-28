@@ -629,15 +629,7 @@
     "11_Flu Game_hover": "Shoes/11_Flu Game_hover.png",
     "5_A Ma Maniere Dawn_hover": "Shoes/5_A Ma Maniere Dawn_hover.png",
     "6_Infrared_hover": "Shoes/6_Infrared_hover.png",
-    "6_Reverse Infrared_hover": "Shoes/6_Reverse Infrared_hover.png",
-    "7_Cardinal_hover": "Shoes/7_Cardinal_hover.png",
-    "9_Olive_hover": "Shoes/9_Olive_hover.png",
-    "10_Steel_hover": "Shoes/10_Steel_hover.png",
-    "1_Royal Reimagined_hover": "Shoes/1_Royal Reimagined_hover.png",
-    "2_Black Cement_hover": "Shoes/2_Black Cement_hover.png",
-    "3_White Cement Reimagined_hover": "Shoes/3_White Cement Reimagined_hover.png",
-    "3_Rare Air_hover": "Shoes/3_Rare Air_hover.png",
-    "14_Chicago_hover": "Shoes/14_Chicago_hover.png"
+    "6_Reverse Infrared_hover": "Shoes/6_Reverse Infrared_hover.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -645,11 +637,7 @@
       "purchasePrice": "228.11",
       "retailer": "SNKRS",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "12_Black Flint": {
       "purchaseDate": "2023-04-22",
@@ -685,11 +673,7 @@
       "purchasePrice": "200.41",
       "retailer": "Nike.com",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "5_Black Tongue": {
       "purchaseDate": "2025-09-13",
@@ -772,9 +756,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "story": ""
     },
     "4_White Cement": {
       "purchaseDate": "2025-05-24",
@@ -819,9 +801,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "story": ""
     },
     "4_Red Cement": {
       "purchaseDate": "2023-09-09",
@@ -843,11 +823,7 @@
       "purchasePrice": "250.88",
       "retailer": "GOAT",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "10_Steel": {
       "purchaseDate": "2025-08-06",
@@ -855,10 +831,7 @@
       "retailer": "GOAT",
       "size": "12.5",
       "notes": "",
-      "ogYear": "1994",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "ogYear": "1994"
     },
     "11_Flu Game": {
       "purchaseDate": "2025-05-02",
@@ -1006,9 +979,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "I had these in French Blue in 2002.",
-      "saleDate": "",
-      "saleTime": ""
+      "story": "I had these in French Blue in 2002."
     },
     "1774297239173_Infrared 3M": {
       "purchaseDate": "",
@@ -1333,5 +1304,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-28T13:09:47.504Z"
+  "exportedAt": "2026-03-27T23:34:38.145Z"
 }
