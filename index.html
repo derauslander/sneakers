@@ -114,13 +114,6 @@
       return diff >= 0 && diff <= 7 * 86400000;
     };
 
-    const CAT_COLORS = {
-      Jordan:      { bg: "#fff0f0", accent: "#e63946" },
-      Nike:        { bg: "#fff0f0", accent: "#e63946" },
-      "New Balance": { bg: "#fff0f0", accent: "#e63946" },
-      Adidas:      { bg: "#fff0f0", accent: "#e63946" },
-      Asics:       { bg: "#fff0f0", accent: "#e63946" },
-    };
 
     const load = (key, fallback) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } };
     const save = (key, val) => { if (!ADMIN_MODE) return; try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.error(e); } };
@@ -235,6 +228,17 @@
       const handleMouseLeave = () => { if (isMobilePublic) return; clearTimeout(timerRef.current); triggerClose(); };
       const handleTap = (e) => { if (!isMobilePublic) return; e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
 
+      useEffect(() => {
+        return () => {
+          clearTimeout(timerRef.current);
+          clearTimeout(crossfadeRef.current);
+          clearTimeout(beaterRef.current);
+          clearTimeout(grailRef.current);
+          clearTimeout(storyRef.current);
+          clearTimeout(iceRef.current);
+        };
+      }, []);
+
       const sortedDates = [...wearDates].sort((a, b) => b > a ? 1 : -1);
 
       return (
@@ -338,6 +342,13 @@
       const handleMouseLeave = () => { if (isMobilePublic) return; clearTimeout(timerRef.current); triggerClose(); };
       const handleTap = (e) => { if (!isMobilePublic) return; e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
 
+      useEffect(() => {
+        return () => {
+          clearTimeout(timerRef.current);
+          clearTimeout(crossfadeRef.current);
+        };
+      }, []);
+
       return (
         <div
           onClick={ADMIN_MODE ? onEdit : undefined}
@@ -418,6 +429,14 @@
       const handleMouseEnter = () => { if (isMobilePublic) return; if (!entry.img) return; timerRef.current = setTimeout(triggerOpen, 500); };
       const handleMouseLeave = () => { if (isMobilePublic) return; clearTimeout(timerRef.current); triggerClose(); };
       const handleTap = (e) => { if (!isMobilePublic) return; e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
+
+      useEffect(() => {
+        return () => {
+          clearTimeout(timerRef.current);
+          clearTimeout(crossfadeRef.current);
+          clearTimeout(glowRef.current);
+        };
+      }, []);
 
       const cardW = isMobilePublic ? "140px" : "200px";
       const imgW = isMobilePublic ? "108px" : "168px";
@@ -702,12 +721,18 @@
       const [wearColorway,   setWearColorway]   = useState("");
       const [sortCol,        setSortCol]        = useState("date");
       const [sortDir,        setSortDir]        = useState("desc");
+      const [histFilterShoe, setHistFilterShoe] = useState("");
+      const [histFilterCw,   setHistFilterCw]   = useState("");
+      const [histDatePreset, setHistDatePreset] = useState("all");
+      const [histDateFrom,   setHistDateFrom]   = useState("");
+      const [histDateTo,     setHistDateTo]     = useState("");
       const [editingMeta,    setEditingMeta]    = useState(null);
       const [metaForm,       setMetaForm]       = useState({ purchaseDate:"", purchasePrice:"", retailer:"", size:"", notes:"", ogYear:"", story:"", saleDate:"", saleTime:"" });
       const [newsDismissed, setNewsDismissed] = useState(false);
       const [bannerShowUpNext, setBannerShowUpNext] = useState(true);
       const [newsIdx, setNewsIdx] = useState(0);
       const [collectionFilter, setCollectionFilter] = useState("all");
+      const [top10Filter, setTop10Filter] = useState("worn");
 
       useEffect(() => {
         const interval = setInterval(() => setBannerShowUpNext(v => !v), 5000);
@@ -744,6 +769,7 @@
       useEffect(() => save("vault_glow_meta",      glowMeta),     [glowMeta]);
       useEffect(() => save("vault_graveyard_meta", graveyardMeta),[graveyardMeta]);
       useEffect(() => save("vault_colorways",      colorways),    [colorways]);
+      useEffect(() => save("vault_display_layout",  displayLayout),[displayLayout]);
 
       useEffect(() => {
         if (!ADMIN_MODE) return;
@@ -758,7 +784,7 @@
         };
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
-      }, [showForm, loggingId, editingMeta, editingCell, importMsg]);
+      }, [showForm, quickLog, loggingId, editingMeta, editingCell, importMsg]);
 
       // Loading / error screens (public only)
       if (!ADMIN_MODE && publicLoading) return (
@@ -897,7 +923,7 @@
       const handleImageUpload = (shoeId, colorway, file, kind = "main") => {
         const key = `${shoeId}_${colorway}`;
         const storageKey = kind === "hover" ? `${key}_hover` : key;
-        const arrayBuffer = file.arrayBuffer().then(buffer => {
+        file.arrayBuffer().then(buffer => {
           fetch(`/upload?key=${encodeURIComponent(key)}&type=${kind}`, {
             method: "POST",
             headers: { "Content-Type": file.type || "image/png" },
@@ -1034,15 +1060,15 @@
         reader.readAsText(file);
       };
 
+      const IS = { background: T.inputBg, border:`1px solid ${T.inputBorder}`, color: T.inputText, padding:"8px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontSize:"13px", width:"100%" };
+      const CAT = { Jordan: { bg: T.categoryBg, accent: "#e63946" }, Nike: { bg: T.categoryBg, accent: "#e63946" }, "New Balance": { bg: T.categoryBg, accent: "#e63946" }, Adidas: { bg: T.categoryBg, accent: "#e63946" }, Asics: { bg: T.categoryBg, accent: "#e63946" } };
+
       const getCellStyle = (cell) => {
         if (!cell.code || cell.code === "") return { empty: true };
         if (cell.code === "--") return { empty: true };
-        const col = CAT_COLORS[inventory.find(s => s.shortName === cell.code)?.category] || CAT_COLORS.Jordan;
+        const col = CAT[inventory.find(s => s.shortName === cell.code)?.category] || CAT.Jordan;
         return { bg: col.bg, accent: col.accent, label: cell.code, colorway: cell.colorway };
       };
-
-      const IS = { background: T.inputBg, border:`1px solid ${T.inputBorder}`, color: T.inputText, padding:"8px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontSize:"13px", width:"100%" };
-      const CAT = { Jordan: { bg: T.categoryBg, accent: "#e63946" }, Nike: { bg: T.categoryBg, accent: "#e63946" }, "New Balance": { bg: T.categoryBg, accent: "#e63946" }, Adidas: { bg: T.categoryBg, accent: "#e63946" }, Asics: { bg: T.categoryBg, accent: "#e63946" } };
 
       const Btn = ({ label, onClick, color, solid }) => (
         <button onClick={onClick} style={{
@@ -1086,7 +1112,7 @@
 
           {/* Nav */}
           <div style={{ display:"flex", borderBottom: isMobilePublic ? `1px solid ${T.border}` : "none", background: T.navBg, alignItems:"center" }}>
-            {(ADMIN_MODE ? ["collection","display","wishlist","graveyard","history","about"] : ["collection", ...(!isMobile ? ["display"] : []), "wishlist", ...(Object.keys(graveyardMeta).length > 0 ? ["graveyard"] : []), "about"]).map(v => (
+            {(ADMIN_MODE ? ["collection","display","wishlist","graveyard","history","stats","about"] : ["collection", ...(!isMobile ? ["display"] : []), "wishlist", ...(Object.keys(graveyardMeta).length > 0 ? ["graveyard"] : []), "stats", "about"]).map(v => (
               <button key={v} onClick={() => setView(v)} style={{
                 padding: isMobilePublic ? "12px 0" : "14px 28px",
                 flex: isMobilePublic ? "1 1 0" : undefined,
@@ -1097,7 +1123,7 @@
                 textTransform:"uppercase", fontFamily:"'Aptos','Segoe UI',sans-serif",
                 textAlign: isMobilePublic ? "center" : undefined,
                 animation: v==="wishlist" && wishlistHasSale && view!=="wishlist" ? "saleGlow 1.5s ease-in-out infinite" : "none",
-              }}>{v}</button>
+              }}>{v === "stats" ? "top 10" : v}</button>
             ))}
             {/* Desktop: stats + dark mode toggle right-aligned in nav */}
             {!isMobilePublic && <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:"20px", padding:"0 20px" }}>
@@ -1632,7 +1658,6 @@
                         )
                       );
                       setDisplayLayout(newLayout);
-                      save("vault_display_layout", newLayout);
                       setEditingCell(null);
                     }} color="#e63946" solid />
                     <Btn label="CANCEL" onClick={() => setEditingCell(null)} color="#666" />
@@ -1765,6 +1790,37 @@
                 }))
               );
 
+              // Date preset logic
+              const getPresetRange = (preset) => {
+                const today = localDateStr();
+                if (preset === "7d") {
+                  const d = new Date(); d.setDate(d.getDate() - 7);
+                  return { from: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`, to: today };
+                }
+                if (preset === "30d") {
+                  const d = new Date(); d.setDate(d.getDate() - 30);
+                  return { from: `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`, to: today };
+                }
+                if (preset === "year") {
+                  return { from: `${new Date().getFullYear()}-01-01`, to: today };
+                }
+                return { from: "", to: "" };
+              };
+              const dateRange = histDatePreset === "custom" ? { from: histDateFrom, to: histDateTo } : getPresetRange(histDatePreset);
+
+              // Filter
+              const filtered = allEntries.filter(e => {
+                if (histFilterShoe && String(e.shoeId) !== histFilterShoe) return false;
+                if (histFilterCw && e.colorway !== histFilterCw) return false;
+                if (dateRange.from && e.date < dateRange.from) return false;
+                if (dateRange.to && e.date > dateRange.to) return false;
+                return true;
+              });
+
+              // Colorways for selected shoe
+              const filterShoeObj = histFilterShoe ? owned.find(s => String(s.id) === histFilterShoe) : null;
+              const filterShoeColorways = filterShoeObj ? (colorways[filterShoeObj.shortName] || []) : [];
+
               const getShoeSortKey = (entry) => {
                 if (entry.category === "Jordan") {
                   const match = entry.shoe.match(/(\d+)/);
@@ -1773,7 +1829,7 @@
                 return 9999;
               };
 
-              const sorted = [...allEntries].sort((a, b) => {
+              const sorted = [...filtered].sort((a, b) => {
                 let av, bv;
                 if (sortCol === "shoe") {
                   av = getShoeSortKey(a);
@@ -1813,14 +1869,68 @@
 
               const arrow = (col) => sortCol===col ? (sortDir==="asc" ? " ↑" : " ↓") : "";
 
+              const presetBtn = (id, label) => (
+                <button key={id} onClick={() => { setHistDatePreset(id); if (id !== "custom") { setHistDateFrom(""); setHistDateTo(""); } }} style={{
+                  background:"transparent", border:"none", cursor:"pointer",
+                  fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
+                  color: histDatePreset === id ? "#e63946" : T.text5,
+                  borderBottom: histDatePreset === id ? "1px solid #e63946" : "1px solid transparent",
+                  padding:"4px 0",
+                }}>{label}</button>
+              );
+
+              const hasActiveFilter = histFilterShoe || histFilterCw || histDatePreset !== "all";
+
               return (
                 <div>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"16px" }}>
                     <div>
                       <div style={{ fontSize:"11px", letterSpacing:"4px", color:T.text4 }}>WEAR HISTORY</div>
-                      <div style={{ fontSize:"10px", color:T.text3, marginTop:"4px" }}>{allEntries.length} total wears</div>
+                      <div style={{ fontSize:"10px", color:T.text3, marginTop:"4px" }}>{filtered.length}{filtered.length !== allEntries.length ? ` of ${allEntries.length}` : ""} total wears</div>
                     </div>
                     <Btn label="EXPORT CSV" onClick={exportCSV} color="#e63946" />
+                  </div>
+                  {/* Filter bar */}
+                  <div style={{ background:T.bg2, border:`1px solid ${T.border}`, padding:"12px 16px", marginBottom:"16px" }}>
+                    <div style={{ display:"flex", gap:"12px", flexWrap:"wrap", alignItems:"flex-end" }}>
+                      <div style={{ flex:"0 0 auto" }}>
+                        <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>SHOE</div>
+                        <select value={histFilterShoe} onChange={e => { setHistFilterShoe(e.target.value); setHistFilterCw(""); }}
+                          style={{ ...IS, width:"180px", fontSize:"11px", padding:"5px" }}>
+                          <option value="">All shoes</option>
+                          {owned.map(s => <option key={s.id} value={String(s.id)}>{s.name}</option>)}
+                        </select>
+                      </div>
+                      <div style={{ flex:"0 0 auto" }}>
+                        <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text5, marginBottom:"4px" }}>COLORWAY</div>
+                        <select value={histFilterCw} onChange={e => setHistFilterCw(e.target.value)}
+                          disabled={!histFilterShoe}
+                          style={{ ...IS, width:"180px", fontSize:"11px", padding:"5px", opacity: histFilterShoe ? 1 : 0.4 }}>
+                          <option value="">All colorways</option>
+                          {filterShoeColorways.map(cw => <option key={cw} value={cw}>{cw}</option>)}
+                        </select>
+                      </div>
+                      <div style={{ flex:"1 1 auto", display:"flex", flexDirection:"column", gap:"6px" }}>
+                        <div style={{ display:"flex", gap:"16px", flexWrap:"wrap" }}>
+                          {presetBtn("all", "ALL TIME")}
+                          {presetBtn("7d", "7 DAYS")}
+                          {presetBtn("30d", "30 DAYS")}
+                          {presetBtn("year", "THIS YEAR")}
+                          {presetBtn("custom", "CUSTOM")}
+                        </div>
+                        {histDatePreset === "custom" && (
+                          <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
+                            <input type="date" value={histDateFrom} onChange={e => setHistDateFrom(e.target.value)} style={{ ...IS, width:"140px", fontSize:"11px", padding:"5px" }} />
+                            <span style={{ fontSize:"9px", color:T.text5, letterSpacing:"2px" }}>TO</span>
+                            <input type="date" value={histDateTo} onChange={e => setHistDateTo(e.target.value)} style={{ ...IS, width:"140px", fontSize:"11px", padding:"5px" }} />
+                          </div>
+                        )}
+                      </div>
+                      {hasActiveFilter && (
+                        <button onClick={() => { setHistFilterShoe(""); setHistFilterCw(""); setHistDatePreset("all"); setHistDateFrom(""); setHistDateTo(""); }}
+                          style={{ background:"transparent", border:`1px solid ${T.border2}`, color:T.text5, padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", alignSelf:"flex-end" }}>CLEAR</button>
+                      )}
+                    </div>
                   </div>
                   <div style={{ overflowX:"auto" }}>
                     <table style={{ width:"100%", borderCollapse:"collapse", fontSize:"12px" }}>
@@ -1854,11 +1964,214 @@
                           );
                         })}
                         {sorted.length === 0 && (
-                          <tr><td colSpan="5" style={{ padding:"32px", textAlign:"center", color:T.text2, letterSpacing:"3px", fontSize:"11px" }}>NO WEARS LOGGED YET</td></tr>
+                          <tr><td colSpan="5" style={{ padding:"32px", textAlign:"center", color:T.text2, letterSpacing:"3px", fontSize:"11px" }}>{hasActiveFilter ? "NO MATCHING WEARS" : "NO WEARS LOGGED YET"}</td></tr>
                         )}
                       </tbody>
                     </table>
                   </div>
+                </div>
+              );
+            })()}
+
+            {/* ── STATS ── */}
+            {view === "stats" && (() => {
+              // Build wear counts per colorway
+              const wearCounts = {};
+              owned.forEach(shoe => {
+                const entries = wearLog[shoe.id] || [];
+                entries.forEach(entry => {
+                  const key = `${shoe.id}_${entry.colorway}`;
+                  if (beaterMeta[key]) return;
+                  if (!wearCounts[key]) wearCounts[key] = { shoe, colorway: entry.colorway, count: 0, lastWorn: entry.date };
+                  wearCounts[key].count++;
+                  if (entry.date > wearCounts[key].lastWorn) wearCounts[key].lastWorn = entry.date;
+                });
+              });
+              const wornRanked = Object.values(wearCounts)
+                .sort((a, b) => {
+                  if (b.count !== a.count) return b.count - a.count;
+                  return a.lastWorn < b.lastWorn ? -1 : a.lastWorn > b.lastWorn ? 1 : 0;
+                })
+                .slice(0, 10);
+
+              // Build price ranking per colorway
+              const priceEntries = [];
+              owned.forEach(shoe => {
+                (colorways[shoe.shortName] || []).forEach(cw => {
+                  if (beaterMeta[`${shoe.id}_${cw}`]) return;
+                  const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
+                  if (!meta.purchasePrice) return;
+                  const priceStr = meta.purchasePrice.replace(/[^0-9.]/g, "");
+                  const price = parseFloat(priceStr);
+                  if (isNaN(price) || price <= 0) return;
+                  priceEntries.push({ shoe, colorway: cw, price, purchaseDate: meta.purchaseDate || "" });
+                });
+              });
+              const priceRanked = priceEntries
+                .sort((a, b) => {
+                  if (b.price !== a.price) return b.price - a.price;
+                  return a.purchaseDate < b.purchaseDate ? -1 : a.purchaseDate > b.purchaseDate ? 1 : 0;
+                })
+                .slice(0, 10);
+
+              // Build best value ranking — wears per dollar (needs both wear data and price)
+              const valueEntries = [];
+              owned.forEach(shoe => {
+                (colorways[shoe.shortName] || []).forEach(cw => {
+                  if (beaterMeta[`${shoe.id}_${cw}`]) return;
+                  const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
+                  if (!meta.purchasePrice) return;
+                  const priceStr = meta.purchasePrice.replace(/[^0-9.]/g, "");
+                  const price = parseFloat(priceStr);
+                  if (isNaN(price) || price <= 0) return;
+                  const wears = (wearLog[shoe.id] || []).filter(e => e.colorway === cw).length;
+                  if (wears === 0) return;
+                  const costPerWear = price / wears;
+                  valueEntries.push({ shoe, colorway: cw, price, wears, costPerWear });
+                });
+              });
+              const valueRanked = valueEntries
+                .sort((a, b) => {
+                  if (a.costPerWear !== b.costPerWear) return a.costPerWear - b.costPerWear;
+                  // Tiebreaker: more wears ranks higher
+                  return b.wears - a.wears;
+                })
+                .slice(0, 10);
+
+              const ranked = top10Filter === "worn" ? wornRanked : top10Filter === "price" ? priceRanked : valueRanked;
+              const podium = ranked.slice(0, 3);
+              const rest = ranked.slice(3);
+              const podiumOrder = [podium[1], podium[0], podium[2]];
+              const podiumHeights = [80, 110, 55];
+              const podiumColors = ["#C0C0C0", "#FFD700", "#CD7F32"];
+              const podiumLabels = ["2", "1", "3"];
+              const imgW = isMobilePublic ? 72 : 120;
+              const imgH = Math.round(imgW * 0.625);
+              const restImgW = isMobilePublic ? 60 : 80;
+              const restImgH = Math.round(restImgW * 0.625);
+
+              const subtitle = (entry) => {
+                if (top10Filter === "worn") return `Worn ${entry.count} ${entry.count === 1 ? "Time" : "Times"}`;
+                if (top10Filter === "price" && ADMIN_MODE) return `$${entry.price.toFixed(2)}`;
+                if (top10Filter === "value") return ADMIN_MODE ? `$${entry.costPerWear.toFixed(2)}/wear (${entry.wears} wears · $${entry.price.toFixed(2)})` : `Worn ${entry.wears} ${entry.wears === 1 ? "Time" : "Times"}`;
+                return null;
+              };
+
+              return (
+                <div style={{ maxWidth:"800px" }}>
+                  {/* Toggle buttons */}
+                  <div style={{ display:"flex", gap: isMobilePublic ? "12px" : "16px", marginBottom:"24px", flexWrap:"wrap" }}>
+                    {[["worn","MOST WORN"],["price","MOST EXPENSIVE"], ["value","BEST VALUE"]].map(([id, label]) => (
+                      <button key={id} onClick={() => setTop10Filter(id)} style={{
+                        background:"transparent", border:"none", cursor:"pointer",
+                        fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
+                        color: top10Filter === id ? "#e63946" : T.text5,
+                        borderBottom: top10Filter === id ? "1px solid #e63946" : "1px solid transparent",
+                        padding:"4px 0",
+                      }}>{label}</button>
+                    ))}
+                  </div>
+                  {/* Podium */}
+                  {podium.length >= 3 && (
+                    <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"center", gap: isMobilePublic ? "8px" : "12px", marginBottom:"32px" }}>
+                      {podiumOrder.map((entry, pi) => {
+                        if (!entry) return null;
+                        const metaKey = `${entry.shoe.id}_${entry.colorway}`;
+                        const img = images[metaKey] || null;
+                        const isGrail = !!grailMeta[metaKey];
+                        const color = podiumColors[pi];
+                        const h = isMobilePublic ? Math.round(podiumHeights[pi] * 0.7) : podiumHeights[pi];
+                        const sub = subtitle(entry);
+                        return (
+                          <div key={metaKey} style={{ display:"flex", flexDirection:"column", alignItems:"center", flex:"1 1 0", maxWidth:"250px" }}>
+                            <div style={{ background:T.cardBg, border:`1px solid ${color}`, padding: isMobilePublic ? "10px" : "16px", width:"100%", textAlign:"center", marginBottom:0 }}>
+                              <div style={{ fontSize: isMobilePublic ? "16px" : "22px", fontWeight:"bold", color, marginBottom:"8px" }}>{podiumLabels[pi]}</div>
+                              {img ? (
+                                <div style={{ width: isMobilePublic ? "60px" : imgW, height: isMobilePublic ? "38px" : imgH, overflow:"hidden", background: dark ? "#222222" : "#ffffff", margin:"0 auto" }}>
+                                  <img src={img} alt={entry.colorway} style={{ width: isMobilePublic ? "60px" : imgW, height: isMobilePublic ? "38px" : imgH, objectFit:"contain", display:"block" }} />
+                                </div>
+                              ) : (
+                                <div style={{ width: isMobilePublic ? "60px" : imgW, height: isMobilePublic ? "38px" : imgH, background:T.bg3, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto" }}>
+                                  <span style={{ fontSize:"9px", color:T.text6 }}>NO IMG</span>
+                                </div>
+                              )}
+                              <div style={{ fontSize: isMobilePublic ? "10px" : "12px", fontWeight:"bold", color: isGrail ? "#FFD700" : T.text, marginTop:"10px", lineHeight:"1.3" }}>{entry.shoe.name}</div>
+                              <div style={{ fontSize: isMobilePublic ? "9px" : "11px", color: isGrail ? "#FFD700" : T.text3, marginTop:"2px" }}>{entry.colorway}</div>
+                              {sub && <div style={{ fontSize: isMobilePublic ? "8px" : "9px", color:T.text5, marginTop:"6px", letterSpacing:"1px" }}>{sub}</div>}
+                            </div>
+                            <div style={{ width:"100%", height: isMobilePublic ? Math.round(h * 0.5) : h, background: `linear-gradient(180deg, ${color}33, ${color}11)`, borderLeft:`1px solid ${color}`, borderRight:`1px solid ${color}`, borderBottom:`1px solid ${color}` }} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {/* Podium fallback for < 3 entries */}
+                  {podium.length > 0 && podium.length < 3 && (
+                    <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr" : "1fr 1fr", gap:"12px", marginBottom:"24px" }}>
+                      {podium.map((entry, i) => {
+                        const metaKey = `${entry.shoe.id}_${entry.colorway}`;
+                        const img = images[metaKey] || null;
+                        const isGrail = !!grailMeta[metaKey];
+                        const color = i === 0 ? "#FFD700" : i === 1 ? "#C0C0C0" : "#CD7F32";
+                        const sub = subtitle(entry);
+                        return (
+                          <div key={metaKey} style={{ background:T.cardBg, border:`1px solid ${color}`, padding:"16px" }}>
+                            <div style={{ display:"flex", alignItems:"center", gap:"16px", marginBottom:"10px" }}>
+                              <div style={{ fontSize:"24px", fontWeight:"bold", color, minWidth:"36px", textAlign:"center", flexShrink:0 }}>{i + 1}</div>
+                              {img ? (
+                                <div style={{ width:imgW, height:imgH, overflow:"hidden", background: dark ? "#222222" : "#ffffff", flexShrink:0 }}>
+                                  <img src={img} alt={entry.colorway} style={{ width:imgW, height:imgH, objectFit:"contain", display:"block" }} />
+                                </div>
+                              ) : (
+                                <div style={{ width:imgW, height:imgH, background:T.bg3, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                                  <span style={{ fontSize:"11px", color:T.text6, letterSpacing:"2px" }}>NO IMG</span>
+                                </div>
+                              )}
+                            </div>
+                            <div style={{ paddingLeft:"52px" }}>
+                              <div style={{ fontSize:"14px", fontWeight:"bold", color: isGrail ? "#FFD700" : T.text }}>{entry.shoe.name} — {entry.colorway}</div>
+                              {sub && <div style={{ fontSize:"10px", color:T.text4, marginTop:"4px", letterSpacing:"1px" }}>{sub}</div>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {/* 4-10 grid */}
+                  {rest.length > 0 && (
+                    <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr" : "1fr 1fr", gap:"12px" }}>
+                      {rest.map((entry, i) => {
+                        const metaKey = `${entry.shoe.id}_${entry.colorway}`;
+                        const img = images[metaKey] || null;
+                        const isGrail = !!grailMeta[metaKey];
+                        const rank = i + 4;
+                        const sub = subtitle(entry);
+                        return (
+                          <div key={metaKey} style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "12px" : "16px" }}>
+                            <div style={{ display:"flex", alignItems:"center", gap: isMobilePublic ? "10px" : "14px" }}>
+                              <div style={{ fontSize: isMobilePublic ? "16px" : "20px", fontWeight:"bold", color:T.text5, minWidth: isMobilePublic ? "24px" : "32px", textAlign:"center", flexShrink:0 }}>{rank}</div>
+                              {img ? (
+                                <div style={{ width:restImgW, height:restImgH, overflow:"hidden", background: dark ? "#222222" : "#ffffff", flexShrink:0 }}>
+                                  <img src={img} alt={entry.colorway} style={{ width:restImgW, height:restImgH, objectFit:"contain", display:"block" }} />
+                                </div>
+                              ) : (
+                                <div style={{ width:restImgW, height:restImgH, background:T.bg3, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                                  <span style={{ fontSize:"9px", color:T.text6 }}>NO IMG</span>
+                                </div>
+                              )}
+                              <div style={{ minWidth:0 }}>
+                                <div style={{ fontSize: isMobilePublic ? "11px" : "13px", fontWeight:"bold", color: isGrail ? "#FFD700" : T.text }}>{entry.shoe.name} — {entry.colorway}</div>
+                                {sub && <div style={{ fontSize: isMobilePublic ? "9px" : "10px", color:T.text4, marginTop:"3px", letterSpacing:"1px" }}>{sub}</div>}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {ranked.length === 0 && (
+                    <div style={{ fontSize:"11px", letterSpacing:"4px", color:T.text5 }}>{top10Filter === "worn" ? "NO WEARS LOGGED YET" : top10Filter === "price" ? "NO PRICES ENTERED YET" : "NO WORN SHOES WITH PRICES YET"}</div>
+                  )}
                 </div>
               );
             })()}

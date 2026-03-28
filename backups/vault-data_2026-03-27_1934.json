@@ -194,44 +194,12 @@
       {
         "date": "2026-03-21",
         "colorway": "Wolf Grey"
-      },
-      {
-        "date": "2023-11-11",
-        "colorway": "Royal Reimagined"
-      },
-      {
-        "date": "2024-01-01",
-        "colorway": "Royal Reimagined"
-      },
-      {
-        "date": "2024-11-27",
-        "colorway": "Royal Reimagined"
-      },
-      {
-        "date": "2024-01-03",
-        "colorway": "Royal Reimagined"
-      },
-      {
-        "date": "2024-06-28",
-        "colorway": "Royal Reimagined"
       }
     ],
     "2": [
       {
         "colorway": "Black Cement",
         "date": "2025-09-11"
-      },
-      {
-        "date": "2023-09-30",
-        "colorway": "Black Cement"
-      },
-      {
-        "date": "2024-01-02",
-        "colorway": "Black Cement"
-      },
-      {
-        "date": "2024-12-13",
-        "colorway": "Black Cement"
       }
     ],
     "3": [
@@ -254,38 +222,6 @@
       {
         "colorway": "Rare Air",
         "date": "2025-08-15"
-      },
-      {
-        "date": "2023-03-11",
-        "colorway": "White Cement Reimagined"
-      },
-      {
-        "date": "2023-03-12",
-        "colorway": "White Cement Reimagined"
-      },
-      {
-        "date": "2023-03-15",
-        "colorway": "White Cement Reimagined"
-      },
-      {
-        "date": "2024-12-27",
-        "colorway": "White Cement Reimagined"
-      },
-      {
-        "date": "2025-02-07",
-        "colorway": "Black Cement"
-      },
-      {
-        "date": "2024-09-06",
-        "colorway": "A Ma Maniere WYWS"
-      },
-      {
-        "date": "2025-01-03",
-        "colorway": "A Ma Maniere WYWS"
-      },
-      {
-        "date": "2025-03-07",
-        "colorway": "A Ma Maniere"
       }
     ],
     "4": [
@@ -324,70 +260,6 @@
       {
         "date": "2026-03-08",
         "colorway": "Red Cement"
-      },
-      {
-        "date": "2023-01-07",
-        "colorway": "Fire Red"
-      },
-      {
-        "date": "2023-11-23",
-        "colorway": "Fire Red"
-      },
-      {
-        "date": "2025-05-02",
-        "colorway": "Fire Red"
-      },
-      {
-        "date": "2023-01-15",
-        "colorway": "Black Cement"
-      },
-      {
-        "date": "2024-01-04",
-        "colorway": "Black Cement"
-      },
-      {
-        "date": "2024-08-16",
-        "colorway": "Black Cement"
-      },
-      {
-        "date": "2025-04-25",
-        "colorway": "Black Cement"
-      },
-      {
-        "date": "2023-03-18",
-        "colorway": "A Ma Maniere"
-      },
-      {
-        "date": "2024-08-02",
-        "colorway": "A Ma Maniere"
-      },
-      {
-        "date": "2025-03-28",
-        "colorway": "A Ma Maniere"
-      },
-      {
-        "date": "2025-03-14",
-        "colorway": "A Ma Maniere WYWS"
-      },
-      {
-        "date": "2024-07-03",
-        "colorway": "What the 4"
-      },
-      {
-        "date": "2025-05-01",
-        "colorway": "What the 4"
-      },
-      {
-        "date": "2025-03-21",
-        "colorway": "Military Blue"
-      },
-      {
-        "date": "2024-06-21",
-        "colorway": "Military Blue"
-      },
-      {
-        "date": "2024-07-25",
-        "colorway": "Military Blue"
       }
     ],
     "5": [
@@ -414,18 +286,6 @@
       {
         "date": "2026-03-19",
         "colorway": "Fire Red"
-      },
-      {
-        "date": "2023-11-27",
-        "colorway": "A Ma Maniere Dawn"
-      },
-      {
-        "date": "2024-09-27",
-        "colorway": "A Ma Maniere Dawn"
-      },
-      {
-        "date": "2025-06-13",
-        "colorway": "A Ma Maniere Dawn"
       }
     ],
     "6": [
@@ -436,14 +296,6 @@
       {
         "date": "2026-03-20",
         "colorway": "Reverse Infrared"
-      },
-      {
-        "date": "2024-12-24",
-        "colorway": "Infrared"
-      },
-      {
-        "date": "2024-10-04",
-        "colorway": "Infrared"
       }
     ],
     "7": [
@@ -456,10 +308,6 @@
       {
         "colorway": "Playoffs",
         "date": "2025-07-17"
-      },
-      {
-        "date": "2024-01-08",
-        "colorway": "Playoffs"
       }
     ],
     "9": [
@@ -484,32 +332,12 @@
       {
         "colorway": "Black Flint",
         "date": "2025-07-11"
-      },
-      {
-        "date": "2023-04-22",
-        "colorway": "Black Flint"
-      },
-      {
-        "date": "2024-01-13",
-        "colorway": "Black Flint"
-      },
-      {
-        "date": "2024-11-01",
-        "colorway": "Black Flint"
       }
     ],
     "13": [
       {
         "colorway": "Flint Grey",
         "date": "2025-08-09"
-      },
-      {
-        "date": "2024-03-20",
-        "colorway": "Flint Grey"
-      },
-      {
-        "date": "2024-11-15",
-        "colorway": "Flint Grey"
       }
     ],
     "14": [
@@ -530,32 +358,12 @@
       {
         "colorway": "Pixel Court",
         "date": "2025-09-05"
-      },
-      {
-        "date": "2024-09-13",
-        "colorway": "Hot Lava"
       }
     ],
     "16": [
       {
         "colorway": "Volt",
         "date": "2025-12-06"
-      },
-      {
-        "date": "2023-01-22",
-        "colorway": "Volt"
-      },
-      {
-        "date": "2023-12-24",
-        "colorway": "Volt"
-      },
-      {
-        "date": "2024-06-08",
-        "colorway": "Volt"
-      },
-      {
-        "date": "2025-04-18",
-        "colorway": "Volt"
       }
     ],
     "17": [
@@ -1304,5 +1112,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-27T23:34:38.145Z"
+  "exportedAt": "2026-03-27T23:08:28.736Z"
 }
