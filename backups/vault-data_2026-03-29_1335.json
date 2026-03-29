@@ -1027,7 +1027,7 @@
       "size": "12",
       "notes": "",
       "ogYear": "",
-      "story": "My father and I went to about fivedifferent stores looking for these in June 1993.  Glad to finally add these to my collection.",
+      "story": "My father and I went to about six different stores looking for these in June 1993.  Glad to finally add these to my collection.",
       "saleDate": "",
       "saleTime": ""
     },
@@ -1134,13 +1134,13 @@
     "5_A Ma Maniere Dawn": "silver",
     "6_Infrared": "platinum",
     "6_Reverse Infrared": "silver",
-    "7_Cardinal": "gold",
+    "7_Cardinal": "silver",
     "8_Playoffs": "platinum",
     "9_Olive": "gold",
     "10_Steel": "platinum",
     "11_Flu Game": "gold",
     "12_Black Flint": "gold",
-    "13_Flint Grey": "gold",
+    "13_Flint Grey": "silver",
     "14_Chicago": "gold",
     "15_Hot Lava": "diamond",
     "15_Stone Blue": "gold",
@@ -1165,8 +1165,7 @@
     "6_Infrared": true,
     "8_Playoff": true,
     "9_Black Olive": true,
-    "11_Flu Game": true,
-    "21_Purple": true
+    "11_Flu Game": true
   },
   "graveyardMeta": {},
   "colorways": {
@@ -1441,5 +1440,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-29T18:40:47.068Z"
+  "exportedAt": "2026-03-29T16:17:02.143Z"
 }

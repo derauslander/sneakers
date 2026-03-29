@@ -828,7 +828,7 @@
       const [top10Filter, setTop10Filter] = useState("worn");
 
       useEffect(() => {
-        const interval = setInterval(() => setBannerShowUpNext(v => !v), 5000);
+        const interval = setInterval(() => setBannerShowUpNext(v => !v), 8000);
         return () => clearInterval(interval);
       }, []);
 
@@ -1348,6 +1348,12 @@
                   });
                   const upcomingQueue = sortedQueue.slice(1, 5);
 
+                  // Recently worn queue — 2nd through 5th most recently worn
+                  const recentlyWornQueue = [...allColorwayEntries]
+                    .filter(e => e.lastWorn)
+                    .sort((a, b) => a.lastWorn > b.lastWorn ? -1 : 1)
+                    .slice(1, 5);
+
                   return (
                   <div style={{ marginBottom:"24px" }}>
                     <div style={{ background: bannerBg, border:`1px solid ${bannerBorder}`, padding:"16px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px", position:"relative", minHeight:"90px" }}>
@@ -1411,18 +1417,37 @@
                       </div>}
                       {!ADMIN_MODE && <div style={{ marginLeft:"auto" }} />}
                     </div>
-                    {/* Upcoming queue — only show when UP NEXT visible */}
-                    {upcomingQueue.length > 0 && (
-                      <div style={{ background: T.bg2, border:"1px solid #e63946", borderTop:"none", padding:"10px 24px", display:"flex", gap:"16px", alignItems:"center" }}>
-                        <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0 }}>COMING UP</div>
-                        <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
-                          {upcomingQueue.map((entry, i) => {
-                            const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
-                            return qImg ? (
-                              <img key={i} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover" }} />
-                            ) : null;
-                          })}
-                        </div>
+                    {/* Queue bar — crossfades between COMING UP and RECENT */}
+                    {(upcomingQueue.length > 0 || recentlyWornQueue.length > 0) && (
+                      <div style={{ background: T.bg2, border:`1px solid ${bannerBorder}`, borderTop:"none", padding:"10px 24px", position:"relative", minHeight:"45px", display:"flex", alignItems:"center" }}>
+                        {/* COMING UP — visible when UP NEXT is showing */}
+                        {upcomingQueue.length > 0 && (
+                          <div style={{ display:"flex", gap:"16px", alignItems:"center", position:"absolute", opacity: bannerShowUpNext ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "auto" : "none" }}>
+                            <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0, minWidth:"80px" }}>COMING UP</div>
+                            <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
+                              {upcomingQueue.map((entry, i) => {
+                                const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
+                                return qImg ? (
+                                  <img key={i} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover" }} />
+                                ) : null;
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        {/* RECENT — visible when LAST WORN is showing */}
+                        {recentlyWornQueue.length > 0 && (
+                          <div style={{ display:"flex", gap:"16px", alignItems:"center", position:"absolute", opacity: bannerShowUpNext ? 0 : 1, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "none" : "auto" }}>
+                            <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0, minWidth:"80px" }}>RECENT</div>
+                            <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
+                              {recentlyWornQueue.map((entry, i) => {
+                                const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
+                                return qImg ? (
+                                  <img key={i} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover" }} />
+                                ) : null;
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -2237,41 +2262,65 @@
                       })}
                     </div>
                   )}
-                  {/* 4-7 grid */}
-                  {rest.slice(0, 4).length > 0 && (
-                    <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr" : "1fr 1fr", gap:"12px" }}>
-                      {rest.slice(0, 4).map((entry, i) => {
+                  {/* #4 — standalone */}
+                  {rest.length > 0 && (() => {
+                    const entry = rest[0];
+                    const metaKey = `${entry.shoe.id}_${entry.colorway}`;
+                    const img = images[metaKey] || null;
+                    const fourImgW = isMobilePublic ? 80 : 144;
+                    const fourImgH = Math.round(fourImgW * 0.625);
+                    const sub = subtitle(entry);
+                    return (
+                      <div style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "12px" : "16px", marginBottom:"12px" }}>
+                        <div style={{ display:"flex", alignItems:"center", gap: isMobilePublic ? "10px" : "14px" }}>
+                          <div style={{ fontSize: isMobilePublic ? "18px" : "22px", fontWeight:"bold", color:T.text5, minWidth: isMobilePublic ? "28px" : "36px", textAlign:"center", flexShrink:0 }}>4</div>
+                          {img ? (
+                            <div style={{ width:fourImgW, height:fourImgH, overflow:"hidden", background: dark ? "#222222" : "#ffffff", flexShrink:0 }}>
+                              <img src={img} alt={entry.colorway} style={{ width:fourImgW, height:fourImgH, objectFit:"contain", display:"block" }} />
+                            </div>
+                          ) : (
+                            <div style={{ width:fourImgW, height:fourImgH, background:T.bg3, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                              <span style={{ fontSize:"9px", color:T.text6 }}>NO IMG</span>
+                            </div>
+                          )}
+                          <div style={{ minWidth:0 }}>
+                            <div style={{ fontSize: isMobilePublic ? "12px" : "14px", fontWeight:"bold", color: T.text }}>{entry.shoe.name} — {entry.colorway}</div>
+                            {sub && <div style={{ fontSize: isMobilePublic ? "9px" : "10px", color:T.text4, marginTop:"4px", letterSpacing:"1px" }}>{sub}</div>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  {/* 5-7 three-wide */}
+                  {rest.slice(1, 4).length > 0 && (
+                    <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr" : "1fr 1fr 1fr", gap:"12px", marginBottom:"12px" }}>
+                      {rest.slice(1, 4).map((entry, i) => {
                         const metaKey = `${entry.shoe.id}_${entry.colorway}`;
                         const img = images[metaKey] || null;
-                        const entryTier = tierOf(tierMeta, metaKey); const entryTierInfo = TIERS[entryTier] || TIERS.silver;
-                        const rank = i + 4;
+                        const rank = i + 5;
                         const sub = subtitle(entry);
                         return (
-                          <div key={metaKey} style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "12px" : "16px" }}>
-                            <div style={{ display:"flex", alignItems:"center", gap: isMobilePublic ? "10px" : "14px" }}>
-                              <div style={{ fontSize: isMobilePublic ? "16px" : "20px", fontWeight:"bold", color:T.text5, minWidth: isMobilePublic ? "24px" : "32px", textAlign:"center", flexShrink:0 }}>{rank}</div>
-                              {img ? (
-                                <div style={{ width:restImgW, height:restImgH, overflow:"hidden", background: dark ? "#222222" : "#ffffff", flexShrink:0 }}>
-                                  <img src={img} alt={entry.colorway} style={{ width:restImgW, height:restImgH, objectFit:"contain", display:"block" }} />
-                                </div>
-                              ) : (
-                                <div style={{ width:restImgW, height:restImgH, background:T.bg3, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                                  <span style={{ fontSize:"9px", color:T.text6 }}>NO IMG</span>
-                                </div>
-                              )}
-                              <div style={{ minWidth:0 }}>
-                                <div style={{ fontSize: isMobilePublic ? "11px" : "13px", fontWeight:"bold", color: T.text }}>{entry.shoe.name} — {entry.colorway}</div>
-                                {sub && <div style={{ fontSize: isMobilePublic ? "9px" : "10px", color:T.text4, marginTop:"3px", letterSpacing:"1px" }}>{sub}</div>}
+                          <div key={metaKey} style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "10px" : "14px", textAlign:"center" }}>
+                            <div style={{ fontSize: isMobilePublic ? "14px" : "16px", fontWeight:"bold", color:T.text5, marginBottom:"8px" }}>{rank}</div>
+                            {img ? (
+                              <div style={{ width: isMobilePublic ? "60px" : "80px", height: isMobilePublic ? "38px" : "50px", overflow:"hidden", background: dark ? "#222222" : "#ffffff", margin:"0 auto" }}>
+                                <img src={img} alt={entry.colorway} style={{ width: isMobilePublic ? "60px" : "80px", height: isMobilePublic ? "38px" : "50px", objectFit:"contain", display:"block" }} />
                               </div>
-                            </div>
+                            ) : (
+                              <div style={{ width: isMobilePublic ? "60px" : "80px", height: isMobilePublic ? "38px" : "50px", background:T.bg3, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto" }}>
+                                <span style={{ fontSize:"8px", color:T.text6 }}>NO IMG</span>
+                              </div>
+                            )}
+                            <div style={{ fontSize: isMobilePublic ? "10px" : "11px", fontWeight:"bold", color: T.text, marginTop:"8px" }}>{entry.shoe.name} — {entry.colorway}</div>
+                            {sub && <div style={{ fontSize: isMobilePublic ? "8px" : "9px", color:T.text4, marginTop:"4px", letterSpacing:"1px" }}>{sub}</div>}
                           </div>
                         );
                       })}
                     </div>
                   )}
-                  {/* 8-9-10 compact row */}
+                  {/* 8-10 three-wide */}
                   {rest.slice(4).length > 0 && (
-                    <div style={{ display:"flex", gap:"12px", marginTop:"12px", justifyContent:"flex-start", flexDirection: isMobilePublic ? "column" : "row" }}>
+                    <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr" : "1fr 1fr 1fr", gap:"12px" }}>
                       {rest.slice(4).map((entry, i) => {
                         const metaKey = `${entry.shoe.id}_${entry.colorway}`;
                         const img = images[metaKey] || null;
@@ -2280,20 +2329,19 @@
                         const compactImgH = Math.round(compactImgW * 0.625);
                         const sub = subtitle(entry);
                         return (
-                          <div key={metaKey} style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "10px" : "12px", flex: isMobilePublic ? "1 1 28%" : "1 1 0", textAlign:"center" }}>
-                            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap: isMobilePublic ? "8px" : "10px" }}>
-                              <div style={{ fontSize: isMobilePublic ? "14px" : "16px", fontWeight:"bold", color:T.text5, flexShrink:0 }}>{rank}</div>
-                              {img ? (
-                                <div style={{ width:compactImgW, height:compactImgH, overflow:"hidden", background: dark ? "#222222" : "#ffffff", flexShrink:0 }}>
-                                  <img src={img} alt={entry.colorway} style={{ width:compactImgW, height:compactImgH, objectFit:"contain", display:"block" }} />
-                                </div>
-                              ) : (
-                                <div style={{ width:compactImgW, height:compactImgH, background:T.bg3, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                                  <span style={{ fontSize:"8px", color:T.text6 }}>NO IMG</span>
-                                </div>
-                              )}
-                            </div>
-                            {sub && <div style={{ fontSize: isMobilePublic ? "8px" : "9px", color:T.text4, marginTop:"6px", letterSpacing:"1px" }}>{sub}</div>}
+                          <div key={metaKey} style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "10px" : "12px", textAlign:"center" }}>
+                            <div style={{ fontSize: isMobilePublic ? "12px" : "14px", fontWeight:"bold", color:T.text5, marginBottom:"6px" }}>{rank}</div>
+                            {img ? (
+                              <div style={{ width:compactImgW, height:compactImgH, overflow:"hidden", background: dark ? "#222222" : "#ffffff", margin:"0 auto" }}>
+                                <img src={img} alt={entry.colorway} style={{ width:compactImgW, height:compactImgH, objectFit:"contain", display:"block" }} />
+                              </div>
+                            ) : (
+                              <div style={{ width:compactImgW, height:compactImgH, background:T.bg3, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto" }}>
+                                <span style={{ fontSize:"8px", color:T.text6 }}>NO IMG</span>
+                              </div>
+                            )}
+                            <div style={{ fontSize: isMobilePublic ? "9px" : "10px", fontWeight:"bold", color: T.text, marginTop:"6px" }}>{entry.shoe.name} — {entry.colorway}</div>
+                            {sub && <div style={{ fontSize: isMobilePublic ? "7px" : "8px", color:T.text4, marginTop:"4px", letterSpacing:"1px" }}>{sub}</div>}
                           </div>
                         );
                       })}
@@ -2327,7 +2375,7 @@
                 {[
                   { tier: "diamond",  label: "✦ DIAMOND ✦",  color: dark ? "#b8f0ff" : "#0099bb", desc: "The sneakers that 10-year-old me dreamed about" },
                   { tier: "platinum", label: "✦ PLATINUM ✦", color: "#C0C0C0", desc: "Original colorways of my favorite sneakers" },
-                  { tier: "gold",     label: "✦ GOLD ✦",     color: "#FFD700", desc: "Solid sneakers" },
+                  { tier: "gold",     label: "✦ GOLD ✦",     color: "#FFD700", desc: "Sneakers I'm glad are in my collection" },
                   { tier: "silver",   label: "⬥ SILVER ⬥",   color: T.text4,   desc: "Maybe I shouldn't have bought these" },
                   { tier: "bronze",   label: "💀 BRONZE 💀", color: "#CD7F32", desc: "Beaters" },
                 ].map(t => (
