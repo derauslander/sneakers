@@ -407,29 +407,58 @@
       return (
         <div
           onClick={ADMIN_MODE ? onEdit : undefined}
-          style={{ width:"160px", cursor: ADMIN_MODE ? "pointer" : "default" }}>
-          <div
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            onClick={handleTap}
-            style={{
-              width:"160px", height:"100px",
-              background: c.empty ? (dark ? "#2a2a2a" : "#f5f5f5") : img ? (dark ? "#1a1a1a" : "#ffffff") : c.bg,
-              border: isEditing ? "2px solid #f4a261" : "none",
-              display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
-              padding: img ? "0" : "6px", textAlign:"center",
-              overflow:"hidden", position:"relative",
-              cursor: isMobilePublic && img ? "pointer" : undefined,
-            }}>
+          style={{ width:"160px", cursor: ADMIN_MODE ? "pointer" : "default", perspective:"800px", paddingTop:"4px" }}>
+          <div style={{ position:"relative", transformStyle:"preserve-3d", transform:"rotateX(2deg)" }}>
+            {/* Top face of acrylic case */}
+            <div style={{
+              position:"absolute", top:0, left:0, width:"160px", height:"12px",
+              background: dark
+                ? "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)"
+                : "linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 100%)",
+              transform:"rotateX(70deg)", transformOrigin:"top center",
+              borderTop: dark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255,255,255,0.8)",
+              borderLeft: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(255,255,255,0.5)",
+              borderRight: dark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(255,255,255,0.5)",
+              pointerEvents:"none", zIndex:2,
+            }} />
+            {/* Front face */}
+            <div
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              onClick={handleTap}
+              style={{
+                width:"160px", height:"100px",
+                background: c.empty ? (dark ? "#2a2a2a" : "#f5f5f5") : img ? (dark ? "#1a1a1a" : "#ffffff") : c.bg,
+                border: isEditing ? "2px solid #f4a261"
+                  : dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.08)",
+                borderBottom: dark ? "2px solid rgba(255,255,255,0.06)" : "2px solid rgba(0,0,0,0.1)",
+                display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+                padding: img ? "0" : "6px", textAlign:"center",
+                overflow:"hidden", position:"relative",
+                cursor: isMobilePublic && img ? "pointer" : undefined,
+                boxShadow: dark
+                  ? "0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)"
+                  : "0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
+              }}>
+              {/* Acrylic reflection highlight */}
+              <div style={{
+                position:"absolute", top:0, left:0, width:"100%", height:"100%",
+                background: dark
+                  ? "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.02) 100%)"
+                  : "linear-gradient(135deg, rgba(255,255,255,0.6) 0%, transparent 40%, transparent 60%, rgba(255,255,255,0.15) 100%)",
+                pointerEvents:"none", zIndex:1,
+              }} />
             {c.empty
               ? <span style={{color: dark ? "#555" : "#ddd",fontSize:"18px"}}>·</span>
               : img
-                  ? <img src={img} alt={c.colorway} style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                  ? <img src={img} alt={c.colorway} style={{ width:"100%", height:"100%", objectFit:"cover", objectPosition:"bottom", display:"block" }} />
                   : <>
                       <div style={{fontSize:"11px",letterSpacing:"2px",color:c.accent,fontWeight:"bold"}}>{c.label}</div>
                     </>
             }
-            {hovered && img && (
+          </div>
+          </div>
+          {hovered && img && ReactDOM.createPortal(
               <div onClick={triggerClose} style={{
                 position:"fixed", top:0, left:0, width:"100vw", height:"100vh",
                 background:"rgba(0,0,0,0.85)", display:"flex", flexDirection:"column",
@@ -444,9 +473,8 @@
                 {tierInfo.label && <div style={{ marginTop:"12px", fontSize:"11px", letterSpacing:"6px", color: tierInfo.color }}>{tierInfo.label}</div>}
                 <div style={{ marginTop: tierInfo.label ? "6px" : "16px", fontSize:"13px", letterSpacing:"3px", color: tierInfo.color || c.accent }}>{c.colorway}</div>
                 {isMobilePublic && <div style={{ marginTop:"16px", fontSize:"10px", color:"#666", letterSpacing:"2px" }}>TAP TO CLOSE</div>}
-              </div>
-            )}
-          </div>
+              </div>,
+          document.body)}
           {!c.empty && (
             <div style={{ textAlign:"center", marginTop:"4px" }}>
               <div style={{ fontSize:"8px", color: dark ? "#999" : "#666", letterSpacing:"0.5px", overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis" }}>{c.colorway}</div>
@@ -537,7 +565,6 @@
                     <img src={entry.img} alt={entry.colorway} style={{ maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: glowOn ? `${ghostFilter} ${ghostGlow}` : `${normalFilter} ${normalGlow}`, display:"block", opacity: hasCrossfade && entry.hoverImg && showHover ? 0 : 1, transition:"filter 5s ease-in-out, opacity 5s ease-in-out" }} />
                     {hasCrossfade && entry.hoverImg && (
                       <img src={entry.hoverImg} alt={entry.colorway} style={{ position:"absolute", top:0, left:"50%", transform: showHover ? "translateX(-50%) scale(1)" : "translateX(-50%) scale(0.95)", maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: `${ghostFilter} ${ghostGlow}`, opacity: showHover ? 1 : 0, transition:"opacity 5s ease-in-out, transform 5s ease-in-out" }} />
-                    )}
                     )}
                   </div>
                   <div style={{ width:"100%", marginTop:"16px", textAlign:"center" }}>
@@ -1739,12 +1766,12 @@
 
                 <div style={{ fontSize:"9px", letterSpacing:"4px", color:T.text6, marginBottom:"16px" }}>MY COLLECTION · AS CURRENTLY DISPLAYED IN MY OFFICE</div>
                 {(() => {
-                  const gridW = 5 * 160 + 4 * 6;
+                  const gridW = 5 * 160 + 4 * 8;
                   const availW = Math.min(window.innerWidth - 64, 1200);
                   const scale = availW < gridW ? availW / gridW : 1;
                   return (
-                    <div style={{ transformOrigin:"top left", transform:`scale(${scale})`, width: gridW + "px", height: Math.round((8 * 100 + 7 * 6 + 8 * 20) * scale) + "px" }}>
-                    <div style={{ display:"inline-grid", gridTemplateColumns:"repeat(5, 160px)", gap:"6px" }}>
+                    <div style={{ transformOrigin:"top left", transform:`scale(${scale})`, width: gridW + "px", height: Math.round((8 * 100 + 7 * 8 + 8 * 24) * scale) + "px" }}>
+                    <div style={{ display:"inline-grid", gridTemplateColumns:"repeat(5, 160px)", gap:"8px" }}>
                   {displayLayout.map((row, ri) => row.map((cell, ci) => {
                     const c = getCellStyle(cell);
                     const shoe = !c.empty ? inventory.find(s => s.shortName === cell.code) : null;
@@ -2298,7 +2325,7 @@
 
                 <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", margin:"48px 0 24px" }}>THE TIER SYSTEM</div>
                 {[
-                  { tier: "diamond",  label: "✦ DIAMOND ✦",  color: "#b8f0ff", desc: "The sneakers that 10-year-old me dreamed about" },
+                  { tier: "diamond",  label: "✦ DIAMOND ✦",  color: dark ? "#b8f0ff" : "#0099bb", desc: "The sneakers that 10-year-old me dreamed about" },
                   { tier: "platinum", label: "✦ PLATINUM ✦", color: "#C0C0C0", desc: "Original colorways of my favorite sneakers" },
                   { tier: "gold",     label: "✦ GOLD ✦",     color: "#FFD700", desc: "Solid sneakers" },
                   { tier: "silver",   label: "⬥ SILVER ⬥",   color: T.text4,   desc: "Maybe I shouldn't have bought these" },

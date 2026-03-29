@@ -129,14 +129,6 @@
       "wishlist": false
     },
     {
-      "id": 21,
-      "name": "Air Force Max CB",
-      "shortName": "AFMCB",
-      "quantity": 1,
-      "category": "Nike",
-      "wishlist": false
-    },
-    {
       "id": 17,
       "name": "Air Max 86",
       "shortName": "AM86",
@@ -156,6 +148,14 @@
       "id": 19,
       "name": "Air Tech Challenge 3",
       "shortName": "ATC3",
+      "quantity": 0,
+      "category": "Nike",
+      "wishlist": true
+    },
+    {
+      "id": 21,
+      "name": "Air Force Max CB",
+      "shortName": "AFMCB",
       "quantity": 0,
       "category": "Nike",
       "wishlist": true
@@ -645,16 +645,7 @@
     "4_A Ma Maniere WYWS_hover": "Shoes/4_A Ma Maniere WYWS_hover.png",
     "4_Red Cement_hover": "Shoes/4_Red Cement_hover.png",
     "15_Stone Blue_hover": "Shoes/15_Stone Blue_hover.png",
-    "15_Pixel Court_hover": "Shoes/15_Pixel Court_hover.png",
-    "1_Wolf Grey_hover": "Shoes/1_Wolf Grey_hover.png",
-    "4_Cave Stone_hover": "Shoes/4_Cave Stone_hover.png",
-    "5_Black Metallic Reimagined_hover": "Shoes/5_Black Metallic Reimagined_hover.png",
-    "5_Fire Red_hover": "Shoes/5_Fire Red_hover.png",
-    "5_Grape_hover": "Shoes/5_Grape_hover.png",
-    "13_Flint Grey_hover": "Shoes/13_Flint Grey_hover.png",
-    "17_Air Max Day (Royal Volt)_hover": "Shoes/17_Air Max Day (Royal Volt)_hover.png",
-    "21_Purple_hover": "Shoes/21_Purple_hover.png",
-    "1773621809428_Sea Salt_hover": "Shoes/1773621809428_Sea Salt_hover.png"
+    "15_Pixel Court_hover": "Shoes/15_Pixel Court_hover.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -772,11 +763,7 @@
       "purchasePrice": "238.98",
       "retailer": "SNKRS",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "15_Pixel Court": {
       "purchaseDate": "2025-08-30",
@@ -827,11 +814,7 @@
       "purchasePrice": "228.11",
       "retailer": "SNKRS",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "17_Air Max Day (Royal Volt)": {
       "purchaseDate": "2024-03-26",
@@ -1021,15 +1004,11 @@
       "saleTime": ""
     },
     "21_Purple": {
-      "purchaseDate": "2026-03-29",
-      "purchasePrice": "369.27",
-      "retailer": "EBay",
-      "size": "12",
-      "notes": "",
-      "ogYear": "",
-      "story": "My father and I went to about six different stores looking for these in June 1993.  Glad to finally add these to my collection.",
-      "saleDate": "",
-      "saleTime": ""
+      "purchaseDate": "",
+      "purchasePrice": "",
+      "retailer": "",
+      "size": "",
+      "notes": ""
     },
     "1773621809428_Sea Salt": {
       "purchaseDate": "2026-03-02",
@@ -1038,20 +1017,14 @@
       "size": "13",
       "notes": "",
       "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "story": ""
     },
     "1_Wolf Grey": {
       "purchaseDate": "2024-07-20",
       "purchasePrice": "152.08",
       "retailer": "SNKRS",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "15_Stone Blue": {
       "purchaseDate": "2025-06-30",
@@ -1149,7 +1122,7 @@
     "17_Air Max Day (Royal Volt)": "gold",
     "18_Space Jam": "silver",
     "19_Volt": "silver",
-    "21_Purple": "platinum",
+    "21_Purple": "diamond",
     "1773621809428_Sea Salt": "bronze",
     "1774096319133_Billy Hoyle": "silver"
   },
@@ -1277,8 +1250,8 @@
         "colorway": "Chicago"
       },
       {
-        "code": "AFMCB",
-        "colorway": "Purple"
+        "code": "ATC2",
+        "colorway": "Pixel Court"
       },
       {
         "code": "AJ2",
@@ -1423,12 +1396,12 @@
         "colorway": ""
       },
       {
-        "code": "AM86",
-        "colorway": "Air Max Day (Royal Volt)"
+        "code": "",
+        "colorway": ""
       },
       {
-        "code": "ATC2",
-        "colorway": "Pixel Court"
+        "code": "AM86",
+        "colorway": "Air Max Day (Royal Volt)"
       },
       {
         "code": "",
@@ -1440,5 +1413,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-29T16:17:02.143Z"
+  "exportedAt": "2026-03-29T13:57:12.358Z"
 }
