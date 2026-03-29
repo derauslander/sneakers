@@ -637,15 +637,7 @@
     "2_Black Cement_hover": "Shoes/2_Black Cement_hover.png",
     "3_White Cement Reimagined_hover": "Shoes/3_White Cement Reimagined_hover.png",
     "3_Rare Air_hover": "Shoes/3_Rare Air_hover.png",
-    "14_Chicago_hover": "Shoes/14_Chicago_hover.png",
-    "3_Black Cement_hover": "Shoes/3_Black Cement_hover.png",
-    "3_A Ma Maniere_hover": "Shoes/3_A Ma Maniere_hover.png",
-    "3_A Ma Maniere WYWS_hover": "Shoes/3_A Ma Maniere WYWS_hover.png",
-    "4_A Ma Maniere_hover": "Shoes/4_A Ma Maniere_hover.png",
-    "4_A Ma Maniere WYWS_hover": "Shoes/4_A Ma Maniere WYWS_hover.png",
-    "4_Red Cement_hover": "Shoes/4_Red Cement_hover.png",
-    "15_Stone Blue_hover": "Shoes/15_Stone Blue_hover.png",
-    "15_Pixel Court_hover": "Shoes/15_Pixel Court_hover.png"
+    "14_Chicago_hover": "Shoes/14_Chicago_hover.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -770,11 +762,7 @@
       "purchasePrice": "168.37",
       "retailer": "SNKRS",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "3_Black Cement": {
       "purchaseDate": "2024-11-14",
@@ -855,10 +843,7 @@
       "retailer": "SNKRS",
       "size": "13",
       "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "ogYear": ""
     },
     "4_A Ma Maniere": {
       "purchaseDate": "2023-03-18",
@@ -944,9 +929,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "story": ""
     },
     "6_Infrared": {
       "purchaseDate": "2023-12-24",
@@ -975,11 +958,7 @@
       "purchasePrice": "244.69",
       "retailer": "A Ma Maniere",
       "size": "12.5",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
+      "notes": ""
     },
     "5_A Ma Maniere Dawn": {
       "purchaseDate": "2023-11-27",
@@ -1094,16 +1073,16 @@
     "4_Fire Red": "diamond",
     "4_Black Cement": "diamond",
     "4_White Cement": "platinum",
-    "4_Military Blue": "platinum",
+    "4_Military Blue": "gold",
     "4_What the 4": "gold",
     "4_A Ma Maniere": "gold",
     "4_A Ma Maniere WYWS": "silver",
     "4_Cave Stone": "silver",
     "4_Red Cement": "bronze",
-    "5_Black Tongue": "platinum",
+    "5_Black Tongue": "diamond",
     "5_Black Metallic Reimagined": "platinum",
-    "5_Fire Red": "platinum",
-    "5_Grape": "platinum",
+    "5_Fire Red": "gold",
+    "5_Grape": "gold",
     "5_A Ma Maniere Dawn": "silver",
     "6_Infrared": "platinum",
     "6_Reverse Infrared": "silver",
@@ -1413,5 +1392,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-29T13:57:12.358Z"
+  "exportedAt": "2026-03-28T18:26:33.551Z"
 }

@@ -1094,7 +1094,7 @@
     "4_Fire Red": "diamond",
     "4_Black Cement": "diamond",
     "4_White Cement": "platinum",
-    "4_Military Blue": "platinum",
+    "4_Military Blue": "gold",
     "4_What the 4": "gold",
     "4_A Ma Maniere": "gold",
     "4_A Ma Maniere WYWS": "silver",
@@ -1102,8 +1102,8 @@
     "4_Red Cement": "bronze",
     "5_Black Tongue": "platinum",
     "5_Black Metallic Reimagined": "platinum",
-    "5_Fire Red": "platinum",
-    "5_Grape": "platinum",
+    "5_Fire Red": "gold",
+    "5_Grape": "gold",
     "5_A Ma Maniere Dawn": "silver",
     "6_Infrared": "platinum",
     "6_Reverse Infrared": "silver",
@@ -1115,7 +1115,7 @@
     "12_Black Flint": "gold",
     "13_Flint Grey": "silver",
     "14_Chicago": "gold",
-    "15_Hot Lava": "diamond",
+    "15_Hot Lava": "platinum",
     "15_Stone Blue": "gold",
     "15_Pixel Court": "silver",
     "16_Volt": "diamond",
@@ -1413,5 +1413,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-03-29T13:57:12.358Z"
+  "exportedAt": "2026-03-29T10:23:23.754Z"
 }
