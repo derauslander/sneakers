@@ -294,7 +294,7 @@
         ? "drop-shadow(0 0 30px rgba(184,240,255,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.6))"
         : tierInfo.glowRgba
         ? `drop-shadow(0 0 30px ${tierInfo.glowRgba}) drop-shadow(0 0 8px rgba(255,255,255,0.6))`
-        : "drop-shadow(0 0 30px rgba(255,215,0,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.6))";
+        : "drop-shadow(0 0 30px rgba(255,255,255,0.5)) drop-shadow(0 0 8px rgba(255,255,255,0.6))";
 
       // Name color on hover
       const nameColor = tierInfo.color && tierReveal ? tierInfo.color : isOnIce && iceGlow ? "#64c8ff" : anniversaryGlow && showHover ? "#FFD700" : isNewPickup ? "#FFD700" : "#fff";
@@ -901,6 +901,10 @@
         const shoeColorways = colorways[shoe.shortName] || [];
         return shoeColorways
           .filter(cw => !tierExcludedFromRotation(tierOf(tierMeta, `${shoe.id}_${cw}`)))
+          .filter(cw => {
+            const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
+            return !isNewPickupCheck(meta.purchaseDate);
+          })
           .map(cw => {
             const entries = (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
             const lastWorn = entries.length ? [...entries].sort((a,b) => a.date < b.date ? 1 : -1)[0].date : null;
@@ -979,13 +983,13 @@
           }
         });
       });
-      // Check owned shoes for "GOT 'EM!" — purchased today
+      // Check owned shoes for "GOT 'EM!" — purchased within last 7 days
       owned.forEach(shoe => {
         const shoeColorways = colorways[shoe.shortName] || [];
         shoeColorways.forEach(cw => {
           const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
           if (!meta.purchaseDate) return;
-          if (meta.purchaseDate === todayDateStr) {
+          if (isNewPickupCheck(meta.purchaseDate)) {
             const img = images[`${shoe.id}_${cw}`] || null;
             gotEmCelebrations.push({ shoe, colorway: cw, img });
           }
@@ -2172,8 +2176,6 @@
               const podiumLabels = ["2", "1", "3"];
               const imgW = isMobilePublic ? 72 : 120;
               const imgH = Math.round(imgW * 0.625);
-              const restImgW = isMobilePublic ? 60 : 80;
-              const restImgH = Math.round(restImgW * 0.625);
 
               const subtitle = (entry) => {
                 if (top10Filter === "worn") return `Worn ${entry.count} ${entry.count === 1 ? "Time" : "Times"}`;
