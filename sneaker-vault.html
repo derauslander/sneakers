@@ -1388,7 +1388,7 @@
                             const [showAlt, setShowAlt] = React.useState(false);
                             React.useEffect(() => {
                               if (!rotationHoverImg) return;
-                              const interval = setInterval(() => setShowAlt(v => !v), 5000);
+                              const interval = setInterval(() => setShowAlt(v => !v), 8000);
                               return () => clearInterval(interval);
                             }, []);
                             return (
@@ -1621,17 +1621,31 @@
                   const filters = [["all","ALL"],["diamond","DIAMOND"],["platinum","PLATINUM"],["gold","GOLD"],["silver","SILVER"],["bronze","BRONZE"],["onice","ON ICE"]];
                   return (
                   <>
-                  <div style={{ display:"flex", gap: isMobilePublic ? "12px" : "16px", marginBottom:"16px", flexWrap:"wrap" }}>
-                    {filters.filter(([id]) => id !== "onice" || hasOnIce).map(([id, label]) => (
-                      <button key={id} onClick={() => setCollectionFilter(id)} style={{
-                        background:"transparent", border:"none", cursor:"pointer",
-                        fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
-                        color: collectionFilter === id ? "#e63946" : T.text5,
-                        borderBottom: collectionFilter === id ? "1px solid #e63946" : "1px solid transparent",
-                        padding:"4px 0",
-                      }}>{label}</button>
-                    ))}
-                  </div>
+                  {isMobilePublic ? (
+                    <div style={{ marginBottom:"16px" }}>
+                      <select value={collectionFilter} onChange={e => setCollectionFilter(e.target.value)} style={{
+                        background: T.inputBg, border:`1px solid ${T.inputBorder}`, color: T.inputText,
+                        padding:"8px 12px", fontSize:"10px", letterSpacing:"3px",
+                        fontFamily:"'Aptos','Segoe UI',sans-serif", width:"100%",
+                      }}>
+                        {filters.filter(([id]) => id !== "onice" || hasOnIce).map(([id, label]) => (
+                          <option key={id} value={id}>{label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <div style={{ display:"flex", gap:"16px", marginBottom:"16px", flexWrap:"wrap" }}>
+                      {filters.filter(([id]) => id !== "onice" || hasOnIce).map(([id, label]) => (
+                        <button key={id} onClick={() => setCollectionFilter(id)} style={{
+                          background:"transparent", border:"none", cursor:"pointer",
+                          fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
+                          color: collectionFilter === id ? "#e63946" : T.text5,
+                          borderBottom: collectionFilter === id ? "1px solid #e63946" : "1px solid transparent",
+                          padding:"4px 0",
+                        }}>{label}</button>
+                      ))}
+                    </div>
+                  )}
                   <div style={{ display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" }}>
                   {owned.map(shoe => {
                     const col = CAT[shoe.category] || CAT.Jordan;
