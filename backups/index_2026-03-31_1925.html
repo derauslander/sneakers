@@ -49,7 +49,7 @@
     // ADMIN_MODE — true for local admin app, false for public site
     // build.bat flips this to false when generating index.html
     // ═══════════════════════════════════════════════════════════════════════════
-    const ADMIN_MODE = true;
+    const ADMIN_MODE = false;
 
     const { useState, useEffect, useRef } = React;
 
@@ -1277,26 +1277,6 @@
                   gotEmQuestions.forEach(item => {
                     newsItems.push({ type:"gotemq", label:"✦ GOT 'EM? ✦", shoe: item.shoe, colorway: item.colorway, img: item.img, subtitle:"Sale was today" });
                   });
-                  // Shoe of the Day — random spotlight when no other news
-                  if (newsItems.length === 0) {
-                    const allOwned = owned.flatMap(shoe =>
-                      (colorways[shoe.shortName] || []).map(cw => ({ shoe, colorway: cw }))
-                    );
-                    if (allOwned.length > 0) {
-                      // Date-seeded random — consistent throughout the day, changes daily
-                      const dateSeed = todayStr.replace(/-/g, "");
-                      const seedIdx = parseInt(dateSeed, 10) % allOwned.length;
-                      const pick = allOwned[seedIdx];
-                      const pickKey = `${pick.shoe.id}_${pick.colorway}`;
-                      const pickImg = images[pickKey] || null;
-                      const pickMeta = colorwayMeta[pickKey] || {};
-                      const pickWears = (wearLog[pick.shoe.id] || []).filter(e => e.colorway === pick.colorway).length;
-                      const purchaseLine = pickMeta.purchaseDate ? `Purchased ${formatDate(pickMeta.purchaseDate)}` : null;
-                      const wearLine = `Worn ${pickWears} ${pickWears === 1 ? "time" : "times"}`;
-                      const sub = [purchaseLine, wearLine].filter(Boolean).join(" · ");
-                      newsItems.push({ type:"spotlight", label:"✦ SHOE OF THE DAY ✦", shoe: pick.shoe, colorway: pick.colorway, img: pickImg, subtitle: sub });
-                    }
-                  }
                   if (newsItems.length === 0) return null;
                   const safeIdx = newsIdx % newsItems.length;
                   const bannerBg = dark ? "linear-gradient(90deg,#2a2a1a,#2a2700)" : "linear-gradient(90deg,#fffdf0,#fff8d6)";
@@ -2187,32 +2167,7 @@
                 })
                 .slice(0, 10);
 
-              // Build longest on ice ranking — days between purchase date and first wear
-              const iceEntries = [];
-              owned.forEach(shoe => {
-                (colorways[shoe.shortName] || []).forEach(cw => {
-                  if (tierExcludedFromRotation(tierOf(tierMeta, `${shoe.id}_${cw}`))) return;
-                  const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
-                  if (!meta.purchaseDate) return;
-                  const wears = (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
-                  if (wears.length === 0) return;
-                  const firstWorn = [...wears].sort((a, b) => a.date < b.date ? -1 : 1)[0].date;
-                  const purchaseMs = new Date(meta.purchaseDate + "T00:00:00").getTime();
-                  const firstWornMs = new Date(firstWorn + "T00:00:00").getTime();
-                  const daysOnIce = Math.round((firstWornMs - purchaseMs) / 86400000);
-                  if (daysOnIce < 0) return;
-                  iceEntries.push({ shoe, colorway: cw, daysOnIce, purchaseDate: meta.purchaseDate, firstWorn });
-                });
-              });
-              const iceRanked = iceEntries
-                .sort((a, b) => {
-                  if (b.daysOnIce !== a.daysOnIce) return b.daysOnIce - a.daysOnIce;
-                  // Tiebreaker: earlier purchase date ranks higher
-                  return a.purchaseDate < b.purchaseDate ? -1 : 1;
-                })
-                .slice(0, 10);
-
-              const ranked = top10Filter === "worn" ? wornRanked : top10Filter === "price" ? priceRanked : top10Filter === "value" ? valueRanked : iceRanked;
+              const ranked = top10Filter === "worn" ? wornRanked : top10Filter === "price" ? priceRanked : valueRanked;
               const podium = ranked.slice(0, 3);
               const rest = ranked.slice(3);
               const podiumOrder = [podium[1], podium[0], podium[2]];
@@ -2226,38 +2181,23 @@
                 if (top10Filter === "worn") return `Worn ${entry.count} ${entry.count === 1 ? "Time" : "Times"}`;
                 if (top10Filter === "price" && ADMIN_MODE) return `$${entry.price.toFixed(2)}`;
                 if (top10Filter === "value") return ADMIN_MODE ? `$${entry.costPerWear.toFixed(2)}/wear (${entry.wears} wears · $${entry.price.toFixed(2)})` : `Worn ${entry.wears} ${entry.wears === 1 ? "Time" : "Times"}`;
-                if (top10Filter === "ice") return `${entry.daysOnIce} ${entry.daysOnIce === 1 ? "day" : "days"} on ice`;
                 return null;
               };
 
               return (
                 <div style={{ maxWidth:"800px" }}>
-                  {/* Toggle buttons (desktop) / Dropdown (mobile) */}
-                  {isMobilePublic ? (
-                    <div style={{ marginBottom:"24px" }}>
-                      <select value={top10Filter} onChange={e => setTop10Filter(e.target.value)} style={{
-                        background: T.inputBg, border:`1px solid ${T.inputBorder}`, color: T.inputText,
-                        padding:"8px 12px", fontSize:"10px", letterSpacing:"3px",
-                        fontFamily:"'Aptos','Segoe UI',sans-serif", width:"100%",
-                      }}>
-                        {[["worn","MOST WORN"],["price","MOST EXPENSIVE"],["value","BEST VALUE"],["ice","LONGEST ON ICE"]].map(([id, label]) => (
-                          <option key={id} value={id}>{label}</option>
-                        ))}
-                      </select>
-                    </div>
-                  ) : (
-                    <div style={{ display:"flex", gap:"16px", marginBottom:"24px", flexWrap:"wrap" }}>
-                      {[["worn","MOST WORN"],["price","MOST EXPENSIVE"], ["value","BEST VALUE"], ["ice","LONGEST ON ICE"]].map(([id, label]) => (
-                        <button key={id} onClick={() => setTop10Filter(id)} style={{
-                          background:"transparent", border:"none", cursor:"pointer",
-                          fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
-                          color: top10Filter === id ? "#e63946" : T.text5,
-                          borderBottom: top10Filter === id ? "1px solid #e63946" : "1px solid transparent",
-                          padding:"4px 0",
-                        }}>{label}</button>
-                      ))}
-                    </div>
-                  )}
+                  {/* Toggle buttons */}
+                  <div style={{ display:"flex", gap: isMobilePublic ? "12px" : "16px", marginBottom:"24px", flexWrap:"wrap" }}>
+                    {[["worn","MOST WORN"],["price","MOST EXPENSIVE"], ["value","BEST VALUE"]].map(([id, label]) => (
+                      <button key={id} onClick={() => setTop10Filter(id)} style={{
+                        background:"transparent", border:"none", cursor:"pointer",
+                        fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
+                        color: top10Filter === id ? "#e63946" : T.text5,
+                        borderBottom: top10Filter === id ? "1px solid #e63946" : "1px solid transparent",
+                        padding:"4px 0",
+                      }}>{label}</button>
+                    ))}
+                  </div>
                   {/* Podium */}
                   {podium.length >= 3 && (
                     <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"center", gap: isMobilePublic ? "8px" : "12px", marginBottom:"32px" }}>
@@ -2410,12 +2350,11 @@
                     </div>
                   )}
                   {ranked.length === 0 && (
-                    <div style={{ fontSize:"11px", letterSpacing:"4px", color:T.text5 }}>{top10Filter === "worn" ? "NO WEARS LOGGED YET" : top10Filter === "price" ? "NO PRICES ENTERED YET" : top10Filter === "value" ? "NO WORN SHOES WITH PRICES YET" : "NO WORN SHOES WITH PURCHASE DATES YET"}</div>
+                    <div style={{ fontSize:"11px", letterSpacing:"4px", color:T.text5 }}>{top10Filter === "worn" ? "NO WEARS LOGGED YET" : top10Filter === "price" ? "NO PRICES ENTERED YET" : "NO WORN SHOES WITH PRICES YET"}</div>
                   )}
                   {/* Subtitle */}
                   {top10Filter === "price" && ranked.length > 0 && <div style={{ fontSize:"10px", color:T.text5, letterSpacing:"1px", marginTop:"20px" }}>Ranked by purchase price</div>}
                   {top10Filter === "value" && ranked.length > 0 && <div style={{ fontSize:"10px", color:T.text5, letterSpacing:"1px", marginTop:"20px" }}>Purchase price ÷ number of times worn</div>}
-                  {top10Filter === "ice" && ranked.length > 0 && <div style={{ fontSize:"10px", color:T.text5, letterSpacing:"1px", marginTop:"20px" }}>Days between purchase date and first wear</div>}
                 </div>
               );
             })()}

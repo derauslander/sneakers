@@ -49,7 +49,7 @@
     // ADMIN_MODE — true for local admin app, false for public site
     // build.bat flips this to false when generating index.html
     // ═══════════════════════════════════════════════════════════════════════════
-    const ADMIN_MODE = true;
+    const ADMIN_MODE = false;
 
     const { useState, useEffect, useRef } = React;
 
@@ -294,7 +294,7 @@
         ? "drop-shadow(0 0 30px rgba(184,240,255,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.6))"
         : tierInfo.glowRgba
         ? `drop-shadow(0 0 30px ${tierInfo.glowRgba}) drop-shadow(0 0 8px rgba(255,255,255,0.6))`
-        : "drop-shadow(0 0 30px rgba(255,255,255,0.5)) drop-shadow(0 0 8px rgba(255,255,255,0.6))";
+        : "drop-shadow(0 0 30px rgba(255,215,0,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.6))";
 
       // Name color on hover
       const nameColor = tierInfo.color && tierReveal ? tierInfo.color : isOnIce && iceGlow ? "#64c8ff" : anniversaryGlow && showHover ? "#FFD700" : isNewPickup ? "#FFD700" : "#fff";
@@ -828,7 +828,7 @@
       const [top10Filter, setTop10Filter] = useState("worn");
 
       useEffect(() => {
-        const interval = setInterval(() => setBannerShowUpNext(v => !v), 8000);
+        const interval = setInterval(() => setBannerShowUpNext(v => !v), 5000);
         return () => clearInterval(interval);
       }, []);
 
@@ -901,10 +901,6 @@
         const shoeColorways = colorways[shoe.shortName] || [];
         return shoeColorways
           .filter(cw => !tierExcludedFromRotation(tierOf(tierMeta, `${shoe.id}_${cw}`)))
-          .filter(cw => {
-            const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
-            return !isNewPickupCheck(meta.purchaseDate);
-          })
           .map(cw => {
             const entries = (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
             const lastWorn = entries.length ? [...entries].sort((a,b) => a.date < b.date ? 1 : -1)[0].date : null;
@@ -983,13 +979,13 @@
           }
         });
       });
-      // Check owned shoes for "GOT 'EM!" — purchased within last 7 days
+      // Check owned shoes for "GOT 'EM!" — purchased today
       owned.forEach(shoe => {
         const shoeColorways = colorways[shoe.shortName] || [];
         shoeColorways.forEach(cw => {
           const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
           if (!meta.purchaseDate) return;
-          if (isNewPickupCheck(meta.purchaseDate)) {
+          if (meta.purchaseDate === todayDateStr) {
             const img = images[`${shoe.id}_${cw}`] || null;
             gotEmCelebrations.push({ shoe, colorway: cw, img });
           }
@@ -1277,26 +1273,6 @@
                   gotEmQuestions.forEach(item => {
                     newsItems.push({ type:"gotemq", label:"✦ GOT 'EM? ✦", shoe: item.shoe, colorway: item.colorway, img: item.img, subtitle:"Sale was today" });
                   });
-                  // Shoe of the Day — random spotlight when no other news
-                  if (newsItems.length === 0) {
-                    const allOwned = owned.flatMap(shoe =>
-                      (colorways[shoe.shortName] || []).map(cw => ({ shoe, colorway: cw }))
-                    );
-                    if (allOwned.length > 0) {
-                      // Date-seeded random — consistent throughout the day, changes daily
-                      const dateSeed = todayStr.replace(/-/g, "");
-                      const seedIdx = parseInt(dateSeed, 10) % allOwned.length;
-                      const pick = allOwned[seedIdx];
-                      const pickKey = `${pick.shoe.id}_${pick.colorway}`;
-                      const pickImg = images[pickKey] || null;
-                      const pickMeta = colorwayMeta[pickKey] || {};
-                      const pickWears = (wearLog[pick.shoe.id] || []).filter(e => e.colorway === pick.colorway).length;
-                      const purchaseLine = pickMeta.purchaseDate ? `Purchased ${formatDate(pickMeta.purchaseDate)}` : null;
-                      const wearLine = `Worn ${pickWears} ${pickWears === 1 ? "time" : "times"}`;
-                      const sub = [purchaseLine, wearLine].filter(Boolean).join(" · ");
-                      newsItems.push({ type:"spotlight", label:"✦ SHOE OF THE DAY ✦", shoe: pick.shoe, colorway: pick.colorway, img: pickImg, subtitle: sub });
-                    }
-                  }
                   if (newsItems.length === 0) return null;
                   const safeIdx = newsIdx % newsItems.length;
                   const bannerBg = dark ? "linear-gradient(90deg,#2a2a1a,#2a2700)" : "linear-gradient(90deg,#fffdf0,#fff8d6)";
@@ -1372,12 +1348,6 @@
                   });
                   const upcomingQueue = sortedQueue.slice(1, 5);
 
-                  // Recently worn queue — 2nd through 5th most recently worn
-                  const recentlyWornQueue = [...allColorwayEntries]
-                    .filter(e => e.lastWorn)
-                    .sort((a, b) => a.lastWorn > b.lastWorn ? -1 : 1)
-                    .slice(1, 5);
-
                   return (
                   <div style={{ marginBottom:"24px" }}>
                     <div style={{ background: bannerBg, border:`1px solid ${bannerBorder}`, padding:"16px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px", position:"relative", minHeight:"90px" }}>
@@ -1441,37 +1411,18 @@
                       </div>}
                       {!ADMIN_MODE && <div style={{ marginLeft:"auto" }} />}
                     </div>
-                    {/* Queue bar — crossfades between COMING UP and RECENT */}
-                    {(upcomingQueue.length > 0 || recentlyWornQueue.length > 0) && (
-                      <div style={{ background: T.bg2, border:`1px solid ${bannerBorder}`, borderTop:"none", padding:"10px 24px", position:"relative", minHeight:"45px", display:"flex", alignItems:"center" }}>
-                        {/* COMING UP — visible when UP NEXT is showing */}
-                        {upcomingQueue.length > 0 && (
-                          <div style={{ display:"flex", gap:"16px", alignItems:"center", position:"absolute", opacity: bannerShowUpNext ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "auto" : "none" }}>
-                            <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0, minWidth:"80px" }}>COMING UP</div>
-                            <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
-                              {upcomingQueue.map((entry, i) => {
-                                const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
-                                return qImg ? (
-                                  <img key={i} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover" }} />
-                                ) : null;
-                              })}
-                            </div>
-                          </div>
-                        )}
-                        {/* RECENT — visible when LAST WORN is showing */}
-                        {recentlyWornQueue.length > 0 && (
-                          <div style={{ display:"flex", gap:"16px", alignItems:"center", position:"absolute", opacity: bannerShowUpNext ? 0 : 1, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "none" : "auto" }}>
-                            <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0, minWidth:"80px" }}>RECENT</div>
-                            <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
-                              {recentlyWornQueue.map((entry, i) => {
-                                const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
-                                return qImg ? (
-                                  <img key={i} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover" }} />
-                                ) : null;
-                              })}
-                            </div>
-                          </div>
-                        )}
+                    {/* Upcoming queue — only show when UP NEXT visible */}
+                    {upcomingQueue.length > 0 && (
+                      <div style={{ background: T.bg2, border:"1px solid #e63946", borderTop:"none", padding:"10px 24px", display:"flex", gap:"16px", alignItems:"center" }}>
+                        <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0 }}>COMING UP</div>
+                        <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
+                          {upcomingQueue.map((entry, i) => {
+                            const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
+                            return qImg ? (
+                              <img key={i} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover" }} />
+                            ) : null;
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2187,32 +2138,7 @@
                 })
                 .slice(0, 10);
 
-              // Build longest on ice ranking — days between purchase date and first wear
-              const iceEntries = [];
-              owned.forEach(shoe => {
-                (colorways[shoe.shortName] || []).forEach(cw => {
-                  if (tierExcludedFromRotation(tierOf(tierMeta, `${shoe.id}_${cw}`))) return;
-                  const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
-                  if (!meta.purchaseDate) return;
-                  const wears = (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
-                  if (wears.length === 0) return;
-                  const firstWorn = [...wears].sort((a, b) => a.date < b.date ? -1 : 1)[0].date;
-                  const purchaseMs = new Date(meta.purchaseDate + "T00:00:00").getTime();
-                  const firstWornMs = new Date(firstWorn + "T00:00:00").getTime();
-                  const daysOnIce = Math.round((firstWornMs - purchaseMs) / 86400000);
-                  if (daysOnIce < 0) return;
-                  iceEntries.push({ shoe, colorway: cw, daysOnIce, purchaseDate: meta.purchaseDate, firstWorn });
-                });
-              });
-              const iceRanked = iceEntries
-                .sort((a, b) => {
-                  if (b.daysOnIce !== a.daysOnIce) return b.daysOnIce - a.daysOnIce;
-                  // Tiebreaker: earlier purchase date ranks higher
-                  return a.purchaseDate < b.purchaseDate ? -1 : 1;
-                })
-                .slice(0, 10);
-
-              const ranked = top10Filter === "worn" ? wornRanked : top10Filter === "price" ? priceRanked : top10Filter === "value" ? valueRanked : iceRanked;
+              const ranked = top10Filter === "worn" ? wornRanked : top10Filter === "price" ? priceRanked : valueRanked;
               const podium = ranked.slice(0, 3);
               const rest = ranked.slice(3);
               const podiumOrder = [podium[1], podium[0], podium[2]];
@@ -2221,43 +2147,30 @@
               const podiumLabels = ["2", "1", "3"];
               const imgW = isMobilePublic ? 72 : 120;
               const imgH = Math.round(imgW * 0.625);
+              const restImgW = isMobilePublic ? 60 : 80;
+              const restImgH = Math.round(restImgW * 0.625);
 
               const subtitle = (entry) => {
                 if (top10Filter === "worn") return `Worn ${entry.count} ${entry.count === 1 ? "Time" : "Times"}`;
                 if (top10Filter === "price" && ADMIN_MODE) return `$${entry.price.toFixed(2)}`;
                 if (top10Filter === "value") return ADMIN_MODE ? `$${entry.costPerWear.toFixed(2)}/wear (${entry.wears} wears · $${entry.price.toFixed(2)})` : `Worn ${entry.wears} ${entry.wears === 1 ? "Time" : "Times"}`;
-                if (top10Filter === "ice") return `${entry.daysOnIce} ${entry.daysOnIce === 1 ? "day" : "days"} on ice`;
                 return null;
               };
 
               return (
                 <div style={{ maxWidth:"800px" }}>
-                  {/* Toggle buttons (desktop) / Dropdown (mobile) */}
-                  {isMobilePublic ? (
-                    <div style={{ marginBottom:"24px" }}>
-                      <select value={top10Filter} onChange={e => setTop10Filter(e.target.value)} style={{
-                        background: T.inputBg, border:`1px solid ${T.inputBorder}`, color: T.inputText,
-                        padding:"8px 12px", fontSize:"10px", letterSpacing:"3px",
-                        fontFamily:"'Aptos','Segoe UI',sans-serif", width:"100%",
-                      }}>
-                        {[["worn","MOST WORN"],["price","MOST EXPENSIVE"],["value","BEST VALUE"],["ice","LONGEST ON ICE"]].map(([id, label]) => (
-                          <option key={id} value={id}>{label}</option>
-                        ))}
-                      </select>
-                    </div>
-                  ) : (
-                    <div style={{ display:"flex", gap:"16px", marginBottom:"24px", flexWrap:"wrap" }}>
-                      {[["worn","MOST WORN"],["price","MOST EXPENSIVE"], ["value","BEST VALUE"], ["ice","LONGEST ON ICE"]].map(([id, label]) => (
-                        <button key={id} onClick={() => setTop10Filter(id)} style={{
-                          background:"transparent", border:"none", cursor:"pointer",
-                          fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
-                          color: top10Filter === id ? "#e63946" : T.text5,
-                          borderBottom: top10Filter === id ? "1px solid #e63946" : "1px solid transparent",
-                          padding:"4px 0",
-                        }}>{label}</button>
-                      ))}
-                    </div>
-                  )}
+                  {/* Toggle buttons */}
+                  <div style={{ display:"flex", gap: isMobilePublic ? "12px" : "16px", marginBottom:"24px", flexWrap:"wrap" }}>
+                    {[["worn","MOST WORN"],["price","MOST EXPENSIVE"], ["value","BEST VALUE"]].map(([id, label]) => (
+                      <button key={id} onClick={() => setTop10Filter(id)} style={{
+                        background:"transparent", border:"none", cursor:"pointer",
+                        fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
+                        color: top10Filter === id ? "#e63946" : T.text5,
+                        borderBottom: top10Filter === id ? "1px solid #e63946" : "1px solid transparent",
+                        padding:"4px 0",
+                      }}>{label}</button>
+                    ))}
+                  </div>
                   {/* Podium */}
                   {podium.length >= 3 && (
                     <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"center", gap: isMobilePublic ? "8px" : "12px", marginBottom:"32px" }}>
@@ -2324,65 +2237,41 @@
                       })}
                     </div>
                   )}
-                  {/* #4 — standalone */}
-                  {rest.length > 0 && (() => {
-                    const entry = rest[0];
-                    const metaKey = `${entry.shoe.id}_${entry.colorway}`;
-                    const img = images[metaKey] || null;
-                    const fourImgW = isMobilePublic ? 80 : 144;
-                    const fourImgH = Math.round(fourImgW * 0.625);
-                    const sub = subtitle(entry);
-                    return (
-                      <div style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "12px" : "16px", marginBottom:"12px" }}>
-                        <div style={{ display:"flex", alignItems:"center", gap: isMobilePublic ? "10px" : "14px" }}>
-                          <div style={{ fontSize: isMobilePublic ? "18px" : "22px", fontWeight:"bold", color:T.text5, minWidth: isMobilePublic ? "28px" : "36px", textAlign:"center", flexShrink:0 }}>4</div>
-                          {img ? (
-                            <div style={{ width:fourImgW, height:fourImgH, overflow:"hidden", background: dark ? "#222222" : "#ffffff", flexShrink:0 }}>
-                              <img src={img} alt={entry.colorway} style={{ width:fourImgW, height:fourImgH, objectFit:"contain", display:"block" }} />
-                            </div>
-                          ) : (
-                            <div style={{ width:fourImgW, height:fourImgH, background:T.bg3, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                              <span style={{ fontSize:"9px", color:T.text6 }}>NO IMG</span>
-                            </div>
-                          )}
-                          <div style={{ minWidth:0 }}>
-                            <div style={{ fontSize: isMobilePublic ? "12px" : "14px", fontWeight:"bold", color: T.text }}>{entry.shoe.name} — {entry.colorway}</div>
-                            {sub && <div style={{ fontSize: isMobilePublic ? "9px" : "10px", color:T.text4, marginTop:"4px", letterSpacing:"1px" }}>{sub}</div>}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                  {/* 5-7 three-wide */}
-                  {rest.slice(1, 4).length > 0 && (
-                    <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr" : "1fr 1fr 1fr", gap:"12px", marginBottom:"12px" }}>
-                      {rest.slice(1, 4).map((entry, i) => {
+                  {/* 4-7 grid */}
+                  {rest.slice(0, 4).length > 0 && (
+                    <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr" : "1fr 1fr", gap:"12px" }}>
+                      {rest.slice(0, 4).map((entry, i) => {
                         const metaKey = `${entry.shoe.id}_${entry.colorway}`;
                         const img = images[metaKey] || null;
-                        const rank = i + 5;
+                        const entryTier = tierOf(tierMeta, metaKey); const entryTierInfo = TIERS[entryTier] || TIERS.silver;
+                        const rank = i + 4;
                         const sub = subtitle(entry);
                         return (
-                          <div key={metaKey} style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "10px" : "14px", textAlign:"center" }}>
-                            <div style={{ fontSize: isMobilePublic ? "14px" : "16px", fontWeight:"bold", color:T.text5, marginBottom:"8px" }}>{rank}</div>
-                            {img ? (
-                              <div style={{ width: isMobilePublic ? "60px" : "80px", height: isMobilePublic ? "38px" : "50px", overflow:"hidden", background: dark ? "#222222" : "#ffffff", margin:"0 auto" }}>
-                                <img src={img} alt={entry.colorway} style={{ width: isMobilePublic ? "60px" : "80px", height: isMobilePublic ? "38px" : "50px", objectFit:"contain", display:"block" }} />
+                          <div key={metaKey} style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "12px" : "16px" }}>
+                            <div style={{ display:"flex", alignItems:"center", gap: isMobilePublic ? "10px" : "14px" }}>
+                              <div style={{ fontSize: isMobilePublic ? "16px" : "20px", fontWeight:"bold", color:T.text5, minWidth: isMobilePublic ? "24px" : "32px", textAlign:"center", flexShrink:0 }}>{rank}</div>
+                              {img ? (
+                                <div style={{ width:restImgW, height:restImgH, overflow:"hidden", background: dark ? "#222222" : "#ffffff", flexShrink:0 }}>
+                                  <img src={img} alt={entry.colorway} style={{ width:restImgW, height:restImgH, objectFit:"contain", display:"block" }} />
+                                </div>
+                              ) : (
+                                <div style={{ width:restImgW, height:restImgH, background:T.bg3, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                                  <span style={{ fontSize:"9px", color:T.text6 }}>NO IMG</span>
+                                </div>
+                              )}
+                              <div style={{ minWidth:0 }}>
+                                <div style={{ fontSize: isMobilePublic ? "11px" : "13px", fontWeight:"bold", color: T.text }}>{entry.shoe.name} — {entry.colorway}</div>
+                                {sub && <div style={{ fontSize: isMobilePublic ? "9px" : "10px", color:T.text4, marginTop:"3px", letterSpacing:"1px" }}>{sub}</div>}
                               </div>
-                            ) : (
-                              <div style={{ width: isMobilePublic ? "60px" : "80px", height: isMobilePublic ? "38px" : "50px", background:T.bg3, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto" }}>
-                                <span style={{ fontSize:"8px", color:T.text6 }}>NO IMG</span>
-                              </div>
-                            )}
-                            <div style={{ fontSize: isMobilePublic ? "10px" : "11px", fontWeight:"bold", color: T.text, marginTop:"8px" }}>{entry.shoe.name} — {entry.colorway}</div>
-                            {sub && <div style={{ fontSize: isMobilePublic ? "8px" : "9px", color:T.text4, marginTop:"4px", letterSpacing:"1px" }}>{sub}</div>}
+                            </div>
                           </div>
                         );
                       })}
                     </div>
                   )}
-                  {/* 8-10 three-wide */}
+                  {/* 8-9-10 compact row */}
                   {rest.slice(4).length > 0 && (
-                    <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr" : "1fr 1fr 1fr", gap:"12px" }}>
+                    <div style={{ display:"flex", gap:"12px", marginTop:"12px", justifyContent:"flex-start", flexDirection: isMobilePublic ? "column" : "row" }}>
                       {rest.slice(4).map((entry, i) => {
                         const metaKey = `${entry.shoe.id}_${entry.colorway}`;
                         const img = images[metaKey] || null;
@@ -2391,31 +2280,31 @@
                         const compactImgH = Math.round(compactImgW * 0.625);
                         const sub = subtitle(entry);
                         return (
-                          <div key={metaKey} style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "10px" : "12px", textAlign:"center" }}>
-                            <div style={{ fontSize: isMobilePublic ? "12px" : "14px", fontWeight:"bold", color:T.text5, marginBottom:"6px" }}>{rank}</div>
-                            {img ? (
-                              <div style={{ width:compactImgW, height:compactImgH, overflow:"hidden", background: dark ? "#222222" : "#ffffff", margin:"0 auto" }}>
-                                <img src={img} alt={entry.colorway} style={{ width:compactImgW, height:compactImgH, objectFit:"contain", display:"block" }} />
-                              </div>
-                            ) : (
-                              <div style={{ width:compactImgW, height:compactImgH, background:T.bg3, display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto" }}>
-                                <span style={{ fontSize:"8px", color:T.text6 }}>NO IMG</span>
-                              </div>
-                            )}
-                            <div style={{ fontSize: isMobilePublic ? "9px" : "10px", fontWeight:"bold", color: T.text, marginTop:"6px" }}>{entry.shoe.name} — {entry.colorway}</div>
-                            {sub && <div style={{ fontSize: isMobilePublic ? "7px" : "8px", color:T.text4, marginTop:"4px", letterSpacing:"1px" }}>{sub}</div>}
+                          <div key={metaKey} style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "10px" : "12px", flex: isMobilePublic ? "1 1 28%" : "1 1 0", textAlign:"center" }}>
+                            <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap: isMobilePublic ? "8px" : "10px" }}>
+                              <div style={{ fontSize: isMobilePublic ? "14px" : "16px", fontWeight:"bold", color:T.text5, flexShrink:0 }}>{rank}</div>
+                              {img ? (
+                                <div style={{ width:compactImgW, height:compactImgH, overflow:"hidden", background: dark ? "#222222" : "#ffffff", flexShrink:0 }}>
+                                  <img src={img} alt={entry.colorway} style={{ width:compactImgW, height:compactImgH, objectFit:"contain", display:"block" }} />
+                                </div>
+                              ) : (
+                                <div style={{ width:compactImgW, height:compactImgH, background:T.bg3, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                                  <span style={{ fontSize:"8px", color:T.text6 }}>NO IMG</span>
+                                </div>
+                              )}
+                            </div>
+                            {sub && <div style={{ fontSize: isMobilePublic ? "8px" : "9px", color:T.text4, marginTop:"6px", letterSpacing:"1px" }}>{sub}</div>}
                           </div>
                         );
                       })}
                     </div>
                   )}
                   {ranked.length === 0 && (
-                    <div style={{ fontSize:"11px", letterSpacing:"4px", color:T.text5 }}>{top10Filter === "worn" ? "NO WEARS LOGGED YET" : top10Filter === "price" ? "NO PRICES ENTERED YET" : top10Filter === "value" ? "NO WORN SHOES WITH PRICES YET" : "NO WORN SHOES WITH PURCHASE DATES YET"}</div>
+                    <div style={{ fontSize:"11px", letterSpacing:"4px", color:T.text5 }}>{top10Filter === "worn" ? "NO WEARS LOGGED YET" : top10Filter === "price" ? "NO PRICES ENTERED YET" : "NO WORN SHOES WITH PRICES YET"}</div>
                   )}
                   {/* Subtitle */}
                   {top10Filter === "price" && ranked.length > 0 && <div style={{ fontSize:"10px", color:T.text5, letterSpacing:"1px", marginTop:"20px" }}>Ranked by purchase price</div>}
                   {top10Filter === "value" && ranked.length > 0 && <div style={{ fontSize:"10px", color:T.text5, letterSpacing:"1px", marginTop:"20px" }}>Purchase price ÷ number of times worn</div>}
-                  {top10Filter === "ice" && ranked.length > 0 && <div style={{ fontSize:"10px", color:T.text5, letterSpacing:"1px", marginTop:"20px" }}>Days between purchase date and first wear</div>}
                 </div>
               );
             })()}
@@ -2438,7 +2327,7 @@
                 {[
                   { tier: "diamond",  label: "✦ DIAMOND ✦",  color: dark ? "#b8f0ff" : "#0099bb", desc: "The sneakers that 10-year-old me dreamed about" },
                   { tier: "platinum", label: "✦ PLATINUM ✦", color: "#C0C0C0", desc: "Original colorways of my favorite sneakers" },
-                  { tier: "gold",     label: "✦ GOLD ✦",     color: "#FFD700", desc: "Sneakers I'm glad are in my collection" },
+                  { tier: "gold",     label: "✦ GOLD ✦",     color: "#FFD700", desc: "Solid sneakers" },
                   { tier: "silver",   label: "⬥ SILVER ⬥",   color: T.text4,   desc: "Maybe I shouldn't have bought these" },
                   { tier: "bronze",   label: "💀 BRONZE 💀", color: "#CD7F32", desc: "Beaters" },
                 ].map(t => (
