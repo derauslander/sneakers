@@ -214,7 +214,7 @@
       const storyRef = useRef(null);
       const triptychRef = useRef(null);
       const iceRef = useRef(null);
-      const hasTriptych = tier === "diamond" && hoverImg && img3 && !isMobilePublic;
+      const hasTriptych = tier === "diamond" && hoverImg && img3 && window.innerWidth >= 768;
 
       const tierInfo = TIERS[tier] || TIERS.silver;
       const hasCrossfade = tierHasCrossfade(tier);

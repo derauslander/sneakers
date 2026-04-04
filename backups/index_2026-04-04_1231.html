@@ -49,7 +49,7 @@
     // ADMIN_MODE — true for local admin app, false for public site
     // build.bat flips this to false when generating index.html
     // ═══════════════════════════════════════════════════════════════════════════
-    const ADMIN_MODE = true;
+    const ADMIN_MODE = false;
 
     const { useState, useEffect, useRef } = React;
 
@@ -214,7 +214,7 @@
       const storyRef = useRef(null);
       const triptychRef = useRef(null);
       const iceRef = useRef(null);
-      const hasTriptych = tier === "diamond" && hoverImg && img3 && window.innerWidth >= 768;
+      const hasTriptych = tier === "diamond" && hoverImg && img3 && !isMobilePublic;
 
       const tierInfo = TIERS[tier] || TIERS.silver;
       const hasCrossfade = tierHasCrossfade(tier);
