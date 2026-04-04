@@ -347,20 +347,20 @@
                         {/* Left — img1, fades in at Act 3 */}
                         {hasTriptych && (
                           <div style={{ position:"absolute", right:"calc(50% + 20vw)", top:"50%", transform: triptychVisible ? "translateY(-50%)" : "translateY(-50%) translateX(-80px)", opacity: triptychVisible ? 1 : 0, transition:"opacity 3s ease-out 0.05s, transform 3s ease-out 0.05s", pointerEvents:"none" }}>
-                            <img src={img} alt={label} style={{ maxWidth:"25vw", maxHeight:"35vh", objectFit:"contain", animation: triptychVisible ? "prismaticGlow 2.5s ease-in-out infinite" : "none", display:"block" }} />
+                            <img src={img} alt={label} style={{ maxWidth:"25vw", maxHeight:"35vh", objectFit:"contain", animation: triptychVisible ? "prismaticGlow 2.5s ease-in-out -1s infinite" : "none", display:"block" }} />
                           </div>
                         )}
                         {/* Center — always visible, never moves */}
                         <div style={{ position:"relative" }}>
                           <img src={img} alt={label} style={{ maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: mainGlowFilter, display:"block", opacity: (shouldCrossfade && showHover) ? 0 : 1, transition:`opacity ${crossfadeDuration} ease-in-out, filter 3s ease-in-out` }} />
                           {shouldCrossfade && (
-                            <img key={showTriptych ? "triptych" : "act2"} src={hoverImg} alt={label} style={{ position:"absolute", top:0, left:"50%", transform: showHover ? crossfadeTransformEnd : crossfadeTransformStart, maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: tier !== "diamond" ? crossfadeGlow : undefined, animation: tier === "diamond" && showHover ? (showTriptych ? "prismaticGlow 2.5s ease-in-out infinite" : "diamondReveal 4s ease-out forwards, prismaticGlow 2.5s ease-in-out 4s infinite") : "none", opacity: showHover ? 1 : 0, transition:`opacity ${crossfadeDuration} ease-in-out, transform ${crossfadeDuration} ease-in-out` }} />
+                            <img src={hoverImg} alt={label} style={{ position:"absolute", top:0, left:"50%", transform: showHover ? crossfadeTransformEnd : crossfadeTransformStart, maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: tier !== "diamond" ? crossfadeGlow : undefined, animation: tier === "diamond" && showHover ? "diamondReveal 4s ease-out forwards, prismaticGlow 2.5s ease-in-out 4s infinite" : "none", opacity: showHover ? 1 : 0, transition:`opacity ${crossfadeDuration} ease-in-out, transform ${crossfadeDuration} ease-in-out` }} />
                           )}
                         </div>
                         {/* Right — img3, fades in at Act 3 */}
                         {hasTriptych && (
                           <div style={{ position:"absolute", left:"calc(50% + 20vw)", top:"50%", transform: triptychVisible ? "translateY(-50%)" : "translateY(-50%) translateX(80px)", opacity: triptychVisible ? 1 : 0, transition:"opacity 3s ease-out 0.05s, transform 3s ease-out 0.05s", pointerEvents:"none" }}>
-                            <img src={img3} alt={label} style={{ maxWidth:"25vw", maxHeight:"35vh", objectFit:"contain", animation: triptychVisible ? "prismaticGlow 2.5s ease-in-out infinite" : "none", display:"block" }} />
+                            <img src={img3} alt={label} style={{ maxWidth:"25vw", maxHeight:"35vh", objectFit:"contain", animation: triptychVisible ? "prismaticGlow 2.5s ease-in-out -1s infinite" : "none", display:"block" }} />
                           </div>
                         )}
                       </div>
