@@ -31,8 +31,8 @@ class VaultHandler(http.server.SimpleHTTPRequestHandler):
                 self._respond(400, {"error": "Missing key parameter"})
                 return
 
-            # Build filename: "4_Fire Red.png" or "4_Fire Red_hover.png"
-            suffix = "_hover" if kind == "hover" else ""
+            # Build filename: "4_Fire Red.png", "4_Fire Red_hover.png", or "4_Fire Red_hover2.png"
+            suffix = "_hover" if kind == "hover" else "_hover2" if kind == "hover2" else ""
             filename = f"{key}{suffix}.png"
             filepath = os.path.join(SHOES_DIR, filename)
 
@@ -59,7 +59,7 @@ class VaultHandler(http.server.SimpleHTTPRequestHandler):
             key  = params.get("key",  [""])[0]
             kind = params.get("type", ["main"])[0]
 
-            suffix = "_hover" if kind == "hover" else ""
+            suffix = "_hover" if kind == "hover" else "_hover2" if kind == "hover2" else ""
             filename = f"{key}{suffix}.png"
             filepath = os.path.join(SHOES_DIR, filename)
 

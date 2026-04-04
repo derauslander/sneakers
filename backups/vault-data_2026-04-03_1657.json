@@ -175,14 +175,6 @@
       "quantity": 1,
       "wishlist": true,
       "id": 1774096319133
-    },
-    {
-      "name": "Air Tech Challenge 4",
-      "shortName": "ATC4",
-      "category": "Nike",
-      "quantity": 1,
-      "wishlist": true,
-      "id": 1775259901810
     }
   ],
   "wearLog": {
@@ -674,15 +666,7 @@
     "13_Flint Grey_hover": "Shoes/13_Flint Grey_hover.png",
     "17_Air Max Day (Royal Volt)_hover": "Shoes/17_Air Max Day (Royal Volt)_hover.png",
     "21_Purple_hover": "Shoes/21_Purple_hover.png",
-    "1773621809428_Sea Salt_hover": "Shoes/1773621809428_Sea Salt_hover.png",
-    "4_Fire Red_hover2": "Shoes/4_Fire Red_hover2.png",
-    "4_Black Cement_hover2": "Shoes/4_Black Cement_hover2.png",
-    "16_Volt_hover2": "Shoes/16_Volt_hover2.png",
-    "15_Hot Lava_hover2": "Shoes/15_Hot Lava_hover2.png",
-    "18_Concord": "Shoes/18_Concord.png",
-    "19_Voltage Purple": "Shoes/19_Voltage Purple.png",
-    "1775259901810_Dark Grape": "Shoes/1775259901810_Dark Grape.png",
-    "15_Black Lava": "Shoes/15_Black Lava.png"
+    "1773621809428_Sea Salt_hover": "Shoes/1773621809428_Sea Salt_hover.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -769,7 +753,7 @@
       "size": "12",
       "notes": "",
       "ogYear": "",
-      "story": "I really loved these shoes when i first saw them in 1989.  Back then we called them Bo Jackson's.  The original colorway was Citron, but I prefer this colorway.  I'm hoping to add the White Infrared version to my collection at some point.",
+      "story": "I really loved these shoes when i first saw them in 1989.  I believe the colorway that was released was Citron, but in my memory they looked like this, which is why I have this colorway in my collection.",
       "saleDate": "",
       "saleTime": ""
     },
@@ -780,7 +764,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "Although the Fire Red 4s were my first love, these are a close second.  I was watching game five of the Bulls v Cavs with my dad when Michael Jordan hit \"the shot\".  I paid way over retail to add these shoes to my collection.",
+      "story": "Although the Fire Red 4s were my first love, these are a close second.",
       "saleDate": "",
       "saleTime": ""
     },
@@ -791,7 +775,7 @@
       "size": "12",
       "notes": "",
       "ogYear": "",
-      "story": "I first saw this shoe in 1989 in my local shoe store and immediately fell in love.  A few people in my class had these, and I remember being quite envious of them.  This was the first sneaker I bought when I started this collection.",
+      "story": "I first saw this shoe in 1989 in my local shoe store and immediately fell in love.  This was the first sneaker I bought when I started this collection.",
       "saleDate": "",
       "saleTime": ""
     },
@@ -978,7 +962,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "1990",
-      "story": "The first pair of Nike sneakers with an air bubble that I owned. My parents bought these for me as a graduation gift from elementary school in June 1990.  I wore them pretty much every day from June until November when they were replaced with the Black Tongue Air Jordan 5.",
+      "story": "The first pair of Nike with an air bubble that I owned. My parents bought these for me as a graduation gift from elementary school in June 1990.",
       "saleDate": "",
       "saleTime": ""
     },
@@ -1261,8 +1245,7 @@
     "ATC2": [
       "Hot Lava",
       "Stone Blue",
-      "Pixel Court",
-      "Black Lava"
+      "Pixel Court"
     ],
     "SC2": [
       "Volt"
@@ -1271,12 +1254,10 @@
       "Air Max Day (Royal Volt)"
     ],
     "AJ11": [
-      "Concord",
       "Space Jam"
     ],
     "ATC3": [
-      "Volt",
-      "Voltage Purple"
+      "Volt"
     ],
     "AFC": [
       "Billy Hoyle"
@@ -1292,13 +1273,7 @@
     ],
     "AM90": [
       "Infrared 3M"
-    ],
-    "ATC4": [
-      "Dark Grape"
     ]
-  },
-  "colorwayWishlist": {
-    "15_Black Lava": true
   },
   "displayLayout": [
     [
@@ -1478,183 +1453,5 @@
       }
     ]
   ],
-  "dreamLayout": [
-    [
-      {
-        "code": "AJ1",
-        "colorway": "Royal Reimagined"
-      },
-      {
-        "code": "AJ2",
-        "colorway": "Black Cement"
-      },
-      {
-        "code": "AJ3",
-        "colorway": "White Cement Reimagined"
-      },
-      {
-        "code": "AJ3",
-        "colorway": "Black Cement"
-      },
-      {
-        "code": "AJ3",
-        "colorway": "A Ma Maniere"
-      }
-    ],
-    [
-      {
-        "code": "ATC2",
-        "colorway": "Stone Blue"
-      },
-      {
-        "code": "ATC2",
-        "colorway": "Black Lava"
-      },
-      {
-        "code": "ATC2",
-        "colorway": "Hot Lava"
-      },
-      {
-        "code": "ATC3",
-        "colorway": "Volt"
-      },
-      {
-        "code": "ATC3",
-        "colorway": "Voltage Purple"
-      }
-    ],
-    [
-      {
-        "code": "AJ4",
-        "colorway": "White Cement"
-      },
-      {
-        "code": "AJ4",
-        "colorway": "Black Cement"
-      },
-      {
-        "code": "AJ4",
-        "colorway": "Fire Red"
-      },
-      {
-        "code": "AJ4",
-        "colorway": "Military Blue"
-      },
-      {
-        "code": "AJ4",
-        "colorway": "What the 4"
-      }
-    ],
-    [
-      {
-        "code": "AJ5",
-        "colorway": "Fire Red"
-      },
-      {
-        "code": "AJ5",
-        "colorway": "Black Metallic Reimagined"
-      },
-      {
-        "code": "AJ5",
-        "colorway": "Black Tongue"
-      },
-      {
-        "code": "AJ5",
-        "colorway": "Grape"
-      },
-      {
-        "code": "AJ6",
-        "colorway": "Infrared"
-      }
-    ],
-    [
-      {
-        "code": "AJ7",
-        "colorway": "Cardinal"
-      },
-      {
-        "code": "AJ8",
-        "colorway": "Playoffs"
-      },
-      {
-        "code": "AJ9",
-        "colorway": "Olive"
-      },
-      {
-        "code": "AJ10",
-        "colorway": "Steel"
-      },
-      {
-        "code": "AJ11",
-        "colorway": "Concord"
-      }
-    ],
-    [
-      {
-        "code": "AJ12",
-        "colorway": "Flu Game"
-      },
-      {
-        "code": "AJ13",
-        "colorway": "Black Flint"
-      },
-      {
-        "code": "AJ14",
-        "colorway": "Flint Grey"
-      },
-      {
-        "code": "AJ40",
-        "colorway": "Chicago"
-      },
-      {
-        "code": "AFMCB",
-        "colorway": "Purple"
-      }
-    ],
-    [
-      {
-        "code": "ATC4",
-        "colorway": "Dark Grape"
-      },
-      {
-        "code": "ACF",
-        "colorway": "Billy Hoyle"
-      },
-      {
-        "code": "AM86",
-        "colorway": "Air Max Day (Royal Volt)"
-      },
-      {
-        "code": "SC2",
-        "colorway": "Volt"
-      },
-      {
-        "code": "",
-        "colorway": ""
-      }
-    ],
-    [
-      {
-        "code": "",
-        "colorway": ""
-      },
-      {
-        "code": "",
-        "colorway": ""
-      },
-      {
-        "code": "",
-        "colorway": ""
-      },
-      {
-        "code": "",
-        "colorway": ""
-      },
-      {
-        "code": "",
-        "colorway": ""
-      }
-    ]
-  ],
-  "exportedAt": "2026-04-04T00:01:03.233Z"
+  "exportedAt": "2026-03-31T23:25:18.284Z"
 }

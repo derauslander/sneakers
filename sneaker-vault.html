@@ -197,20 +197,24 @@
       );
     }
 
-    function ImageSlot({ img, hoverImg, label, accent, bg, onUpload, onClear, width = 96, height = 60, wearDates = [], tier = "silver", purchaseDate = null, size = null, ogYear = null, story = null, isOnIce = false, dark = false, shoeName = null, isMobilePublic = false, isNewPickup = false }) {
+    function ImageSlot({ img, hoverImg, img3, label, accent, bg, onUpload, onClear, width = 96, height = 60, wearDates = [], tier = "silver", purchaseDate = null, size = null, ogYear = null, story = null, isOnIce = false, dark = false, shoeName = null, isMobilePublic = false, isNewPickup = false }) {
       const fileRef = useRef();
       const [hovered, setHovered] = useState(false);
       const [showHover, setShowHover] = useState(false);
       const [tierGlow, setTierGlow] = useState(false);
       const [tierReveal, setTierReveal] = useState(false);
       const [showStory, setShowStory] = useState(false);
+      const [showTriptych, setShowTriptych] = useState(false);
+      const [triptychVisible, setTriptychVisible] = useState(false);
       const [iceGlow, setIceGlow] = useState(false);
       const overlayBg = "rgba(0,0,0,0.85)";
       const timerRef = useRef(null);
       const crossfadeRef = useRef(null);
       const tierRef = useRef(null);
       const storyRef = useRef(null);
+      const triptychRef = useRef(null);
       const iceRef = useRef(null);
+      const hasTriptych = tier === "diamond" && hoverImg && img3;
 
       const tierInfo = TIERS[tier] || TIERS.silver;
       const hasCrossfade = tierHasCrossfade(tier);
@@ -231,10 +235,24 @@
         setTierGlow(false);
         setTierReveal(false);
         setShowStory(false);
+        setShowTriptych(false);
+        setTriptychVisible(false);
         setIceGlow(false);
+        // Preload all images up front so triptych has no load-time shift
+        if (hasTriptych) {
+          [img, hoverImg, img3].forEach(src => { if (src) { const i = new Image(); i.src = src; } });
+        }
         if (hasCrossfade && shouldCrossfade) {
           crossfadeRef.current = setTimeout(() => { setShowHover(true); setTierReveal(true);
-            if (story) storyRef.current = setTimeout(() => setShowStory(true), 5000);
+            if (hasTriptych) {
+              triptychRef.current = setTimeout(() => {
+                setShowTriptych(true);
+                setShowStory(true);
+                requestAnimationFrame(() => requestAnimationFrame(() => setTriptychVisible(true)));
+              }, 5000);
+            } else if (story) {
+              storyRef.current = setTimeout(() => setShowStory(true), 5000);
+            }
           }, 200);
         } else if (tierInfo.label) {
           tierRef.current = setTimeout(() => { setTierReveal(true);
@@ -258,12 +276,15 @@
         clearTimeout(crossfadeRef.current);
         clearTimeout(tierRef.current);
         clearTimeout(storyRef.current);
+        clearTimeout(triptychRef.current);
         clearTimeout(iceRef.current);
         setHovered(false);
         setShowHover(false);
         setTierGlow(false);
         setTierReveal(false);
         setShowStory(false);
+        setShowTriptych(false);
+        setTriptychVisible(false);
         setIceGlow(false);
       };
       const handleMouseEnter = () => { if (isMobilePublic) return; timerRef.current = setTimeout(triggerOpen, 500); };
@@ -276,6 +297,7 @@
           clearTimeout(crossfadeRef.current);
           clearTimeout(tierRef.current);
           clearTimeout(storyRef.current);
+          clearTimeout(triptychRef.current);
           clearTimeout(iceRef.current);
         };
       }, []);
@@ -318,14 +340,33 @@
                     alignItems:"center", justifyContent:"center", zIndex:9999,
                     pointerEvents: isMobilePublic ? "auto" : "none",
                   }}>
-                    <div style={{ position:"relative", width: isMobilePublic ? "90vw" : "50vw", maxWidth:"600px", display:"flex", flexDirection:"column", alignItems:"center" }}>
-                      <div style={{ position:"relative", width:"100%", display:"flex", justifyContent:"center" }}>
-                        <img src={img} alt={label} style={{ maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: mainGlowFilter, display:"block", opacity: (shouldCrossfade && showHover) ? 0 : 1, transition:`opacity ${crossfadeDuration} ease-in-out, filter 3s ease-in-out` }} />
-                        {shouldCrossfade && (
-                          <img src={hoverImg} alt={label} style={{ position:"absolute", top:0, left:"50%", transform: showHover ? crossfadeTransformEnd : crossfadeTransformStart, maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: tier !== "diamond" ? crossfadeGlow : undefined, animation: tier === "diamond" && showHover ? "diamondReveal 4s ease-out forwards, prismaticGlow 2.5s ease-in-out 4s infinite" : "none", opacity: showHover ? 1 : 0, transition:`opacity ${crossfadeDuration} ease-in-out, transform ${crossfadeDuration} ease-in-out` }} />
+                    {/* ── UNIFIED OVERLAY — triptych and single view coexist, no layout swap ── */}
+                    <div style={{ display:"flex", flexDirection:"column", alignItems:"center" }}>
+                      {/* Image row — fixed size always, flanking images absolute so they never affect layout */}
+                      <div style={{ position:"relative", width:"100vw", height:"42vh", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                        {/* Left — img1, fades in at Act 3 */}
+                        {hasTriptych && (
+                          <div style={{ position:"absolute", right:"calc(50% + 20vw)", top:"50%", transform: triptychVisible ? "translateY(-50%)" : "translateY(-50%) translateX(-80px)", opacity: triptychVisible ? 1 : 0, transition:"opacity 3s ease-out 0.05s, transform 3s ease-out 0.05s", pointerEvents:"none" }}>
+                            <img src={img} alt={label} style={{ maxWidth:"25vw", maxHeight:"35vh", objectFit:"contain", animation: triptychVisible ? "prismaticGlow 2.5s ease-in-out infinite" : "none", display:"block" }} />
+                          </div>
+                        )}
+                        {/* Center — always visible, never moves */}
+                        <div style={{ position:"relative" }}>
+                          <img src={img} alt={label} style={{ maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: mainGlowFilter, display:"block", opacity: (shouldCrossfade && showHover) ? 0 : 1, transition:`opacity ${crossfadeDuration} ease-in-out, filter 3s ease-in-out` }} />
+                          {shouldCrossfade && (
+                            <img key={showTriptych ? "triptych" : "act2"} src={hoverImg} alt={label} style={{ position:"absolute", top:0, left:"50%", transform: showHover ? crossfadeTransformEnd : crossfadeTransformStart, maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: tier !== "diamond" ? crossfadeGlow : undefined, animation: tier === "diamond" && showHover ? (showTriptych ? "prismaticGlow 2.5s ease-in-out infinite" : "diamondReveal 4s ease-out forwards, prismaticGlow 2.5s ease-in-out 4s infinite") : "none", opacity: showHover ? 1 : 0, transition:`opacity ${crossfadeDuration} ease-in-out, transform ${crossfadeDuration} ease-in-out` }} />
+                          )}
+                        </div>
+                        {/* Right — img3, fades in at Act 3 */}
+                        {hasTriptych && (
+                          <div style={{ position:"absolute", left:"calc(50% + 20vw)", top:"50%", transform: triptychVisible ? "translateY(-50%)" : "translateY(-50%) translateX(80px)", opacity: triptychVisible ? 1 : 0, transition:"opacity 3s ease-out 0.05s, transform 3s ease-out 0.05s", pointerEvents:"none" }}>
+                            <img src={img3} alt={label} style={{ maxWidth:"25vw", maxHeight:"35vh", objectFit:"contain", animation: triptychVisible ? "prismaticGlow 2.5s ease-in-out infinite" : "none", display:"block" }} />
+                          </div>
                         )}
                       </div>
-                      <div style={{ width:"100%", marginTop:"16px", textAlign:"center", position:"relative", minHeight:"80px" }}>
+                      {/* Text area — fixed height, always reserved so center never shifts */}
+                      <div style={{ height:"80px", width:"100%", textAlign:"center", position:"relative" }}>
+                        {/* Act 1+2 metadata — fades out when story/triptych arrives */}
                         <div style={{ position:"absolute", width:"100%", opacity: showStory ? 0 : 1, transition:"opacity 1s ease-in-out" }}>
                           {tierInfo.label && <div style={{ fontSize:"11px", letterSpacing:"6px", color: tierInfo.color, opacity: tierReveal ? 1 : 0, transition:"opacity 3s ease-in-out" }}>{tierInfo.label}</div>}
                           {isOnIce && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#64c8ff", marginTop:"6px", opacity: iceGlow ? 1 : 0, transition:"opacity 3s ease-in-out" }}>❄️ ON ICE ❄️</div>}
@@ -340,8 +381,10 @@
                           {sortedDates.length > 0 && <div style={{ marginTop:"4px", fontSize:"10px", color: dark ? "#777" : "#aaa", letterSpacing:"1px" }}>Last Worn: {new Date(sortedDates[0] + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}</div>}
                           {isMobilePublic && <div style={{ marginTop:"16px", fontSize:"10px", color:"#666", letterSpacing:"2px" }}>TAP TO CLOSE</div>}
                         </div>
+                        {/* Act 2 story / Act 3 story+triptych label — fades in */}
                         {story && (
                           <div style={{ position:"absolute", width:"100%", opacity: showStory ? 1 : 0, transition:"opacity 2s ease-in-out" }}>
+                            {hasTriptych && tierInfo.label && <div style={{ fontSize:"11px", letterSpacing:"6px", color: tierInfo.color, marginBottom:"10px", opacity: triptychVisible ? 1 : 0, transition:"opacity 2s ease-in-out" }}>{tierInfo.label}</div>}
                             <div style={{ fontSize:"13px", color:"#fff", lineHeight:"1.8", letterSpacing:"0.5px" }}>{story}</div>
                           </div>
                         )}
@@ -372,7 +415,7 @@
       );
     }
 
-    function DisplayCell({ c, img, hoverImg, ri, onEdit, isEditing, tier = "silver", dark = false, isMobilePublic = false }) {
+    function DisplayCell({ c, img, hoverImg, ri, onEdit, isEditing, tier = "silver", dark = false, isMobilePublic = false, isWishlist = false }) {
       const [hovered, setHovered] = useState(false);
       const [showHover, setShowHover] = useState(false);
       const timerRef = useRef(null);
@@ -430,6 +473,7 @@
                 width:"160px", height:"100px",
                 background: c.empty ? (dark ? "#2a2a2a" : "#f5f5f5") : img ? (dark ? "#1a1a1a" : "#ffffff") : c.bg,
                 border: isEditing ? "2px solid #f4a261"
+                  : isWishlist ? "1px dashed #e63946"
                   : dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.08)",
                 borderBottom: dark ? "2px solid rgba(255,255,255,0.06)" : "2px solid rgba(0,0,0,0.1)",
                 display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
@@ -594,7 +638,7 @@
       );
     }
 
-    function MetaEditForm({ editingMeta, metaForm, setMetaForm, setColorwayMeta, setEditingMeta, tierMeta, setTierMeta, setGlowMeta, glowMeta, setImages, images, handleImageUpload, setRetiringMeta, setRetireForm, IS, CT, T, dark, isWishlist = false }) {
+    function MetaEditForm({ editingMeta, metaForm, setMetaForm, setColorwayMeta, setEditingMeta, tierMeta, setTierMeta, setGlowMeta, glowMeta, setImages, images, handleImageUpload, setRetiringMeta, setRetireForm, IS, CT, T, dark, isWishlist = false, colorwayWishlist = {}, setColorwayWishlist = null }) {
       const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
       const hoverKey = `${key}_hover`;
       const hoverImgVal = images[hoverKey];
@@ -633,7 +677,7 @@
           {/* Hover image upload — collection only */}
           {!isWishlist && (
             <div style={{ marginBottom:"10px" }}>
-              <div style={{ fontSize:"9px", letterSpacing:"2px", color: hasCrossfade ? (tierInfo.color || "#e63946") : "#e63946", marginBottom:"6px" }}>{hasCrossfade ? "✦ HOVER IMAGE" : "✦ 2ND IMAGE (ANNIVERSARY)"}</div>
+              <div style={{ fontSize:"9px", letterSpacing:"2px", color: hasCrossfade ? (tierInfo.color || "#e63946") : "#e63946", marginBottom:"6px" }}>{hasCrossfade ? "✦ HOVER IMAGE (IMG 2)" : "✦ 2ND IMAGE (ANNIVERSARY)"}</div>
               <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
                 {hoverImgVal
                   ? <img src={hoverImgVal} alt="hover" style={{ width:"80px", height:"50px", objectFit:"cover", border:`1px solid ${tierInfo.color || "#FFD700"}` }} />
@@ -663,6 +707,44 @@
                 }} />
             </div>
           )}
+          {/* Img3 upload — diamond only */}
+          {!isWishlist && currentTier === "diamond" && (() => {
+            const hover2Key = `${key}_hover2`;
+            const hover2Val = images[hover2Key];
+            let hover2InputEl = null;
+            return (
+              <div style={{ marginBottom:"10px" }}>
+                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#b8f0ff", marginBottom:"6px" }}>✦ DETAIL IMAGE (IMG 3 · TRIPTYCH)</div>
+                <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                  {hover2Val
+                    ? <img src={hover2Val} alt="detail" style={{ width:"80px", height:"50px", objectFit:"cover", border:"1px solid #b8f0ff" }} />
+                    : <div style={{ width:"80px", height:"50px", background: dark ? "#2a2a2a" : "#f0f0f0", border:"1px dashed #b8f0ff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px", color:"#b8f0ff", cursor:"pointer" }}
+                        onClick={() => hover2InputEl && hover2InputEl.click()}>+</div>
+                  }
+                  <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
+                    <button onClick={() => hover2InputEl && hover2InputEl.click()}
+                      style={{ background:"transparent", border:"1px solid #b8f0ff", color:"#b8f0ff", padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
+                      {hover2Val ? "REPLACE" : "UPLOAD"}
+                    </button>
+                    {hover2Val && (
+                      <button onClick={() => setImages(imgs => { const n={...imgs}; delete n[hover2Key]; return n; })}
+                        style={{ background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
+                        REMOVE
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div style={{ fontSize:"8px", color: CT.text6, marginTop:"4px", letterSpacing:"1px" }}>Appears alongside img 1 & 2 when story reveals</div>
+                <input ref={el => hover2InputEl = el} type="file" accept="image/*" style={{ display:"none" }}
+                  onChange={e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    handleImageUpload(editingMeta.shoeId, editingMeta.colorway, file, "hover2");
+                    e.target.value = "";
+                  }} />
+              </div>
+            );
+          })()}
           {/* Fields */}
           {isWishlist ? (
             <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", alignItems:"flex-end" }}>
@@ -734,6 +816,17 @@
                 setEditingMeta(null);
               }} style={btnStyle}>REMOVE PHOTO</button>
             )}
+            {!isWishlist && setColorwayWishlist && (() => {
+              const isOnWishlist = !!colorwayWishlist[key];
+              return (
+                <button onClick={() => {
+                  setColorwayWishlist(w => { const n={...w}; if (isOnWishlist) delete n[key]; else n[key]=true; return n; });
+                  setEditingMeta(null);
+                }} style={{ background:"transparent", border:"1px solid #4cc9f0", color:"#4cc9f0", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>
+                  {isOnWishlist ? "↩ MOVE TO COLLECTION" : "★ MOVE TO WISHLIST"}
+                </button>
+              );
+            })()}
             {!isWishlist && (
               <button onClick={() => {
                 setRetiringMeta({ shoeId: editingMeta.shoeId, colorway: editingMeta.colorway });
@@ -792,7 +885,10 @@
       const [glowMeta,       setGlowMeta]       = useState(() => ADMIN_MODE ? load("vault_glow_meta", {}) : {});
       const [graveyardMeta,  setGraveyardMeta]  = useState(() => ADMIN_MODE ? load("vault_graveyard_meta", {}) : {});
       const [colorways,      setColorways]      = useState(() => ADMIN_MODE ? load("vault_colorways", {}) : {});
+      const [colorwayWishlist, setColorwayWishlist] = useState(() => ADMIN_MODE ? load("vault_colorway_wishlist", {}) : {});
       const [displayLayout,  setDisplayLayout]  = useState(() => ADMIN_MODE ? load("vault_display_layout", []) : []);
+      const [dreamLayout,    setDreamLayout]    = useState(() => { if (ADMIN_MODE) { const stored = load("vault_dream_layout", null); if (stored && stored.length) return stored; } return Array.from({length:8}, () => Array.from({length:5}, () => ({code:"",colorway:""}))); });
+      const [displayMode,    setDisplayMode]    = useState("my");
       const [editingCell,    setEditingCell]    = useState(null);
       const [editShoe,       setEditShoe]       = useState("");
       const [editCw,         setEditCw]         = useState("");
@@ -860,7 +956,9 @@
       useEffect(() => save("vault_glow_meta",      glowMeta),     [glowMeta]);
       useEffect(() => save("vault_graveyard_meta", graveyardMeta),[graveyardMeta]);
       useEffect(() => save("vault_colorways",      colorways),    [colorways]);
+      useEffect(() => save("vault_colorway_wishlist", colorwayWishlist), [colorwayWishlist]);
       useEffect(() => save("vault_display_layout",  displayLayout),[displayLayout]);
+      useEffect(() => save("vault_dream_layout",    dreamLayout),  [dreamLayout]);
 
       useEffect(() => {
         if (!ADMIN_MODE) return;
@@ -900,6 +998,7 @@
       const allColorwayEntries = owned.flatMap(shoe => {
         const shoeColorways = colorways[shoe.shortName] || [];
         return shoeColorways
+          .filter(cw => !colorwayWishlist[`${shoe.id}_${cw}`])
           .filter(cw => !tierExcludedFromRotation(tierOf(tierMeta, `${shoe.id}_${cw}`)))
           .filter(cw => {
             const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
@@ -986,7 +1085,7 @@
       // Check owned shoes for "GOT 'EM!" — purchased within last 7 days
       owned.forEach(shoe => {
         const shoeColorways = colorways[shoe.shortName] || [];
-        shoeColorways.forEach(cw => {
+        shoeColorways.filter(cw => !colorwayWishlist[`${shoe.id}_${cw}`]).forEach(cw => {
           const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
           if (!meta.purchaseDate) return;
           if (isNewPickupCheck(meta.purchaseDate)) {
@@ -1017,7 +1116,7 @@
 
       const handleImageUpload = (shoeId, colorway, file, kind = "main") => {
         const key = `${shoeId}_${colorway}`;
-        const storageKey = kind === "hover" ? `${key}_hover` : key;
+        const storageKey = kind === "hover" ? `${key}_hover` : kind === "hover2" ? `${key}_hover2` : key;
         file.arrayBuffer().then(buffer => {
           fetch(`/upload?key=${encodeURIComponent(key)}&type=${kind}`, {
             method: "POST",
@@ -1094,7 +1193,7 @@
       };
 
       const exportJSON = () => {
-        const data = { inventory, wearLog, images, colorwayMeta, tierMeta, glowMeta, graveyardMeta, colorways, displayLayout, exportedAt: new Date().toISOString() };
+        const data = { inventory, wearLog, images, colorwayMeta, tierMeta, glowMeta, graveyardMeta, colorways, colorwayWishlist, displayLayout, dreamLayout, exportedAt: new Date().toISOString() };
         const json = JSON.stringify(data, null, 2);
         if (ADMIN_MODE) {
           // Save via server — backs up old vault-data.json, writes new one
@@ -1147,7 +1246,9 @@
             if (data.glowMeta)      { setGlowMeta(data.glowMeta);           save("vault_glow_meta",       data.glowMeta); }
             if (data.graveyardMeta) { setGraveyardMeta(data.graveyardMeta); save("vault_graveyard_meta",  data.graveyardMeta); }
             if (data.colorways)     { setColorways(data.colorways);         save("vault_colorways",       data.colorways); }
+            if (data.colorwayWishlist) { setColorwayWishlist(data.colorwayWishlist); save("vault_colorway_wishlist", data.colorwayWishlist); }
             if (data.displayLayout) { setDisplayLayout(data.displayLayout); save("vault_display_layout",  data.displayLayout); }
+            if (data.dreamLayout)   { setDreamLayout(data.dreamLayout);     save("vault_dream_layout",    data.dreamLayout); }
             setImportMsg({ type:"success", text:"Backup restored successfully!" });
           } catch {
             setImportMsg({ type:"error", text:"Invalid backup file. Please use a Vault JSON backup." });
@@ -1280,7 +1381,7 @@
                   // Shoe of the Day — random spotlight when no other news
                   if (newsItems.length === 0) {
                     const allOwned = owned.flatMap(shoe =>
-                      (colorways[shoe.shortName] || []).map(cw => ({ shoe, colorway: cw }))
+                      (colorways[shoe.shortName] || []).filter(cw => !colorwayWishlist[`${shoe.id}_${cw}`]).map(cw => ({ shoe, colorway: cw }))
                     );
                     if (allOwned.length > 0) {
                       // Date-seeded random — consistent throughout the day, changes daily
@@ -1603,6 +1704,7 @@
                 {(() => {
                   // Check if any on-ice colorways exist
                   const hasOnIce = owned.some(shoe => (colorways[shoe.shortName] || []).some(cw => 
+                    !colorwayWishlist[`${shoe.id}_${cw}`] &&
                     !tierExcludedFromRotation(tierOf(tierMeta, `${shoe.id}_${cw}`)) && (wearLog[shoe.id] || []).filter(e => e.colorway === cw).length === 0
                   ));
                   // Filter function for colorways
@@ -1650,7 +1752,7 @@
                   {owned.map(shoe => {
                     const col = CAT[shoe.category] || CAT.Jordan;
                     const allShoeColorways = colorways[shoe.shortName] || [];
-                    const filteredColorways = allShoeColorways.filter(cw => matchesFilter(shoe.id, cw));
+                    const filteredColorways = allShoeColorways.filter(cw => matchesFilter(shoe.id, cw) && !colorwayWishlist[`${shoe.id}_${cw}`]);
                     if (filteredColorways.length === 0) return null;
                     const shoeColorways = filteredColorways;
                     const perRow = isMobilePublic ? shoeColorways.length : Math.min(shoeColorways.length, 5);
@@ -1685,6 +1787,7 @@
                                 <ImageSlot
                                   img={images[metaKey] || null}
                                   hoverImg={images[`${metaKey}_hover`] || null}
+                                  img3={images[`${metaKey}_hover2`] || null}
                                   label={cw}
                                   accent={col.accent}
                                   bg={col.bg}
@@ -1723,7 +1826,7 @@
                         {/* Colorway meta edit form */}
                         {ADMIN_MODE && editingMeta && editingMeta.shoeId === shoe.id && (
                           <div style={{ padding:"0 16px 16px 16px" }}>
-                          <MetaEditForm editingMeta={editingMeta} metaForm={metaForm} setMetaForm={setMetaForm} setColorwayMeta={setColorwayMeta} setEditingMeta={setEditingMeta} tierMeta={tierMeta} setTierMeta={setTierMeta} setGlowMeta={setGlowMeta} glowMeta={glowMeta} setImages={setImages} images={images} handleImageUpload={handleImageUpload} setRetiringMeta={setRetiringMeta} setRetireForm={setRetireForm} IS={IS} CT={CT} T={T} dark={dark} />
+                          <MetaEditForm editingMeta={editingMeta} metaForm={metaForm} setMetaForm={setMetaForm} setColorwayMeta={setColorwayMeta} setEditingMeta={setEditingMeta} tierMeta={tierMeta} setTierMeta={setTierMeta} setGlowMeta={setGlowMeta} glowMeta={glowMeta} setImages={setImages} images={images} handleImageUpload={handleImageUpload} setRetiringMeta={setRetiringMeta} setRetireForm={setRetireForm} IS={IS} CT={CT} T={T} dark={dark} colorwayWishlist={colorwayWishlist} setColorwayWishlist={setColorwayWishlist} />
                           </div>
                         )}
                         {/* Retire form */}
@@ -1792,8 +1895,30 @@
             )}
 
             {/* ── DISPLAY ── */}
-            {view === "display" && (
+            {view === "display" && (() => {
+              const isDream = displayMode === "dream";
+              const activeLayout = isDream ? dreamLayout : displayLayout;
+              const setActiveLayout = isDream ? setDreamLayout : setDisplayLayout;
+              // All shoes available for dream (owned + wishlist), owned only for my display
+              const availableShoes = isDream ? inventory : owned;
+              // For dream display: determine if a cell's shoe is a wishlist item
+              const isWishlistShoe = (shortName) => wishlist.some(s => s.shortName === shortName);
+
+              return (
               <div>
+                {/* Mode toggle */}
+                <div style={{ display:"flex", gap:"8px", marginBottom:"20px" }}>
+                  {[["my","MY DISPLAY"],["dream","DREAM DISPLAY"]].map(([mode, label]) => (
+                    <button key={mode} onClick={() => { setDisplayMode(mode); setEditingCell(null); }} style={{
+                      background: displayMode === mode ? "#e63946" : "transparent",
+                      border: `1px solid ${displayMode === mode ? "#e63946" : T.border2}`,
+                      color: displayMode === mode ? "#fff" : T.text4,
+                      padding:"6px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"3px",
+                      fontFamily:"'Aptos','Segoe UI',sans-serif",
+                    }}>{label}</button>
+                  ))}
+                </div>
+
                 {/* Edit panel */}
                 {ADMIN_MODE && editingCell && (
                   <div style={{ background:T.bg4, border:"1px solid #f4a261", padding:"16px 24px", marginBottom:"24px", display:"flex", alignItems:"center", gap:"12px", flexWrap:"wrap" }}>
@@ -1801,11 +1926,29 @@
                     <select value={editShoe} onChange={e => { setEditShoe(e.target.value); setEditCw(colorways[e.target.value]?.[0] || ""); }}
                       style={{ background:T.inputBg, border:`1px solid ${T.inputBorder}`, color:T.inputText, padding:"8px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontSize:"13px", minWidth:"160px" }}>
                       <option value="">— Empty —</option>
-                      {[...new Set(owned.map(s => s.shortName))].map(sn => {
-                        const shoe = inventory.find(s => s.shortName === sn);
-                        return <option key={sn} value={sn}>{shoe?.name || sn}</option>;
-                      })}
-                      </select>
+                      {isDream ? (
+                        <>
+                          <optgroup label="── COLLECTION ──">
+                            {[...new Set(owned.map(s => s.shortName))].map(sn => {
+                              const shoe = inventory.find(s => s.shortName === sn);
+                              return <option key={sn} value={sn}>{shoe?.name || sn}</option>;
+                            })}
+                          </optgroup>
+                          {wishlist.length > 0 && (
+                            <optgroup label="── WISHLIST ──">
+                              {wishlist.map(shoe => (
+                                <option key={shoe.shortName} value={shoe.shortName}>{shoe.name}</option>
+                              ))}
+                            </optgroup>
+                          )}
+                        </>
+                      ) : (
+                        [...new Set(owned.map(s => s.shortName))].map(sn => {
+                          const shoe = inventory.find(s => s.shortName === sn);
+                          return <option key={sn} value={sn}>{shoe?.name || sn}</option>;
+                        })
+                      )}
+                    </select>
                     {editShoe && editShoe !== "--" && (colorways[editShoe] || []).length > 0 && (
                       <select value={editCw} onChange={e => setEditCw(e.target.value)}
                         style={{ background:T.inputBg, border:`1px solid ${T.inputBorder}`, color:T.inputText, padding:"8px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontSize:"13px", minWidth:"180px" }}>
@@ -1813,21 +1956,27 @@
                       </select>
                     )}
                     <Btn label="SAVE" onClick={() => {
-                      const newLayout = displayLayout.map((row, ri) =>
+                      const newLayout = activeLayout.map((row, ri) =>
                         row.map((cell, ci) =>
                           ri === editingCell.ri && ci === editingCell.ci
                             ? { code: editShoe, colorway: editCw }
                             : cell
                         )
                       );
-                      setDisplayLayout(newLayout);
+                      setActiveLayout(newLayout);
                       setEditingCell(null);
                     }} color="#e63946" solid />
                     <Btn label="CANCEL" onClick={() => setEditingCell(null)} color="#666" />
                   </div>
                 )}
 
-                <div style={{ fontSize:"9px", letterSpacing:"4px", color:T.text6, marginBottom:"16px" }}>MY COLLECTION · AS CURRENTLY DISPLAYED IN MY OFFICE</div>
+                <div style={{ fontSize:"9px", letterSpacing:"4px", color:T.text6, marginBottom:"16px" }}>
+                  {isDream ? "DREAM DISPLAY · HOW IT COULD LOOK" : "MY COLLECTION · AS CURRENTLY DISPLAYED IN MY OFFICE"}
+                </div>
+                {isDream && <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text6, marginBottom:"16px" }}>
+                  <span style={{ display:"inline-block", width:"14px", height:"10px", border:"1px dashed #e63946", marginRight:"6px", verticalAlign:"middle" }}></span>
+                  DASHED BORDER = WISHLIST
+                </div>}
                 {(() => {
                   const gridW = 5 * 160 + 4 * 8;
                   const availW = Math.min(window.innerWidth - 64, 1200);
@@ -1835,18 +1984,20 @@
                   return (
                     <div style={{ transformOrigin:"top left", transform:`scale(${scale})`, width: gridW + "px", height: Math.round((8 * 100 + 7 * 8 + 8 * 24) * scale) + "px" }}>
                     <div style={{ display:"inline-grid", gridTemplateColumns:"repeat(5, 160px)", gap:"8px" }}>
-                  {displayLayout.map((row, ri) => row.map((cell, ci) => {
+                  {activeLayout.map((row, ri) => row.map((cell, ci) => {
                     const c = getCellStyle(cell);
                     const shoe = !c.empty ? inventory.find(s => s.shortName === cell.code) : null;
                     const img = shoe ? images[`${shoe.id}_${cell.colorway}`] : null;
                     const hoverImg = shoe ? images[`${shoe.id}_${cell.colorway}_hover`] : null;
                     const isEditing = editingCell && editingCell.ri === ri && editingCell.ci === ci;
                     const cellTier = shoe ? tierOf(tierMeta, `${shoe.id}_${cell.colorway}`) : "silver";
+                    const cellIsWishlist = isDream && !c.empty && isWishlistShoe(cell.code);
                     return (
                       <DisplayCell key={`${ri}-${ci}`} c={c} img={img} hoverImg={hoverImg} ri={ri} dark={dark}
                         isEditing={isEditing}
                         tier={cellTier}
                         isMobilePublic={isMobilePublic}
+                        isWishlist={cellIsWishlist}
                         onEdit={() => {
                           setEditingCell({ri, ci});
                           setEditShoe(cell.code || "");
@@ -1860,7 +2011,8 @@
                   );
                 })()}
               </div>
-            )}
+              );
+            })()}
 
             {/* ── WISHLIST ── */}
             {view === "wishlist" && (
@@ -1879,10 +2031,16 @@
                         <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:"12px" }}>
                           <div>
                             <div style={{ fontSize:"14px", color:T.text, fontWeight:"bold", marginBottom:"3px" }}>{shoe.name}</div>
-                            <div style={{ fontSize:"11px", color:"#e63946", letterSpacing:"1px" }}>{shoeColorways.join(", ")}</div>
                           </div>
                           <div style={{ display:"flex", gap:"6px", flexShrink:0, marginLeft:"12px" }}>
                             {ADMIN_MODE && <><Btn label="GOT IT" onClick={() => setInventory(inv => inv.map(s => s.id===shoe.id ? {...s,wishlist:false,quantity:1} : s))} color="#e63946" />
+                            <Btn label="EDIT" onClick={() => {
+                              setNewShoe({ name:shoe.name, shortName:shoe.shortName, category:shoe.category, quantity:shoe.quantity, wishlist:shoe.wishlist });
+                              setEditColorways([...(colorways[shoe.shortName] || [])]);
+                              setEditId(shoe.id);
+                              setShowForm(true);
+                              setView("collection");
+                            }} color="#4cc9f0" />
                             <Btn label="X" onClick={() => { if (window.confirm(`Remove ${shoe.name} from your wishlist?`)) setInventory(inv => inv.filter(s => s.id!==shoe.id)); }} color="#bbb" /></>}
                           </div>
                         </div>
@@ -1934,11 +2092,63 @@
                       </div>
                     );
                   })}
+                  {/* ── WISHLIST COLORWAYS FROM OWNED SHOES ── */}
+                  {owned.flatMap(shoe => {
+                    const wishCws = (colorways[shoe.shortName] || []).filter(cw => colorwayWishlist[`${shoe.id}_${cw}`]);
+                    if (wishCws.length === 0) return [];
+                    const col = CAT[shoe.category] || CAT.Jordan;
+                    const imgW = isMobilePublic ? 72 : 120;
+                    const imgH = Math.round(imgW * 0.625);
+                    const cardMinW = isMobilePublic ? "100%" : Math.max(200, wishCws.length * (imgW + 16) + 32);
+                    return [(
+                      <div key={`wish-cw-${shoe.id}`} style={{ background:T.cardBg, border:`1px dashed ${T.border2}`, padding:"16px", minWidth: cardMinW, flex: isMobilePublic ? "1 1 100%" : "0 1 auto" }}>
+                        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:"12px" }}>
+                          <div style={{ fontSize:"14px", color:T.text, fontWeight:"bold" }}>{shoe.name}</div>
+                        </div>
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
+                          {wishCws.map(cw => {
+                            const metaKey = `${shoe.id}_${cw}`;
+                            const meta = colorwayMeta[metaKey] || {};
+                            const isEditingThis = editingMeta && editingMeta.shoeId === shoe.id && editingMeta.colorway === cw;
+                            return (
+                              <div key={cw}>
+                                <ImageSlot
+                                  img={images[metaKey] || null}
+                                  hoverImg={images[`${metaKey}_hover`] || null}
+                                  img3={images[`${metaKey}_hover2`] || null}
+                                  label={cw}
+                                  accent={col.accent}
+                                  bg={T.bg3}
+                                  width={imgW}
+                                  height={imgH}
+                                  tier={tierOf(tierMeta, metaKey)}
+                                  dark={dark}
+                                  isMobilePublic={isMobilePublic}
+                                  onUpload={file => handleImageUpload(shoe.id, cw, file)}
+                                  onClear={() => setImages(imgs => { const n={...imgs}; delete n[metaKey]; return n; })}
+                                />
+                                {ADMIN_MODE && <div
+                                  onClick={() => {
+                                    setEditingMeta({ shoeId: shoe.id, colorway: cw });
+                                    setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"" });
+                                  }}
+                                  title="Edit details"
+                                  style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : T.text6, marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
+                                  · · ·
+                                </div>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {ADMIN_MODE && editingMeta && editingMeta.shoeId === shoe.id && wishCws.includes(editingMeta.colorway) && (
+                          <MetaEditForm editingMeta={editingMeta} metaForm={metaForm} setMetaForm={setMetaForm} setColorwayMeta={setColorwayMeta} setEditingMeta={setEditingMeta} tierMeta={tierMeta} setTierMeta={setTierMeta} setGlowMeta={setGlowMeta} glowMeta={glowMeta} setImages={setImages} images={images} handleImageUpload={handleImageUpload} setRetiringMeta={setRetiringMeta} setRetireForm={setRetireForm} IS={IS} CT={CT} T={T} dark={dark} isWishlist colorwayWishlist={colorwayWishlist} setColorwayWishlist={setColorwayWishlist} />
+                        )}
+                      </div>
+                    )];
+                  })}
                 </div>
               </div>
             )}
-
-            {/* ── HISTORY ── */}
             {ADMIN_MODE && view === "history" && (() => {
               // Build flat list of all wear entries
               const allEntries = owned.flatMap(shoe =>
@@ -2160,7 +2370,7 @@
               // Build price ranking per colorway
               const priceEntries = [];
               owned.forEach(shoe => {
-                (colorways[shoe.shortName] || []).forEach(cw => {
+                (colorways[shoe.shortName] || []).filter(cw => !colorwayWishlist[`${shoe.id}_${cw}`]).forEach(cw => {
                   if (tierExcludedFromRotation(tierOf(tierMeta, `${shoe.id}_${cw}`))) return;
                   const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
                   if (!meta.purchasePrice) return;
@@ -2180,7 +2390,7 @@
               // Build best value ranking — wears per dollar (needs both wear data and price)
               const valueEntries = [];
               owned.forEach(shoe => {
-                (colorways[shoe.shortName] || []).forEach(cw => {
+                (colorways[shoe.shortName] || []).filter(cw => !colorwayWishlist[`${shoe.id}_${cw}`]).forEach(cw => {
                   if (tierExcludedFromRotation(tierOf(tierMeta, `${shoe.id}_${cw}`))) return;
                   const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
                   if (!meta.purchasePrice) return;
@@ -2204,7 +2414,7 @@
               // Build longest on ice ranking — days between purchase date and first wear
               const iceEntries = [];
               owned.forEach(shoe => {
-                (colorways[shoe.shortName] || []).forEach(cw => {
+                (colorways[shoe.shortName] || []).filter(cw => !colorwayWishlist[`${shoe.id}_${cw}`]).forEach(cw => {
                   if (tierExcludedFromRotation(tierOf(tierMeta, `${shoe.id}_${cw}`))) return;
                   const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
                   if (!meta.purchaseDate) return;
