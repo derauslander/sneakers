@@ -632,12 +632,14 @@
     "17_Air Max Day (Royal Volt)": "Shoes/17_Air Max Day (Royal Volt).png",
     "1773621809428_Sea Salt": "Shoes/1773621809428_Sea Salt.png",
     "18_Space Jam": "Shoes/18_Space Jam.png",
+    "20_Billy Hoyle": "Shoes/20_Billy Hoyle.png",
     "21_Purple": "Shoes/21_Purple.png",
     "1_Wolf Grey": "Shoes/1_Barons.png",
     "15_Stone Blue": "Shoes/15_McEnroe.png",
     "1774096319133_Billy Hoyle": "Shoes/1774096319133_Billy Hoyle.png",
     "8_Playoffs": "Shoes/8_Playoffs.png",
     "9_Olive": "Shoes/9_Olive.png",
+    "1774297239173_Infrared 3M": "Shoes/1774297239173_Infrared 3M.png",
     "4_White Cement_hover": "Shoes/4_White Cement_hover.png",
     "4_What the 4_hover": "Shoes/4_What the 4_hover.png",
     "4_Military Blue_hover": "Shoes/4_Military Blue_hover.png",
@@ -709,26 +711,7 @@
     "19_Volt_hover": "Shoes/19_Volt_hover.png",
     "19_Volt_hover2": "Shoes/19_Volt_hover2.png",
     "1775259901810_Dark Grape_hover": "Shoes/1775259901810_Dark Grape_hover.png",
-    "1775259901810_Dark Grape_hover2": "Shoes/1775259901810_Dark Grape_hover2.png",
-    "3_White Cement Reimagined_hover2": "Shoes/3_White Cement Reimagined_hover2.png",
-    "3_Black Cement_hover2": "Shoes/3_Black Cement_hover2.png",
-    "2_Black Cement_hover2": "Shoes/2_Black Cement_hover2.png",
-    "3_A Ma Maniere_hover2": "Shoes/3_A Ma Maniere_hover2.png",
-    "3_A Ma Maniere WYWS_hover2": "Shoes/3_A Ma Maniere WYWS_hover2.png",
-    "12_Black Flint_hover2": "Shoes/12_Black Flint_hover2.png",
-    "13_Flint Grey_hover2": "Shoes/13_Flint Grey_hover2.png",
-    "11_Flu Game_hover2": "Shoes/11_Flu Game_hover2.png",
-    "10_Steel_hover2": "Shoes/10_Steel_hover2.png",
-    "18_Concord_hover2": "Shoes/18_Concord_hover2.png",
-    "18_Space Jam_hover2": "Shoes/18_Space Jam_hover2.png",
-    "17_Air Max Day (Royal Volt)_hover2": "Shoes/17_Air Max Day (Royal Volt)_hover2.png",
-    "15_Stone Blue_hover2": "Shoes/15_Stone Blue_hover2.png",
-    "21_Purple_hover2": "Shoes/21_Purple_hover2.png",
-    "9_Olive_hover2": "Shoes/9_Olive_hover2.png",
-    "7_Cardinal_hover2": "Shoes/7_Cardinal_hover2.png",
-    "1774096319133_Billy Hoyle_hover2": "Shoes/1774096319133_Billy Hoyle_hover2.png",
-    "15_Black Lava_hover": "Shoes/15_Black Lava_hover.png",
-    "15_Black Lava_hover2": "Shoes/15_Black Lava_hover2.png"
+    "1775259901810_Dark Grape_hover2": "Shoes/1775259901810_Dark Grape_hover2.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -980,7 +963,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "1994",
-      "story": "I grabbed these for the 1994 basketball season. These were the first shoes that I wore exclusively for basketball.  I would carry them around all day in my backpack and take them out for practice/games.",
+      "story": "",
       "saleDate": "",
       "saleTime": ""
     },
@@ -1156,9 +1139,20 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "My first retro Jordan was this silhouette in French Blue.  I bought them in May 2002 and debuted them at Attack of the Clones in Farmingdale New York.",
+      "story": "I had these in French Blue in 2002.",
       "saleDate": "",
       "saleTime": ""
+    },
+    "1774297239173_Infrared 3M": {
+      "purchaseDate": "",
+      "purchasePrice": "",
+      "retailer": "",
+      "size": "",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "2026-03-26",
+      "saleTime": "10:00"
     },
     "18_Space Jam": {
       "purchaseDate": "",
@@ -1194,39 +1188,6 @@
       "saleTime": ""
     },
     "1775259901810_Dark Grape": {
-      "purchaseDate": "",
-      "purchasePrice": "",
-      "retailer": "",
-      "size": "",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
-    },
-    "18_Concord": {
-      "purchaseDate": "",
-      "purchasePrice": "",
-      "retailer": "",
-      "size": "",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
-    },
-    "15_Black Lava": {
-      "purchaseDate": "",
-      "purchasePrice": "",
-      "retailer": "",
-      "size": "",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
-    },
-    "1774096319133_Billy Hoyle": {
       "purchaseDate": "",
       "purchasePrice": "",
       "retailer": "",
@@ -1276,15 +1237,11 @@
     "15_Pixel Court": "silver",
     "16_Volt": "diamond",
     "17_Air Max Day (Royal Volt)": "gold",
-    "18_Space Jam": "gold",
-    "19_Volt": "platinum",
+    "18_Space Jam": "silver",
+    "19_Volt": "silver",
     "21_Purple": "platinum",
     "1773621809428_Sea Salt": "bronze",
-    "1774096319133_Billy Hoyle": "platinum",
-    "15_Black Lava": "platinum",
-    "1775259901810_Dark Grape": "gold",
-    "19_Voltage Purple": "platinum",
-    "18_Concord": "gold"
+    "1774096319133_Billy Hoyle": "silver"
   },
   "glowMeta": {
     "6_Reverse Infrared": true,
@@ -1296,10 +1253,10 @@
     "4_Black Cement": true,
     "5_Black Metallic Reimagined": true,
     "6_Infrared": true,
+    "8_Playoff": true,
+    "9_Black Olive": true,
     "11_Flu Game": true,
-    "21_Purple": true,
-    "8_Playoffs": true,
-    "9_Olive": true
+    "21_Purple": true
   },
   "graveyardMeta": {},
   "colorways": {
@@ -1383,6 +1340,9 @@
       "Volt",
       "Voltage Purple"
     ],
+    "AFC": [
+      "Billy Hoyle"
+    ],
     "AFMCB": [
       "Purple"
     ],
@@ -1391,6 +1351,9 @@
     ],
     "ACF": [
       "Billy Hoyle"
+    ],
+    "AM90": [
+      "Infrared 3M"
     ],
     "ATC4": [
       "Dark Grape"
@@ -1712,8 +1675,8 @@
     ],
     [
       {
-        "code": "",
-        "colorway": ""
+        "code": "ATC4",
+        "colorway": "Dark Grape"
       },
       {
         "code": "ACF",
@@ -1755,5 +1718,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-04-05T10:25:34.956Z"
+  "exportedAt": "2026-04-04T22:08:58.099Z"
 }

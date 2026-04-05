@@ -509,10 +509,7 @@
                 alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents: isMobilePublic ? "auto" : "none",
               }}>
                 <div style={{ position:"relative", maxWidth: isMobilePublic ? "90vw" : "60vw", maxHeight: isMobilePublic ? "70vh" : "60vh" }}>
-                  <img src={img} alt={c.colorway} style={{ maxWidth: isMobilePublic ? "90vw" : "60vw", maxHeight: isMobilePublic ? "70vh" : "60vh", objectFit:"contain", filter:"drop-shadow(0 0 8px rgba(255,255,255,0.6))", display:"block", opacity: (hasCrossfade && hoverImg && showHover) ? 0 : 1, transition:"opacity 3s ease-in-out" }} />
-                  {hasCrossfade && hoverImg && (
-                    <img src={hoverImg} alt={c.colorway} style={{ position:"absolute", top:0, left:0, maxWidth: isMobilePublic ? "90vw" : "60vw", maxHeight: isMobilePublic ? "70vh" : "60vh", objectFit:"contain", filter: tierInfo.glowRgba ? `drop-shadow(0 0 30px ${tierInfo.glowRgba}) drop-shadow(0 0 8px rgba(255,255,255,0.6))` : "drop-shadow(0 0 8px rgba(255,255,255,0.6))", opacity: showHover ? 1 : 0, transform: showHover ? "scale(1)" : "scale(0.95)", transition:"opacity 3s ease-in-out, transform 3s ease-in-out" }} />
-                  )}
+                  <img src={hoverImg || img} alt={c.colorway} style={{ maxWidth: isMobilePublic ? "90vw" : "60vw", maxHeight: isMobilePublic ? "70vh" : "60vh", objectFit:"contain", filter:"drop-shadow(0 0 8px rgba(255,255,255,0.6))", display:"block" }} />
                 </div>
                 {tierInfo.label && <div style={{ marginTop:"12px", fontSize:"11px", letterSpacing:"6px", color: tierInfo.color }}>{tierInfo.label}</div>}
                 <div style={{ marginTop: tierInfo.label ? "6px" : "16px", fontSize:"13px", letterSpacing:"3px", color: tierInfo.color || c.accent }}>{c.colorway}</div>
@@ -674,8 +671,8 @@
               <span style={{ fontSize:"10px", letterSpacing:"3px", color: CT.text5, cursor:"pointer" }}>☾ DARK GLOW</span>
             </div>
           )}
-          {/* Hover image upload — collection only */}
-          {!isWishlist && (
+          {/* Hover image upload */}
+          {(
             <div style={{ marginBottom:"10px" }}>
               <div style={{ fontSize:"9px", letterSpacing:"2px", color: hasCrossfade ? (tierInfo.color || "#e63946") : "#e63946", marginBottom:"6px" }}>{hasCrossfade ? "✦ HOVER IMAGE (IMG 2)" : "✦ 2ND IMAGE (ANNIVERSARY)"}</div>
               <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
@@ -707,14 +704,14 @@
                 }} />
             </div>
           )}
-          {/* Img3 upload — diamond only */}
-          {!isWishlist && currentTier === "diamond" && (() => {
+          {/* Img3 upload — all tiers */}
+          {(() => {
             const hover2Key = `${key}_hover2`;
             const hover2Val = images[hover2Key];
             let hover2InputEl = null;
             return (
               <div style={{ marginBottom:"10px" }}>
-                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#b8f0ff", marginBottom:"6px" }}>✦ DETAIL IMAGE (IMG 3 · TRIPTYCH)</div>
+                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#b8f0ff", marginBottom:"6px" }}>✦ DETAIL IMAGE (IMG 3 · DISPLAY)</div>
                 <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
                   {hover2Val
                     ? <img src={hover2Val} alt="detail" style={{ width:"80px", height:"50px", objectFit:"cover", border:"1px solid #b8f0ff" }} />
@@ -734,7 +731,7 @@
                     )}
                   </div>
                 </div>
-                <div style={{ fontSize:"8px", color: CT.text6, marginTop:"4px", letterSpacing:"1px" }}>Appears alongside img 1 & 2 when story reveals</div>
+                <div style={{ fontSize:"8px", color: CT.text6, marginTop:"4px", letterSpacing:"1px" }}>Used in display cabinet + diamond triptych</div>
                 <input ref={el => hover2InputEl = el} type="file" accept="image/*" style={{ display:"none" }}
                   onChange={e => {
                     const file = e.target.files[0];
@@ -1904,7 +1901,12 @@
               // All shoes available for dream (owned + wishlist), owned only for my display
               const availableShoes = isDream ? inventory : owned;
               // For dream display: determine if a cell's shoe is a wishlist item
-              const isWishlistShoe = (shortName) => wishlist.some(s => s.shortName === shortName);
+              const isWishlistShoe = (shortName, colorway) => {
+                if (wishlist.some(s => s.shortName === shortName)) return true;
+                const shoe = inventory.find(s => s.shortName === shortName);
+                if (!shoe) return false;
+                return !!colorwayWishlist[`${shoe.id}_${colorway}`];
+              };
 
               return (
               <div>
@@ -1989,13 +1991,14 @@
                   {activeLayout.map((row, ri) => row.map((cell, ci) => {
                     const c = getCellStyle(cell);
                     const shoe = !c.empty ? inventory.find(s => s.shortName === cell.code) : null;
-                    const img = shoe ? images[`${shoe.id}_${cell.colorway}`] : null;
-                    const hoverImg = shoe ? images[`${shoe.id}_${cell.colorway}_hover`] : null;
+                    const img1 = shoe ? images[`${shoe.id}_${cell.colorway}`] : null;
+                    const img3 = shoe ? images[`${shoe.id}_${cell.colorway}_hover2`] : null;
+                    const displayImg = img3 || img1;
                     const isEditing = editingCell && editingCell.ri === ri && editingCell.ci === ci;
                     const cellTier = shoe ? tierOf(tierMeta, `${shoe.id}_${cell.colorway}`) : "silver";
-                    const cellIsWishlist = isDream && !c.empty && isWishlistShoe(cell.code);
+                    const cellIsWishlist = isDream && !c.empty && isWishlistShoe(cell.code, cell.colorway);
                     return (
-                      <DisplayCell key={`${ri}-${ci}`} c={c} img={img} hoverImg={hoverImg} ri={ri} dark={dark}
+                      <DisplayCell key={`${ri}-${ci}`} c={c} img={displayImg} hoverImg={img1} ri={ri} dark={dark}
                         isEditing={isEditing}
                         tier={cellTier}
                         isMobilePublic={isMobilePublic}
