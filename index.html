@@ -1573,7 +1573,7 @@
               <div>
                 {/* News Banner — unified cycling banner for all notifications */}
                 {!newsDismissed && (() => {
-                  // Build news items in priority order: GOT 'EM! > Anniversary > Sale Alert > GOT 'EM?
+                  // Build news items in priority order: GOT 'EM! > Anniversary > On This Day > Sale Alert > GOT 'EM?
                   const newsItems = [];
                   gotEmCelebrations.forEach(item => {
                     newsItems.push({ type:"gotem", label:"✦ GOT 'EM! ✦", shoe: item.shoe, colorway: item.colorway, img: item.img, subtitle:"Welcome to The Vault" });
@@ -1582,6 +1582,19 @@
                     const aImg = images[`${a.shoe.id}_${a.colorway}`] || null;
                     const aHoverImg = images[`${a.shoe.id}_${a.colorway}_hover`] || null;
                     newsItems.push({ type:"anniversary", label:"✦ PURCHASE ANNIVERSARY ✦", shoe: a.shoe, colorway: a.colorway, img: aImg, hoverImg: aHoverImg, subtitle:`${a.years} ${a.years === 1 ? "year" : "years"} ago today` });
+                  });
+                  // On This Day — first wear anniversary
+                  inventory.forEach(shoe => {
+                    (colorways[shoe.shortName] || []).filter(cw => isColorwayOwned(shoe.id, cw)).forEach(cw => {
+                      const wears = (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
+                      if (wears.length === 0) return;
+                      const firstWear = [...wears].sort((a, b) => a.date < b.date ? -1 : 1)[0].date;
+                      if (firstWear.slice(5) !== todayMD) return;
+                      const years = parseInt(todayStr.slice(0,4)) - parseInt(firstWear.slice(0,4));
+                      if (years <= 0) return;
+                      const img = images[`${shoe.id}_${cw}`] || null;
+                      newsItems.push({ type:"onthisday", label:"👟 ON THIS DAY", shoe, colorway: cw, img, subtitle:`${years} ${years === 1 ? "year" : "years"} ago today, you first wore these` });
+                    });
                   });
                   saleAlerts.forEach(item => {
                     const sub = item.hoursUntil < 1
