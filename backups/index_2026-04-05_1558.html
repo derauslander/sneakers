@@ -528,10 +528,10 @@
     function GraveyardCard({ entryKey, entry, T, CT, dark, setColorways, setGraveyardMeta, isMobilePublic = false }) {
       const [hovered,    setHovered]    = useState(false);
       const [showHover,  setShowHover]  = useState(false);
-      const [ghosted,    setGhosted]    = useState(false);
+      const [glowOn,     setGlowOn]     = useState(false);
       const timerRef     = useRef(null);
       const crossfadeRef = useRef(null);
-      const ghostRef     = useRef(null);
+      const glowRef      = useRef(null);
 
       const entryTier = entry.tier || (entry.isGrail ? "diamond" : entry.isBeater ? "bronze" : "silver");
       const tierInfo = TIERS[entryTier] || TIERS.silver;
@@ -542,13 +542,17 @@
 
       const triggerOpen = () => {
         if (!entry.img) return;
-        setHovered(true); setShowHover(false); setGhosted(false);
-        ghostRef.current = setTimeout(() => setGhosted(true), 500);
+        setHovered(true); setShowHover(false); setGlowOn(false);
+        if (hasCrossfade && entry.hoverImg) {
+          crossfadeRef.current = setTimeout(() => { setShowHover(true); }, 200);
+          glowRef.current = setTimeout(() => setGlowOn(true), 1500);
+        } else {
+          glowRef.current = setTimeout(() => setGlowOn(true), 1500);
+        }
       };
       const triggerClose = () => {
-        clearTimeout(crossfadeRef.current);
-        clearTimeout(ghostRef.current);
-        setHovered(false); setShowHover(false); setGhosted(false);
+        clearTimeout(crossfadeRef.current); clearTimeout(glowRef.current);
+        setHovered(false); setShowHover(false); setGlowOn(false);
       };
       const handleMouseEnter = () => { if (isMobilePublic) return; if (!entry.img) return; timerRef.current = setTimeout(triggerOpen, 500); };
       const handleMouseLeave = () => { if (isMobilePublic) return; clearTimeout(timerRef.current); triggerClose(); };
@@ -558,22 +562,17 @@
         return () => {
           clearTimeout(timerRef.current);
           clearTimeout(crossfadeRef.current);
-          clearTimeout(ghostRef.current);
+          clearTimeout(glowRef.current);
         };
       }, []);
 
       const cardW = isMobilePublic ? "140px" : "200px";
       const imgW = isMobilePublic ? "108px" : "168px";
       const imgH = isMobilePublic ? "68px" : "105px";
-      const ghostFilter = "none";
-      const normalFilter = "none";
-
-      // Tombstone shape — classic rounded arch, 240×320px at desktop scale
-      const stoneW = isMobilePublic ? 180 : 260;
-      const stoneH = isMobilePublic ? (entry.story ? 280 : 220) : (entry.story ? 400 : 320);
-      const archR = stoneW / 2; // full semicircle arch
-      const engravedColor = "rgba(0,0,0,0.45)";
-      const engravedShadow = "0 1px 0 rgba(255,255,255,0.08)";
+      const ghostFilter = "grayscale(0.4) sepia(0.6) hue-rotate(170deg) saturate(1.5) brightness(1.3)";
+      const normalFilter = "grayscale(0) sepia(0) hue-rotate(0deg) saturate(1) brightness(1)";
+      const ghostGlow = "drop-shadow(0 0 25px rgba(120,160,220,0.5)) drop-shadow(0 0 60px rgba(100,140,200,0.3))";
+      const normalGlow = "drop-shadow(0 0 8px rgba(255,255,255,0.4)) drop-shadow(0 0 0px rgba(100,140,200,0))";
 
       return (
         <div style={{ background: dark ? T.cardBg : "#f9f9f9", border:`1px solid ${T.border}`, padding:"16px", width: cardW, flex:"0 0 auto" }}>
@@ -583,9 +582,9 @@
               <>
                 <img src={entry.img} alt={entry.colorway} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={handleTap}
                   style={{ width: imgW, height: imgH, objectFit:"cover", display:"block", cursor: isMobilePublic ? "pointer" : "zoom-in",
-                    filter: hovered ? `drop-shadow(0 0 20px ${glowColor})` : "none",
+                    filter: glowOn ? `drop-shadow(0 0 20px ${glowColor})` : "none",
                     opacity: hasCrossfade && entry.hoverImg && showHover ? 0 : 1,
-                    transition:"opacity 3s ease-in-out, filter 0.3s ease-in-out" }} />
+                    transition:"opacity 3s ease-in-out, filter 3s ease-in-out" }} />
                 {hasCrossfade && entry.hoverImg && (
                   <img src={entry.hoverImg} alt={entry.colorway} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={handleTap}
                     style={{ position:"absolute", top:0, left:0, width: imgW, height: imgH, objectFit:"cover",
@@ -601,62 +600,27 @@
             )}
             {/* Hover overlay */}
             {hovered && entry.img && (
-              <div onClick={triggerClose} style={{ position:"fixed", top:0, left:0, width:"100vw", height:"100vh", background:"rgba(0,0,0,0.88)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents: isMobilePublic ? "auto" : "none" }}>
-                <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"24px" }}>
-
-                  {/* Tombstone shape */}
-                  <div style={{ position:"relative", width:`${stoneW}px`, height:`${stoneH}px`, flexShrink:0 }}>
-                    {/* Stone shape — CSS clip with rounded arch top */}
-                    <div style={{
-                      position:"absolute", inset:0,
-                      backgroundImage:"url('assets/tombstone.png')",
-                      backgroundSize:"cover", backgroundPosition:"center",
-                      borderRadius:`${archR}px ${archR}px 6px 6px`,
-                      overflow:"hidden",
-                      boxShadow:"0 8px 32px rgba(0,0,0,0.7), inset 0 0 40px rgba(0,0,0,0.3)",
-                    }}>
-                      {/* Dark overlay for depth */}
-                      <div style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.25)", borderRadius:`${archR}px ${archR}px 6px 6px` }} />
-                    </div>
-
-                    {/* Engraved text — upper arch area */}
-                    <div style={{ position:"absolute", top:0, left:0, right:0, padding:`${Math.round(archR * 0.3)}px 20px 12px`, textAlign:"center" }}>
-                      {tierInfo.ripLabel && (
-                        <div style={{ fontSize:"11px", letterSpacing:"4px", color: tierInfo.color || "rgba(230,230,220,0.95)", textShadow: engravedShadow, marginBottom:"8px", opacity:0.95 }}>{tierInfo.ripLabel}</div>
-                      )}
-                      <div style={{ fontSize: isMobilePublic ? "11px" : "13px", letterSpacing:"2px", color:"rgba(230,230,220,0.95)", textShadow: engravedShadow, fontWeight:"bold", lineHeight:1.4, marginBottom:"6px" }}>
-                        {entry.shoeName}
-                      </div>
-                      <div style={{ fontSize: isMobilePublic ? "10px" : "11px", letterSpacing:"1px", color:"rgba(210,210,200,0.9)", textShadow: engravedShadow, marginBottom:"8px" }}>
-                        {entry.colorway}
-                      </div>
-                      {(purchaseDate || retireDate) && (
-                        <div style={{ fontSize: isMobilePublic ? "9px" : "10px", color:"rgba(200,200,190,0.85)", letterSpacing:"1px", textShadow: engravedShadow, marginBottom: entry.story ? "10px" : "0" }}>
-                          {purchaseDate || "?"} — {retireDate || "?"}
-                        </div>
-                      )}
-                      {entry.story && (
-                        <div style={{ fontSize: isMobilePublic ? "9px" : "10px", fontStyle:"italic", color:"rgba(210,210,200,0.8)", textShadow: engravedShadow, lineHeight:1.6, letterSpacing:"0.3px", maxHeight:"80px", overflowY:"auto", marginTop:"2px" }}>
-                          {entry.story}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Shoe — img2 if available, nudged up and right for visual centering */}
-                    <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"flex-end", justifyContent:"center", paddingBottom:"18%", paddingLeft:"8%" }}>
-                      <img src={entry.hoverImg || entry.img}
-                        alt={entry.colorway}
-                        style={{
-                          maxWidth:`${stoneW - 24}px`, maxHeight:`${Math.round(stoneH * 0.42)}px`,
-                          objectFit:"contain",
-                          filter: ghosted ? ghostFilter : normalFilter,
-                          transition:"filter 2.5s ease-in-out",
-                        }} />
-                    </div>
+              <div onClick={triggerClose} style={{ position:"fixed", top:0, left:0, width:"100vw", height:"100vh", background:"rgba(0,0,0,0.85)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents: isMobilePublic ? "auto" : "none" }}>
+                <div style={{ position:"relative", width: isMobilePublic ? "90vw" : "50vw", maxWidth:"600px", display:"flex", flexDirection:"column", alignItems:"center" }}>
+                  <div style={{ position:"relative", width:"100%", display:"flex", justifyContent:"center" }}>
+                    <img src={entry.img} alt={entry.colorway} style={{ maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: glowOn ? `${ghostFilter} ${ghostGlow}` : `${normalFilter} ${normalGlow}`, display:"block", opacity: hasCrossfade && entry.hoverImg && showHover ? 0 : 1, transition:"filter 5s ease-in-out, opacity 5s ease-in-out" }} />
+                    {hasCrossfade && entry.hoverImg && (
+                      <img src={entry.hoverImg} alt={entry.colorway} style={{ position:"absolute", top:0, left:"50%", transform: showHover ? "translateX(-50%) scale(1)" : "translateX(-50%) scale(0.95)", maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: `${ghostFilter} ${ghostGlow}`, opacity: showHover ? 1 : 0, transition:"opacity 5s ease-in-out, transform 5s ease-in-out" }} />
+                    )}
                   </div>
-
-
-                  {isMobilePublic && <div style={{ fontSize:"10px", color:"#555", letterSpacing:"2px" }}>TAP TO CLOSE</div>}
+                  <div style={{ width:"100%", marginTop:"16px", textAlign:"center" }}>
+                    {tierInfo.ripLabel && <div style={{ fontSize:"11px", letterSpacing:"6px", color: tierInfo.color, marginBottom:"6px", opacity: glowOn ? 1 : 0, transition:"opacity 3s ease-in-out" }}>{tierInfo.ripLabel}</div>}
+                    <div style={{ fontSize:"13px", letterSpacing:"3px", color: tierInfo.color && glowOn ? tierInfo.color : "#fff", transition:"color 3s ease-in-out" }}>{entry.shoeName} — {entry.colorway}</div>
+                    {(purchaseDate || retireDate) && (
+                      <div style={{ marginTop:"8px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>
+                        🪦 {purchaseDate || "?"} — {retireDate || "?"} 🪦
+                      </div>
+                    )}
+                    {entry.story && (
+                      <div style={{ marginTop:"12px", fontSize:"13px", color:"#fff", lineHeight:"1.8", letterSpacing:"0.5px" }}>{entry.story}</div>
+                    )}
+                    {isMobilePublic && <div style={{ marginTop:"16px", fontSize:"10px", color:"#666", letterSpacing:"2px" }}>TAP TO CLOSE</div>}
+                  </div>
                 </div>
               </div>
             )}
@@ -671,7 +635,7 @@
       );
     }
 
-    function MetaEditForm({ editingMeta, metaForm, setMetaForm, setColorwayMeta, setEditingMeta, tierMeta, setTierMeta, setGlowMeta, glowMeta, setImages, images, handleImageUpload, setRetiringMeta, setRetireForm, IS, CT, T, dark, isWishlist = false, colorwayOwned = {}, setColorwayOwned = null }) {
+    function MetaEditForm({ editingMeta, metaForm, setMetaForm, setColorwayMeta, setEditingMeta, tierMeta, setTierMeta, setGlowMeta, glowMeta, setImages, images, handleImageUpload, setRetiringMeta, setRetireForm, IS, CT, T, dark, isWishlist = false, colorwayWishlist = {}, setColorwayWishlist = null }) {
       const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
       const hoverKey = `${key}_hover`;
       const hoverImgVal = images[hoverKey];
@@ -849,25 +813,23 @@
                 setEditingMeta(null);
               }} style={btnStyle}>REMOVE PHOTO</button>
             )}
-            {setColorwayOwned && (() => {
-              const isOwned = colorwayOwned[key] !== false;
+            {!isWishlist && setColorwayWishlist && (() => {
+              const isOnWishlist = !!colorwayWishlist[key];
               return (
-                <>
-                  {!isWishlist && (
-                    <button onClick={() => {
-                      setColorwayOwned(o => ({ ...o, [key]: false }));
-                      setEditingMeta(null);
-                    }} style={{ background:"transparent", border:"1px solid #4cc9f0", color:"#4cc9f0", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>★ MOVE TO WISHLIST</button>
-                  )}
-                  {isWishlist && (
-                    <button onClick={() => {
-                      setColorwayOwned(o => ({ ...o, [key]: true }));
-                      setEditingMeta(null);
-                    }} style={{ background:"transparent", border:"1px solid #4cc9f0", color:"#4cc9f0", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>✓ GOT IT — MOVE TO COLLECTION</button>
-                  )}
-                </>
+                <button onClick={() => {
+                  setColorwayWishlist(w => { const n={...w}; if (isOnWishlist) delete n[key]; else n[key]=true; return n; });
+                  setEditingMeta(null);
+                }} style={{ background:"transparent", border:"1px solid #4cc9f0", color:"#4cc9f0", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>
+                  {isOnWishlist ? "↩ MOVE TO COLLECTION" : "★ MOVE TO WISHLIST"}
+                </button>
               );
             })()}
+            {isWishlist && setColorwayWishlist && colorwayWishlist[key] && (
+              <button onClick={() => {
+                setColorwayWishlist(w => { const n={...w}; delete n[key]; return n; });
+                setEditingMeta(null);
+              }} style={{ background:"transparent", border:"1px solid #4cc9f0", color:"#4cc9f0", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>↩ MOVE TO COLLECTION</button>
+            )}
             {!isWishlist && (
               <button onClick={() => {
                 setRetiringMeta({ shoeId: editingMeta.shoeId, colorway: editingMeta.colorway });
@@ -926,32 +888,7 @@
       const [glowMeta,       setGlowMeta]       = useState(() => ADMIN_MODE ? load("vault_glow_meta", {}) : {});
       const [graveyardMeta,  setGraveyardMeta]  = useState(() => ADMIN_MODE ? load("vault_graveyard_meta", {}) : {});
       const [colorways,      setColorways]      = useState(() => ADMIN_MODE ? load("vault_colorways", {}) : {});
-      const [colorwayOwned, setColorwayOwned] = useState(() => {
-        if (!ADMIN_MODE) return {};
-        const existing = load("vault_colorway_owned", null);
-        if (existing) return existing;
-        // One-time migration from wishlist flag + colorwayWishlist
-        const inv = load("vault_inventory", []);
-        const cws = load("vault_colorways", {});
-        const cwWishlist = load("vault_colorway_wishlist", {});
-        const owned = {};
-        inv.forEach(shoe => {
-          (cws[shoe.shortName] || []).forEach(cw => {
-            const key = `${shoe.id}_${cw}`;
-            // Start with shoe-level wishlist flag, then override with colorwayWishlist
-            owned[key] = !shoe.wishlist;
-            if (cwWishlist[key]) owned[key] = false;
-          });
-        });
-        try {
-          localStorage.setItem("vault_colorway_owned", JSON.stringify(owned));
-          localStorage.removeItem("vault_colorway_wishlist");
-          // Remove wishlist flag from inventory items
-          const migratedInv = inv.map(s => { const n={...s}; delete n.wishlist; delete n.quantity; return n; });
-          localStorage.setItem("vault_inventory", JSON.stringify(migratedInv));
-        } catch {}
-        return owned;
-      });
+      const [colorwayWishlist, setColorwayWishlist] = useState(() => ADMIN_MODE ? load("vault_colorway_wishlist", {}) : {});
       const [wishlistOrder,    setWishlistOrder]    = useState(() => ADMIN_MODE ? load("vault_wishlist_order", []) : []);
       const [displayLayout,  setDisplayLayout]  = useState(() => ADMIN_MODE ? load("vault_display_layout", []) : []);
       const [dreamLayout,    setDreamLayout]    = useState(() => { if (ADMIN_MODE) { const stored = load("vault_dream_layout", null); if (stored && stored.length) return stored; } return Array.from({length:8}, () => Array.from({length:5}, () => ({code:"",colorway:""}))); });
@@ -966,7 +903,7 @@
       const [quickColorway,  setQuickColorway]  = useState("");
       const [quickDate,      setQuickDate]      = useState(() => localDateStr());
       const [editId,         setEditId]         = useState(null);
-      const [newShoe,        setNewShoe]        = useState({ name:"", shortName:"", category:"Jordan" });
+      const [newShoe,        setNewShoe]        = useState({ name:"", shortName:"", category:"Jordan", quantity:1, wishlist:false });
       const [editColorways,  setEditColorways]  = useState([]);
       const [newColorway,    setNewColorway]    = useState("");
       const [renamingColorwayIdx, setRenamingColorwayIdx] = useState(null);
@@ -1011,7 +948,7 @@
         setGlowMeta(publicData.glowMeta || {});
         setGraveyardMeta(publicData.graveyardMeta || {});
         setColorways(publicData.colorways || {});
-        setColorwayOwned(publicData.colorwayOwned || {});
+        setColorwayWishlist(publicData.colorwayWishlist || {});
         setWishlistOrder(publicData.wishlistOrder || []);
         setDisplayLayout(publicData.displayLayout || []);
         setDreamLayout(publicData.dreamLayout || []);
@@ -1026,7 +963,7 @@
       useEffect(() => save("vault_glow_meta",      glowMeta),     [glowMeta]);
       useEffect(() => save("vault_graveyard_meta", graveyardMeta),[graveyardMeta]);
       useEffect(() => save("vault_colorways",      colorways),    [colorways]);
-      useEffect(() => save("vault_colorway_owned", colorwayOwned), [colorwayOwned]);
+      useEffect(() => save("vault_colorway_wishlist", colorwayWishlist), [colorwayWishlist]);
       useEffect(() => save("vault_wishlist_order", wishlistOrder), [wishlistOrder]);
       useEffect(() => save("vault_display_layout",  displayLayout),[displayLayout]);
       useEffect(() => save("vault_dream_layout",    dreamLayout),  [dreamLayout]);
@@ -1035,7 +972,7 @@
         if (!ADMIN_MODE) return;
         const handler = (e) => {
           if (e.key !== "Escape") return;
-          if (showForm)      { setShowForm(false); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan"}); setEditColorways([]); setNewColorway(""); }
+          if (showForm)      { setShowForm(false); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan",quantity:1,wishlist:false}); setEditColorways([]); setNewColorway(""); }
           if (quickLog)      { setQuickLog(false); }
           if (loggingId)     { setLoggingId(null); }
           if (editingMeta)   { setEditingMeta(null); }
@@ -1059,138 +996,17 @@
         </div>
       );
 
-      // colorwayOwned determines per-colorway ownership — collection shows owned, wishlist shows unowned
-      const isColorwayOwned = (shoeId, cw) => colorwayOwned[`${shoeId}_${cw}`] !== false;
-      const total = inventory.reduce((n, shoe) => {
-        return n + (colorways[shoe.shortName] || []).filter(cw => isColorwayOwned(shoe.id, cw)).length;
-      }, 0);
-      const wishlistCount = inventory.reduce((n, shoe) => {
-        return n + (colorways[shoe.shortName] || []).filter(cw => !isColorwayOwned(shoe.id, cw)).length;
-      }, 0);
-
-      // ── Memoised Top 10 rankings ────────────────────────────────────────
-      const top10Rankings = React.useMemo(() => {
-        const excluded = (key) => tierExcludedFromRotation(tierOf(tierMeta, key)) || colorwayOwned[key] === false;
-
-        // Most Worn
-        const wearCounts = {};
-        inventory.forEach(shoe => {
-          (wearLog[shoe.id] || []).forEach(entry => {
-            const key = `${shoe.id}_${entry.colorway}`;
-            if (excluded(key)) return;
-            if (!wearCounts[key]) wearCounts[key] = { shoe, colorway: entry.colorway, count: 0, lastWorn: entry.date };
-            wearCounts[key].count++;
-            if (entry.date > wearCounts[key].lastWorn) wearCounts[key].lastWorn = entry.date;
-          });
-        });
-        const wornRanked = Object.values(wearCounts)
-          .sort((a, b) => b.count !== a.count ? b.count - a.count : a.lastWorn < b.lastWorn ? -1 : a.lastWorn > b.lastWorn ? 1 : 0)
-          .slice(0, 10);
-
-        // Most Expensive
-        const priceEntries = [];
-        inventory.forEach(shoe => {
-          (colorways[shoe.shortName] || []).forEach(cw => {
-            const key = `${shoe.id}_${cw}`;
-            if (excluded(key)) return;
-            const meta = colorwayMeta[key] || {};
-            if (!meta.purchasePrice) return;
-            const price = parseFloat(meta.purchasePrice.replace(/[^0-9.]/g, ""));
-            if (isNaN(price) || price <= 0) return;
-            priceEntries.push({ shoe, colorway: cw, price, purchaseDate: meta.purchaseDate || "" });
-          });
-        });
-        const priceRanked = priceEntries
-          .sort((a, b) => b.price !== a.price ? b.price - a.price : a.purchaseDate < b.purchaseDate ? -1 : 1)
-          .slice(0, 10);
-
-        // Best Value
-        const valueEntries = [];
-        inventory.forEach(shoe => {
-          (colorways[shoe.shortName] || []).forEach(cw => {
-            const key = `${shoe.id}_${cw}`;
-            if (excluded(key)) return;
-            const meta = colorwayMeta[key] || {};
-            if (!meta.purchasePrice) return;
-            const price = parseFloat(meta.purchasePrice.replace(/[^0-9.]/g, ""));
-            if (isNaN(price) || price <= 0) return;
-            const wears = (wearLog[shoe.id] || []).filter(e => e.colorway === cw).length;
-            if (wears === 0) return;
-            valueEntries.push({ shoe, colorway: cw, price, wears, costPerWear: price / wears });
-          });
-        });
-        const valueRanked = valueEntries
-          .sort((a, b) => a.costPerWear !== b.costPerWear ? a.costPerWear - b.costPerWear : b.wears - a.wears)
-          .slice(0, 10);
-
-        // Longest On Ice
-        const iceEntries = [];
-        inventory.forEach(shoe => {
-          (colorways[shoe.shortName] || []).forEach(cw => {
-            const key = `${shoe.id}_${cw}`;
-            if (excluded(key)) return;
-            const meta = colorwayMeta[key] || {};
-            if (!meta.purchaseDate) return;
-            const wears = (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
-            if (wears.length === 0) return;
-            const firstWorn = [...wears].sort((a, b) => a.date < b.date ? -1 : 1)[0].date;
-            const daysOnIce = Math.round((new Date(firstWorn + "T00:00:00") - new Date(meta.purchaseDate + "T00:00:00")) / 86400000);
-            if (daysOnIce < 0) return;
-            iceEntries.push({ shoe, colorway: cw, daysOnIce, purchaseDate: meta.purchaseDate, firstWorn });
-          });
-        });
-        const iceRanked = iceEntries
-          .sort((a, b) => b.daysOnIce !== a.daysOnIce ? b.daysOnIce - a.daysOnIce : a.purchaseDate < b.purchaseDate ? -1 : 1)
-          .slice(0, 10);
-
-        // Longest Gap
-        const gapEntries = [];
-        inventory.forEach(shoe => {
-          (colorways[shoe.shortName] || []).forEach(cw => {
-            const key = `${shoe.id}_${cw}`;
-            if (excluded(key)) return;
-            const wears = (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
-            if (wears.length < 2) return;
-            const sorted = [...wears].sort((a, b) => a.date < b.date ? -1 : 1);
-            for (let i = 1; i < sorted.length; i++) {
-              const from = sorted[i - 1].date;
-              const to   = sorted[i].date;
-              const days = Math.round((new Date(to + "T00:00:00") - new Date(from + "T00:00:00")) / 86400000);
-              if (days > 0) gapEntries.push({ shoe, colorway: cw, days, from, to, entryKey: `${shoe.id}_${cw}_${from}` });
-            }
-          });
-        });
-        const gapRanked = gapEntries
-          .sort((a, b) => b.days !== a.days ? b.days - a.days : a.from < b.from ? -1 : 1)
-          .slice(0, 10);
-
-        return { wornRanked, priceRanked, valueRanked, iceRanked, gapRanked };
-      }, [inventory, wearLog, colorwayMeta, tierMeta, colorwayOwned, colorways]);
-
-      // ── Memoised wishlist card order ────────────────────────────────────
-      const orderedWishlistCards = React.useMemo(() => {
-        // Group unowned colorways by shoe
-        const shoeMap = {};
-        inventory.forEach(shoe => {
-          const unownedCws = (colorways[shoe.shortName] || []).filter(cw => !isColorwayOwned(shoe.id, cw));
-          if (unownedCws.length > 0) shoeMap[shoe.id] = { shoe, wishCws: unownedCws };
-        });
-        const allCards = Object.values(shoeMap).map(({ shoe, wishCws }) => ({
-          type: "wish", id: String(shoe.id), shoe, wishCws,
-        }));
-        return wishlistOrder.length
-          ? [...wishlistOrder.filter(id => allCards.find(c => c.id === id)).map(id => allCards.find(c => c.id === id)),
-             ...allCards.filter(c => !wishlistOrder.includes(c.id))]
-          : allCards;
-      }, [inventory, colorways, colorwayOwned, wishlistOrder]);
+      const owned    = inventory.filter(s => !s.wishlist);
+      const wishlist = inventory.filter(s => s.wishlist);
+      const total    = owned.reduce((n, s) => n + s.quantity, 0);
       const filledCells = displayLayout.flat().filter(c => c.code && c.code !== "").length;
       const empty    = 40 - filledCells;
 
       // Build a flat list of { shoe, colorway, lastWorn } for every owned colorway
-      const allColorwayEntries = inventory.flatMap(shoe => {
+      const allColorwayEntries = owned.flatMap(shoe => {
         const shoeColorways = colorways[shoe.shortName] || [];
         return shoeColorways
-          .filter(cw => isColorwayOwned(shoe.id, cw))
+          .filter(cw => !colorwayWishlist[`${shoe.id}_${cw}`])
           .filter(cw => !tierExcludedFromRotation(tierOf(tierMeta, `${shoe.id}_${cw}`)))
           .filter(cw => {
             const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
@@ -1247,35 +1063,42 @@
         anniversaries.push({ shoe, colorway, years });
       });
 
-      // Sale alerts and GOT 'EM! celebrations — scan all colorways by owned status
+      // Sale alerts — wishlist colorways with a sale within the next 24 hours, or past sale still on sale day
       const nowMs = Date.now();
       const todayDateStr = localDateStr();
       const saleAlerts = [];
-      const saleGlowKeys = new Set();
-      const gotEmQuestions = [];
-      const gotEmCelebrations = [];
-      inventory.forEach(shoe => {
-        (colorways[shoe.shortName] || []).forEach(cw => {
-          const key = `${shoe.id}_${cw}`;
-          const meta = colorwayMeta[key] || {};
-          const isOwned = isColorwayOwned(shoe.id, cw);
-          if (!isOwned) {
-            // Unowned — check for sale alerts
-            if (meta.saleDate) {
-              const saleDateTime = new Date(`${meta.saleDate}T${meta.saleTime || "00:00"}`).getTime();
-              const hoursUntil = (saleDateTime - nowMs) / (1000 * 60 * 60);
-              if (hoursUntil >= 0 && hoursUntil <= 168) saleGlowKeys.add(key);
-              if (hoursUntil >= 0 && hoursUntil <= 24) {
-                saleAlerts.push({ shoe, colorway: cw, saleDateTime, hoursUntil, img: images[key] || null });
-              } else if (hoursUntil < 0 && meta.saleDate === todayDateStr) {
-                gotEmQuestions.push({ shoe, colorway: cw, img: images[key] || null });
-              }
-            }
-          } else {
-            // Owned — check for new pickup celebration
-            if (meta.purchaseDate && isNewPickupCheck(meta.purchaseDate)) {
-              gotEmCelebrations.push({ shoe, colorway: cw, img: images[key] || null });
-            }
+      const saleGlowKeys = new Set(); // colorway keys with sale within 7 days
+      const gotEmQuestions = []; // sale passed today, shoe still on wishlist
+      const gotEmCelebrations = []; // sale passed today, shoe now in collection with today's purchase date
+      wishlist.forEach(shoe => {
+        const shoeColorways = colorways[shoe.shortName] || [];
+        shoeColorways.forEach(cw => {
+          const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
+          if (!meta.saleDate) return;
+          const saleDateTime = new Date(`${meta.saleDate}T${meta.saleTime || "00:00"}`).getTime();
+          const hoursUntil = (saleDateTime - nowMs) / (1000 * 60 * 60);
+          if (hoursUntil >= 0 && hoursUntil <= 168) { // 7 days
+            saleGlowKeys.add(`${shoe.id}_${cw}`);
+          }
+          if (hoursUntil >= 0 && hoursUntil <= 24) {
+            const img = images[`${shoe.id}_${cw}`] || null;
+            saleAlerts.push({ shoe, colorway: cw, saleDateTime, hoursUntil, img });
+          } else if (hoursUntil < 0 && meta.saleDate === todayDateStr) {
+            // Sale has passed but still on sale day — shoe still on wishlist
+            const img = images[`${shoe.id}_${cw}`] || null;
+            gotEmQuestions.push({ shoe, colorway: cw, img });
+          }
+        });
+      });
+      // Check owned shoes for "GOT 'EM!" — purchased within last 7 days
+      owned.forEach(shoe => {
+        const shoeColorways = colorways[shoe.shortName] || [];
+        shoeColorways.filter(cw => !colorwayWishlist[`${shoe.id}_${cw}`]).forEach(cw => {
+          const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
+          if (!meta.purchaseDate) return;
+          if (isNewPickupCheck(meta.purchaseDate)) {
+            const img = images[`${shoe.id}_${cw}`] || null;
+            gotEmCelebrations.push({ shoe, colorway: cw, img });
           }
         });
       });
@@ -1332,7 +1155,7 @@
           setInventory(inv => [...inv, { ...newShoe, id: Date.now() }]);
         }
         handleSaveColorways(newShoe.shortName);
-        setNewShoe({ name:"", shortName:"", category:"Jordan" });
+        setNewShoe({ name:"", shortName:"", category:"Jordan", quantity:1, wishlist:false });
         setEditColorways([]);
         setNewColorway("");
         setShowForm(false);
@@ -1350,7 +1173,7 @@
       };
 
       const handleEdit = (shoe) => {
-        setNewShoe({ name:shoe.name, shortName:shoe.shortName, category:shoe.category });
+        setNewShoe({ name:shoe.name, shortName:shoe.shortName, category:shoe.category, quantity:shoe.quantity, wishlist:shoe.wishlist });
         setEditColorways([...(colorways[shoe.shortName] || [])]);
         setNewColorway("");
         setEditId(shoe.id);
@@ -1374,12 +1197,11 @@
           if (hasTier) setTierMeta(tm => { const n = {...tm}; delete n[key]; return n; });
           if (hasGlow) setGlowMeta(g => { const n = {...g}; delete n[key]; return n; });
         }
-        setColorwayOwned(o => { const n = {...o}; delete n[key]; return n; });
         setEditColorways(cws => cws.filter(c => c !== cw));
       };
 
       const exportJSON = () => {
-        const data = { inventory, wearLog, images, colorwayMeta, tierMeta, glowMeta, graveyardMeta, colorways, colorwayOwned, wishlistOrder, displayLayout, dreamLayout, exportedAt: new Date().toISOString() };
+        const data = { inventory, wearLog, images, colorwayMeta, tierMeta, glowMeta, graveyardMeta, colorways, colorwayWishlist, wishlistOrder, displayLayout, dreamLayout, exportedAt: new Date().toISOString() };
         const json = JSON.stringify(data, null, 2);
         if (ADMIN_MODE) {
           // Save via server — backs up old vault-data.json, writes new one
@@ -1432,22 +1254,7 @@
             if (data.glowMeta)      { setGlowMeta(data.glowMeta);           save("vault_glow_meta",       data.glowMeta); }
             if (data.graveyardMeta) { setGraveyardMeta(data.graveyardMeta); save("vault_graveyard_meta",  data.graveyardMeta); }
             if (data.colorways)     { setColorways(data.colorways);         save("vault_colorways",       data.colorways); }
-            if (data.colorwayOwned)    { setColorwayOwned(data.colorwayOwned);       save("vault_colorway_owned",    data.colorwayOwned); }
-            else if (data.colorwayWishlist) {
-              // Legacy backup — run migration
-              const inv = data.inventory || [];
-              const cws = data.colorways || {};
-              const cwWishlist = data.colorwayWishlist || {};
-              const migrated = {};
-              inv.forEach(shoe => {
-                (cws[shoe.shortName] || []).forEach(cw => {
-                  const key = `${shoe.id}_${cw}`;
-                  migrated[key] = !shoe.wishlist;
-                  if (cwWishlist[key]) migrated[key] = false;
-                });
-              });
-              setColorwayOwned(migrated); save("vault_colorway_owned", migrated);
-            }
+            if (data.colorwayWishlist) { setColorwayWishlist(data.colorwayWishlist); save("vault_colorway_wishlist", data.colorwayWishlist); }
             if (data.wishlistOrder)    { setWishlistOrder(data.wishlistOrder);       save("vault_wishlist_order",    data.wishlistOrder); }
             if (data.displayLayout) { setDisplayLayout(data.displayLayout); save("vault_display_layout",  data.displayLayout); }
             if (data.dreamLayout)   { setDreamLayout(data.dreamLayout);     save("vault_dream_layout",    data.dreamLayout); }
@@ -1485,11 +1292,11 @@
         <div style={{ minHeight:"100vh", background: T.bg }}>
 
           <div style={{ background:"#000000", borderBottom:"2px solid #e63946", position:"relative", minHeight: isMobilePublic ? "80px" : "200px", display:"flex", alignItems:"center" }}>
-            <img src="assets/banner.png" alt="" style={{ position:"absolute", top:0, left:0, width:"100%", height: isMobilePublic ? "80px" : "200px", objectFit:"cover", objectPosition:"center" }} />
+            <img src="banner.png" alt="" style={{ position:"absolute", top:0, left:0, width:"100%", height: isMobilePublic ? "80px" : "200px", objectFit:"cover", objectPosition:"center" }} />
             {/* Title — fills remaining space, layered */}
             <div style={{ flex:1, display:"flex", justifyContent:"center", alignItems:"center", position:"relative", zIndex:2, pointerEvents:"none" }}>
-              <img src="assets/title2.png" alt="DerAusländer" style={{ display:"block", height: isMobilePublic ? "28px" : "90px", objectFit:"contain" }} />
-              <img src="assets/title1.png" alt="The Vault" style={{ position:"absolute", display:"block", height: isMobilePublic ? "20px" : "60px", objectFit:"contain", animation:"fadeInTitle 1.5s ease-in-out 1s both", filter:"drop-shadow(0px 0px 4px rgba(0,0,0,1)) drop-shadow(0px 0px 8px rgba(0,0,0,1))" }} />
+              <img src="title2.png" alt="DerAusländer" style={{ display:"block", height: isMobilePublic ? "28px" : "90px", objectFit:"contain" }} />
+              <img src="title1.png" alt="The Vault" style={{ position:"absolute", display:"block", height: isMobilePublic ? "20px" : "60px", objectFit:"contain", animation:"fadeInTitle 1.5s ease-in-out 1s both", filter:"drop-shadow(0px 0px 4px rgba(0,0,0,1)) drop-shadow(0px 0px 8px rgba(0,0,0,1))" }} />
             </div>
             {/* Admin buttons — solid black panel */}
             {ADMIN_MODE && <div style={{ position:"relative", zIndex:2, flexShrink:0, display:"flex", gap:"24px", textAlign:"center", alignItems:"center", background:"#000000", borderLeft:"2px solid #e63946", padding:"16px 32px", height:"200px" }}>
@@ -1528,7 +1335,7 @@
             {/* Desktop: stats + dark mode toggle right-aligned in nav */}
             {!isMobilePublic && <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:"20px", padding:"0 20px" }}>
               <div style={{ display:"flex", gap:"16px", alignItems:"center" }}>
-                {(ADMIN_MODE ? [["PAIRS",total],["OPEN BOXES",empty],["WISHLIST",wishlistCount]] : [["PAIRS",total],["WISHLIST",wishlistCount]]).map(([label,val]) => (
+                {(ADMIN_MODE ? [["PAIRS",total],["OPEN BOXES",empty],["WISHLIST",wishlist.length]] : [["PAIRS",total],["WISHLIST",wishlist.length]]).map(([label,val]) => (
                   <div key={label} style={{ display:"flex", alignItems:"center", gap:"6px" }}>
                     <span style={{ fontSize:"14px", fontWeight:"bold", color:"#e63946" }}>{val}</span>
                     <span style={{ fontSize:"9px", letterSpacing:"2px", color: T.text5 }}>{label}</span>
@@ -1544,7 +1351,7 @@
           {/* Mobile: stats strip below nav */}
           {isMobilePublic && (
             <div style={{ display:"flex", justifyContent:"center", alignItems:"center", gap:"20px", padding:"8px 16px", background: T.navBg, borderBottom:`1px solid ${T.border}` }}>
-              {[["PAIRS",total],["WISHLIST",wishlistCount]].map(([label,val]) => (
+              {[["PAIRS",total],["WISHLIST",wishlist.length]].map(([label,val]) => (
                 <div key={label} style={{ display:"flex", alignItems:"center", gap:"5px" }}>
                   <span style={{ fontSize:"12px", fontWeight:"bold", color:"#e63946" }}>{val}</span>
                   <span style={{ fontSize:"8px", letterSpacing:"2px", color: T.text5 }}>{label}</span>
@@ -1582,8 +1389,8 @@
                   });
                   // Shoe of the Day — random spotlight when no other news
                   if (newsItems.length === 0) {
-                    const allOwned = inventory.flatMap(shoe =>
-                      (colorways[shoe.shortName] || []).filter(cw => isColorwayOwned(shoe.id, cw)).map(cw => ({ shoe, colorway: cw }))
+                    const allOwned = owned.flatMap(shoe =>
+                      (colorways[shoe.shortName] || []).filter(cw => !colorwayWishlist[`${shoe.id}_${cw}`]).map(cw => ({ shoe, colorway: cw }))
                     );
                     if (allOwned.length > 0) {
                       // Date-seeded random — consistent throughout the day, changes daily
@@ -1803,7 +1610,7 @@
                 {/* Add shoe header — admin only */}
                 {ADMIN_MODE && <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
                   <div></div>
-                  <button onClick={() => { setShowForm(!showForm); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan"}); }} style={{
+                  <button onClick={() => { setShowForm(!showForm); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan",quantity:1,wishlist:false}); }} style={{
                     background:"#e63946", color:T.text, border:"none", padding:"10px 20px",
                     cursor:"pointer", fontSize:"11px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
                   }}>+ ADD SHOE</button>
@@ -1824,7 +1631,14 @@
                           <option>Jordan</option><option>Nike</option><option>New Balance</option><option>Adidas</option><option>Asics</option>
                         </select>
                       </div>
-
+                      <div style={{ flex:"0 0 70px" }}>
+                        <div style={{ fontSize:"10px", letterSpacing:"3px", color:T.text4, marginBottom:"6px" }}>QTY</div>
+                        <input type="number" min="0" value={newShoe.quantity} onChange={e => setNewShoe(s => ({...s,quantity:parseInt(e.target.value)||0}))} style={IS} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize:"10px", letterSpacing:"3px", color:T.text4, marginBottom:"6px" }}>WISHLIST</div>
+                        <input type="checkbox" checked={newShoe.wishlist} onChange={e => setNewShoe(s => ({...s,wishlist:e.target.checked}))} style={{ width:"20px",height:"20px",cursor:"pointer" }} />
+                      </div>
                     </div>
                     {/* Colorway management */}
                     <div style={{ marginTop:"16px", borderTop:"1px solid #ddd", paddingTop:"16px" }}>
@@ -1898,8 +1712,8 @@
                 {/* Shoe Cards */}
                 {(() => {
                   // Check if any on-ice colorways exist
-                  const hasOnIce = inventory.some(shoe => (colorways[shoe.shortName] || []).some(cw =>
-                    isColorwayOwned(shoe.id, cw) &&
+                  const hasOnIce = owned.some(shoe => (colorways[shoe.shortName] || []).some(cw => 
+                    !colorwayWishlist[`${shoe.id}_${cw}`] &&
                     !tierExcludedFromRotation(tierOf(tierMeta, `${shoe.id}_${cw}`)) && (wearLog[shoe.id] || []).filter(e => e.colorway === cw).length === 0
                   ));
                   // Filter function for colorways
@@ -1944,10 +1758,10 @@
                     </div>
                   )}
                   <div style={{ display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" }}>
-                  {inventory.map(shoe => {
+                  {owned.map(shoe => {
                     const col = CAT[shoe.category] || CAT.Jordan;
                     const allShoeColorways = colorways[shoe.shortName] || [];
-                    const filteredColorways = allShoeColorways.filter(cw => isColorwayOwned(shoe.id, cw) && matchesFilter(shoe.id, cw));
+                    const filteredColorways = allShoeColorways.filter(cw => matchesFilter(shoe.id, cw) && !colorwayWishlist[`${shoe.id}_${cw}`]);
                     if (filteredColorways.length === 0) return null;
                     const shoeColorways = filteredColorways;
                     const perRow = isMobilePublic ? shoeColorways.length : Math.min(shoeColorways.length, 5);
@@ -1958,7 +1772,7 @@
                       <div key={shoe.id} style={{ background:T.cardBg, border:`1px solid ${T.border}`, minWidth: cardMinW, maxWidth: isMobilePublic ? "100%" : undefined, flex: isMobilePublic ? "1 1 100%" : "0 1 auto", position:"relative" }}>
                         {/* Top: info + buttons — outside fixed height area */}
                         <div style={{ padding: isMobilePublic ? "16px" : "16px 16px 0 16px", display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom: isMobilePublic ? "0" : "8px" }}>
-                          <div style={{ fontSize:"14px", color:CT.text, fontWeight:"bold", whiteSpace: isMobilePublic ? "normal" : "nowrap" }}>{shoe.name}{shoeColorways.length > 1 ? ` — ${shoeColorways.length} pairs` : ""}</div>
+                          <div style={{ fontSize:"14px", color:CT.text, fontWeight:"bold", whiteSpace: isMobilePublic ? "normal" : "nowrap" }}>{shoe.name}{(collectionFilter === "all" ? shoe.quantity : shoeColorways.length) > 1 ? ` — ${collectionFilter === "all" ? shoe.quantity : shoeColorways.length} pairs` : ""}</div>
                           {ADMIN_MODE && <div style={{ display:"flex", gap:"6px", flexShrink:0, marginLeft:"12px" }}>
                             <Btn label="EDIT" onClick={() => handleEdit(shoe)} color="#888" />
                             <Btn label="X" onClick={() => { if (window.confirm(`Remove ${shoe.name} from your collection? This cannot be undone.`)) setInventory(inv => inv.filter(s => s.id !== shoe.id)); }} color="#bbb" />
@@ -2021,7 +1835,7 @@
                         {/* Colorway meta edit form */}
                         {ADMIN_MODE && editingMeta && editingMeta.shoeId === shoe.id && (
                           <div style={{ padding:"0 16px 16px 16px" }}>
-                          <MetaEditForm editingMeta={editingMeta} metaForm={metaForm} setMetaForm={setMetaForm} setColorwayMeta={setColorwayMeta} setEditingMeta={setEditingMeta} tierMeta={tierMeta} setTierMeta={setTierMeta} setGlowMeta={setGlowMeta} glowMeta={glowMeta} setImages={setImages} images={images} handleImageUpload={handleImageUpload} setRetiringMeta={setRetiringMeta} setRetireForm={setRetireForm} IS={IS} CT={CT} T={T} dark={dark} colorwayOwned={colorwayOwned} setColorwayOwned={setColorwayOwned} />
+                          <MetaEditForm editingMeta={editingMeta} metaForm={metaForm} setMetaForm={setMetaForm} setColorwayMeta={setColorwayMeta} setEditingMeta={setEditingMeta} tierMeta={tierMeta} setTierMeta={setTierMeta} setGlowMeta={setGlowMeta} glowMeta={glowMeta} setImages={setImages} images={images} handleImageUpload={handleImageUpload} setRetiringMeta={setRetiringMeta} setRetireForm={setRetireForm} IS={IS} CT={CT} T={T} dark={dark} colorwayWishlist={colorwayWishlist} setColorwayWishlist={setColorwayWishlist} />
                           </div>
                         )}
                         {/* Retire form */}
@@ -2094,12 +1908,14 @@
               const isDream = displayMode === "dream";
               const activeLayout = isDream ? dreamLayout : displayLayout;
               const setActiveLayout = isDream ? setDreamLayout : setDisplayLayout;
-              // All shoes available for selection
+              // All shoes available for dream (owned + wishlist), owned only for my display
+              const availableShoes = isDream ? inventory : owned;
               // For dream display: determine if a cell's shoe is a wishlist item
               const isWishlistShoe = (shortName, colorway) => {
+                if (wishlist.some(s => s.shortName === shortName)) return true;
                 const shoe = inventory.find(s => s.shortName === shortName);
                 if (!shoe) return false;
-                return !isColorwayOwned(shoe.id, colorway);
+                return !!colorwayWishlist[`${shoe.id}_${colorway}`];
               };
 
               return (
@@ -2124,10 +1940,28 @@
                     <select value={editShoe} onChange={e => { setEditShoe(e.target.value); setEditCw(colorways[e.target.value]?.[0] || ""); }}
                       style={{ background:T.inputBg, border:`1px solid ${T.inputBorder}`, color:T.inputText, padding:"8px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontSize:"13px", minWidth:"160px" }}>
                       <option value="">— Empty —</option>
-                      {[...new Set(inventory.map(s => s.shortName))].map(sn => {
-                        const shoe = inventory.find(s => s.shortName === sn);
-                        return <option key={sn} value={sn}>{shoe?.name || sn}</option>;
-                      })}
+                      {isDream ? (
+                        <>
+                          <optgroup label="── COLLECTION ──">
+                            {[...new Set(owned.map(s => s.shortName))].map(sn => {
+                              const shoe = inventory.find(s => s.shortName === sn);
+                              return <option key={sn} value={sn}>{shoe?.name || sn}</option>;
+                            })}
+                          </optgroup>
+                          {wishlist.length > 0 && (
+                            <optgroup label="── WISHLIST ──">
+                              {wishlist.map(shoe => (
+                                <option key={shoe.shortName} value={shoe.shortName}>{shoe.name}</option>
+                              ))}
+                            </optgroup>
+                          )}
+                        </>
+                      ) : (
+                        [...new Set(owned.map(s => s.shortName))].map(sn => {
+                          const shoe = inventory.find(s => s.shortName === sn);
+                          return <option key={sn} value={sn}>{shoe?.name || sn}</option>;
+                        })
+                      )}
                     </select>
                     {editShoe && editShoe !== "--" && (colorways[editShoe] || []).length > 0 && (
                       <select value={editCw} onChange={e => setEditCw(e.target.value)}
@@ -2193,7 +2027,17 @@
 
             {/* ── WISHLIST ── */}
             {view === "wishlist" && (() => {
-              const orderedCards = orderedWishlistCards;
+              // Build unified ordered card list
+              const invCards = wishlist.map(s => ({ type:"inv", id: String(s.id), shoe: s }));
+              const cwCards  = owned.flatMap(s => {
+                const cws = (colorways[s.shortName] || []).filter(cw => colorwayWishlist[`${s.id}_${cw}`]);
+                return cws.length ? [{ type:"cw", id:`wish-cw-${s.id}`, shoe: s, wishCws: cws }] : [];
+              });
+              const allCards = [...invCards, ...cwCards];
+              const orderedCards = wishlistOrder.length
+                ? [...wishlistOrder.filter(id => allCards.find(c => c.id === id)).map(id => allCards.find(c => c.id === id)),
+                   ...allCards.filter(c => !wishlistOrder.includes(c.id))]
+                : allCards;
               const moveCard = (idx, dir) => {
                 const ids = orderedCards.map(c => c.id);
                 const newIdx = idx + dir;
@@ -2209,34 +2053,36 @@
               <div>
                 <div style={isMobilePublic ? { display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" } : { display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(340px,1fr))", gap:"12px" }}>
                   {orderedCards.map((card, cardIdx) => {
+                  if (card.type === "inv") {
                   const shoe = card.shoe;
-                    const wishCws = card.wishCws;
+                    const shoeColorways = colorways[shoe.shortName] || [shoe.shortName];
                     const col = CAT[shoe.category] || CAT.Jordan;
                     const imgW = isMobilePublic ? 72 : 120;
                     const imgH = Math.round(imgW * 0.625);
-                    const cardMinW = isMobilePublic ? "100%" : Math.max(200, wishCws.length * (imgW + 16) + 32);
-                    const cardHasSale = wishCws.some(cw => saleGlowKeys.has(`${shoe.id}_${cw}`));
+                    const cardMinW = isMobilePublic ? "100%" : Math.max(200, shoeColorways.length * (imgW + 16) + 32);
+                    const cardHasSale = (colorways[shoe.shortName] || [shoe.shortName]).some(cw => saleGlowKeys.has(`${shoe.id}_${cw}`));
                     return (
                       <div key={shoe.id} style={{ background:T.cardBg, border:`1px dashed ${T.border2}`, padding:"16px", minWidth: cardMinW, flex: isMobilePublic ? "1 1 100%" : "0 1 auto", animation: cardHasSale ? "saleGlow 1.5s ease-in-out infinite" : "none" }}>
                         {/* Top: info + buttons */}
                         <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:"12px" }}>
-                          <div style={{ fontSize:"14px", color:T.text, fontWeight:"bold" }}>{shoe.name}</div>
-                          {ADMIN_MODE && <div style={{ display:"flex", gap:"6px", flexShrink:0, marginLeft:"12px" }}>
-                            <div style={{ display:"flex", gap:"3px", marginRight:"4px" }}>
-                              <ArrowBtn label="▲" onClick={() => moveCard(cardIdx, -1)} disabled={cardIdx === 0} />
-                              <ArrowBtn label="▼" onClick={() => moveCard(cardIdx, 1)} disabled={cardIdx === orderedCards.length - 1} />
-                            </div>
+                          <div>
+                            <div style={{ fontSize:"14px", color:T.text, fontWeight:"bold", marginBottom:"3px" }}>{shoe.name}</div>
+                          </div>
+                          <div style={{ display:"flex", gap:"6px", flexShrink:0, marginLeft:"12px" }}>
+                            {ADMIN_MODE && <><div style={{ display:"flex", gap:"3px", marginRight:"4px" }}><ArrowBtn label="▲" onClick={() => moveCard(cardIdx, -1)} disabled={cardIdx === 0} /><ArrowBtn label="▼" onClick={() => moveCard(cardIdx, 1)} disabled={cardIdx === orderedCards.length - 1} /></div><Btn label="GOT IT" onClick={() => setInventory(inv => inv.map(s => s.id===shoe.id ? {...s,wishlist:false,quantity:1} : s))} color="#e63946" />
                             <Btn label="EDIT" onClick={() => {
-                              setNewShoe({ name:shoe.name, shortName:shoe.shortName, category:shoe.category });
+                              setNewShoe({ name:shoe.name, shortName:shoe.shortName, category:shoe.category, quantity:shoe.quantity, wishlist:shoe.wishlist });
                               setEditColorways([...(colorways[shoe.shortName] || [])]);
                               setEditId(shoe.id);
                               setShowForm(true);
+                              setView("collection");
                             }} color="#4cc9f0" />
-                          </div>}
+                            <Btn label="X" onClick={() => { if (window.confirm(`Remove ${shoe.name} from your wishlist?`)) setInventory(inv => inv.filter(s => s.id!==shoe.id)); }} color="#bbb" /></>}
+                          </div>
                         </div>
-                        {/* Image slots — unowned colorways only */}
+                        {/* Image slots */}
                         <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
-                          {wishCws.map(cw => {
+                          {shoeColorways.map(cw => {
                             const metaKey = `${shoe.id}_${cw}`;
                             const meta = colorwayMeta[metaKey] || {};
                             const isEditingThis = editingMeta && editingMeta.shoeId === shoe.id && editingMeta.colorway === cw;
@@ -2246,8 +2092,6 @@
                                 <div>
                                   <ImageSlot
                                     img={images[metaKey] || null}
-                                    hoverImg={images[`${metaKey}_hover`] || null}
-                                    img3={images[`${metaKey}_hover2`] || null}
                                     label={cw}
                                     accent={col.accent}
                                     bg={T.bg3}
@@ -2261,14 +2105,14 @@
                                     onClear={() => setImages(imgs => { const n={...imgs}; delete n[metaKey]; return n; })}
                                   />
                                   {ADMIN_MODE && <div
-                                    onClick={() => {
-                                      setEditingMeta({ shoeId: shoe.id, colorway: cw });
-                                      setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"" });
-                                    }}
-                                    title="Edit details"
-                                    style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : T.text6, marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
-                                    · · ·
-                                  </div>}
+                                  onClick={() => {
+                                    setEditingMeta({ shoeId: shoe.id, colorway: cw });
+                                    setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"" });
+                                  }}
+                                  title="Edit details"
+                                  style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : ((meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? T.text3 : T.text4), marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
+                                  {(meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? `sz ${meta.size}` : "· · ·"}
+                                </div>}
                                 </div>
                                 {hasSaleCountdown && <div style={{ display:"flex", alignItems:"center", paddingTop:"24px", marginLeft:"40px" }}>
                                   <SaleCountdown saleDate={meta.saleDate} saleTime={meta.saleTime} />
@@ -2277,12 +2121,70 @@
                             );
                           })}
                         </div>
-                        {/* Meta edit form */}
-                        {ADMIN_MODE && editingMeta && editingMeta.shoeId === shoe.id && wishCws.includes(editingMeta.colorway) && (
-                          <MetaEditForm editingMeta={editingMeta} metaForm={metaForm} setMetaForm={setMetaForm} setColorwayMeta={setColorwayMeta} setEditingMeta={setEditingMeta} tierMeta={tierMeta} setTierMeta={setTierMeta} setGlowMeta={setGlowMeta} glowMeta={glowMeta} setImages={setImages} images={images} handleImageUpload={handleImageUpload} setRetiringMeta={setRetiringMeta} setRetireForm={setRetireForm} IS={IS} CT={CT} T={T} dark={dark} isWishlist colorwayOwned={colorwayOwned} setColorwayOwned={setColorwayOwned} />
+                        {/* Colorway meta edit form */}
+                        {ADMIN_MODE && editingMeta && editingMeta.shoeId === shoe.id && (
+                          <MetaEditForm editingMeta={editingMeta} metaForm={metaForm} setMetaForm={setMetaForm} setColorwayMeta={setColorwayMeta} setEditingMeta={setEditingMeta} tierMeta={tierMeta} setTierMeta={setTierMeta} setGlowMeta={setGlowMeta} glowMeta={glowMeta} setImages={setImages} images={images} handleImageUpload={handleImageUpload} setRetiringMeta={setRetiringMeta} setRetireForm={setRetireForm} IS={IS} CT={CT} T={T} dark={dark} isWishlist />
                         )}
                       </div>
                     );
+                  } else {
+                    // colorwayWishlist card
+                    const shoe = card.shoe;
+                    const wishCws = card.wishCws;
+                    const col = CAT[shoe.category] || CAT.Jordan;
+                    const imgW = isMobilePublic ? 72 : 120;
+                    const imgH = Math.round(imgW * 0.625);
+                    const cardMinW = isMobilePublic ? "100%" : Math.max(200, wishCws.length * (imgW + 16) + 32);
+                    return (
+                      <div key={`wish-cw-${shoe.id}`} style={{ background:T.cardBg, border:`1px dashed ${T.border2}`, padding:"16px", minWidth: cardMinW, flex: isMobilePublic ? "1 1 100%" : "0 1 auto" }}>
+                        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:"12px" }}>
+                          <div style={{ fontSize:"14px", color:T.text, fontWeight:"bold" }}>{shoe.name}</div>
+                          {ADMIN_MODE && <div style={{ display:"flex", gap:"3px", marginLeft:"12px", flexShrink:0 }}>
+                            <ArrowBtn label="▲" onClick={() => moveCard(cardIdx, -1)} disabled={cardIdx === 0} />
+                            <ArrowBtn label="▼" onClick={() => moveCard(cardIdx, 1)} disabled={cardIdx === orderedCards.length - 1} />
+                          </div>}
+                        </div>
+                        <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
+                          {wishCws.map(cw => {
+                            const metaKey = `${shoe.id}_${cw}`;
+                            const meta = colorwayMeta[metaKey] || {};
+                            const isEditingThis = editingMeta && editingMeta.shoeId === shoe.id && editingMeta.colorway === cw;
+                            return (
+                              <div key={cw}>
+                                <ImageSlot
+                                  img={images[metaKey] || null}
+                                  hoverImg={images[`${metaKey}_hover`] || null}
+                                  img3={images[`${metaKey}_hover2`] || null}
+                                  label={cw}
+                                  accent={col.accent}
+                                  bg={T.bg3}
+                                  width={imgW}
+                                  height={imgH}
+                                  tier={tierOf(tierMeta, metaKey)}
+                                  dark={dark}
+                                  isMobilePublic={isMobilePublic}
+                                  onUpload={file => handleImageUpload(shoe.id, cw, file)}
+                                  onClear={() => setImages(imgs => { const n={...imgs}; delete n[metaKey]; return n; })}
+                                />
+                                {ADMIN_MODE && <div
+                                  onClick={() => {
+                                    setEditingMeta({ shoeId: shoe.id, colorway: cw });
+                                    setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"" });
+                                  }}
+                                  title="Edit details"
+                                  style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : T.text6, marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
+                                  · · ·
+                                </div>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {ADMIN_MODE && editingMeta && editingMeta.shoeId === shoe.id && wishCws.includes(editingMeta.colorway) && (
+                          <MetaEditForm editingMeta={editingMeta} metaForm={metaForm} setMetaForm={setMetaForm} setColorwayMeta={setColorwayMeta} setEditingMeta={setEditingMeta} tierMeta={tierMeta} setTierMeta={setTierMeta} setGlowMeta={setGlowMeta} glowMeta={glowMeta} setImages={setImages} images={images} handleImageUpload={handleImageUpload} setRetiringMeta={setRetiringMeta} setRetireForm={setRetireForm} IS={IS} CT={CT} T={T} dark={dark} isWishlist colorwayWishlist={colorwayWishlist} setColorwayWishlist={setColorwayWishlist} />
+                        )}
+                      </div>
+                    );
+                  }
                   })}
                 </div>
               </div>
@@ -2290,7 +2192,7 @@
             })()}
             {ADMIN_MODE && view === "history" && (() => {
               // Build flat list of all wear entries
-              const allEntries = inventory.flatMap(shoe =>
+              const allEntries = owned.flatMap(shoe =>
                 (wearLog[shoe.id] || []).map((entry, idx) => ({
                   shoe: shoe.name,
                   shortName: shoe.shortName,
@@ -2330,7 +2232,7 @@
               });
 
               // Colorways for selected shoe
-              const filterShoeObj = histFilterShoe ? inventory.find(s => String(s.id) === histFilterShoe) : null;
+              const filterShoeObj = histFilterShoe ? owned.find(s => String(s.id) === histFilterShoe) : null;
               const filterShoeColorways = filterShoeObj ? (colorways[filterShoeObj.shortName] || []) : [];
 
               const getShoeSortKey = (entry) => {
@@ -2410,7 +2312,7 @@
                         <select value={histFilterShoe} onChange={e => { setHistFilterShoe(e.target.value); setHistFilterCw(""); }}
                           style={{ ...IS, width:"180px", fontSize:"11px", padding:"5px" }}>
                           <option value="">All shoes</option>
-                          {inventory.map(s => <option key={s.id} value={String(s.id)}>{s.name}</option>)}
+                          {owned.map(s => <option key={s.id} value={String(s.id)}>{s.name}</option>)}
                         </select>
                       </div>
                       <div style={{ flex:"0 0 auto" }}>
@@ -2487,8 +2389,95 @@
 
             {/* ── STATS ── */}
             {view === "stats" && (() => {
-              const { wornRanked, priceRanked, valueRanked, iceRanked, gapRanked } = top10Rankings;
-              const ranked = top10Filter === "worn" ? wornRanked : top10Filter === "price" ? priceRanked : top10Filter === "value" ? valueRanked : top10Filter === "ice" ? iceRanked : gapRanked;
+              // Build wear counts per colorway
+              const wearCounts = {};
+              owned.forEach(shoe => {
+                const entries = wearLog[shoe.id] || [];
+                entries.forEach(entry => {
+                  const key = `${shoe.id}_${entry.colorway}`;
+                  if (tierExcludedFromRotation(tierOf(tierMeta, key))) return;
+                  if (!wearCounts[key]) wearCounts[key] = { shoe, colorway: entry.colorway, count: 0, lastWorn: entry.date };
+                  wearCounts[key].count++;
+                  if (entry.date > wearCounts[key].lastWorn) wearCounts[key].lastWorn = entry.date;
+                });
+              });
+              const wornRanked = Object.values(wearCounts)
+                .sort((a, b) => {
+                  if (b.count !== a.count) return b.count - a.count;
+                  return a.lastWorn < b.lastWorn ? -1 : a.lastWorn > b.lastWorn ? 1 : 0;
+                })
+                .slice(0, 10);
+
+              // Build price ranking per colorway
+              const priceEntries = [];
+              owned.forEach(shoe => {
+                (colorways[shoe.shortName] || []).filter(cw => !colorwayWishlist[`${shoe.id}_${cw}`]).forEach(cw => {
+                  if (tierExcludedFromRotation(tierOf(tierMeta, `${shoe.id}_${cw}`))) return;
+                  const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
+                  if (!meta.purchasePrice) return;
+                  const priceStr = meta.purchasePrice.replace(/[^0-9.]/g, "");
+                  const price = parseFloat(priceStr);
+                  if (isNaN(price) || price <= 0) return;
+                  priceEntries.push({ shoe, colorway: cw, price, purchaseDate: meta.purchaseDate || "" });
+                });
+              });
+              const priceRanked = priceEntries
+                .sort((a, b) => {
+                  if (b.price !== a.price) return b.price - a.price;
+                  return a.purchaseDate < b.purchaseDate ? -1 : a.purchaseDate > b.purchaseDate ? 1 : 0;
+                })
+                .slice(0, 10);
+
+              // Build best value ranking — wears per dollar (needs both wear data and price)
+              const valueEntries = [];
+              owned.forEach(shoe => {
+                (colorways[shoe.shortName] || []).filter(cw => !colorwayWishlist[`${shoe.id}_${cw}`]).forEach(cw => {
+                  if (tierExcludedFromRotation(tierOf(tierMeta, `${shoe.id}_${cw}`))) return;
+                  const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
+                  if (!meta.purchasePrice) return;
+                  const priceStr = meta.purchasePrice.replace(/[^0-9.]/g, "");
+                  const price = parseFloat(priceStr);
+                  if (isNaN(price) || price <= 0) return;
+                  const wears = (wearLog[shoe.id] || []).filter(e => e.colorway === cw).length;
+                  if (wears === 0) return;
+                  const costPerWear = price / wears;
+                  valueEntries.push({ shoe, colorway: cw, price, wears, costPerWear });
+                });
+              });
+              const valueRanked = valueEntries
+                .sort((a, b) => {
+                  if (a.costPerWear !== b.costPerWear) return a.costPerWear - b.costPerWear;
+                  // Tiebreaker: more wears ranks higher
+                  return b.wears - a.wears;
+                })
+                .slice(0, 10);
+
+              // Build longest on ice ranking — days between purchase date and first wear
+              const iceEntries = [];
+              owned.forEach(shoe => {
+                (colorways[shoe.shortName] || []).filter(cw => !colorwayWishlist[`${shoe.id}_${cw}`]).forEach(cw => {
+                  if (tierExcludedFromRotation(tierOf(tierMeta, `${shoe.id}_${cw}`))) return;
+                  const meta = colorwayMeta[`${shoe.id}_${cw}`] || {};
+                  if (!meta.purchaseDate) return;
+                  const wears = (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
+                  if (wears.length === 0) return;
+                  const firstWorn = [...wears].sort((a, b) => a.date < b.date ? -1 : 1)[0].date;
+                  const purchaseMs = new Date(meta.purchaseDate + "T00:00:00").getTime();
+                  const firstWornMs = new Date(firstWorn + "T00:00:00").getTime();
+                  const daysOnIce = Math.round((firstWornMs - purchaseMs) / 86400000);
+                  if (daysOnIce < 0) return;
+                  iceEntries.push({ shoe, colorway: cw, daysOnIce, purchaseDate: meta.purchaseDate, firstWorn });
+                });
+              });
+              const iceRanked = iceEntries
+                .sort((a, b) => {
+                  if (b.daysOnIce !== a.daysOnIce) return b.daysOnIce - a.daysOnIce;
+                  // Tiebreaker: earlier purchase date ranks higher
+                  return a.purchaseDate < b.purchaseDate ? -1 : 1;
+                })
+                .slice(0, 10);
+
+              const ranked = top10Filter === "worn" ? wornRanked : top10Filter === "price" ? priceRanked : top10Filter === "value" ? valueRanked : iceRanked;
               const podium = ranked.slice(0, 3);
               const rest = ranked.slice(3);
               const podiumOrder = [podium[1], podium[0], podium[2]];
@@ -2503,7 +2492,6 @@
                 if (top10Filter === "price" && ADMIN_MODE) return `$${entry.price.toFixed(2)}`;
                 if (top10Filter === "value") return ADMIN_MODE ? `$${entry.costPerWear.toFixed(2)}/wear (${entry.wears} wears · $${entry.price.toFixed(2)})` : `Worn ${entry.wears} ${entry.wears === 1 ? "Time" : "Times"}`;
                 if (top10Filter === "ice") return `${entry.daysOnIce} ${entry.daysOnIce === 1 ? "day" : "days"} on ice`;
-                if (top10Filter === "gap") return `${entry.days} ${entry.days === 1 ? "day" : "days"} gap · ${entry.from} → ${entry.to}`;
                 return null;
               };
 
@@ -2517,14 +2505,14 @@
                         padding:"8px 12px", fontSize:"10px", letterSpacing:"3px",
                         fontFamily:"'Aptos','Segoe UI',sans-serif", width:"100%",
                       }}>
-                        {[["worn","MOST WORN"],["price","MOST EXPENSIVE"],["value","BEST VALUE"],["ice","LONGEST ON ICE"],["gap","LONGEST GAP"]].map(([id, label]) => (
+                        {[["worn","MOST WORN"],["price","MOST EXPENSIVE"],["value","BEST VALUE"],["ice","LONGEST ON ICE"]].map(([id, label]) => (
                           <option key={id} value={id}>{label}</option>
                         ))}
                       </select>
                     </div>
                   ) : (
                     <div style={{ display:"flex", gap:"16px", marginBottom:"24px", flexWrap:"wrap" }}>
-                      {[["worn","MOST WORN"],["price","MOST EXPENSIVE"], ["value","BEST VALUE"], ["ice","LONGEST ON ICE"], ["gap","LONGEST GAP"]].map(([id, label]) => (
+                      {[["worn","MOST WORN"],["price","MOST EXPENSIVE"], ["value","BEST VALUE"], ["ice","LONGEST ON ICE"]].map(([id, label]) => (
                         <button key={id} onClick={() => setTop10Filter(id)} style={{
                           background:"transparent", border:"none", cursor:"pointer",
                           fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
@@ -2547,7 +2535,7 @@
                         const h = isMobilePublic ? Math.round(podiumHeights[pi] * 0.7) : podiumHeights[pi];
                         const sub = subtitle(entry);
                         return (
-                          <div key={entry.entryKey || metaKey} style={{ display:"flex", flexDirection:"column", alignItems:"center", flex:"1 1 0", maxWidth:"250px" }}>
+                          <div key={metaKey} style={{ display:"flex", flexDirection:"column", alignItems:"center", flex:"1 1 0", maxWidth:"250px" }}>
                             <div style={{ background:T.cardBg, border:`1px solid ${color}`, padding: isMobilePublic ? "10px" : "16px", width:"100%", textAlign:"center", marginBottom:0 }}>
                               <div style={{ fontSize: isMobilePublic ? "16px" : "22px", fontWeight:"bold", color, marginBottom:"8px" }}>{podiumLabels[pi]}</div>
                               {podiumImg ? (
@@ -2639,7 +2627,7 @@
                         const rank = i + 5;
                         const sub = subtitle(entry);
                         return (
-                          <div key={entry.entryKey || metaKey} style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "10px" : "14px", textAlign:"center" }}>
+                          <div key={metaKey} style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "10px" : "14px", textAlign:"center" }}>
                             <div style={{ fontSize: isMobilePublic ? "14px" : "16px", fontWeight:"bold", color:T.text5, marginBottom:"8px" }}>{rank}</div>
                             {img ? (
                               <div style={{ width: isMobilePublic ? "60px" : "80px", height: isMobilePublic ? "38px" : "50px", overflow:"hidden", background: dark ? "#222222" : "#ffffff", margin:"0 auto" }}>
@@ -2668,7 +2656,7 @@
                         const compactImgH = Math.round(compactImgW * 0.625);
                         const sub = subtitle(entry);
                         return (
-                          <div key={entry.entryKey || metaKey} style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "10px" : "12px", textAlign:"center" }}>
+                          <div key={metaKey} style={{ background:T.cardBg, border:`1px solid ${T.border}`, padding: isMobilePublic ? "10px" : "12px", textAlign:"center" }}>
                             <div style={{ fontSize: isMobilePublic ? "12px" : "14px", fontWeight:"bold", color:T.text5, marginBottom:"6px" }}>{rank}</div>
                             {img ? (
                               <div style={{ width:compactImgW, height:compactImgH, overflow:"hidden", background: dark ? "#222222" : "#ffffff", margin:"0 auto" }}>
@@ -2687,13 +2675,12 @@
                     </div>
                   )}
                   {ranked.length === 0 && (
-                    <div style={{ fontSize:"11px", letterSpacing:"4px", color:T.text5 }}>{top10Filter === "worn" ? "NO WEARS LOGGED YET" : top10Filter === "price" ? "NO PRICES ENTERED YET" : top10Filter === "value" ? "NO WORN SHOES WITH PRICES YET" : top10Filter === "gap" ? "NO SHOES WITH 2+ WEARS YET" : "NO WORN SHOES WITH PURCHASE DATES YET"}</div>
+                    <div style={{ fontSize:"11px", letterSpacing:"4px", color:T.text5 }}>{top10Filter === "worn" ? "NO WEARS LOGGED YET" : top10Filter === "price" ? "NO PRICES ENTERED YET" : top10Filter === "value" ? "NO WORN SHOES WITH PRICES YET" : "NO WORN SHOES WITH PURCHASE DATES YET"}</div>
                   )}
                   {/* Subtitle */}
                   {top10Filter === "price" && ranked.length > 0 && <div style={{ fontSize:"10px", color:T.text5, letterSpacing:"1px", marginTop:"20px" }}>Ranked by purchase price</div>}
                   {top10Filter === "value" && ranked.length > 0 && <div style={{ fontSize:"10px", color:T.text5, letterSpacing:"1px", marginTop:"20px" }}>Purchase price ÷ number of times worn</div>}
                   {top10Filter === "ice" && ranked.length > 0 && <div style={{ fontSize:"10px", color:T.text5, letterSpacing:"1px", marginTop:"20px" }}>Days between purchase date and first wear</div>}
-                  {top10Filter === "gap" && ranked.length > 0 && <div style={{ fontSize:"10px", color:T.text5, letterSpacing:"1px", marginTop:"20px" }}>Longest gap between consecutive wears — same shoe can appear multiple times</div>}
                 </div>
               );
             })()}
@@ -2770,10 +2757,10 @@
           {ADMIN_MODE && <><button onClick={() => {
             setQuickLog(true);
             setQuickDate(localDateStr());
-            const firstShoe = inventory[0];
-            if (firstShoe) {
-              setQuickShoeId(String(firstShoe.id));
-              setQuickColorway(colorways[firstShoe.shortName]?.[0] || "");
+            const firstOwned = owned[0];
+            if (firstOwned) {
+              setQuickShoeId(String(firstOwned.id));
+              setQuickColorway(colorways[firstOwned.shortName]?.[0] || "");
             }
           }} style={{
             position:"fixed", bottom:"28px", right:"28px", zIndex:8888,
@@ -2785,7 +2772,7 @@
 
           {/* Quick Log Modal */}
           {quickLog && (() => {
-            const qShoe = inventory.find(s => String(s.id) === String(quickShoeId));
+            const qShoe = owned.find(s => String(s.id) === String(quickShoeId));
             const qColorways = qShoe ? (colorways[qShoe.shortName] || []) : [];
             return (
               <div onClick={() => setQuickLog(false)} style={{
@@ -2801,10 +2788,10 @@
                       <div style={{ fontSize:"9px", letterSpacing:"2px", color: T.text5, marginBottom:"6px" }}>SHOE</div>
                       <select value={quickShoeId} onChange={e => {
                         setQuickShoeId(e.target.value);
-                        const s = inventory.find(sh => String(sh.id) === e.target.value);
+                        const s = owned.find(sh => String(sh.id) === e.target.value);
                         setQuickColorway(s ? (colorways[s.shortName]?.[0] || "") : "");
                       }} style={{ ...IS, width:"100%" }}>
-                        {inventory.map(s => <option key={s.id} value={String(s.id)}>{s.name}</option>)}
+                        {owned.map(s => <option key={s.id} value={String(s.id)}>{s.name}</option>)}
                       </select>
                     </div>
                     {qColorways.length > 0 && (

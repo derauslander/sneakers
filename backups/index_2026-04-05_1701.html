@@ -528,10 +528,10 @@
     function GraveyardCard({ entryKey, entry, T, CT, dark, setColorways, setGraveyardMeta, isMobilePublic = false }) {
       const [hovered,    setHovered]    = useState(false);
       const [showHover,  setShowHover]  = useState(false);
-      const [ghosted,    setGhosted]    = useState(false);
+      const [glowOn,     setGlowOn]     = useState(false);
       const timerRef     = useRef(null);
       const crossfadeRef = useRef(null);
-      const ghostRef     = useRef(null);
+      const glowRef      = useRef(null);
 
       const entryTier = entry.tier || (entry.isGrail ? "diamond" : entry.isBeater ? "bronze" : "silver");
       const tierInfo = TIERS[entryTier] || TIERS.silver;
@@ -542,13 +542,17 @@
 
       const triggerOpen = () => {
         if (!entry.img) return;
-        setHovered(true); setShowHover(false); setGhosted(false);
-        ghostRef.current = setTimeout(() => setGhosted(true), 500);
+        setHovered(true); setShowHover(false); setGlowOn(false);
+        if (hasCrossfade && entry.hoverImg) {
+          crossfadeRef.current = setTimeout(() => { setShowHover(true); }, 200);
+          glowRef.current = setTimeout(() => setGlowOn(true), 1500);
+        } else {
+          glowRef.current = setTimeout(() => setGlowOn(true), 1500);
+        }
       };
       const triggerClose = () => {
-        clearTimeout(crossfadeRef.current);
-        clearTimeout(ghostRef.current);
-        setHovered(false); setShowHover(false); setGhosted(false);
+        clearTimeout(crossfadeRef.current); clearTimeout(glowRef.current);
+        setHovered(false); setShowHover(false); setGlowOn(false);
       };
       const handleMouseEnter = () => { if (isMobilePublic) return; if (!entry.img) return; timerRef.current = setTimeout(triggerOpen, 500); };
       const handleMouseLeave = () => { if (isMobilePublic) return; clearTimeout(timerRef.current); triggerClose(); };
@@ -558,22 +562,17 @@
         return () => {
           clearTimeout(timerRef.current);
           clearTimeout(crossfadeRef.current);
-          clearTimeout(ghostRef.current);
+          clearTimeout(glowRef.current);
         };
       }, []);
 
       const cardW = isMobilePublic ? "140px" : "200px";
       const imgW = isMobilePublic ? "108px" : "168px";
       const imgH = isMobilePublic ? "68px" : "105px";
-      const ghostFilter = "none";
-      const normalFilter = "none";
-
-      // Tombstone shape — classic rounded arch, 240×320px at desktop scale
-      const stoneW = isMobilePublic ? 180 : 260;
-      const stoneH = isMobilePublic ? (entry.story ? 280 : 220) : (entry.story ? 400 : 320);
-      const archR = stoneW / 2; // full semicircle arch
-      const engravedColor = "rgba(0,0,0,0.45)";
-      const engravedShadow = "0 1px 0 rgba(255,255,255,0.08)";
+      const ghostFilter = "grayscale(0.4) sepia(0.6) hue-rotate(170deg) saturate(1.5) brightness(1.3)";
+      const normalFilter = "grayscale(0) sepia(0) hue-rotate(0deg) saturate(1) brightness(1)";
+      const ghostGlow = "drop-shadow(0 0 25px rgba(120,160,220,0.5)) drop-shadow(0 0 60px rgba(100,140,200,0.3))";
+      const normalGlow = "drop-shadow(0 0 8px rgba(255,255,255,0.4)) drop-shadow(0 0 0px rgba(100,140,200,0))";
 
       return (
         <div style={{ background: dark ? T.cardBg : "#f9f9f9", border:`1px solid ${T.border}`, padding:"16px", width: cardW, flex:"0 0 auto" }}>
@@ -583,9 +582,9 @@
               <>
                 <img src={entry.img} alt={entry.colorway} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={handleTap}
                   style={{ width: imgW, height: imgH, objectFit:"cover", display:"block", cursor: isMobilePublic ? "pointer" : "zoom-in",
-                    filter: hovered ? `drop-shadow(0 0 20px ${glowColor})` : "none",
+                    filter: glowOn ? `drop-shadow(0 0 20px ${glowColor})` : "none",
                     opacity: hasCrossfade && entry.hoverImg && showHover ? 0 : 1,
-                    transition:"opacity 3s ease-in-out, filter 0.3s ease-in-out" }} />
+                    transition:"opacity 3s ease-in-out, filter 3s ease-in-out" }} />
                 {hasCrossfade && entry.hoverImg && (
                   <img src={entry.hoverImg} alt={entry.colorway} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={handleTap}
                     style={{ position:"absolute", top:0, left:0, width: imgW, height: imgH, objectFit:"cover",
@@ -601,62 +600,27 @@
             )}
             {/* Hover overlay */}
             {hovered && entry.img && (
-              <div onClick={triggerClose} style={{ position:"fixed", top:0, left:0, width:"100vw", height:"100vh", background:"rgba(0,0,0,0.88)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents: isMobilePublic ? "auto" : "none" }}>
-                <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"24px" }}>
-
-                  {/* Tombstone shape */}
-                  <div style={{ position:"relative", width:`${stoneW}px`, height:`${stoneH}px`, flexShrink:0 }}>
-                    {/* Stone shape — CSS clip with rounded arch top */}
-                    <div style={{
-                      position:"absolute", inset:0,
-                      backgroundImage:"url('assets/tombstone.png')",
-                      backgroundSize:"cover", backgroundPosition:"center",
-                      borderRadius:`${archR}px ${archR}px 6px 6px`,
-                      overflow:"hidden",
-                      boxShadow:"0 8px 32px rgba(0,0,0,0.7), inset 0 0 40px rgba(0,0,0,0.3)",
-                    }}>
-                      {/* Dark overlay for depth */}
-                      <div style={{ position:"absolute", inset:0, background:"rgba(0,0,0,0.25)", borderRadius:`${archR}px ${archR}px 6px 6px` }} />
-                    </div>
-
-                    {/* Engraved text — upper arch area */}
-                    <div style={{ position:"absolute", top:0, left:0, right:0, padding:`${Math.round(archR * 0.3)}px 20px 12px`, textAlign:"center" }}>
-                      {tierInfo.ripLabel && (
-                        <div style={{ fontSize:"11px", letterSpacing:"4px", color: tierInfo.color || "rgba(230,230,220,0.95)", textShadow: engravedShadow, marginBottom:"8px", opacity:0.95 }}>{tierInfo.ripLabel}</div>
-                      )}
-                      <div style={{ fontSize: isMobilePublic ? "11px" : "13px", letterSpacing:"2px", color:"rgba(230,230,220,0.95)", textShadow: engravedShadow, fontWeight:"bold", lineHeight:1.4, marginBottom:"6px" }}>
-                        {entry.shoeName}
-                      </div>
-                      <div style={{ fontSize: isMobilePublic ? "10px" : "11px", letterSpacing:"1px", color:"rgba(210,210,200,0.9)", textShadow: engravedShadow, marginBottom:"8px" }}>
-                        {entry.colorway}
-                      </div>
-                      {(purchaseDate || retireDate) && (
-                        <div style={{ fontSize: isMobilePublic ? "9px" : "10px", color:"rgba(200,200,190,0.85)", letterSpacing:"1px", textShadow: engravedShadow, marginBottom: entry.story ? "10px" : "0" }}>
-                          {purchaseDate || "?"} — {retireDate || "?"}
-                        </div>
-                      )}
-                      {entry.story && (
-                        <div style={{ fontSize: isMobilePublic ? "9px" : "10px", fontStyle:"italic", color:"rgba(210,210,200,0.8)", textShadow: engravedShadow, lineHeight:1.6, letterSpacing:"0.3px", maxHeight:"80px", overflowY:"auto", marginTop:"2px" }}>
-                          {entry.story}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Shoe — img2 if available, nudged up and right for visual centering */}
-                    <div style={{ position:"absolute", inset:0, display:"flex", alignItems:"flex-end", justifyContent:"center", paddingBottom:"18%", paddingLeft:"8%" }}>
-                      <img src={entry.hoverImg || entry.img}
-                        alt={entry.colorway}
-                        style={{
-                          maxWidth:`${stoneW - 24}px`, maxHeight:`${Math.round(stoneH * 0.42)}px`,
-                          objectFit:"contain",
-                          filter: ghosted ? ghostFilter : normalFilter,
-                          transition:"filter 2.5s ease-in-out",
-                        }} />
-                    </div>
+              <div onClick={triggerClose} style={{ position:"fixed", top:0, left:0, width:"100vw", height:"100vh", background:"rgba(0,0,0,0.85)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents: isMobilePublic ? "auto" : "none" }}>
+                <div style={{ position:"relative", width: isMobilePublic ? "90vw" : "50vw", maxWidth:"600px", display:"flex", flexDirection:"column", alignItems:"center" }}>
+                  <div style={{ position:"relative", width:"100%", display:"flex", justifyContent:"center" }}>
+                    <img src={entry.img} alt={entry.colorway} style={{ maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: glowOn ? `${ghostFilter} ${ghostGlow}` : `${normalFilter} ${normalGlow}`, display:"block", opacity: hasCrossfade && entry.hoverImg && showHover ? 0 : 1, transition:"filter 5s ease-in-out, opacity 5s ease-in-out" }} />
+                    {hasCrossfade && entry.hoverImg && (
+                      <img src={entry.hoverImg} alt={entry.colorway} style={{ position:"absolute", top:0, left:"50%", transform: showHover ? "translateX(-50%) scale(1)" : "translateX(-50%) scale(0.95)", maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: `${ghostFilter} ${ghostGlow}`, opacity: showHover ? 1 : 0, transition:"opacity 5s ease-in-out, transform 5s ease-in-out" }} />
+                    )}
                   </div>
-
-
-                  {isMobilePublic && <div style={{ fontSize:"10px", color:"#555", letterSpacing:"2px" }}>TAP TO CLOSE</div>}
+                  <div style={{ width:"100%", marginTop:"16px", textAlign:"center" }}>
+                    {tierInfo.ripLabel && <div style={{ fontSize:"11px", letterSpacing:"6px", color: tierInfo.color, marginBottom:"6px", opacity: glowOn ? 1 : 0, transition:"opacity 3s ease-in-out" }}>{tierInfo.ripLabel}</div>}
+                    <div style={{ fontSize:"13px", letterSpacing:"3px", color: tierInfo.color && glowOn ? tierInfo.color : "#fff", transition:"color 3s ease-in-out" }}>{entry.shoeName} — {entry.colorway}</div>
+                    {(purchaseDate || retireDate) && (
+                      <div style={{ marginTop:"8px", fontSize:"10px", color:"#aaa", letterSpacing:"1px" }}>
+                        🪦 {purchaseDate || "?"} — {retireDate || "?"} 🪦
+                      </div>
+                    )}
+                    {entry.story && (
+                      <div style={{ marginTop:"12px", fontSize:"13px", color:"#fff", lineHeight:"1.8", letterSpacing:"0.5px" }}>{entry.story}</div>
+                    )}
+                    {isMobilePublic && <div style={{ marginTop:"16px", fontSize:"10px", color:"#666", letterSpacing:"2px" }}>TAP TO CLOSE</div>}
+                  </div>
                 </div>
               </div>
             )}
@@ -1485,11 +1449,11 @@
         <div style={{ minHeight:"100vh", background: T.bg }}>
 
           <div style={{ background:"#000000", borderBottom:"2px solid #e63946", position:"relative", minHeight: isMobilePublic ? "80px" : "200px", display:"flex", alignItems:"center" }}>
-            <img src="assets/banner.png" alt="" style={{ position:"absolute", top:0, left:0, width:"100%", height: isMobilePublic ? "80px" : "200px", objectFit:"cover", objectPosition:"center" }} />
+            <img src="banner.png" alt="" style={{ position:"absolute", top:0, left:0, width:"100%", height: isMobilePublic ? "80px" : "200px", objectFit:"cover", objectPosition:"center" }} />
             {/* Title — fills remaining space, layered */}
             <div style={{ flex:1, display:"flex", justifyContent:"center", alignItems:"center", position:"relative", zIndex:2, pointerEvents:"none" }}>
-              <img src="assets/title2.png" alt="DerAusländer" style={{ display:"block", height: isMobilePublic ? "28px" : "90px", objectFit:"contain" }} />
-              <img src="assets/title1.png" alt="The Vault" style={{ position:"absolute", display:"block", height: isMobilePublic ? "20px" : "60px", objectFit:"contain", animation:"fadeInTitle 1.5s ease-in-out 1s both", filter:"drop-shadow(0px 0px 4px rgba(0,0,0,1)) drop-shadow(0px 0px 8px rgba(0,0,0,1))" }} />
+              <img src="title2.png" alt="DerAusländer" style={{ display:"block", height: isMobilePublic ? "28px" : "90px", objectFit:"contain" }} />
+              <img src="title1.png" alt="The Vault" style={{ position:"absolute", display:"block", height: isMobilePublic ? "20px" : "60px", objectFit:"contain", animation:"fadeInTitle 1.5s ease-in-out 1s both", filter:"drop-shadow(0px 0px 4px rgba(0,0,0,1)) drop-shadow(0px 0px 8px rgba(0,0,0,1))" }} />
             </div>
             {/* Admin buttons — solid black panel */}
             {ADMIN_MODE && <div style={{ position:"relative", zIndex:2, flexShrink:0, display:"flex", gap:"24px", textAlign:"center", alignItems:"center", background:"#000000", borderLeft:"2px solid #e63946", padding:"16px 32px", height:"200px" }}>
