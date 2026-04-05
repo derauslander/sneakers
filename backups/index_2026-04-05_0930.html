@@ -824,12 +824,6 @@
                 </button>
               );
             })()}
-            {isWishlist && setColorwayWishlist && colorwayWishlist[key] && (
-              <button onClick={() => {
-                setColorwayWishlist(w => { const n={...w}; delete n[key]; return n; });
-                setEditingMeta(null);
-              }} style={{ background:"transparent", border:"1px solid #4cc9f0", color:"#4cc9f0", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>↩ MOVE TO COLLECTION</button>
-            )}
             {!isWishlist && (
               <button onClick={() => {
                 setRetiringMeta({ shoeId: editingMeta.shoeId, colorway: editingMeta.colorway });
@@ -889,7 +883,6 @@
       const [graveyardMeta,  setGraveyardMeta]  = useState(() => ADMIN_MODE ? load("vault_graveyard_meta", {}) : {});
       const [colorways,      setColorways]      = useState(() => ADMIN_MODE ? load("vault_colorways", {}) : {});
       const [colorwayWishlist, setColorwayWishlist] = useState(() => ADMIN_MODE ? load("vault_colorway_wishlist", {}) : {});
-      const [wishlistOrder,    setWishlistOrder]    = useState(() => ADMIN_MODE ? load("vault_wishlist_order", []) : []);
       const [displayLayout,  setDisplayLayout]  = useState(() => ADMIN_MODE ? load("vault_display_layout", []) : []);
       const [dreamLayout,    setDreamLayout]    = useState(() => { if (ADMIN_MODE) { const stored = load("vault_dream_layout", null); if (stored && stored.length) return stored; } return Array.from({length:8}, () => Array.from({length:5}, () => ({code:"",colorway:""}))); });
       const [displayMode,    setDisplayMode]    = useState("my");
@@ -963,7 +956,6 @@
       useEffect(() => save("vault_graveyard_meta", graveyardMeta),[graveyardMeta]);
       useEffect(() => save("vault_colorways",      colorways),    [colorways]);
       useEffect(() => save("vault_colorway_wishlist", colorwayWishlist), [colorwayWishlist]);
-      useEffect(() => save("vault_wishlist_order", wishlistOrder), [wishlistOrder]);
       useEffect(() => save("vault_display_layout",  displayLayout),[displayLayout]);
       useEffect(() => save("vault_dream_layout",    dreamLayout),  [dreamLayout]);
 
@@ -1200,7 +1192,7 @@
       };
 
       const exportJSON = () => {
-        const data = { inventory, wearLog, images, colorwayMeta, tierMeta, glowMeta, graveyardMeta, colorways, colorwayWishlist, wishlistOrder, displayLayout, dreamLayout, exportedAt: new Date().toISOString() };
+        const data = { inventory, wearLog, images, colorwayMeta, tierMeta, glowMeta, graveyardMeta, colorways, colorwayWishlist, displayLayout, dreamLayout, exportedAt: new Date().toISOString() };
         const json = JSON.stringify(data, null, 2);
         if (ADMIN_MODE) {
           // Save via server — backs up old vault-data.json, writes new one
@@ -1254,7 +1246,6 @@
             if (data.graveyardMeta) { setGraveyardMeta(data.graveyardMeta); save("vault_graveyard_meta",  data.graveyardMeta); }
             if (data.colorways)     { setColorways(data.colorways);         save("vault_colorways",       data.colorways); }
             if (data.colorwayWishlist) { setColorwayWishlist(data.colorwayWishlist); save("vault_colorway_wishlist", data.colorwayWishlist); }
-            if (data.wishlistOrder)    { setWishlistOrder(data.wishlistOrder);       save("vault_wishlist_order",    data.wishlistOrder); }
             if (data.displayLayout) { setDisplayLayout(data.displayLayout); save("vault_display_layout",  data.displayLayout); }
             if (data.dreamLayout)   { setDreamLayout(data.dreamLayout);     save("vault_dream_layout",    data.dreamLayout); }
             setImportMsg({ type:"success", text:"Backup restored successfully!" });
@@ -1984,8 +1975,12 @@
                 )}
 
                 <div style={{ fontSize:"9px", letterSpacing:"4px", color:T.text6, marginBottom:"16px" }}>
-                  {isDream ? <>DREAM DISPLAY · HOW IT COULD LOOK <span style={{ letterSpacing:"2px", opacity:0.7 }}>(<span style={{ display:"inline-block", width:"14px", height:"10px", border:"1px dashed #e63946", marginRight:"4px", marginLeft:"2px", verticalAlign:"middle" }}></span>DASHED BORDER = WISHLIST)</span></> : "MY COLLECTION · AS CURRENTLY DISPLAYED IN MY OFFICE"}
+                  {isDream ? "DREAM DISPLAY · HOW IT COULD LOOK" : "MY COLLECTION · AS CURRENTLY DISPLAYED IN MY OFFICE"}
                 </div>
+                {isDream && <div style={{ fontSize:"9px", letterSpacing:"2px", color:T.text6, marginBottom:"16px" }}>
+                  <span style={{ display:"inline-block", width:"14px", height:"10px", border:"1px dashed #e63946", marginRight:"6px", verticalAlign:"middle" }}></span>
+                  DASHED BORDER = WISHLIST
+                </div>}
                 {(() => {
                   const gridW = 5 * 160 + 4 * 8;
                   const availW = Math.min(window.innerWidth - 64, 1200);
@@ -2025,35 +2020,10 @@
             })()}
 
             {/* ── WISHLIST ── */}
-            {view === "wishlist" && (() => {
-              // Build unified ordered card list
-              const invCards = wishlist.map(s => ({ type:"inv", id: String(s.id), shoe: s }));
-              const cwCards  = owned.flatMap(s => {
-                const cws = (colorways[s.shortName] || []).filter(cw => colorwayWishlist[`${s.id}_${cw}`]);
-                return cws.length ? [{ type:"cw", id:`wish-cw-${s.id}`, shoe: s, wishCws: cws }] : [];
-              });
-              const allCards = [...invCards, ...cwCards];
-              const orderedCards = wishlistOrder.length
-                ? [...wishlistOrder.filter(id => allCards.find(c => c.id === id)).map(id => allCards.find(c => c.id === id)),
-                   ...allCards.filter(c => !wishlistOrder.includes(c.id))]
-                : allCards;
-              const moveCard = (idx, dir) => {
-                const ids = orderedCards.map(c => c.id);
-                const newIdx = idx + dir;
-                if (newIdx < 0 || newIdx >= ids.length) return;
-                const next = [...ids];
-                [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
-                setWishlistOrder(next);
-              };
-              const ArrowBtn = ({ onClick, disabled, label }) => (
-                <button onClick={onClick} disabled={disabled} style={{ background:"transparent", border:`1px solid ${disabled ? T.border : T.border2}`, color: disabled ? T.text7 : T.text4, padding:"2px 7px", cursor: disabled ? "default" : "pointer", fontSize:"12px", lineHeight:1, fontFamily:"'Aptos','Segoe UI',sans-serif" }}>{label}</button>
-              );
-              return (
+            {view === "wishlist" && (
               <div>
                 <div style={isMobilePublic ? { display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" } : { display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(340px,1fr))", gap:"12px" }}>
-                  {orderedCards.map((card, cardIdx) => {
-                  if (card.type === "inv") {
-                  const shoe = card.shoe;
+                  {wishlist.map(shoe => {
                     const shoeColorways = colorways[shoe.shortName] || [shoe.shortName];
                     const col = CAT[shoe.category] || CAT.Jordan;
                     const imgW = isMobilePublic ? 72 : 120;
@@ -2068,7 +2038,7 @@
                             <div style={{ fontSize:"14px", color:T.text, fontWeight:"bold", marginBottom:"3px" }}>{shoe.name}</div>
                           </div>
                           <div style={{ display:"flex", gap:"6px", flexShrink:0, marginLeft:"12px" }}>
-                            {ADMIN_MODE && <><div style={{ display:"flex", gap:"3px", marginRight:"4px" }}><ArrowBtn label="▲" onClick={() => moveCard(cardIdx, -1)} disabled={cardIdx === 0} /><ArrowBtn label="▼" onClick={() => moveCard(cardIdx, 1)} disabled={cardIdx === orderedCards.length - 1} /></div><Btn label="GOT IT" onClick={() => setInventory(inv => inv.map(s => s.id===shoe.id ? {...s,wishlist:false,quantity:1} : s))} color="#e63946" />
+                            {ADMIN_MODE && <><Btn label="GOT IT" onClick={() => setInventory(inv => inv.map(s => s.id===shoe.id ? {...s,wishlist:false,quantity:1} : s))} color="#e63946" />
                             <Btn label="EDIT" onClick={() => {
                               setNewShoe({ name:shoe.name, shortName:shoe.shortName, category:shoe.category, quantity:shoe.quantity, wishlist:shoe.wishlist });
                               setEditColorways([...(colorways[shoe.shortName] || [])]);
@@ -2126,22 +2096,19 @@
                         )}
                       </div>
                     );
-                  } else {
-                    // colorwayWishlist card
-                    const shoe = card.shoe;
-                    const wishCws = card.wishCws;
+                  })}
+                  {/* ── WISHLIST COLORWAYS FROM OWNED SHOES ── */}
+                  {owned.flatMap(shoe => {
+                    const wishCws = (colorways[shoe.shortName] || []).filter(cw => colorwayWishlist[`${shoe.id}_${cw}`]);
+                    if (wishCws.length === 0) return [];
                     const col = CAT[shoe.category] || CAT.Jordan;
                     const imgW = isMobilePublic ? 72 : 120;
                     const imgH = Math.round(imgW * 0.625);
                     const cardMinW = isMobilePublic ? "100%" : Math.max(200, wishCws.length * (imgW + 16) + 32);
-                    return (
+                    return [(
                       <div key={`wish-cw-${shoe.id}`} style={{ background:T.cardBg, border:`1px dashed ${T.border2}`, padding:"16px", minWidth: cardMinW, flex: isMobilePublic ? "1 1 100%" : "0 1 auto" }}>
                         <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:"12px" }}>
                           <div style={{ fontSize:"14px", color:T.text, fontWeight:"bold" }}>{shoe.name}</div>
-                          {ADMIN_MODE && <div style={{ display:"flex", gap:"3px", marginLeft:"12px", flexShrink:0 }}>
-                            <ArrowBtn label="▲" onClick={() => moveCard(cardIdx, -1)} disabled={cardIdx === 0} />
-                            <ArrowBtn label="▼" onClick={() => moveCard(cardIdx, 1)} disabled={cardIdx === orderedCards.length - 1} />
-                          </div>}
                         </div>
                         <div style={{ display:"flex", flexWrap:"wrap", gap:"8px" }}>
                           {wishCws.map(cw => {
@@ -2182,13 +2149,11 @@
                           <MetaEditForm editingMeta={editingMeta} metaForm={metaForm} setMetaForm={setMetaForm} setColorwayMeta={setColorwayMeta} setEditingMeta={setEditingMeta} tierMeta={tierMeta} setTierMeta={setTierMeta} setGlowMeta={setGlowMeta} glowMeta={glowMeta} setImages={setImages} images={images} handleImageUpload={handleImageUpload} setRetiringMeta={setRetiringMeta} setRetireForm={setRetireForm} IS={IS} CT={CT} T={T} dark={dark} isWishlist colorwayWishlist={colorwayWishlist} setColorwayWishlist={setColorwayWishlist} />
                         )}
                       </div>
-                    );
-                  }
+                    )];
                   })}
                 </div>
               </div>
-              );
-            })()}
+            )}
             {ADMIN_MODE && view === "history" && (() => {
               // Build flat list of all wear entries
               const allEntries = owned.flatMap(shoe =>

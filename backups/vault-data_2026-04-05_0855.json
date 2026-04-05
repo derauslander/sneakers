@@ -728,15 +728,7 @@
     "7_Cardinal_hover2": "Shoes/7_Cardinal_hover2.png",
     "1774096319133_Billy Hoyle_hover2": "Shoes/1774096319133_Billy Hoyle_hover2.png",
     "15_Black Lava_hover": "Shoes/15_Black Lava_hover.png",
-    "15_Black Lava_hover2": "Shoes/15_Black Lava_hover2.png",
-    "4_Red Cement_hover2": "Shoes/4_Red Cement_hover2.png",
-    "1773621809428_Sea Salt_hover2": "Shoes/1773621809428_Sea Salt_hover2.png",
-    "18_Concord_hover": "Shoes/18_Concord_hover.png",
-    "18_Space Jam_hover": "Shoes/18_Space Jam_hover.png",
-    "1774096319133_Billy Hoyle_hover": "Shoes/1774096319133_Billy Hoyle_hover.png",
-    "16_White Infrared_hover": "Shoes/16_White Infrared_hover.png",
-    "16_White Infrared": "Shoes/16_White Infrared.png",
-    "16_White Infrared_hover2": "Shoes/16_White Infrared_hover2.png"
+    "15_Black Lava_hover2": "Shoes/15_Black Lava_hover2.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -1244,17 +1236,6 @@
       "story": "",
       "saleDate": "",
       "saleTime": ""
-    },
-    "16_White Infrared": {
-      "purchaseDate": "",
-      "purchasePrice": "",
-      "retailer": "",
-      "size": "",
-      "notes": "",
-      "ogYear": "",
-      "story": "",
-      "saleDate": "",
-      "saleTime": ""
     }
   },
   "tierMeta": {
@@ -1303,8 +1284,7 @@
     "15_Black Lava": "platinum",
     "1775259901810_Dark Grape": "gold",
     "19_Voltage Purple": "platinum",
-    "18_Concord": "gold",
-    "16_White Infrared": "gold"
+    "18_Concord": "gold"
   },
   "glowMeta": {
     "6_Reverse Infrared": true,
@@ -1390,8 +1370,7 @@
       "Black Lava"
     ],
     "SC2": [
-      "Volt",
-      "White Infrared"
+      "Volt"
     ],
     "AM86": [
       "Air Max Day (Royal Volt)"
@@ -1418,17 +1397,8 @@
     ]
   },
   "colorwayWishlist": {
-    "15_Black Lava": true,
-    "16_White Infrared": true
+    "15_Black Lava": true
   },
-  "wishlistOrder": [
-    "wish-cw-15",
-    "19",
-    "1775259901810",
-    "18",
-    "1774096319133",
-    "wish-cw-16"
-  ],
   "displayLayout": [
     [
       {
@@ -1785,5 +1755,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-04-05T13:29:52.872Z"
+  "exportedAt": "2026-04-05T10:25:34.956Z"
 }

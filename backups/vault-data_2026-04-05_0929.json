@@ -1421,14 +1421,6 @@
     "15_Black Lava": true,
     "16_White Infrared": true
   },
-  "wishlistOrder": [
-    "wish-cw-15",
-    "19",
-    "1775259901810",
-    "18",
-    "1774096319133",
-    "wish-cw-16"
-  ],
   "displayLayout": [
     [
       {
@@ -1785,5 +1777,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-04-05T13:29:52.872Z"
+  "exportedAt": "2026-04-05T13:17:09.107Z"
 }
