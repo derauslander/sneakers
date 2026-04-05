@@ -1426,54 +1426,9 @@
       "Dark Grape"
     ]
   },
-  "colorwayOwned": {
-    "1_Royal Reimagined": true,
-    "1_Wolf Grey": true,
-    "2_Black Cement": true,
-    "3_White Cement Reimagined": true,
-    "3_Black Cement": true,
-    "3_A Ma Maniere": true,
-    "3_Rare Air": true,
-    "3_A Ma Maniere WYWS": true,
-    "4_Fire Red": true,
-    "4_Black Cement": true,
-    "4_White Cement": true,
-    "4_Military Blue": true,
-    "4_What the 4": true,
-    "4_A Ma Maniere": true,
-    "4_A Ma Maniere WYWS": true,
-    "4_Cave Stone": true,
-    "4_Red Cement": true,
-    "5_Black Tongue": true,
-    "5_Black Metallic Reimagined": true,
-    "5_Fire Red": true,
-    "5_Grape": true,
-    "5_A Ma Maniere Dawn": true,
-    "6_Infrared": true,
-    "6_Reverse Infrared": true,
-    "7_Cardinal": true,
-    "8_Playoffs": true,
-    "9_Olive": true,
-    "10_Steel": true,
-    "11_Flu Game": true,
-    "12_Black Flint": true,
-    "13_Flint Grey": true,
-    "14_Chicago": true,
-    "15_Hot Lava": true,
-    "15_Stone Blue": true,
-    "15_Pixel Court": true,
-    "15_Black Lava": false,
-    "16_Volt": true,
-    "16_White Infrared": false,
-    "21_Purple": true,
-    "17_Air Max Day (Royal Volt)": true,
-    "18_Concord": false,
-    "18_Space Jam": false,
-    "19_Volt": false,
-    "19_Voltage Purple": false,
-    "1773621809428_Sea Salt": true,
-    "1774096319133_Billy Hoyle": false,
-    "1775259901810_Dark Grape": false
+  "colorwayWishlist": {
+    "15_Black Lava": true,
+    "16_White Infrared": true
   },
   "wishlistOrder": [
     "wish-cw-15",
@@ -1839,5 +1794,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-04-05T19:58:39.676Z"
+  "exportedAt": "2026-04-05T17:33:25.592Z"
 }
