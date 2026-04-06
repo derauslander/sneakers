@@ -4,184 +4,138 @@
       "id": 1,
       "name": "Air Jordan 1",
       "shortName": "AJ1",
-      "quantity": 2,
-      "category": "Jordan",
-      "wishlist": false
+      "category": "Jordan"
     },
     {
       "id": 2,
       "name": "Air Jordan 2",
       "shortName": "AJ2",
-      "quantity": 1,
-      "category": "Jordan",
-      "wishlist": false
+      "category": "Jordan"
     },
     {
       "id": 3,
       "name": "Air Jordan 3",
       "shortName": "AJ3",
-      "quantity": 5,
-      "category": "Jordan",
-      "wishlist": false
+      "category": "Jordan"
     },
     {
       "id": 4,
       "name": "Air Jordan 4",
       "shortName": "AJ4",
-      "quantity": 9,
-      "category": "Jordan",
-      "wishlist": false
+      "category": "Jordan"
     },
     {
       "id": 5,
       "name": "Air Jordan 5",
       "shortName": "AJ5",
-      "quantity": 5,
-      "category": "Jordan",
-      "wishlist": false
+      "category": "Jordan"
     },
     {
       "id": 6,
       "name": "Air Jordan 6",
       "shortName": "AJ6",
-      "quantity": 2,
-      "category": "Jordan",
-      "wishlist": false
+      "category": "Jordan"
     },
     {
       "id": 7,
       "name": "Air Jordan 7",
       "shortName": "AJ7",
-      "quantity": 1,
-      "category": "Jordan",
-      "wishlist": false
+      "category": "Jordan"
     },
     {
       "id": 8,
       "name": "Air Jordan 8",
       "shortName": "AJ8",
-      "quantity": 1,
-      "category": "Jordan",
-      "wishlist": false
+      "category": "Jordan"
     },
     {
       "id": 9,
       "name": "Air Jordan 9",
       "shortName": "AJ9",
-      "quantity": 1,
-      "category": "Jordan",
-      "wishlist": false
+      "category": "Jordan"
     },
     {
       "id": 10,
       "name": "Air Jordan 10",
       "shortName": "AJ10",
-      "quantity": 1,
-      "category": "Jordan",
-      "wishlist": false
+      "category": "Jordan"
     },
     {
       "id": 11,
       "name": "Air Jordan 12",
       "shortName": "AJ12",
-      "quantity": 1,
-      "category": "Jordan",
-      "wishlist": false
+      "category": "Jordan"
     },
     {
       "id": 12,
       "name": "Air Jordan 13",
       "shortName": "AJ13",
-      "quantity": 1,
-      "category": "Jordan",
-      "wishlist": false
+      "category": "Jordan"
     },
     {
       "id": 13,
       "name": "Air Jordan 14",
       "shortName": "AJ14",
-      "quantity": 1,
-      "category": "Jordan",
-      "wishlist": false
+      "category": "Jordan"
     },
     {
       "id": 14,
       "name": "Air Jordan 40",
       "shortName": "AJ40",
-      "quantity": 1,
-      "category": "Jordan",
-      "wishlist": false
+      "category": "Jordan"
     },
     {
       "id": 15,
       "name": "Air Tech Challenge 2",
       "shortName": "ATC2",
-      "quantity": 3,
-      "category": "Nike",
-      "wishlist": false
+      "category": "Nike"
     },
     {
       "id": 16,
       "name": "Air Trainer SC2",
       "shortName": "SC2",
-      "quantity": 1,
-      "category": "Nike",
-      "wishlist": false
+      "category": "Nike"
     },
     {
       "id": 21,
       "name": "Air Force Max CB",
       "shortName": "AFMCB",
-      "quantity": 1,
-      "category": "Nike",
-      "wishlist": false
+      "category": "Nike"
     },
     {
       "id": 17,
       "name": "Air Max 86",
       "shortName": "AM86",
-      "quantity": 1,
-      "category": "Nike",
-      "wishlist": false
+      "category": "Nike"
     },
     {
       "id": 18,
       "name": "Air Jordan 11",
       "shortName": "AJ11",
-      "quantity": 0,
-      "category": "Jordan",
-      "wishlist": true
+      "category": "Jordan"
     },
     {
       "id": 19,
       "name": "Air Tech Challenge 3",
       "shortName": "ATC3",
-      "quantity": 0,
-      "category": "Nike",
-      "wishlist": true
+      "category": "Nike"
     },
     {
       "name": "NB 1080 V14",
       "shortName": "NB FF",
       "category": "New Balance",
-      "quantity": 1,
-      "wishlist": false,
       "id": 1773621809428
     },
     {
       "name": "Air Command Force",
       "shortName": "ACF",
       "category": "Nike",
-      "quantity": 1,
-      "wishlist": true,
       "id": 1774096319133
     },
     {
       "name": "Air Tech Challenge 4",
       "shortName": "ATC4",
       "category": "Nike",
-      "quantity": 1,
-      "wishlist": true,
       "id": 1775259901810
     }
   ],

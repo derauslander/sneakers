@@ -117,6 +117,11 @@
       return isMobile;
     };
 
+    const load = (key, fallback) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } };
+    const save = (key, val) => { if (!ADMIN_MODE) return; try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.error(e); } };
+    const localDateStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+    const formatDate = (iso) => iso ? new Date(iso+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : null;
+
     // ── Anniversary check helper ─────────────────────────────────────────
     const isAnniversaryToday = (purchaseDate) => {
       if (!purchaseDate) return false;
@@ -135,12 +140,6 @@
       const diff = today - purchase;
       return diff >= 0 && diff <= 7 * 86400000;
     };
-
-
-    const load = (key, fallback) => { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } };
-    const save = (key, val) => { if (!ADMIN_MODE) return; try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.error(e); } };
-    const localDateStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
-    const formatDate = (iso) => iso ? new Date(iso+"T00:00:00").toLocaleDateString("en-US",{month:"2-digit",day:"2-digit",year:"numeric"}) : null;
 
     // ── Tier System ──────────────────────────────────────────────────────
     const TIERS = {
