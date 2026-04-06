@@ -637,16 +637,16 @@
                       <div style={{ fontSize: isMobilePublic ? "11px" : "13px", letterSpacing:"2px", color:"rgba(230,230,220,0.95)", textShadow: engravedShadow, fontWeight:"bold", lineHeight:1.4, marginBottom:"6px" }}>
                         {entry.shoeName}
                       </div>
-                      <div style={{ fontSize: isMobilePublic ? "10px" : "11px", letterSpacing:"1px", color:"rgba(210,210,200,0.9)", textShadow: engravedShadow, marginBottom:"8px" }}>
+                      <div style={{ fontSize: isMobilePublic ? "10px" : "13px", letterSpacing:"1px", color:"rgba(210,210,200,0.9)", textShadow: engravedShadow, marginBottom:"8px" }}>
                         {entry.colorway}
                       </div>
                       {(purchaseDate || retireDate) && (
-                        <div style={{ fontSize: isMobilePublic ? "9px" : "10px", color:"rgba(200,200,190,0.85)", letterSpacing:"1px", textShadow: engravedShadow, marginBottom: entry.story ? "10px" : "0" }}>
+                        <div style={{ fontSize: isMobilePublic ? "9px" : "12px", color:"rgba(200,200,190,0.85)", letterSpacing:"1px", textShadow: engravedShadow, marginBottom: entry.story ? "10px" : "0" }}>
                           {purchaseDate || "?"} — {retireDate || "?"}
                         </div>
                       )}
                       {entry.story && (
-                        <div style={{ fontSize: isMobilePublic ? "9px" : "10px", fontStyle:"italic", color:"rgba(210,210,200,0.8)", textShadow: engravedShadow, lineHeight:1.6, letterSpacing:"0.3px", maxHeight:"80px", overflowY:"auto", marginTop:"2px" }}>
+                        <div style={{ fontSize: isMobilePublic ? "9px" : "12px", fontStyle:"italic", color:"rgba(210,210,200,0.8)", textShadow: engravedShadow, lineHeight:1.6, letterSpacing:"0.3px", maxHeight:"80px", overflowY:"auto", marginTop:"2px" }}>
                           {entry.story}
                         </div>
                       )}
@@ -821,6 +821,14 @@
                   <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>OG YEAR</div>
                   <input type="text" placeholder="1995" value={metaForm.ogYear} onChange={e => setMetaForm(f => ({...f, ogYear:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
                 </div>
+                <div style={{ flex:"0 0 65px" }}>
+                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>REL. YEAR</div>
+                  <input type="text" placeholder="2023" value={metaForm.releaseYear} onChange={e => setMetaForm(f => ({...f, releaseYear:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                </div>
+                <div style={{ flex:"0 0 65px" }}>
+                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>COMFORT</div>
+                  <input type="number" placeholder="1-10" min="1" max="10" value={metaForm.comfortRating} onChange={e => setMetaForm(f => ({...f, comfortRating:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
+                </div>
                 <div style={{ flex:"1 1 160px" }}>
                   <div style={{ fontSize:"9px", letterSpacing:"2px", color:CT.text5, marginBottom:"4px" }}>NOTES</div>
                   <input type="text" placeholder="Any notes..." value={metaForm.notes} onChange={e => setMetaForm(f => ({...f, notes:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
@@ -993,7 +1001,7 @@
       const [histDateFrom,   setHistDateFrom]   = useState("");
       const [histDateTo,     setHistDateTo]     = useState("");
       const [editingMeta,    setEditingMeta]    = useState(null);
-      const [metaForm,       setMetaForm]       = useState({ purchaseDate:"", purchasePrice:"", retailer:"", size:"", notes:"", ogYear:"", story:"", saleDate:"", saleTime:"" });
+      const [metaForm,       setMetaForm]       = useState({ purchaseDate:"", purchasePrice:"", retailer:"", size:"", notes:"", ogYear:"", story:"", saleDate:"", saleTime:"", comfortRating:"", releaseYear:"" });
       const [newsDismissed, setNewsDismissed] = useState(false);
       const [bannerShowUpNext, setBannerShowUpNext] = useState(true);
       const [newsIdx, setNewsIdx] = useState(0);
@@ -2031,7 +2039,7 @@
                                 {ADMIN_MODE && <div
                                   onClick={() => {
                                     setEditingMeta({ shoeId: shoe.id, colorway: cw });
-                                    setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"" });
+                                    setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"", comfortRating: meta.comfortRating||"", releaseYear: meta.releaseYear||"" });
                                   }}
                                   title="Edit details"
                                   style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : ((meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? T.text3 : T.text6), marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
@@ -2287,7 +2295,7 @@
                                   {ADMIN_MODE && <div
                                     onClick={() => {
                                       setEditingMeta({ shoeId: shoe.id, colorway: cw });
-                                      setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"" });
+                                      setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"", comfortRating: meta.comfortRating||"", releaseYear: meta.releaseYear||"" });
                                     }}
                                     title="Edit details"
                                     style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : T.text6, marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
