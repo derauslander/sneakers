@@ -1362,22 +1362,7 @@
     "8_Playoffs": true,
     "9_Olive": true
   },
-  "graveyardMeta": {
-    "4_White Cement": {
-      "shoeName": "Air Jordan 4",
-      "colorway": "White Cement",
-      "shortName": "AJ4",
-      "category": "Jordan",
-      "tier": "platinum",
-      "purchaseDate": "2025-05-24",
-      "retireDate": "2026-04-06",
-      "reason": "Sold",
-      "story": "Zain told me I was too old to wear these shoes.",
-      "lastWorn": "2025-07-18",
-      "img": "Shoes/4_White Cement.png",
-      "hoverImg": "Shoes/4_White Cement_hover.png"
-    }
-  },
+  "graveyardMeta": {},
   "colorways": {
     "AJ1": [
       "Royal Reimagined",
@@ -1396,6 +1381,7 @@
     "AJ4": [
       "Fire Red",
       "Black Cement",
+      "White Cement",
       "Military Blue",
       "What the 4",
       "A Ma Maniere",
@@ -1522,12 +1508,12 @@
     "1775259901810_Dark Grape": false
   },
   "wishlistOrder": [
-    "wish-cw-15",
+    "18",
+    "15",
     "19",
     "1775259901810",
-    "18",
-    "1774096319133",
-    "wish-cw-16"
+    "16",
+    "1774096319133"
   ],
   "displayLayout": [
     [
@@ -1885,5 +1871,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-04-06T23:08:42.310Z"
+  "exportedAt": "2026-04-07T21:52:23.731Z"
 }

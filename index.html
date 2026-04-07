@@ -312,6 +312,13 @@
         };
       }, []);
 
+      useEffect(() => {
+        if (!isMobilePublic || !hovered) return;
+        const handler = () => triggerClose();
+        window.addEventListener("orientationchange", handler);
+        return () => window.removeEventListener("orientationchange", handler);
+      }, [isMobilePublic, hovered]);
+
       const sortedDates = [...wearDates].sort((a, b) => b > a ? 1 : -1);
 
       // Glow filter for main image
@@ -457,6 +464,13 @@
         };
       }, []);
 
+      useEffect(() => {
+        if (!isMobilePublic || !hovered) return;
+        const handler = () => triggerClose();
+        window.addEventListener("orientationchange", handler);
+        return () => window.removeEventListener("orientationchange", handler);
+      }, [isMobilePublic, hovered]);
+
       return (
         <div
           onClick={ADMIN_MODE ? onEdit : undefined}
@@ -572,6 +586,13 @@
         };
       }, []);
 
+      useEffect(() => {
+        if (!isMobilePublic || !hovered) return;
+        const handler = () => triggerClose();
+        window.addEventListener("orientationchange", handler);
+        return () => window.removeEventListener("orientationchange", handler);
+      }, [isMobilePublic, hovered]);
+
       const cardW = isMobilePublic ? "140px" : "200px";
       const imgW = isMobilePublic ? "108px" : "168px";
       const imgH = isMobilePublic ? "68px" : "105px";
@@ -582,8 +603,7 @@
       const stoneW = isMobilePublic ? 180 : 260;
       const stoneH = isMobilePublic ? (entry.story ? 280 : 220) : (entry.story ? 400 : 320);
       const archR = stoneW / 2; // full semicircle arch
-      const engravedColor = "rgba(0,0,0,0.45)";
-      const engravedShadow = "0 1px 0 rgba(255,255,255,0.08)";
+      const engravedShadow = "0 -1px 2px rgba(0,0,0,0.7), 0 2px 1px rgba(255,255,255,0.12)";
 
       return (
         <div style={{ background: dark ? T.cardBg : "#f9f9f9", border:`1px solid ${T.border}`, padding:"16px", width: cardW, flex:"0 0 auto" }}>
@@ -632,21 +652,21 @@
                     {/* Engraved text — upper arch area */}
                     <div style={{ position:"absolute", top:0, left:0, right:0, padding:`${Math.round(archR * 0.3)}px 20px 12px`, textAlign:"center" }}>
                       {tierInfo.ripLabel && (
-                        <div style={{ fontSize:"11px", letterSpacing:"4px", color: tierInfo.color || "rgba(230,230,220,0.95)", textShadow: engravedShadow, marginBottom:"8px", opacity:0.95 }}>{tierInfo.ripLabel}</div>
+                        <div style={{ fontSize:"11px", letterSpacing:"4px", color: tierInfo.color || "rgba(160,155,145,0.95)", textShadow: engravedShadow, marginBottom:"8px", opacity:0.95 }}>{tierInfo.ripLabel}</div>
                       )}
-                      <div style={{ fontSize: isMobilePublic ? "11px" : "13px", letterSpacing:"2px", color:"rgba(230,230,220,0.95)", textShadow: engravedShadow, fontWeight:"bold", lineHeight:1.4, marginBottom:"6px" }}>
+                      <div style={{ fontSize: isMobilePublic ? "11px" : "13px", letterSpacing:"2px", color:"rgba(160,155,145,0.95)", textShadow: engravedShadow, fontWeight:"bold", lineHeight:1.4, marginBottom:"6px" }}>
                         {entry.shoeName}
                       </div>
-                      <div style={{ fontSize: isMobilePublic ? "10px" : "13px", letterSpacing:"1px", color:"rgba(210,210,200,0.9)", textShadow: engravedShadow, marginBottom:"8px" }}>
+                      <div style={{ fontSize: isMobilePublic ? "10px" : "13px", letterSpacing:"1px", color:"rgba(145,140,130,0.9)", textShadow: engravedShadow, marginBottom:"8px" }}>
                         {entry.colorway}
                       </div>
                       {(purchaseDate || retireDate) && (
-                        <div style={{ fontSize: isMobilePublic ? "9px" : "12px", color:"rgba(200,200,190,0.85)", letterSpacing:"1px", textShadow: engravedShadow, marginBottom: entry.story ? "10px" : "0" }}>
+                        <div style={{ fontSize: isMobilePublic ? "9px" : "12px", color:"rgba(135,130,120,0.85)", letterSpacing:"1px", textShadow: engravedShadow, marginBottom: entry.story ? "10px" : "0" }}>
                           {purchaseDate || "?"} — {retireDate || "?"}
                         </div>
                       )}
                       {entry.story && (
-                        <div style={{ fontSize: isMobilePublic ? "9px" : "12px", fontStyle:"italic", color:"rgba(210,210,200,0.8)", textShadow: engravedShadow, lineHeight:1.6, letterSpacing:"0.3px", maxHeight:"80px", overflowY:"auto", marginTop:"2px" }}>
+                        <div style={{ fontSize: isMobilePublic ? "9px" : "12px", fontStyle:"italic", color:"rgba(145,140,130,0.8)", textShadow: engravedShadow, lineHeight:1.6, letterSpacing:"0.3px", maxHeight:"80px", overflowY:"auto", marginTop:"2px" }}>
                           {entry.story}
                         </div>
                       )}
@@ -676,6 +696,10 @@
           {ADMIN_MODE && <button onClick={() => { if (window.confirm(`Restore ${entry.shoeName} — ${entry.colorway} to your collection?`)) {
             setColorways(cws => ({ ...cws, [entry.shortName]: [...(cws[entry.shortName]||[]), entry.colorway] }));
             setGraveyardMeta(g => { const n={...g}; delete n[entryKey]; return n; });
+            // Restore ownership and tier
+            const restoreKey = entryKey;
+            setColorwayOwned(o => ({ ...o, [restoreKey]: true }));
+            if (entryTier && entryTier !== "silver") setTierMeta(tm => ({ ...tm, [restoreKey]: entryTier }));
           }}} style={{ marginTop:"10px", background:"transparent", border:`1px solid ${T.border2}`, color:T.text5, padding:"3px 8px", cursor:"pointer", fontSize:"8px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>RESTORE</button>}
         </div>
       );
@@ -733,7 +757,7 @@
                     {hoverImgVal ? "REPLACE" : "UPLOAD"}
                   </button>
                   {hoverImgVal && (
-                    <button onClick={() => setImages(imgs => { const n={...imgs}; delete n[hoverKey]; return n; })}
+                    <button onClick={() => { setImages(imgs => { const n={...imgs}; delete n[hoverKey]; return n; }); fetch(`/delete?key=${encodeURIComponent(key)}&type=hover`, { method: "POST" }).catch(() => {}); }}
                       style={{ background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
                       REMOVE
                     </button>
@@ -770,7 +794,7 @@
                       {hover2Val ? "REPLACE" : "UPLOAD"}
                     </button>
                     {hover2Val && (
-                      <button onClick={() => setImages(imgs => { const n={...imgs}; delete n[hover2Key]; return n; })}
+                      <button onClick={() => { setImages(imgs => { const n={...imgs}; delete n[hover2Key]; return n; }); fetch(`/delete?key=${encodeURIComponent(key)}&type=hover2`, { method: "POST" }).catch(() => {}); }}
                         style={{ background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
                         REMOVE
                       </button>
@@ -864,6 +888,7 @@
             {images[key] && (
               <button onClick={() => {
                 setImages(imgs => { const n={...imgs}; delete n[key]; return n; });
+                fetch(`/delete?key=${encodeURIComponent(key)}&type=main`, { method: "POST" }).catch(() => {});
                 setEditingMeta(null);
               }} style={btnStyle}>REMOVE PHOTO</button>
             )}
@@ -1002,19 +1027,12 @@
       const [histDateTo,     setHistDateTo]     = useState("");
       const [editingMeta,    setEditingMeta]    = useState(null);
       const [metaForm,       setMetaForm]       = useState({ purchaseDate:"", purchasePrice:"", retailer:"", size:"", notes:"", ogYear:"", story:"", saleDate:"", saleTime:"", comfortRating:"", releaseYear:"" });
-      const [newsDismissed, setNewsDismissed] = useState(false);
-      const [bannerShowUpNext, setBannerShowUpNext] = useState(true);
-      const [newsIdx, setNewsIdx] = useState(0);
+      const [bannerIdx, setBannerIdx] = useState(0);
       const [collectionFilter, setCollectionFilter] = useState("all");
       const [top10Filter, setTop10Filter] = useState("worn");
 
       useEffect(() => {
-        const interval = setInterval(() => setBannerShowUpNext(v => !v), 8000);
-        return () => clearInterval(interval);
-      }, []);
-
-      useEffect(() => {
-        const interval = setInterval(() => setNewsIdx(i => i + 1), 5000);
+        const interval = setInterval(() => setBannerIdx(i => i + 1), 6000);
         return () => clearInterval(interval);
       }, []);
 
@@ -1384,11 +1402,18 @@
         const hasTier = !!tierMeta[key];
         const hasGlow = !!glowMeta[key];
         const hasHoverImg = !!images[`${key}_hover`];
-        if (hasWear || hasImage || hasMeta || hasTier || hasGlow || hasHoverImg) {
-          const msg = [hasWear && "wear history", (hasImage || hasHoverImg) && "image(s)", hasMeta && "details"].filter(Boolean).join(", ");
+        const hasHover2Img = !!images[`${key}_hover2`];
+        if (hasWear || hasImage || hasMeta || hasTier || hasGlow || hasHoverImg || hasHover2Img) {
+          const msg = [hasWear && "wear history", (hasImage || hasHoverImg || hasHover2Img) && "image(s)", hasMeta && "details"].filter(Boolean).join(", ");
           if (!window.confirm(`"${cw}" has ${msg} attached. Deleting it will remove all of that data. Are you sure?`)) return;
           if (hasWear) setWearLog(log => ({ ...log, [shoe.id]: (log[shoe.id] || []).filter(e => e.colorway !== cw) }));
-          if (hasImage || hasHoverImg) setImages(imgs => { const n = {...imgs}; delete n[key]; delete n[`${key}_hover`]; return n; });
+          if (hasImage || hasHoverImg || hasHover2Img) {
+            setImages(imgs => { const n = {...imgs}; delete n[key]; delete n[`${key}_hover`]; delete n[`${key}_hover2`]; return n; });
+            // Delete actual files from Shoes/ folder via server
+            if (hasImage) fetch(`/delete?key=${encodeURIComponent(key)}&type=main`, { method: "POST" }).catch(() => {});
+            if (hasHoverImg) fetch(`/delete?key=${encodeURIComponent(key)}&type=hover`, { method: "POST" }).catch(() => {});
+            if (hasHover2Img) fetch(`/delete?key=${encodeURIComponent(key)}&type=hover2`, { method: "POST" }).catch(() => {});
+          }
           if (hasMeta) setColorwayMeta(m => { const n = {...m}; delete n[key]; return n; });
           if (hasTier) setTierMeta(tm => { const n = {...tm}; delete n[key]; return n; });
           if (hasGlow) setGlowMeta(g => { const n = {...g}; delete n[key]; return n; });
@@ -1578,19 +1603,84 @@
             {/* ── COLLECTION ── */}
             {view === "collection" && (
               <div>
-                {/* News Banner — unified cycling banner for all notifications */}
-                {!newsDismissed && (() => {
-                  // Build news items in priority order: GOT 'EM! > Anniversary > On This Day > Sale Alert > GOT 'EM?
-                  const newsItems = [];
-                  gotEmCelebrations.forEach(item => {
-                    newsItems.push({ type:"gotem", label:"✦ GOT 'EM! ✦", shoe: item.shoe, colorway: item.colorway, img: item.img, subtitle:"Welcome to The Vault" });
+                {/* Unified Banner — cycles through all notifications and rotation */}
+                {(() => {
+                  // ── Compute UP NEXT data ──
+                  const rotationTier = longestUnwornColorway ? tierOf(tierMeta, `${longestUnworn?.id}_${longestUnwornColorway}`) : "silver";
+                  const rotationTierInfo = TIERS[rotationTier] || TIERS.silver;
+                  const isRotationPremium = rotationTier === "diamond" || rotationTier === "platinum";
+                  const isRotationOnIce = longestUnworn && longestUnwornColorway ? (wearLog[longestUnworn.id] || []).filter(e => e.colorway === longestUnwornColorway).length === 0 : false;
+                  const rotationImgKey = longestUnworn ? `${longestUnworn.id}_${longestUnwornColorway}` : "";
+                  const rotationImg = images[rotationImgKey] || null;
+                  const rotationHoverImg = isRotationPremium ? (images[`${rotationImgKey}_hover`] || null) : null;
+                  const rotationMetaKey = rotationImgKey;
+                  const isRotationGlow = dark && !!glowMeta[rotationMetaKey];
+                  const upNextImgFilter = isRotationPremium
+                    ? `drop-shadow(0 0 12px ${rotationTierInfo.glowRgba})`
+                    : dark && isRotationOnIce
+                    ? "drop-shadow(0 0 14px rgba(100,200,255,0.7))"
+                    : isRotationGlow
+                    ? "drop-shadow(0 0 14px rgba(255,255,255,0.5))"
+                    : "none";
+
+                  // ── Compute LAST WORN data ──
+                  const lastWornTier = lastWornColorway ? tierOf(tierMeta, `${lastWornShoe?.id}_${lastWornColorway}`) : "silver";
+                  const lastWornTierInfo = TIERS[lastWornTier] || TIERS.silver;
+                  const isLastWornPremium = lastWornTier === "diamond" || lastWornTier === "platinum";
+                  const lastWornImg = lastWornShoe ? images[`${lastWornShoe.id}_${lastWornColorway}`] || null : null;
+
+                  // ── Compute queues ──
+                  const sortedQueue = [...allColorwayEntries].sort((a, b) => {
+                    if (!a.lastWorn && !b.lastWorn) return 0;
+                    if (!a.lastWorn) return -1;
+                    if (!b.lastWorn) return 1;
+                    return a.lastWorn < b.lastWorn ? -1 : 1;
                   });
+                  const upcomingQueue = sortedQueue.slice(1, 5);
+                  const recentlyWornQueue = [...allColorwayEntries]
+                    .filter(e => e.lastWorn)
+                    .sort((a, b) => a.lastWorn > b.lastWorn ? -1 : 1)
+                    .slice(1, 5);
+
+                  // ── Build unified items in priority order ──
+                  const bannerItems = [];
+                  const hasNews = saleAlerts.length > 0 || gotEmCelebrations.length > 0 || gotEmQuestions.length > 0 || anniversaries.length > 0;
+
+                  // 1. Sale Alerts
+                  saleAlerts.forEach(item => {
+                    const sub = item.hoursUntil < 1
+                      ? `Sale starts in ${Math.round(item.hoursUntil * 60)} minutes`
+                      : `Sale starts in ${Math.round(item.hoursUntil)} hours`;
+                    bannerItems.push({ type:"sale", label:"🛒 SALE ALERT", shoe: item.shoe, colorway: item.colorway, img: item.img, subtitle: sub });
+                  });
+
+                  // 2. GOT 'EM
+                  gotEmCelebrations.forEach(item => {
+                    bannerItems.push({ type:"gotem", label:"✦ GOT 'EM! ✦", shoe: item.shoe, colorway: item.colorway, img: item.img, subtitle:"Welcome to The Vault" });
+                  });
+
+                  // 3. UP NEXT
+                  if (longestUnworn) {
+                    bannerItems.push({ type:"upnext", shoe: longestUnworn, colorway: longestUnwornColorway });
+                  }
+
+                  // 4. LAST WORN
+                  if (lastWornShoe) {
+                    bannerItems.push({ type:"lastworn", shoe: lastWornShoe, colorway: lastWornColorway });
+                  }
+
+                  // 5. GOT 'EM?
+                  gotEmQuestions.forEach(item => {
+                    bannerItems.push({ type:"gotemq", label:"✦ GOT 'EM? ✦", shoe: item.shoe, colorway: item.colorway, img: item.img, subtitle:"Sale was today" });
+                  });
+
+                  // 6. Anniversary
                   anniversaries.forEach(a => {
                     const aImg = images[`${a.shoe.id}_${a.colorway}`] || null;
-                    const aHoverImg = images[`${a.shoe.id}_${a.colorway}_hover`] || null;
-                    newsItems.push({ type:"anniversary", label:"✦ PURCHASE ANNIVERSARY ✦", shoe: a.shoe, colorway: a.colorway, img: aImg, hoverImg: aHoverImg, subtitle:`${a.years} ${a.years === 1 ? "year" : "years"} ago today` });
+                    bannerItems.push({ type:"anniversary", label:"✦ PURCHASE ANNIVERSARY ✦", shoe: a.shoe, colorway: a.colorway, img: aImg, subtitle:`${a.years} ${a.years === 1 ? "year" : "years"} ago today` });
                   });
-                  // On This Day — first wear anniversary
+
+                  // 7. On This Day
                   inventory.forEach(shoe => {
                     (colorways[shoe.shortName] || []).filter(cw => isColorwayOwned(shoe.id, cw)).forEach(cw => {
                       const wears = (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
@@ -1600,25 +1690,16 @@
                       const years = parseInt(todayStr.slice(0,4)) - parseInt(firstWear.slice(0,4));
                       if (years <= 0) return;
                       const img = images[`${shoe.id}_${cw}`] || null;
-                      newsItems.push({ type:"onthisday", label:"👟 ON THIS DAY", shoe, colorway: cw, img, subtitle:`${years} ${years === 1 ? "year" : "years"} ago today, you first wore these` });
+                      bannerItems.push({ type:"onthisday", label:"👟 ON THIS DAY", shoe, colorway: cw, img, subtitle:`${years} ${years === 1 ? "year" : "years"} ago today, you first wore these` });
                     });
                   });
-                  saleAlerts.forEach(item => {
-                    const sub = item.hoursUntil < 1
-                      ? `Sale starts in ${Math.round(item.hoursUntil * 60)} minutes`
-                      : `Sale starts in ${Math.round(item.hoursUntil)} hours`;
-                    newsItems.push({ type:"sale", label:"🛒 SALE ALERT", shoe: item.shoe, colorway: item.colorway, img: item.img, subtitle: sub });
-                  });
-                  gotEmQuestions.forEach(item => {
-                    newsItems.push({ type:"gotemq", label:"✦ GOT 'EM? ✦", shoe: item.shoe, colorway: item.colorway, img: item.img, subtitle:"Sale was today" });
-                  });
-                  // Shoe of the Day — random spotlight when no other news
-                  if (newsItems.length === 0) {
+
+                  // 8. Shoe of the Day — only when no news items
+                  if (!hasNews) {
                     const allOwned = inventory.flatMap(shoe =>
                       (colorways[shoe.shortName] || []).filter(cw => isColorwayOwned(shoe.id, cw)).map(cw => ({ shoe, colorway: cw }))
                     );
                     if (allOwned.length > 0) {
-                      // Date-seeded random — consistent throughout the day, changes daily
                       const dateSeed = todayStr.replace(/-/g, "");
                       const seedIdx = parseInt(dateSeed, 10) % allOwned.length;
                       const pick = allOwned[seedIdx];
@@ -1629,184 +1710,164 @@
                       const purchaseLine = pickMeta.purchaseDate ? `Purchased ${formatDate(pickMeta.purchaseDate)}` : null;
                       const wearLine = `Worn ${pickWears} ${pickWears === 1 ? "time" : "times"}`;
                       const sub = [purchaseLine, wearLine].filter(Boolean).join(" · ");
-                      newsItems.push({ type:"spotlight", label:"✦ SHOE OF THE DAY ✦", shoe: pick.shoe, colorway: pick.colorway, img: pickImg, subtitle: sub });
+                      bannerItems.push({ type:"spotlight", label:"✦ SHOE OF THE DAY ✦", shoe: pick.shoe, colorway: pick.colorway, img: pickImg, subtitle: sub });
                     }
                   }
-                  if (newsItems.length === 0) return null;
-                  const safeIdx = newsIdx % newsItems.length;
-                  const bannerBg = dark ? "linear-gradient(90deg,#2a2a1a,#2a2700)" : "linear-gradient(90deg,#fffdf0,#fff8d6)";
-                  return (
-                    <div style={{ background: bannerBg, border:"1px solid #e6b800", padding:"16px 24px", marginBottom:"16px" }}>
-                      <div style={{ position:"relative", minHeight:"75px" }}>
-                        {newsItems.map((item, i) => (
-                          <div key={i} style={{ position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px", opacity: i === safeIdx ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: i === safeIdx ? "auto" : "none" }}>
-                            <div style={{ display:"flex", alignItems:"center", gap:"16px", flex:1, minWidth:0 }}>
-                              {item.img && (
-                                <img src={item.img} alt={item.colorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0 }} />
-                              )}
-                              <div>
-                                <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e6b800", marginBottom:"4px" }}>{item.label}</div>
-                                <div style={{ fontSize:"15px", fontWeight:"bold", color: T.text }}>{item.shoe.name} — {item.colorway}</div>
-                                <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{item.subtitle}</div>
-                              </div>
-                            </div>
-                            {i === 0 && <button onClick={() => setNewsDismissed(true)} style={{ background:"transparent", border:"none", color: T.text7, cursor:"pointer", fontSize:"18px", lineHeight:1, padding:"0", fontFamily:"'Aptos','Segoe UI',sans-serif", flexShrink:0 }}>✕</button>}
-                          </div>
-                        ))}
-                      </div>
-                      {newsItems.length > 1 && (
-                        <div style={{ display:"flex", justifyContent:"center", gap:"6px", marginTop:"10px" }}>
-                          {newsItems.map((_, i) => (
-                            <div key={i} style={{ width:"6px", height:"6px", borderRadius:"50%", background: i === safeIdx ? "#e6b800" : (dark ? "#555" : "#ccc"), transition:"background 0.3s" }} />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
 
-                {/* Rotation Banner */}
-                {longestUnworn && (() => {
-                  // UP NEXT data
-                  const rotationTier = longestUnwornColorway ? tierOf(tierMeta, `${longestUnworn.id}_${longestUnwornColorway}`) : "silver";
-                  const rotationTierInfo = TIERS[rotationTier] || TIERS.silver;
-                  const isRotationPremium = rotationTier === "diamond" || rotationTier === "platinum";
-                  const isRotationOnIce = longestUnwornColorway ? (wearLog[longestUnworn.id] || []).filter(e => e.colorway === longestUnwornColorway).length === 0 : false;
-                  const rotationImgKey = `${longestUnworn.id}_${longestUnwornColorway}`;
-                  const rotationImg = images[rotationImgKey] || null;
-                  const rotationHoverImg = isRotationPremium ? (images[`${rotationImgKey}_hover`] || null) : null;
+                  if (bannerItems.length === 0) return null;
+                  const safeIdx = bannerIdx % bannerItems.length;
+                  const currentItem = bannerItems[safeIdx];
+                  const isRotationSlide = currentItem.type === "upnext" || currentItem.type === "lastworn";
 
-                  // LAST WORN data
-                  const lastWornTier = lastWornColorway ? tierOf(tierMeta, `${lastWornShoe?.id}_${lastWornColorway}`) : "silver";
-                  const lastWornTierInfo = TIERS[lastWornTier] || TIERS.silver;
-                  const isLastWornPremium = lastWornTier === "diamond" || lastWornTier === "platinum";
-                  const lastWornImg = lastWornShoe ? images[`${lastWornShoe.id}_${lastWornColorway}`] || null : null;
-
-                  const bannerBg = rotationTier === "diamond"
-                    ? dark ? "linear-gradient(90deg,#1a1a2a,#111122)" : "linear-gradient(90deg,#f0f8ff,#e8f4ff)"
-                    : rotationTier === "platinum"
-                    ? dark ? "linear-gradient(90deg,#222228,#1e1e24)" : "linear-gradient(90deg,#f5f5f8,#ebebf0)"
-                    : dark ? `linear-gradient(90deg,${T.bg2},${T.bg3})` : "linear-gradient(90deg,#fff5f5,#ffe8e8)";
-                  const bannerBorder = rotationTier === "diamond" ? "#b8f0ff" : rotationTier === "platinum" ? "#C0C0C0" : "#e63946";
-                  const rotationMetaKey = `${longestUnworn.id}_${longestUnwornColorway}`;
-                  const isRotationGlow = dark && !!glowMeta[rotationMetaKey];
-                  const imgFilter = isRotationPremium
-                    ? `drop-shadow(0 0 12px ${rotationTierInfo.glowRgba})`
-                    : dark && isRotationOnIce
-                    ? "drop-shadow(0 0 14px rgba(100,200,255,0.7))"
-                    : isRotationGlow
-                    ? "drop-shadow(0 0 14px rgba(255,255,255,0.5))"
-                    : "none";
-
-                  // Next 4 in queue (after the first)
-                  const sortedQueue = [...allColorwayEntries].sort((a, b) => {
-                    if (!a.lastWorn && !b.lastWorn) return 0;
-                    if (!a.lastWorn) return -1;
-                    if (!b.lastWorn) return 1;
-                    return a.lastWorn < b.lastWorn ? -1 : 1;
-                  });
-                  const upcomingQueue = sortedQueue.slice(1, 5);
-
-                  // Recently worn queue — 2nd through 5th most recently worn
-                  const recentlyWornQueue = [...allColorwayEntries]
-                    .filter(e => e.lastWorn)
-                    .sort((a, b) => a.lastWorn > b.lastWorn ? -1 : 1)
-                    .slice(1, 5);
+                  // ── Background per slide type ──
+                  const getBannerBg = (item) => {
+                    if (item.type === "upnext") {
+                      return rotationTier === "diamond"
+                        ? dark ? "linear-gradient(90deg,#1a1a2a,#111122)" : "linear-gradient(90deg,#f0f8ff,#e8f4ff)"
+                        : rotationTier === "platinum"
+                        ? dark ? "linear-gradient(90deg,#222228,#1e1e24)" : "linear-gradient(90deg,#f5f5f8,#ebebf0)"
+                        : dark ? `linear-gradient(90deg,${T.bg2},${T.bg3})` : "linear-gradient(90deg,#fff5f5,#ffe8e8)";
+                    }
+                    if (item.type === "lastworn") {
+                      return lastWornTier === "diamond"
+                        ? dark ? "linear-gradient(90deg,#1a1a2a,#111122)" : "linear-gradient(90deg,#f0f8ff,#e8f4ff)"
+                        : lastWornTier === "platinum"
+                        ? dark ? "linear-gradient(90deg,#222228,#1e1e24)" : "linear-gradient(90deg,#f5f5f8,#ebebf0)"
+                        : dark ? `linear-gradient(90deg,${T.bg2},${T.bg3})` : "linear-gradient(90deg,#fff5f5,#ffe8e8)";
+                    }
+                    return dark ? `linear-gradient(90deg,${T.bg2},${T.bg3})` : `linear-gradient(90deg,${T.bg},${T.bg2})`;
+                  };
+                  const getBannerBorder = (item) => {
+                    if (item.type === "upnext") return rotationTier === "diamond" ? "#b8f0ff" : rotationTier === "platinum" ? "#C0C0C0" : "#e63946";
+                    if (item.type === "lastworn") return lastWornTier === "diamond" ? "#b8f0ff" : lastWornTier === "platinum" ? "#C0C0C0" : "#e63946";
+                    if (item.type === "sale") return "#e6b800";
+                    if (item.type === "gotem") return "#e6b800";
+                    return T.border;
+                  };
 
                   return (
                   <div style={{ marginBottom:"24px" }}>
-                    <div style={{ background: bannerBg, border:`1px solid ${bannerBorder}`, padding:"16px 24px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px", position:"relative", minHeight:"90px" }}>
-                      {/* UP NEXT */}
-                      <div style={{ display:"flex", alignItems:"center", gap:"16px", position:"absolute", opacity: bannerShowUpNext ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "auto" : "none" }}>
-                        {rotationImg && (() => {
-                          function RotationImg() {
-                            const [showAlt, setShowAlt] = React.useState(false);
-                            React.useEffect(() => {
-                              if (!rotationHoverImg) return;
-                              const interval = setInterval(() => setShowAlt(v => !v), 8000);
-                              return () => clearInterval(interval);
-                            }, []);
-                            return (
-                              <div style={{ position:"relative", width:"120px", height:"75px", flexShrink:0 }}>
-                                <img src={rotationImg} alt={longestUnwornColorway} style={{ position:"absolute", top:0, left:0, width:"120px", height:"75px", objectFit:"cover", filter: imgFilter, opacity: rotationHoverImg && showAlt ? 0 : 1, transition:"opacity 2s ease-in-out" }} />
-                                {rotationHoverImg && <img src={rotationHoverImg} alt={longestUnwornColorway} style={{ position:"absolute", top:0, left:0, width:"120px", height:"75px", objectFit:"cover", filter: imgFilter, opacity: showAlt ? 1 : 0, transition:"opacity 2s ease-in-out" }} />}
+                    <div style={{ background: getBannerBg(currentItem), border:`1px solid ${getBannerBorder(currentItem)}`, padding:"16px 24px", position:"relative", minHeight:"90px", transition:"background 0.5s ease-in-out" }}>
+                      {bannerItems.map((item, i) => {
+                        const isActive = i === safeIdx;
+
+                        // ── UP NEXT slide ──
+                        if (item.type === "upnext") {
+                          return (
+                            <div key={`upnext-${i}`} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none" }}>
+                              <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
+                                {rotationImg && (() => {
+                                  function RotationImg() {
+                                    const [showAlt, setShowAlt] = React.useState(false);
+                                    React.useEffect(() => {
+                                      if (!rotationHoverImg) return;
+                                      const interval = setInterval(() => setShowAlt(v => !v), 8000);
+                                      return () => clearInterval(interval);
+                                    }, []);
+                                    return (
+                                      <div style={{ position:"relative", width:"120px", height:"75px", flexShrink:0 }}>
+                                        <img src={rotationImg} alt={longestUnwornColorway} style={{ position:"absolute", top:0, left:0, width:"120px", height:"75px", objectFit:"cover", filter: upNextImgFilter, opacity: rotationHoverImg && showAlt ? 0 : 1, transition:"opacity 2s ease-in-out" }} />
+                                        {rotationHoverImg && <img src={rotationHoverImg} alt={longestUnwornColorway} style={{ position:"absolute", top:0, left:0, width:"120px", height:"75px", objectFit:"cover", filter: upNextImgFilter, opacity: showAlt ? 1 : 0, transition:"opacity 2s ease-in-out" }} />}
+                                      </div>
+                                    );
+                                  }
+                                  return <RotationImg />;
+                                })()}
+                                <div>
+                                  <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
+                                    {isRotationOnIce
+                                      ? <span><span style={{color:"#64c8ff"}}>❄️</span> TIME TO TAKE THEM OFF ICE? <span style={{color:"#64c8ff"}}>❄️</span></span>
+                                      : rotationTierInfo.color
+                                      ? <span><span style={{color: rotationTierInfo.color}}>✦</span> UP NEXT <span style={{color: rotationTierInfo.color}}>✦</span></span>
+                                      : "UP NEXT FOR ROTATION"}
+                                  </div>
+                                  <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: T.text }}>
+                                    {isRotationOnIce
+                                      ? <span><span style={{color:"#64c8ff"}}>❄️</span> {longestUnworn.name}{longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""} <span style={{color:"#64c8ff"}}>❄️</span></span>
+                                      : rotationTierInfo.color
+                                      ? <span><span style={{color: rotationTierInfo.color}}>✦</span> {longestUnworn.name}{longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""} <span style={{color: rotationTierInfo.color}}>✦</span></span>
+                                      : `${longestUnworn.name}${longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""}`}
+                                  </div>
+                                  <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>
+                                    {longestUnwornLastDate ? `Last worn: ${formatDate(longestUnwornLastDate)}` : "Never worn"}
+                                  </div>
+                                </div>
                               </div>
-                            );
-                          }
-                          return <RotationImg />;
-                        })()}
-                        <div>
-                          <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
-                            {isRotationOnIce
-                              ? <span><span style={{color:"#64c8ff"}}>❄️</span> TIME TO TAKE THEM OFF ICE? <span style={{color:"#64c8ff"}}>❄️</span></span>
-                              : rotationTierInfo.color
-                              ? <span><span style={{color: rotationTierInfo.color}}>✦</span> UP NEXT <span style={{color: rotationTierInfo.color}}>✦</span></span>
-                              : "UP NEXT FOR ROTATION"}
-                          </div>
-                          <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: T.text }}>
-                            {isRotationOnIce
-                              ? <span><span style={{color:"#64c8ff"}}>❄️</span> {longestUnworn.name}{longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""} <span style={{color:"#64c8ff"}}>❄️</span></span>
-                              : rotationTierInfo.color
-                              ? <span><span style={{color: rotationTierInfo.color}}>✦</span> {longestUnworn.name}{longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""} <span style={{color: rotationTierInfo.color}}>✦</span></span>
-                              : `${longestUnworn.name}${longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""}`}
-                          </div>
-                          <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>
-                            {longestUnwornLastDate ? `Last worn: ${formatDate(longestUnwornLastDate)}` : "Never worn"}
-                          </div>
-                        </div>
-                      </div>
-                      {/* LAST WORN */}
-                      {lastWornShoe && (
-                        <div style={{ display:"flex", alignItems:"center", gap:"16px", position:"absolute", opacity: bannerShowUpNext ? 0 : 1, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "none" : "auto" }}>
-                          {lastWornImg && <img src={lastWornImg} alt={lastWornColorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0, filter: isLastWornPremium ? `drop-shadow(0 0 12px ${lastWornTierInfo.glowRgba})` : "none" }} />}
-                          <div>
-                            <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
-                              {isLastWornPremium ? <span><span style={{color: lastWornTierInfo.color}}>✦</span> LAST WORN <span style={{color: lastWornTierInfo.color}}>✦</span></span> : "LAST WORN"}
+                              {ADMIN_MODE && <div style={{ marginLeft:"auto", flexShrink:0 }}>
+                                <Btn label="LOG WEAR" onClick={() => { setLoggingId(longestUnworn.id); setWearDate(localDateStr()); const ownedCws = (colorways[longestUnworn.shortName] || []).filter(cw => isColorwayOwned(longestUnworn.id, cw)); setWearColorway(longestUnwornColorway || (ownedCws[0] ?? "")); }} color="#e63946" solid />
+                              </div>}
                             </div>
-                            <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: isLastWornPremium ? lastWornTierInfo.color : T.text }}>
-                              {lastWornShoe.name}{lastWornColorway ? ` — ${lastWornColorway}` : ""}
+                          );
+                        }
+
+                        // ── LAST WORN slide ──
+                        if (item.type === "lastworn") {
+                          return (
+                            <div key={`lastworn-${i}`} style={{ display:"flex", alignItems:"center", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none" }}>
+                              {lastWornImg && <img src={lastWornImg} alt={lastWornColorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0, filter: isLastWornPremium ? `drop-shadow(0 0 12px ${lastWornTierInfo.glowRgba})` : "none" }} />}
+                              <div>
+                                <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
+                                  {isLastWornPremium ? <span><span style={{color: lastWornTierInfo.color}}>✦</span> LAST WORN <span style={{color: lastWornTierInfo.color}}>✦</span></span> : "LAST WORN"}
+                                </div>
+                                <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: isLastWornPremium ? lastWornTierInfo.color : T.text }}>
+                                  {lastWornShoe.name}{lastWornColorway ? ` — ${lastWornColorway}` : ""}
+                                </div>
+                                <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{lastWornDate ? `Worn on ${formatDate(lastWornDate)}` : ""}</div>
+                              </div>
                             </div>
-                            <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{lastWornDate ? `Worn on ${formatDate(lastWornDate)}` : ""}</div>
+                          );
+                        }
+
+                        // ── News slides (sale, gotem, gotemq, anniversary, onthisday, spotlight) ──
+                        return (
+                          <div key={`${item.type}-${i}`} style={{ display:"flex", alignItems:"center", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none" }}>
+                            {item.img && <img src={item.img} alt={item.colorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0 }} />}
+                            <div>
+                              <div style={{ fontSize:"9px", letterSpacing:"4px", color: item.type === "sale" || item.type === "gotem" || item.type === "spotlight" ? "#e6b800" : "#e63946", marginBottom:"4px" }}>{item.label}</div>
+                              <div style={{ fontSize:"15px", fontWeight:"bold", color: T.text }}>{item.shoe.name} — {item.colorway}</div>
+                              <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{item.subtitle}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Queue bar — always reserves space, content only on rotation slides */}
+                    <div style={{ background: T.bg2, border:`1px solid ${getBannerBorder(currentItem)}`, borderTop:"none", padding:"10px 24px", position:"relative", minHeight:"45px", display:"flex", alignItems:"center", transition:"border-color 0.5s ease-in-out" }}>
+                      {/* COMING UP — visible on UP NEXT slide */}
+                      {upcomingQueue.length > 0 && (
+                        <div style={{ display:"flex", gap:"16px", alignItems:"center", position:"absolute", opacity: currentItem.type === "upnext" ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: currentItem.type === "upnext" ? "auto" : "none" }}>
+                          <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0, minWidth:"80px" }}>COMING UP</div>
+                          <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
+                            {upcomingQueue.map((entry, qi) => {
+                              const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
+                              return qImg ? (
+                                <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover" }} />
+                              ) : null;
+                            })}
                           </div>
                         </div>
                       )}
-                      {/* LOG WEAR button — only show when UP NEXT visible */}
-                      {ADMIN_MODE && <div style={{ marginLeft:"auto", opacity: bannerShowUpNext ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "auto" : "none" }}>
-                        <Btn label="LOG WEAR" onClick={() => { setLoggingId(longestUnworn.id); setWearDate(localDateStr()); setWearColorway(longestUnwornColorway || (colorways[longestUnworn.shortName]?.[0] ?? "")); }} color="#e63946" solid />
-                      </div>}
-                      {!ADMIN_MODE && <div style={{ marginLeft:"auto" }} />}
+                      {/* RECENT — visible on LAST WORN slide */}
+                      {recentlyWornQueue.length > 0 && (
+                        <div style={{ display:"flex", gap:"16px", alignItems:"center", position:"absolute", opacity: currentItem.type === "lastworn" ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: currentItem.type === "lastworn" ? "auto" : "none" }}>
+                          <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0, minWidth:"80px" }}>RECENT</div>
+                          <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
+                            {recentlyWornQueue.map((entry, qi) => {
+                              const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
+                              return qImg ? (
+                                <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover" }} />
+                              ) : null;
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    {/* Queue bar — crossfades between COMING UP and RECENT */}
-                    {(upcomingQueue.length > 0 || recentlyWornQueue.length > 0) && (
-                      <div style={{ background: T.bg2, border:`1px solid ${bannerBorder}`, borderTop:"none", padding:"10px 24px", position:"relative", minHeight:"45px", display:"flex", alignItems:"center" }}>
-                        {/* COMING UP — visible when UP NEXT is showing */}
-                        {upcomingQueue.length > 0 && (
-                          <div style={{ display:"flex", gap:"16px", alignItems:"center", position:"absolute", opacity: bannerShowUpNext ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "auto" : "none" }}>
-                            <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0, minWidth:"80px" }}>COMING UP</div>
-                            <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
-                              {upcomingQueue.map((entry, i) => {
-                                const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
-                                return qImg ? (
-                                  <img key={i} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover" }} />
-                                ) : null;
-                              })}
-                            </div>
-                          </div>
-                        )}
-                        {/* RECENT — visible when LAST WORN is showing */}
-                        {recentlyWornQueue.length > 0 && (
-                          <div style={{ display:"flex", gap:"16px", alignItems:"center", position:"absolute", opacity: bannerShowUpNext ? 0 : 1, transition:"opacity 1s ease-in-out", pointerEvents: bannerShowUpNext ? "none" : "auto" }}>
-                            <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0, minWidth:"80px" }}>RECENT</div>
-                            <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
-                              {recentlyWornQueue.map((entry, i) => {
-                                const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
-                                return qImg ? (
-                                  <img key={i} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover" }} />
-                                ) : null;
-                              })}
-                            </div>
-                          </div>
-                        )}
+                    {/* Dots — tappable navigation */}
+                    {bannerItems.length > 1 && (
+                      <div style={{ display:"flex", justifyContent:"center", gap:"6px", marginTop:"10px" }}>
+                        {bannerItems.map((_, i) => (
+                          <div key={i} onClick={() => setBannerIdx(i)} style={{ width:"8px", height:"8px", borderRadius:"50%", background: i === safeIdx ? "#e63946" : (dark ? "#444" : "#ccc"), cursor:"pointer", transition:"background 0.3s" }} />
+                        ))}
                       </div>
                     )}
                   </div>
@@ -1816,7 +1877,7 @@
                 {/* Wear Log Form */}
                 {loggingId && (() => {
                   const shoe = inventory.find(s => s.id === loggingId);
-                  const shoeColorways = colorways[shoe?.shortName] || [];
+                  const shoeColorways = (colorways[shoe?.shortName] || []).filter(cw => shoe && isColorwayOwned(shoe.id, cw));
                   return (
                     <div style={{ background: T.bg4, border:"1px solid #f4a261", padding:"16px 24px", marginBottom:"24px", display:"flex", alignItems:"center", gap:"12px", flexWrap:"wrap" }}>
                       <div style={{ fontSize:"10px", letterSpacing:"3px", color:"#e63946", marginRight:"4px" }}>LOGGING: {shoe?.name}</div>
@@ -2361,9 +2422,11 @@
                 return true;
               });
 
-              // Colorways for selected shoe
+              // Colorways for selected shoe — only those with actual wear entries
               const filterShoeObj = histFilterShoe ? inventory.find(s => String(s.id) === histFilterShoe) : null;
-              const filterShoeColorways = filterShoeObj ? (colorways[filterShoeObj.shortName] || []) : [];
+              const filterShoeColorways = filterShoeObj
+                ? [...new Set((wearLog[filterShoeObj.id] || []).map(e => e.colorway))]
+                : [];
 
               const getShoeSortKey = (entry) => {
                 if (entry.category === "Jordan") {
@@ -2818,7 +2881,7 @@
           {/* Quick Log Modal */}
           {quickLog && (() => {
             const qShoe = inventory.find(s => String(s.id) === String(quickShoeId));
-            const qColorways = qShoe ? (colorways[qShoe.shortName] || []) : [];
+            const qColorways = qShoe ? (colorways[qShoe.shortName] || []).filter(cw => isColorwayOwned(qShoe.id, cw)) : [];
             return (
               <div onClick={() => setQuickLog(false)} style={{
                 position:"fixed", top:0, left:0, width:"100vw", height:"100vh",
@@ -2834,7 +2897,8 @@
                       <select value={quickShoeId} onChange={e => {
                         setQuickShoeId(e.target.value);
                         const s = inventory.find(sh => String(sh.id) === e.target.value);
-                        setQuickColorway(s ? (colorways[s.shortName]?.[0] || "") : "");
+                        const ownedCws = s ? (colorways[s.shortName] || []).filter(cw => isColorwayOwned(s.id, cw)) : [];
+                        setQuickColorway(ownedCws[0] || "");
                       }} style={{ ...IS, width:"100%" }}>
                         {inventory.map(s => <option key={s.id} value={String(s.id)}>{s.name}</option>)}
                       </select>
