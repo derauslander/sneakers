@@ -650,23 +650,23 @@
                     </div>
 
                     {/* Engraved text — upper arch area */}
-                    <div style={{ position:"absolute", top:0, left:0, right:0, padding:`${Math.round(archR * 0.3)}px 20px 12px`, textAlign:"center" }}>
+                    <div style={{ position:"absolute", top:0, left:0, right:0, padding:`${Math.round(archR * 0.5)}px 20px 12px`, textAlign:"center" }}>
                       {tierInfo.ripLabel && (
-                        <div style={{ fontSize:"11px", letterSpacing:"4px", color: tierInfo.color || "rgba(160,155,145,0.95)", textShadow: engravedShadow, marginBottom:"8px", opacity:0.95 }}>{tierInfo.ripLabel}</div>
+                        <div style={{ fontSize:"11px", letterSpacing:"4px", color: tierInfo.color || "rgba(220,215,205,0.95)", textShadow: engravedShadow, marginBottom:"8px", opacity:0.95 }}>{tierInfo.ripLabel}</div>
                       )}
-                      <div style={{ fontSize: isMobilePublic ? "11px" : "13px", letterSpacing:"2px", color:"rgba(160,155,145,0.95)", textShadow: engravedShadow, fontWeight:"bold", lineHeight:1.4, marginBottom:"6px" }}>
+                      <div style={{ fontSize: isMobilePublic ? "11px" : "13px", letterSpacing:"2px", color:"rgba(230,225,215,0.97)", textShadow: engravedShadow, fontWeight:"bold", lineHeight:1.4, marginBottom:"6px" }}>
                         {entry.shoeName}
                       </div>
-                      <div style={{ fontSize: isMobilePublic ? "10px" : "13px", letterSpacing:"1px", color:"rgba(145,140,130,0.9)", textShadow: engravedShadow, marginBottom:"8px" }}>
+                      <div style={{ fontSize: isMobilePublic ? "10px" : "13px", letterSpacing:"1px", color:"rgba(210,205,195,0.95)", textShadow: engravedShadow, marginBottom:"8px" }}>
                         {entry.colorway}
                       </div>
                       {(purchaseDate || retireDate) && (
-                        <div style={{ fontSize: isMobilePublic ? "9px" : "12px", color:"rgba(135,130,120,0.85)", letterSpacing:"1px", textShadow: engravedShadow, marginBottom: entry.story ? "10px" : "0" }}>
+                        <div style={{ fontSize: isMobilePublic ? "9px" : "12px", color:"rgba(195,190,180,0.92)", letterSpacing:"1px", textShadow: engravedShadow, marginBottom: entry.story ? "10px" : "0" }}>
                           {purchaseDate || "?"} — {retireDate || "?"}
                         </div>
                       )}
                       {entry.story && (
-                        <div style={{ fontSize: isMobilePublic ? "9px" : "12px", fontStyle:"italic", color:"rgba(145,140,130,0.8)", textShadow: engravedShadow, lineHeight:1.6, letterSpacing:"0.3px", maxHeight:"80px", overflowY:"auto", marginTop:"2px" }}>
+                        <div style={{ fontSize: isMobilePublic ? "9px" : "12px", fontStyle:"italic", color:"rgba(210,205,195,0.90)", textShadow: engravedShadow, lineHeight:1.6, letterSpacing:"0.3px", maxHeight:"80px", overflowY:"auto", marginTop:"2px" }}>
                           {entry.story}
                         </div>
                       )}
@@ -1835,13 +1835,13 @@
                     <div style={{ background: T.bg2, border:`1px solid ${getBannerBorder(currentItem)}`, borderTop:"none", padding:"10px 24px", position:"relative", minHeight:"45px", display:"flex", alignItems:"center", transition:"border-color 0.5s ease-in-out" }}>
                       {/* COMING UP — visible on UP NEXT slide */}
                       {upcomingQueue.length > 0 && (
-                        <div style={{ display:"flex", gap:"16px", alignItems:"center", position:"absolute", opacity: currentItem.type === "upnext" ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: currentItem.type === "upnext" ? "auto" : "none" }}>
+                        <div style={{ display:"flex", gap:"16px", alignItems:"center", position:"absolute", left:"24px", right:"24px", overflow:"hidden", opacity: currentItem.type === "upnext" ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: currentItem.type === "upnext" ? "auto" : "none" }}>
                           <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0, minWidth:"80px" }}>COMING UP</div>
-                          <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
+                          <div style={{ display:"flex", gap:"8px", alignItems:"center", overflow:"hidden" }}>
                             {upcomingQueue.map((entry, qi) => {
                               const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
                               return qImg ? (
-                                <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover" }} />
+                                <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover", flexShrink:0 }} />
                               ) : null;
                             })}
                           </div>
@@ -1849,13 +1849,13 @@
                       )}
                       {/* RECENT — visible on LAST WORN slide */}
                       {recentlyWornQueue.length > 0 && (
-                        <div style={{ display:"flex", gap:"16px", alignItems:"center", position:"absolute", opacity: currentItem.type === "lastworn" ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: currentItem.type === "lastworn" ? "auto" : "none" }}>
+                        <div style={{ display:"flex", gap:"16px", alignItems:"center", position:"absolute", left:"24px", right:"24px", overflow:"hidden", opacity: currentItem.type === "lastworn" ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: currentItem.type === "lastworn" ? "auto" : "none" }}>
                           <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0, minWidth:"80px" }}>RECENT</div>
-                          <div style={{ display:"flex", gap:"8px", alignItems:"center" }}>
+                          <div style={{ display:"flex", gap:"8px", alignItems:"center", overflow:"hidden" }}>
                             {recentlyWornQueue.map((entry, qi) => {
                               const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
                               return qImg ? (
-                                <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover" }} />
+                                <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover", flexShrink:0 }} />
                               ) : null;
                             })}
                           </div>
