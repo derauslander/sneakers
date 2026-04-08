@@ -1083,7 +1083,7 @@
       }, [showForm, quickLog, loggingId, editingMeta, editingCell, importMsg]);
 
       // colorwayOwned determines per-colorway ownership — collection shows owned, wishlist shows unowned
-      const isColorwayOwned = (shoeId, cw) => colorwayOwned[`${shoeId}_${cw}`] !== false;
+      const isColorwayOwned = React.useCallback((shoeId, cw) => colorwayOwned[`${shoeId}_${cw}`] !== false, [colorwayOwned]);
       const total = inventory.reduce((n, shoe) => {
         return n + (colorways[shoe.shortName] || []).filter(cw => isColorwayOwned(shoe.id, cw)).length;
       }, 0);
@@ -1940,7 +1940,7 @@
                                     // Migrate wear log
                                     setWearLog(log => ({ ...log, [shoe.id]: (log[shoe.id]||[]).map(e => e.colorway===cw ? {...e,colorway:newName} : e) }));
                                     // Migrate images
-                                    setImages(imgs => { const n={...imgs}; if(n[oldKey]){n[newKey]=n[oldKey];delete n[oldKey];} if(n[`${oldKey}_hover`]){n[`${newKey}_hover`]=n[`${oldKey}_hover`];delete n[`${oldKey}_hover`];} return n; });
+                                    setImages(imgs => { const n={...imgs}; if(n[oldKey]){n[newKey]=n[oldKey];delete n[oldKey];} if(n[`${oldKey}_hover`]){n[`${newKey}_hover`]=n[`${oldKey}_hover`];delete n[`${oldKey}_hover`];} if(n[`${oldKey}_hover2`]){n[`${newKey}_hover2`]=n[`${oldKey}_hover2`];delete n[`${oldKey}_hover2`];} return n; });
                                     // Migrate colorwayMeta
                                     setColorwayMeta(m => { const n={...m}; if(n[oldKey]){n[newKey]=n[oldKey];delete n[oldKey];} return n; });
                                     // Migrate tierMeta
@@ -1981,7 +1981,7 @@
                       <button onClick={handleAdd} style={{ background:"#e63946", color:T.text, border:"none", padding:"10px 16px", cursor:"pointer", fontSize:"11px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>
                         {editId !== null ? "SAVE" : "ADD"}
                       </button>
-                      <button onClick={() => { setShowForm(false); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan",quantity:1,wishlist:false}); setEditColorways([]); setNewColorway(""); }} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"10px 16px", cursor:"pointer", fontSize:"11px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>
+                      <button onClick={() => { setShowForm(false); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan"}); setEditColorways([]); setNewColorway(""); }} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"10px 16px", cursor:"pointer", fontSize:"11px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>
                         CANCEL
                       </button>
                     </div>
