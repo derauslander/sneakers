@@ -2077,7 +2077,7 @@
                           </div>}
                         </div>
                         {/* Fixed height content area */}
-                        <div style={{ padding: isMobilePublic ? "0 16px 16px 16px" : "0 16px 16px 16px", height: isMobilePublic ? "auto" : (Math.ceil(shoeColorways.length / perRow) * (imgH + 30) + 60) + "px", overflow: isMobilePublic ? "visible" : "hidden", position:"relative" }}>
+                        <div style={{ padding: isMobilePublic ? "0 16px 16px 16px" : "0 16px 16px 16px", height: isMobilePublic ? "auto" : (Math.ceil(shoeColorways.length / perRow) * (imgH + 30) + 40) + "px", overflow: isMobilePublic ? "visible" : "hidden", position:"relative" }}>
                         {/* Reorder arrows */}
                         {ADMIN_MODE && <div style={{ position:"absolute", bottom:"6px", right:"6px", display:"flex", flexDirection:"column", gap:"1px" }}>
                           <button onClick={() => reorderShoe(shoe.id, -1)} style={{ background:"transparent", border:"none", color:CT.text8, cursor:"pointer", fontSize:"9px", padding:"1px 3px", lineHeight:1 }}>▲</button>
