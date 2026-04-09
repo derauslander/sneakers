@@ -3,3 +3,5 @@ start.bat
 sneaker-vault.html
 build.bat
 backups/
+vault-data.json
+build.py

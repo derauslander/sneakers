@@ -208,6 +208,20 @@ def strip_prices(colorway_meta):
         stripped[key] = entry
     return stripped
 
+def strip_ranking_prices(rankings):
+    """Remove price/costPerWear from ranking entries so dollar amounts stay private."""
+    stripped = {}
+    for key, entries in rankings.items():
+        stripped[key] = []
+        for entry in entries:
+            clean = dict(entry)
+            clean.pop("price", None)
+            clean.pop("costPerWear", None)
+            clean.pop("purchaseDate", None)
+            stripped[key] = stripped.get(key, [])
+            stripped[key].append(clean)
+    return stripped
+
 def main():
     if not os.path.exists(VAULT_FILE):
         print(f"  ERROR: {VAULT_FILE} not found. Run a BACKUP from the admin app first.")
@@ -228,8 +242,8 @@ def main():
     # Build public data — full data minus purchasePrice, plus pre-computed rankings
     public_data = dict(data)
     public_data["colorwayMeta"] = strip_prices(data.get("colorwayMeta", {}))
-    public_data["precomputedRankings"] = rankings
-    public_data["builtAt"] = datetime.utcnow().isoformat() + "Z"
+    public_data["precomputedRankings"] = strip_ranking_prices(rankings)
+    public_data["builtAt"] = datetime.now(tz=__import__('datetime').timezone.utc).isoformat().replace("+00:00", "Z")
 
     # Remove exportedAt if present (replace with builtAt)
     public_data.pop("exportedAt", None)

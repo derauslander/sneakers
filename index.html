@@ -938,7 +938,7 @@
       useEffect(() => {
         if (ADMIN_MODE) return;
         fetch("public-data.json")
-          .then(r => { if (!r.ok) throw new Error("Could not load vault-data.json"); return r.json(); })
+          .then(r => { if (!r.ok) throw new Error("Could not load public-data.json"); return r.json(); })
           .then(d => { setPublicData(d); setPublicLoading(false); })
           .catch(e => { setPublicError(e.message); setPublicLoading(false); });
       }, []);
@@ -1851,13 +1851,13 @@
                     <div style={{ background: T.bg2, border:`1px solid ${getBannerBorder(currentItem)}`, borderTop:"none", padding:"10px 24px", position:"relative", minHeight:"45px", display:"flex", alignItems:"center", transition:"border-color 0.5s ease-in-out" }}>
                       {/* COMING UP — visible on UP NEXT slide */}
                       {upcomingQueue.length > 0 && (
-                        <div style={{ display:"flex", gap:"16px", alignItems:"center", position:"absolute", left:"24px", right:"24px", overflow:"hidden", opacity: currentItem.type === "upnext" ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: currentItem.type === "upnext" ? "auto" : "none" }}>
-                          <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0, minWidth:"80px" }}>COMING UP</div>
-                          <div style={{ display:"flex", gap:"8px", alignItems:"center", overflow:"hidden" }}>
+                        <div style={{ display:"flex", gap: isMobilePublic ? "8px" : "16px", alignItems:"center", position:"absolute", left: isMobilePublic ? "12px" : "24px", right: isMobilePublic ? "12px" : "24px", overflow:"hidden", opacity: currentItem.type === "upnext" ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: currentItem.type === "upnext" ? "auto" : "none" }}>
+                          <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0 }}>COMING UP</div>
+                          <div style={{ display:"flex", gap: isMobilePublic ? "6px" : "8px", alignItems:"center", overflow:"hidden", flex:1 }}>
                             {upcomingQueue.map((entry, qi) => {
                               const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
                               return qImg ? (
-                                <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover", flexShrink:0 }} />
+                                <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover", flexShrink: isMobilePublic ? 1 : 0, minWidth: isMobilePublic ? "36px" : undefined }} />
                               ) : null;
                             })}
                           </div>
@@ -1865,13 +1865,13 @@
                       )}
                       {/* RECENT — visible on LAST WORN slide */}
                       {recentlyWornQueue.length > 0 && (
-                        <div style={{ display:"flex", gap:"16px", alignItems:"center", position:"absolute", left:"24px", right:"24px", overflow:"hidden", opacity: currentItem.type === "lastworn" ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: currentItem.type === "lastworn" ? "auto" : "none" }}>
-                          <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0, minWidth:"80px" }}>RECENT</div>
-                          <div style={{ display:"flex", gap:"8px", alignItems:"center", overflow:"hidden" }}>
+                        <div style={{ display:"flex", gap: isMobilePublic ? "8px" : "16px", alignItems:"center", position:"absolute", left: isMobilePublic ? "12px" : "24px", right: isMobilePublic ? "12px" : "24px", overflow:"hidden", opacity: currentItem.type === "lastworn" ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: currentItem.type === "lastworn" ? "auto" : "none" }}>
+                          <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0 }}>RECENT</div>
+                          <div style={{ display:"flex", gap: isMobilePublic ? "6px" : "8px", alignItems:"center", overflow:"hidden", flex:1 }}>
                             {recentlyWornQueue.map((entry, qi) => {
                               const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
                               return qImg ? (
-                                <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover", flexShrink:0 }} />
+                                <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover", flexShrink: isMobilePublic ? 1 : 0, minWidth: isMobilePublic ? "36px" : undefined }} />
                               ) : null;
                             })}
                           </div>
@@ -2404,14 +2404,13 @@
             {ADMIN_MODE && view === "history" && (() => {
               // Build flat list of all wear entries
               const allEntries = inventory.flatMap(shoe =>
-                (wearLog[shoe.id] || []).map((entry, idx) => ({
+                (wearLog[shoe.id] || []).map((entry) => ({
                   shoe: shoe.name,
                   shortName: shoe.shortName,
                   category: shoe.category,
                   colorway: entry.colorway,
                   date: entry.date,
                   shoeId: shoe.id,
-                  idx,
                 }))
               );
 
@@ -2583,7 +2582,7 @@
                               <td style={{ padding:"6px 16px", textAlign:"center" }}>
                                 <button onClick={() => {
                                   if (window.confirm(`Delete this wear entry?\n${entry.shoe} · ${entry.colorway} · ${entry.date}`)) {
-                                    setWearLog(log => ({ ...log, [entry.shoeId]: (log[entry.shoeId] || []).filter((_, j) => j !== entry.idx) }));
+                                    setWearLog(log => { let removed = false; return { ...log, [entry.shoeId]: (log[entry.shoeId] || []).filter(e => { if (!removed && e.date === entry.date && e.colorway === entry.colorway) { removed = true; return false; } return true; }) }; });
                                   }
                                 }} style={{ background:"transparent", border:"none", color:T.text7, cursor:"pointer", fontSize:"12px", padding:"2px 4px" }}>✕</button>
                               </td>
