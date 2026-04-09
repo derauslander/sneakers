@@ -704,6 +704,7 @@
   "colorwayMeta": {
     "3_White Cement Reimagined": {
       "purchaseDate": "2023-03-11",
+      "purchasePrice": "228.11",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "",
@@ -716,6 +717,7 @@
     },
     "12_Black Flint": {
       "purchaseDate": "2023-04-22",
+      "purchasePrice": "217.25",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "",
@@ -728,6 +730,7 @@
     },
     "5_Grape": {
       "purchaseDate": "2025-06-21",
+      "purchasePrice": "233.54",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "",
@@ -740,6 +743,7 @@
     },
     "6_Reverse Infrared": {
       "purchaseDate": "2026-02-14",
+      "purchasePrice": "233.54",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "",
@@ -752,6 +756,7 @@
     },
     "14_Chicago": {
       "purchaseDate": "2025-11-01",
+      "purchasePrice": "200.41",
       "retailer": "Nike.com",
       "size": "12.5",
       "notes": "",
@@ -764,6 +769,7 @@
     },
     "5_Black Tongue": {
       "purchaseDate": "2025-09-13",
+      "purchasePrice": "233.54",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "",
@@ -776,6 +782,7 @@
     },
     "5_Fire Red": {
       "purchaseDate": "2025-01-04",
+      "purchasePrice": "281.28",
       "retailer": "EBAY",
       "size": "12.5",
       "notes": "",
@@ -788,6 +795,7 @@
     },
     "16_Volt": {
       "purchaseDate": "2023-01-22",
+      "purchasePrice": "120.27",
       "retailer": "EBAY",
       "size": "12",
       "notes": "",
@@ -800,6 +808,7 @@
     },
     "4_Black Cement": {
       "purchaseDate": "2023-01-15",
+      "purchasePrice": "830.93",
       "retailer": "EBAY",
       "size": "12.5",
       "notes": "",
@@ -812,6 +821,7 @@
     },
     "4_Fire Red": {
       "purchaseDate": "2023-01-07",
+      "purchasePrice": "450.74",
       "retailer": "EBAY",
       "size": "12",
       "notes": "",
@@ -824,6 +834,7 @@
     },
     "4_Cave Stone": {
       "purchaseDate": "2025-09-06",
+      "purchasePrice": "238.98",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "",
@@ -836,6 +847,7 @@
     },
     "15_Pixel Court": {
       "purchaseDate": "2025-08-30",
+      "purchasePrice": "168.37",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "",
@@ -848,6 +860,7 @@
     },
     "3_Black Cement": {
       "purchaseDate": "2024-11-14",
+      "purchasePrice": "238.98",
       "retailer": "SNKRS",
       "size": "13",
       "notes": "",
@@ -860,6 +873,7 @@
     },
     "3_Rare Air": {
       "purchaseDate": "2025-06-04",
+      "purchasePrice": "228.11",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "",
@@ -872,6 +886,7 @@
     },
     "4_White Cement": {
       "purchaseDate": "2025-05-24",
+      "purchasePrice": "244.41",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "",
@@ -884,6 +899,7 @@
     },
     "13_Flint Grey": {
       "purchaseDate": "2024-03-20",
+      "purchasePrice": "228.11",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "",
@@ -896,6 +912,7 @@
     },
     "17_Air Max Day (Royal Volt)": {
       "purchaseDate": "2024-03-26",
+      "purchasePrice": "162.94",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "",
@@ -908,6 +925,7 @@
     },
     "1_Royal Reimagined": {
       "purchaseDate": "2023-11-04",
+      "purchasePrice": "195.53",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "",
@@ -920,6 +938,7 @@
     },
     "2_Black Cement": {
       "purchaseDate": "2023-09-23",
+      "purchasePrice": "190.09",
       "retailer": "Nike.com",
       "size": "12.5",
       "notes": "",
@@ -932,6 +951,7 @@
     },
     "4_Red Cement": {
       "purchaseDate": "2023-09-09",
+      "purchasePrice": "228.11",
       "retailer": "SNKRS",
       "size": "13",
       "notes": "",
@@ -944,6 +964,7 @@
     },
     "4_A Ma Maniere": {
       "purchaseDate": "2023-03-18",
+      "purchasePrice": "463.29",
       "retailer": "GOAT",
       "size": "12.5",
       "notes": "",
@@ -956,6 +977,7 @@
     },
     "7_Cardinal": {
       "purchaseDate": "2025-12-08",
+      "purchasePrice": "250.88",
       "retailer": "GOAT",
       "size": "12.5",
       "notes": "",
@@ -968,6 +990,7 @@
     },
     "10_Steel": {
       "purchaseDate": "2025-08-06",
+      "purchasePrice": "467.05",
       "retailer": "GOAT",
       "size": "12.5",
       "notes": "",
@@ -980,6 +1003,7 @@
     },
     "11_Flu Game": {
       "purchaseDate": "2025-05-02",
+      "purchasePrice": "293.03",
       "retailer": "GOAT",
       "size": "12.5",
       "notes": "",
@@ -992,6 +1016,7 @@
     },
     "5_Black Metallic Reimagined": {
       "purchaseDate": "2025-02-08",
+      "purchasePrice": "385.36",
       "retailer": "GOAT",
       "size": "12.5",
       "notes": "",
@@ -1004,6 +1029,7 @@
     },
     "3_A Ma Maniere": {
       "purchaseDate": "2025-01-03",
+      "purchasePrice": "359.29",
       "retailer": "GOAT",
       "size": "12.5",
       "notes": "",
@@ -1016,6 +1042,7 @@
     },
     "15_Hot Lava": {
       "purchaseDate": "2024-08-30",
+      "purchasePrice": "409.26",
       "retailer": "GOAT",
       "size": "12.5",
       "notes": "",
@@ -1028,6 +1055,7 @@
     },
     "3_A Ma Maniere WYWS": {
       "purchaseDate": "2024-08-27",
+      "purchasePrice": "291.94",
       "retailer": "GOAT",
       "size": "12.5",
       "notes": "",
@@ -1040,6 +1068,7 @@
     },
     "6_Infrared": {
       "purchaseDate": "2023-12-24",
+      "purchasePrice": "499.13",
       "retailer": "GOAT",
       "size": "12.5",
       "notes": "",
@@ -1052,6 +1081,7 @@
     },
     "4_What the 4": {
       "purchaseDate": "2023-03-28",
+      "purchasePrice": "464.37",
       "retailer": "GOAT",
       "size": "12.5",
       "notes": "",
@@ -1064,6 +1094,7 @@
     },
     "4_A Ma Maniere WYWS": {
       "purchaseDate": "2024-09-26",
+      "purchasePrice": "244.69",
       "retailer": "A Ma Maniere",
       "size": "12.5",
       "notes": "",
@@ -1076,6 +1107,7 @@
     },
     "5_A Ma Maniere Dawn": {
       "purchaseDate": "2023-11-27",
+      "purchasePrice": "244.41",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "LR hit on SNKRS",
@@ -1088,6 +1120,7 @@
     },
     "4_Military Blue": {
       "purchaseDate": "2024-05-04",
+      "purchasePrice": "233.54",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "LR hit on SNKRS.",
@@ -1100,6 +1133,7 @@
     },
     "21_Purple": {
       "purchaseDate": "2026-03-29",
+      "purchasePrice": "369.27",
       "retailer": "EBay",
       "size": "12",
       "notes": "",
@@ -1112,6 +1146,7 @@
     },
     "1773621809428_Sea Salt": {
       "purchaseDate": "2026-03-02",
+      "purchasePrice": "99.40",
       "retailer": "Amazon",
       "size": "13",
       "notes": "",
@@ -1124,6 +1159,7 @@
     },
     "1_Wolf Grey": {
       "purchaseDate": "2024-07-20",
+      "purchasePrice": "152.08",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "",
@@ -1136,6 +1172,7 @@
     },
     "15_Stone Blue": {
       "purchaseDate": "2025-06-30",
+      "purchasePrice": "193.09",
       "retailer": "GOAT",
       "size": "12.5",
       "notes": "",
@@ -1148,6 +1185,7 @@
     },
     "8_Playoffs": {
       "purchaseDate": "2023-10-20",
+      "purchasePrice": "309.52",
       "retailer": "EBAY",
       "size": "12.5",
       "notes": "",
@@ -1160,6 +1198,7 @@
     },
     "9_Olive": {
       "purchaseDate": "2024-11-09",
+      "purchasePrice": "228.11",
       "retailer": "SNKRS",
       "size": "12.5",
       "notes": "",
@@ -1172,6 +1211,7 @@
     },
     "18_Space Jam": {
       "purchaseDate": "",
+      "purchasePrice": "",
       "retailer": "",
       "size": "",
       "notes": "",
@@ -1182,6 +1222,7 @@
     },
     "19_Voltage Purple": {
       "purchaseDate": "",
+      "purchasePrice": "",
       "retailer": "",
       "size": "",
       "notes": "",
@@ -1192,6 +1233,7 @@
     },
     "19_Volt": {
       "purchaseDate": "",
+      "purchasePrice": "",
       "retailer": "",
       "size": "",
       "notes": "",
@@ -1202,6 +1244,7 @@
     },
     "1775259901810_Dark Grape": {
       "purchaseDate": "",
+      "purchasePrice": "",
       "retailer": "",
       "size": "",
       "notes": "",
@@ -1212,6 +1255,7 @@
     },
     "18_Concord": {
       "purchaseDate": "",
+      "purchasePrice": "",
       "retailer": "",
       "size": "",
       "notes": "",
@@ -1222,6 +1266,7 @@
     },
     "15_Black Lava": {
       "purchaseDate": "",
+      "purchasePrice": "",
       "retailer": "",
       "size": "",
       "notes": "",
@@ -1232,6 +1277,7 @@
     },
     "1774096319133_Billy Hoyle": {
       "purchaseDate": "",
+      "purchasePrice": "",
       "retailer": "",
       "size": "",
       "notes": "",
@@ -1242,6 +1288,7 @@
     },
     "16_White Infrared": {
       "purchaseDate": "",
+      "purchasePrice": "",
       "retailer": "",
       "size": "",
       "notes": "",
@@ -1824,457 +1871,5 @@
       }
     ]
   ],
-  "precomputedRankings": {
-    "wornRanked": [
-      {
-        "shoeId": 3,
-        "shoeName": "Air Jordan 3",
-        "shortName": "AJ3",
-        "colorway": "White Cement Reimagined",
-        "count": 6,
-        "lastWorn": "2025-10-17"
-      },
-      {
-        "shoeId": 17,
-        "shoeName": "Air Max 86",
-        "shortName": "AM86",
-        "colorway": "Air Max Day (Royal Volt)",
-        "count": 5,
-        "lastWorn": "2025-11-28"
-      },
-      {
-        "shoeId": 16,
-        "shoeName": "Air Trainer SC2",
-        "shortName": "SC2",
-        "colorway": "Volt",
-        "count": 5,
-        "lastWorn": "2025-12-06"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Black Cement",
-        "count": 5,
-        "lastWorn": "2025-12-24"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Fire Red",
-        "count": 5,
-        "lastWorn": "2026-01-16"
-      },
-      {
-        "shoeId": 12,
-        "shoeName": "Air Jordan 13",
-        "shortName": "AJ13",
-        "colorway": "Black Flint",
-        "count": 5,
-        "lastWorn": "2026-04-04"
-      },
-      {
-        "shoeId": 2,
-        "shoeName": "Air Jordan 2",
-        "shortName": "AJ2",
-        "colorway": "Black Cement",
-        "count": 4,
-        "lastWorn": "2025-09-11"
-      },
-      {
-        "shoeId": 1,
-        "shoeName": "Air Jordan 1",
-        "shortName": "AJ1",
-        "colorway": "Royal Reimagined",
-        "count": 4,
-        "lastWorn": "2025-09-30"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Military Blue",
-        "count": 4,
-        "lastWorn": "2025-10-03"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "A Ma Maniere",
-        "count": 4,
-        "lastWorn": "2025-11-27"
-      }
-    ],
-    "priceRanked": [
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Black Cement",
-        "price": 830.93,
-        "purchaseDate": "2023-01-15"
-      },
-      {
-        "shoeId": 6,
-        "shoeName": "Air Jordan 6",
-        "shortName": "AJ6",
-        "colorway": "Infrared",
-        "price": 499.13,
-        "purchaseDate": "2023-12-24"
-      },
-      {
-        "shoeId": 10,
-        "shoeName": "Air Jordan 10",
-        "shortName": "AJ10",
-        "colorway": "Steel",
-        "price": 467.05,
-        "purchaseDate": "2025-08-06"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "What the 4",
-        "price": 464.37,
-        "purchaseDate": "2023-03-28"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "A Ma Maniere",
-        "price": 463.29,
-        "purchaseDate": "2023-03-18"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Fire Red",
-        "price": 450.74,
-        "purchaseDate": "2023-01-07"
-      },
-      {
-        "shoeId": 15,
-        "shoeName": "Air Tech Challenge 2",
-        "shortName": "ATC2",
-        "colorway": "Hot Lava",
-        "price": 409.26,
-        "purchaseDate": "2024-08-30"
-      },
-      {
-        "shoeId": 5,
-        "shoeName": "Air Jordan 5",
-        "shortName": "AJ5",
-        "colorway": "Black Metallic Reimagined",
-        "price": 385.36,
-        "purchaseDate": "2025-02-08"
-      },
-      {
-        "shoeId": 21,
-        "shoeName": "Air Force Max CB",
-        "shortName": "AFMCB",
-        "colorway": "Purple",
-        "price": 369.27,
-        "purchaseDate": "2026-03-29"
-      },
-      {
-        "shoeId": 3,
-        "shoeName": "Air Jordan 3",
-        "shortName": "AJ3",
-        "colorway": "A Ma Maniere",
-        "price": 359.29,
-        "purchaseDate": "2025-01-03"
-      }
-    ],
-    "valueRanked": [
-      {
-        "shoeId": 16,
-        "shoeName": "Air Trainer SC2",
-        "shortName": "SC2",
-        "colorway": "Volt",
-        "price": 120.27,
-        "wears": 5,
-        "costPerWear": 24.054
-      },
-      {
-        "shoeId": 17,
-        "shoeName": "Air Max 86",
-        "shortName": "AM86",
-        "colorway": "Air Max Day (Royal Volt)",
-        "price": 162.94,
-        "wears": 5,
-        "costPerWear": 32.588
-      },
-      {
-        "shoeId": 3,
-        "shoeName": "Air Jordan 3",
-        "shortName": "AJ3",
-        "colorway": "White Cement Reimagined",
-        "price": 228.11,
-        "wears": 6,
-        "costPerWear": 38.0183
-      },
-      {
-        "shoeId": 12,
-        "shoeName": "Air Jordan 13",
-        "shortName": "AJ13",
-        "colorway": "Black Flint",
-        "price": 217.25,
-        "wears": 5,
-        "costPerWear": 43.45
-      },
-      {
-        "shoeId": 2,
-        "shoeName": "Air Jordan 2",
-        "shortName": "AJ2",
-        "colorway": "Black Cement",
-        "price": 190.09,
-        "wears": 4,
-        "costPerWear": 47.5225
-      },
-      {
-        "shoeId": 1,
-        "shoeName": "Air Jordan 1",
-        "shortName": "AJ1",
-        "colorway": "Royal Reimagined",
-        "price": 195.53,
-        "wears": 4,
-        "costPerWear": 48.8825
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Military Blue",
-        "price": 233.54,
-        "wears": 4,
-        "costPerWear": 58.385
-      },
-      {
-        "shoeId": 5,
-        "shoeName": "Air Jordan 5",
-        "shortName": "AJ5",
-        "colorway": "A Ma Maniere Dawn",
-        "price": 244.41,
-        "wears": 4,
-        "costPerWear": 61.1025
-      },
-      {
-        "shoeId": 13,
-        "shoeName": "Air Jordan 14",
-        "shortName": "AJ14",
-        "colorway": "Flint Grey",
-        "price": 228.11,
-        "wears": 3,
-        "costPerWear": 76.0367
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Fire Red",
-        "price": 450.74,
-        "wears": 5,
-        "costPerWear": 90.148
-      }
-    ],
-    "iceRanked": [
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "What the 4",
-        "daysOnIce": 463,
-        "purchaseDate": "2023-03-28",
-        "firstWorn": "2024-07-03"
-      },
-      {
-        "shoeId": 6,
-        "shoeName": "Air Jordan 6",
-        "shortName": "AJ6",
-        "colorway": "Infrared",
-        "daysOnIce": 285,
-        "purchaseDate": "2023-12-24",
-        "firstWorn": "2024-10-04"
-      },
-      {
-        "shoeId": 9,
-        "shoeName": "Air Jordan 9",
-        "shortName": "AJ9",
-        "colorway": "Olive",
-        "daysOnIce": 257,
-        "purchaseDate": "2024-11-09",
-        "firstWorn": "2025-07-24"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "A Ma Maniere WYWS",
-        "daysOnIce": 169,
-        "purchaseDate": "2024-09-26",
-        "firstWorn": "2025-03-14"
-      },
-      {
-        "shoeId": 5,
-        "shoeName": "Air Jordan 5",
-        "shortName": "AJ5",
-        "colorway": "Fire Red",
-        "daysOnIce": 153,
-        "purchaseDate": "2025-01-04",
-        "firstWorn": "2025-06-06"
-      },
-      {
-        "shoeId": 5,
-        "shoeName": "Air Jordan 5",
-        "shortName": "AJ5",
-        "colorway": "Black Metallic Reimagined",
-        "daysOnIce": 145,
-        "purchaseDate": "2025-02-08",
-        "firstWorn": "2025-07-03"
-      },
-      {
-        "shoeId": 3,
-        "shoeName": "Air Jordan 3",
-        "shortName": "AJ3",
-        "colorway": "Black Cement",
-        "daysOnIce": 85,
-        "purchaseDate": "2024-11-14",
-        "firstWorn": "2025-02-07"
-      },
-      {
-        "shoeId": 11,
-        "shoeName": "Air Jordan 12",
-        "shortName": "AJ12",
-        "colorway": "Flu Game",
-        "daysOnIce": 84,
-        "purchaseDate": "2025-05-02",
-        "firstWorn": "2025-07-25"
-      },
-      {
-        "shoeId": 8,
-        "shoeName": "Air Jordan 8",
-        "shortName": "AJ8",
-        "colorway": "Playoffs",
-        "daysOnIce": 80,
-        "purchaseDate": "2023-10-20",
-        "firstWorn": "2024-01-08"
-      },
-      {
-        "shoeId": 3,
-        "shoeName": "Air Jordan 3",
-        "shortName": "AJ3",
-        "colorway": "Rare Air",
-        "daysOnIce": 72,
-        "purchaseDate": "2025-06-04",
-        "firstWorn": "2025-08-15"
-      }
-    ],
-    "gapRanked": [
-      {
-        "shoeId": 8,
-        "shoeName": "Air Jordan 8",
-        "shortName": "AJ8",
-        "colorway": "Playoffs",
-        "days": 556,
-        "from": "2024-01-08",
-        "to": "2025-07-17",
-        "entryKey": "8_Playoffs_2024-01-08"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "A Ma Maniere",
-        "days": 503,
-        "from": "2023-03-18",
-        "to": "2024-08-02",
-        "entryKey": "4_A Ma Maniere_2023-03-18"
-      },
-      {
-        "shoeId": 3,
-        "shoeName": "Air Jordan 3",
-        "shortName": "AJ3",
-        "colorway": "White Cement Reimagined",
-        "days": 359,
-        "from": "2024-01-03",
-        "to": "2024-12-27",
-        "entryKey": "3_White Cement Reimagined_2024-01-03"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Black Cement",
-        "days": 354,
-        "from": "2023-01-15",
-        "to": "2024-01-04",
-        "entryKey": "4_Black Cement_2023-01-15"
-      },
-      {
-        "shoeId": 2,
-        "shoeName": "Air Jordan 2",
-        "shortName": "AJ2",
-        "colorway": "Black Cement",
-        "days": 346,
-        "from": "2024-01-02",
-        "to": "2024-12-13",
-        "entryKey": "2_Black Cement_2024-01-02"
-      },
-      {
-        "shoeId": 16,
-        "shoeName": "Air Trainer SC2",
-        "shortName": "SC2",
-        "colorway": "Volt",
-        "days": 336,
-        "from": "2023-01-22",
-        "to": "2023-12-24",
-        "entryKey": "16_Volt_2023-01-22"
-      },
-      {
-        "shoeId": 1,
-        "shoeName": "Air Jordan 1",
-        "shortName": "AJ1",
-        "colorway": "Royal Reimagined",
-        "days": 331,
-        "from": "2024-01-01",
-        "to": "2024-11-27",
-        "entryKey": "1_Royal Reimagined_2024-01-01"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Fire Red",
-        "days": 320,
-        "from": "2023-01-07",
-        "to": "2023-11-23",
-        "entryKey": "4_Fire Red_2023-01-07"
-      },
-      {
-        "shoeId": 16,
-        "shoeName": "Air Trainer SC2",
-        "shortName": "SC2",
-        "colorway": "Volt",
-        "days": 314,
-        "from": "2024-06-08",
-        "to": "2025-04-18",
-        "entryKey": "16_Volt_2024-06-08"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Fire Red",
-        "days": 308,
-        "from": "2024-06-28",
-        "to": "2025-05-02",
-        "entryKey": "4_Fire Red_2024-06-28"
-      }
-    ]
-  },
-  "builtAt": "2026-04-09T00:21:20.472712Z"
+  "exportedAt": "2026-04-07T21:52:23.731Z"
 }
