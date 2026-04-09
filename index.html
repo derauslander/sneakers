@@ -937,7 +937,7 @@
 
       useEffect(() => {
         if (ADMIN_MODE) return;
-        fetch("vault-data.json")
+        fetch("public-data.json")
           .then(r => { if (!r.ok) throw new Error("Could not load vault-data.json"); return r.json(); })
           .then(d => { setPublicData(d); setPublicLoading(false); })
           .catch(e => { setPublicError(e.message); setPublicLoading(false); });
@@ -1092,7 +1092,23 @@
       }, 0);
 
       // ── Memoised Top 10 rankings ────────────────────────────────────────
+      // Public site uses pre-computed rankings from public-data.json (no prices in public JSON)
       const top10Rankings = React.useMemo(() => {
+        if (!ADMIN_MODE && publicData?.precomputedRankings) {
+          const rehydrate = (entries) => entries.map(e => ({
+            ...e,
+            shoe: inventory.find(s => s.id === e.shoeId) || { id: e.shoeId, name: e.shoeName, shortName: e.shortName }
+          }));
+          const r = publicData.precomputedRankings;
+          return {
+            wornRanked:  rehydrate(r.wornRanked  || []),
+            priceRanked: rehydrate(r.priceRanked || []),
+            valueRanked: rehydrate(r.valueRanked || []),
+            iceRanked:   rehydrate(r.iceRanked   || []),
+            gapRanked:   rehydrate(r.gapRanked   || []),
+          };
+        }
+
         const excluded = (key) => tierExcludedFromRotation(tierOf(tierMeta, key)) || colorwayOwned[key] === false;
 
         // Most Worn
@@ -1188,7 +1204,7 @@
           .slice(0, 10);
 
         return { wornRanked, priceRanked, valueRanked, iceRanked, gapRanked };
-      }, [inventory, wearLog, colorwayMeta, tierMeta, colorwayOwned, colorways]);
+      }, [inventory, wearLog, colorwayMeta, tierMeta, colorwayOwned, colorways, publicData]);
 
       // ── Memoised wishlist card order ────────────────────────────────────
       const orderedWishlistCards = React.useMemo(() => {

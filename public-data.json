@@ -1,0 +1,2280 @@
+{
+  "inventory": [
+    {
+      "id": 1,
+      "name": "Air Jordan 1",
+      "shortName": "AJ1",
+      "category": "Jordan"
+    },
+    {
+      "id": 2,
+      "name": "Air Jordan 2",
+      "shortName": "AJ2",
+      "category": "Jordan"
+    },
+    {
+      "id": 3,
+      "name": "Air Jordan 3",
+      "shortName": "AJ3",
+      "category": "Jordan"
+    },
+    {
+      "id": 4,
+      "name": "Air Jordan 4",
+      "shortName": "AJ4",
+      "category": "Jordan"
+    },
+    {
+      "id": 5,
+      "name": "Air Jordan 5",
+      "shortName": "AJ5",
+      "category": "Jordan"
+    },
+    {
+      "id": 6,
+      "name": "Air Jordan 6",
+      "shortName": "AJ6",
+      "category": "Jordan"
+    },
+    {
+      "id": 7,
+      "name": "Air Jordan 7",
+      "shortName": "AJ7",
+      "category": "Jordan"
+    },
+    {
+      "id": 8,
+      "name": "Air Jordan 8",
+      "shortName": "AJ8",
+      "category": "Jordan"
+    },
+    {
+      "id": 9,
+      "name": "Air Jordan 9",
+      "shortName": "AJ9",
+      "category": "Jordan"
+    },
+    {
+      "id": 10,
+      "name": "Air Jordan 10",
+      "shortName": "AJ10",
+      "category": "Jordan"
+    },
+    {
+      "id": 11,
+      "name": "Air Jordan 12",
+      "shortName": "AJ12",
+      "category": "Jordan"
+    },
+    {
+      "id": 12,
+      "name": "Air Jordan 13",
+      "shortName": "AJ13",
+      "category": "Jordan"
+    },
+    {
+      "id": 13,
+      "name": "Air Jordan 14",
+      "shortName": "AJ14",
+      "category": "Jordan"
+    },
+    {
+      "id": 14,
+      "name": "Air Jordan 40",
+      "shortName": "AJ40",
+      "category": "Jordan"
+    },
+    {
+      "id": 15,
+      "name": "Air Tech Challenge 2",
+      "shortName": "ATC2",
+      "category": "Nike"
+    },
+    {
+      "id": 16,
+      "name": "Air Trainer SC2",
+      "shortName": "SC2",
+      "category": "Nike"
+    },
+    {
+      "id": 21,
+      "name": "Air Force Max CB",
+      "shortName": "AFMCB",
+      "category": "Nike"
+    },
+    {
+      "id": 17,
+      "name": "Air Max 86",
+      "shortName": "AM86",
+      "category": "Nike"
+    },
+    {
+      "id": 18,
+      "name": "Air Jordan 11",
+      "shortName": "AJ11",
+      "category": "Jordan"
+    },
+    {
+      "id": 19,
+      "name": "Air Tech Challenge 3",
+      "shortName": "ATC3",
+      "category": "Nike"
+    },
+    {
+      "name": "NB 1080 V14",
+      "shortName": "NB FF",
+      "category": "New Balance",
+      "id": 1773621809428
+    },
+    {
+      "name": "Air Command Force",
+      "shortName": "ACF",
+      "category": "Nike",
+      "id": 1774096319133
+    },
+    {
+      "name": "Air Tech Challenge 4",
+      "shortName": "ATC4",
+      "category": "Nike",
+      "id": 1775259901810
+    }
+  ],
+  "wearLog": {
+    "1": [
+      {
+        "colorway": "Royal Reimagined",
+        "date": "2025-09-30"
+      },
+      {
+        "date": "2026-03-08",
+        "colorway": "Wolf Grey"
+      },
+      {
+        "date": "2026-03-15",
+        "colorway": "Wolf Grey"
+      },
+      {
+        "date": "2026-03-21",
+        "colorway": "Wolf Grey"
+      },
+      {
+        "date": "2023-11-11",
+        "colorway": "Royal Reimagined"
+      },
+      {
+        "date": "2024-01-01",
+        "colorway": "Royal Reimagined"
+      },
+      {
+        "date": "2024-11-27",
+        "colorway": "Royal Reimagined"
+      }
+    ],
+    "2": [
+      {
+        "colorway": "Black Cement",
+        "date": "2025-09-11"
+      },
+      {
+        "date": "2023-09-30",
+        "colorway": "Black Cement"
+      },
+      {
+        "date": "2024-01-02",
+        "colorway": "Black Cement"
+      },
+      {
+        "date": "2024-12-13",
+        "colorway": "Black Cement"
+      }
+    ],
+    "3": [
+      {
+        "colorway": "White Cement Reimagined",
+        "date": "2025-10-17"
+      },
+      {
+        "colorway": "Black Cement",
+        "date": "2025-10-31"
+      },
+      {
+        "colorway": "A Ma Maniere WYWS",
+        "date": "2025-10-24"
+      },
+      {
+        "colorway": "A Ma Maniere",
+        "date": "2025-11-14"
+      },
+      {
+        "colorway": "Rare Air",
+        "date": "2025-08-15"
+      },
+      {
+        "date": "2023-03-11",
+        "colorway": "White Cement Reimagined"
+      },
+      {
+        "date": "2023-03-12",
+        "colorway": "White Cement Reimagined"
+      },
+      {
+        "date": "2023-03-15",
+        "colorway": "White Cement Reimagined"
+      },
+      {
+        "date": "2024-12-27",
+        "colorway": "White Cement Reimagined"
+      },
+      {
+        "date": "2025-02-07",
+        "colorway": "Black Cement"
+      },
+      {
+        "date": "2024-09-06",
+        "colorway": "A Ma Maniere WYWS"
+      },
+      {
+        "date": "2025-01-03",
+        "colorway": "A Ma Maniere WYWS"
+      },
+      {
+        "date": "2025-03-07",
+        "colorway": "A Ma Maniere"
+      },
+      {
+        "date": "2024-01-03",
+        "colorway": "White Cement Reimagined"
+      }
+    ],
+    "4": [
+      {
+        "colorway": "Fire Red",
+        "date": "2026-01-16"
+      },
+      {
+        "colorway": "Black Cement",
+        "date": "2025-12-24"
+      },
+      {
+        "colorway": "A Ma Maniere",
+        "date": "2025-11-27"
+      },
+      {
+        "colorway": "A Ma Maniere WYWS",
+        "date": "2025-11-21"
+      },
+      {
+        "colorway": "What the 4",
+        "date": "2025-12-31"
+      },
+      {
+        "colorway": "White Cement",
+        "date": "2025-07-18"
+      },
+      {
+        "colorway": "Military Blue",
+        "date": "2025-10-03"
+      },
+      {
+        "colorway": "Cave Stone",
+        "date": "2025-09-12"
+      },
+      {
+        "date": "2026-03-08",
+        "colorway": "Red Cement"
+      },
+      {
+        "date": "2023-01-07",
+        "colorway": "Fire Red"
+      },
+      {
+        "date": "2023-11-23",
+        "colorway": "Fire Red"
+      },
+      {
+        "date": "2025-05-02",
+        "colorway": "Fire Red"
+      },
+      {
+        "date": "2023-01-15",
+        "colorway": "Black Cement"
+      },
+      {
+        "date": "2024-01-04",
+        "colorway": "Black Cement"
+      },
+      {
+        "date": "2024-08-16",
+        "colorway": "Black Cement"
+      },
+      {
+        "date": "2025-04-25",
+        "colorway": "Black Cement"
+      },
+      {
+        "date": "2023-03-18",
+        "colorway": "A Ma Maniere"
+      },
+      {
+        "date": "2024-08-02",
+        "colorway": "A Ma Maniere"
+      },
+      {
+        "date": "2025-03-28",
+        "colorway": "A Ma Maniere"
+      },
+      {
+        "date": "2025-03-14",
+        "colorway": "A Ma Maniere WYWS"
+      },
+      {
+        "date": "2024-07-03",
+        "colorway": "What the 4"
+      },
+      {
+        "date": "2025-05-01",
+        "colorway": "What the 4"
+      },
+      {
+        "date": "2025-03-21",
+        "colorway": "Military Blue"
+      },
+      {
+        "date": "2024-06-21",
+        "colorway": "Military Blue"
+      },
+      {
+        "date": "2024-07-25",
+        "colorway": "Military Blue"
+      },
+      {
+        "date": "2024-06-28",
+        "colorway": "Fire Red"
+      }
+    ],
+    "5": [
+      {
+        "colorway": "Black Tongue",
+        "date": "2025-09-26"
+      },
+      {
+        "colorway": "Black Metallic Reimagined",
+        "date": "2025-07-03"
+      },
+      {
+        "colorway": "Fire Red",
+        "date": "2025-06-06"
+      },
+      {
+        "colorway": "A Ma Maniere Dawn",
+        "date": "2026-01-23"
+      },
+      {
+        "colorway": "Grape",
+        "date": "2025-10-10"
+      },
+      {
+        "date": "2026-03-19",
+        "colorway": "Fire Red"
+      },
+      {
+        "date": "2023-11-27",
+        "colorway": "A Ma Maniere Dawn"
+      },
+      {
+        "date": "2024-09-27",
+        "colorway": "A Ma Maniere Dawn"
+      },
+      {
+        "date": "2025-06-13",
+        "colorway": "A Ma Maniere Dawn"
+      },
+      {
+        "date": "2025-06-25",
+        "colorway": "Grape"
+      }
+    ],
+    "6": [
+      {
+        "colorway": "Infrared",
+        "date": "2025-07-10"
+      },
+      {
+        "date": "2026-03-20",
+        "colorway": "Reverse Infrared"
+      },
+      {
+        "date": "2024-12-24",
+        "colorway": "Infrared"
+      },
+      {
+        "date": "2024-10-04",
+        "colorway": "Infrared"
+      }
+    ],
+    "7": [
+      {
+        "colorway": "Cardinal",
+        "date": "2025-12-25"
+      }
+    ],
+    "8": [
+      {
+        "colorway": "Playoffs",
+        "date": "2025-07-17"
+      },
+      {
+        "date": "2024-01-08",
+        "colorway": "Playoffs"
+      }
+    ],
+    "9": [
+      {
+        "colorway": "Olive",
+        "date": "2025-07-24"
+      }
+    ],
+    "10": [
+      {
+        "colorway": "Steel",
+        "date": "2025-08-22"
+      }
+    ],
+    "11": [
+      {
+        "colorway": "Flu Game",
+        "date": "2025-07-25"
+      }
+    ],
+    "12": [
+      {
+        "colorway": "Black Flint",
+        "date": "2025-07-11"
+      },
+      {
+        "date": "2023-04-22",
+        "colorway": "Black Flint"
+      },
+      {
+        "date": "2024-01-13",
+        "colorway": "Black Flint"
+      },
+      {
+        "date": "2024-11-01",
+        "colorway": "Black Flint"
+      },
+      {
+        "date": "2026-04-04",
+        "colorway": "Black Flint"
+      }
+    ],
+    "13": [
+      {
+        "colorway": "Flint Grey",
+        "date": "2025-08-09"
+      },
+      {
+        "date": "2024-03-20",
+        "colorway": "Flint Grey"
+      },
+      {
+        "date": "2024-11-15",
+        "colorway": "Flint Grey"
+      }
+    ],
+    "14": [
+      {
+        "colorway": "Chicago",
+        "date": "2025-11-07"
+      }
+    ],
+    "15": [
+      {
+        "colorway": "Hot Lava",
+        "date": "2025-06-20"
+      },
+      {
+        "colorway": "Stone Blue",
+        "date": "2025-08-08"
+      },
+      {
+        "colorway": "Pixel Court",
+        "date": "2025-09-05"
+      },
+      {
+        "date": "2024-09-13",
+        "colorway": "Hot Lava"
+      }
+    ],
+    "16": [
+      {
+        "colorway": "Volt",
+        "date": "2025-12-06"
+      },
+      {
+        "date": "2023-01-22",
+        "colorway": "Volt"
+      },
+      {
+        "date": "2023-12-24",
+        "colorway": "Volt"
+      },
+      {
+        "date": "2024-06-08",
+        "colorway": "Volt"
+      },
+      {
+        "date": "2025-04-18",
+        "colorway": "Volt"
+      }
+    ],
+    "17": [
+      {
+        "colorway": "Air Max Day (Royal Volt)",
+        "date": "2025-11-28"
+      },
+      {
+        "date": "2024-12-03",
+        "colorway": "Air Max Day (Royal Volt)"
+      },
+      {
+        "date": "2024-05-30",
+        "colorway": "Air Max Day (Royal Volt)"
+      },
+      {
+        "date": "2024-05-31",
+        "colorway": "Air Max Day (Royal Volt)"
+      },
+      {
+        "date": "2025-04-17",
+        "colorway": "Air Max Day (Royal Volt)"
+      }
+    ],
+    "21": [],
+    "1773621809428": [
+      {
+        "date": "2026-03-15",
+        "colorway": "Sea Salt"
+      }
+    ]
+  },
+  "images": {
+    "1_Royal Reimagined": "Shoes/1_Royal Reimagined.png",
+    "2_Black Cement": "Shoes/2_Black Cement.png",
+    "3_White Cement Reimagined": "Shoes/3_White Cement Reimagined.png",
+    "3_Black Cement": "Shoes/3_Black Cement.png",
+    "3_A Ma Maniere": "Shoes/3_A Ma Maniere.png",
+    "3_Rare Air": "Shoes/3_Rare Air.png",
+    "3_A Ma Maniere WYWS": "Shoes/3_A Ma Maniere WYWS.png",
+    "4_Fire Red_hover": "Shoes/4_Fire Red_hover.png",
+    "4_Black Cement_hover": "Shoes/4_Black Cement_hover.png",
+    "4_White Cement": "Shoes/4_White Cement.png",
+    "4_Military Blue": "Shoes/4_Military Blue.png",
+    "4_What the 4": "Shoes/4_What the 4.png",
+    "4_A Ma Maniere": "Shoes/4_A Ma Maniere.png",
+    "4_A Ma Maniere WYWS": "Shoes/4_A Ma Maniere WYWS.png",
+    "4_Cave Stone": "Shoes/4_Cave Stone.png",
+    "4_Red Cement": "Shoes/4_Red Cement.png",
+    "5_Black Tongue": "Shoes/5_Black Tongue.png",
+    "5_Black Tongue_hover": "Shoes/5_Black Tongue_hover.png",
+    "5_Black Metallic Reimagined": "Shoes/5_Black Metallic Reimagined.png",
+    "5_Fire Red": "Shoes/5_Fire Red.png",
+    "5_Grape": "Shoes/5_Grape.png",
+    "5_A Ma Maniere Dawn": "Shoes/5_A Ma Maniere Dawn.png",
+    "6_Infrared": "Shoes/6_Infrared.png",
+    "6_Reverse Infrared": "Shoes/6_Reverse Infrared.png",
+    "7_Cardinal": "Shoes/7_Cardinal.png",
+    "10_Steel": "Shoes/10_Steel.png",
+    "11_Flu Game": "Shoes/11_Flu Game.png",
+    "12_Black Flint": "Shoes/12_Black Flint.png",
+    "13_Flint Grey": "Shoes/13_Flint Grey.png",
+    "14_Chicago": "Shoes/14_Chicago.png",
+    "15_Hot Lava_hover": "Shoes/15_Hot Lava_hover.png",
+    "15_Pixel Court": "Shoes/15_Pixel Court.png",
+    "16_Volt_hover": "Shoes/16_Volt_hover.png",
+    "17_Air Max Day (Royal Volt)": "Shoes/17_Air Max Day (Royal Volt).png",
+    "1773621809428_Sea Salt": "Shoes/1773621809428_Sea Salt.png",
+    "18_Space Jam": "Shoes/18_Space Jam.png",
+    "21_Purple": "Shoes/21_Purple.png",
+    "1_Wolf Grey": "Shoes/1_Barons.png",
+    "15_Stone Blue": "Shoes/15_McEnroe.png",
+    "1774096319133_Billy Hoyle": "Shoes/1774096319133_Billy Hoyle.png",
+    "8_Playoffs": "Shoes/8_Playoffs.png",
+    "9_Olive": "Shoes/9_Olive.png",
+    "4_White Cement_hover": "Shoes/4_White Cement_hover.png",
+    "4_What the 4_hover": "Shoes/4_What the 4_hover.png",
+    "4_Military Blue_hover": "Shoes/4_Military Blue_hover.png",
+    "8_Playoffs_hover": "Shoes/8_Playoffs_hover.png",
+    "12_Black Flint_hover": "Shoes/12_Black Flint_hover.png",
+    "11_Flu Game_hover": "Shoes/11_Flu Game_hover.png",
+    "5_A Ma Maniere Dawn_hover": "Shoes/5_A Ma Maniere Dawn_hover.png",
+    "6_Infrared_hover": "Shoes/6_Infrared_hover.png",
+    "6_Reverse Infrared_hover": "Shoes/6_Reverse Infrared_hover.png",
+    "7_Cardinal_hover": "Shoes/7_Cardinal_hover.png",
+    "9_Olive_hover": "Shoes/9_Olive_hover.png",
+    "10_Steel_hover": "Shoes/10_Steel_hover.png",
+    "1_Royal Reimagined_hover": "Shoes/1_Royal Reimagined_hover.png",
+    "2_Black Cement_hover": "Shoes/2_Black Cement_hover.png",
+    "3_White Cement Reimagined_hover": "Shoes/3_White Cement Reimagined_hover.png",
+    "3_Rare Air_hover": "Shoes/3_Rare Air_hover.png",
+    "14_Chicago_hover": "Shoes/14_Chicago_hover.png",
+    "3_Black Cement_hover": "Shoes/3_Black Cement_hover.png",
+    "3_A Ma Maniere_hover": "Shoes/3_A Ma Maniere_hover.png",
+    "3_A Ma Maniere WYWS_hover": "Shoes/3_A Ma Maniere WYWS_hover.png",
+    "4_A Ma Maniere_hover": "Shoes/4_A Ma Maniere_hover.png",
+    "4_A Ma Maniere WYWS_hover": "Shoes/4_A Ma Maniere WYWS_hover.png",
+    "4_Red Cement_hover": "Shoes/4_Red Cement_hover.png",
+    "15_Stone Blue_hover": "Shoes/15_Stone Blue_hover.png",
+    "15_Pixel Court_hover": "Shoes/15_Pixel Court_hover.png",
+    "1_Wolf Grey_hover": "Shoes/1_Wolf Grey_hover.png",
+    "4_Cave Stone_hover": "Shoes/4_Cave Stone_hover.png",
+    "5_Black Metallic Reimagined_hover": "Shoes/5_Black Metallic Reimagined_hover.png",
+    "5_Fire Red_hover": "Shoes/5_Fire Red_hover.png",
+    "5_Grape_hover": "Shoes/5_Grape_hover.png",
+    "13_Flint Grey_hover": "Shoes/13_Flint Grey_hover.png",
+    "17_Air Max Day (Royal Volt)_hover": "Shoes/17_Air Max Day (Royal Volt)_hover.png",
+    "21_Purple_hover": "Shoes/21_Purple_hover.png",
+    "1773621809428_Sea Salt_hover": "Shoes/1773621809428_Sea Salt_hover.png",
+    "4_Fire Red_hover2": "Shoes/4_Fire Red_hover2.png",
+    "4_Black Cement_hover2": "Shoes/4_Black Cement_hover2.png",
+    "16_Volt_hover2": "Shoes/16_Volt_hover2.png",
+    "15_Hot Lava_hover2": "Shoes/15_Hot Lava_hover2.png",
+    "18_Concord": "Shoes/18_Concord.png",
+    "19_Voltage Purple": "Shoes/19_Voltage Purple.png",
+    "1775259901810_Dark Grape": "Shoes/1775259901810_Dark Grape.png",
+    "15_Black Lava": "Shoes/15_Black Lava.png",
+    "4_Fire Red": "Shoes/4_Fire Red.png",
+    "4_Black Cement": "Shoes/4_Black Cement.png",
+    "15_Hot Lava": "Shoes/15_Hot Lava.png",
+    "16_Volt": "Shoes/16_Volt.png",
+    "4_White Cement_hover2": "Shoes/4_White Cement_hover2.png",
+    "4_Military Blue_hover2": "Shoes/4_Military Blue_hover2.png",
+    "4_What the 4_hover2": "Shoes/4_What the 4_hover2.png",
+    "4_A Ma Maniere_hover2": "Shoes/4_A Ma Maniere_hover2.png",
+    "4_Cave Stone_hover2": "Shoes/4_Cave Stone_hover2.png",
+    "4_A Ma Maniere WYWS_hover2": "Shoes/4_A Ma Maniere WYWS_hover2.png",
+    "5_Black Tongue_hover2": "Shoes/5_Black Tongue_hover2.png",
+    "5_Black Metallic Reimagined_hover2": "Shoes/5_Black Metallic Reimagined_hover2.png",
+    "5_Fire Red_hover2": "Shoes/5_Fire Red_hover2.png",
+    "5_Grape_hover2": "Shoes/5_Grape_hover2.png",
+    "5_A Ma Maniere Dawn_hover2": "Shoes/5_A Ma Maniere Dawn_hover2.png",
+    "3_Rare Air_hover2": "Shoes/3_Rare Air_hover2.png",
+    "1_Royal Reimagined_hover2": "Shoes/1_Royal Reimagined_hover2.png",
+    "1_Wolf Grey_hover2": "Shoes/1_Wolf Grey_hover2.png",
+    "6_Infrared_hover2": "Shoes/6_Infrared_hover2.png",
+    "6_Reverse Infrared_hover2": "Shoes/6_Reverse Infrared_hover2.png",
+    "15_Pixel Court_hover2": "Shoes/15_Pixel Court_hover2.png",
+    "14_Chicago_hover2": "Shoes/14_Chicago_hover2.png",
+    "8_Playoffs_hover2": "Shoes/8_Playoffs_hover2.png",
+    "19_Voltage Purple_hover": "Shoes/19_Voltage Purple_hover.png",
+    "19_Voltage Purple_hover2": "Shoes/19_Voltage Purple_hover2.png",
+    "19_Volt": "Shoes/19_Volt.png",
+    "19_Volt_hover": "Shoes/19_Volt_hover.png",
+    "19_Volt_hover2": "Shoes/19_Volt_hover2.png",
+    "1775259901810_Dark Grape_hover": "Shoes/1775259901810_Dark Grape_hover.png",
+    "1775259901810_Dark Grape_hover2": "Shoes/1775259901810_Dark Grape_hover2.png",
+    "3_White Cement Reimagined_hover2": "Shoes/3_White Cement Reimagined_hover2.png",
+    "3_Black Cement_hover2": "Shoes/3_Black Cement_hover2.png",
+    "2_Black Cement_hover2": "Shoes/2_Black Cement_hover2.png",
+    "3_A Ma Maniere_hover2": "Shoes/3_A Ma Maniere_hover2.png",
+    "3_A Ma Maniere WYWS_hover2": "Shoes/3_A Ma Maniere WYWS_hover2.png",
+    "12_Black Flint_hover2": "Shoes/12_Black Flint_hover2.png",
+    "13_Flint Grey_hover2": "Shoes/13_Flint Grey_hover2.png",
+    "11_Flu Game_hover2": "Shoes/11_Flu Game_hover2.png",
+    "10_Steel_hover2": "Shoes/10_Steel_hover2.png",
+    "18_Concord_hover2": "Shoes/18_Concord_hover2.png",
+    "18_Space Jam_hover2": "Shoes/18_Space Jam_hover2.png",
+    "17_Air Max Day (Royal Volt)_hover2": "Shoes/17_Air Max Day (Royal Volt)_hover2.png",
+    "15_Stone Blue_hover2": "Shoes/15_Stone Blue_hover2.png",
+    "21_Purple_hover2": "Shoes/21_Purple_hover2.png",
+    "9_Olive_hover2": "Shoes/9_Olive_hover2.png",
+    "7_Cardinal_hover2": "Shoes/7_Cardinal_hover2.png",
+    "1774096319133_Billy Hoyle_hover2": "Shoes/1774096319133_Billy Hoyle_hover2.png",
+    "15_Black Lava_hover": "Shoes/15_Black Lava_hover.png",
+    "15_Black Lava_hover2": "Shoes/15_Black Lava_hover2.png",
+    "4_Red Cement_hover2": "Shoes/4_Red Cement_hover2.png",
+    "1773621809428_Sea Salt_hover2": "Shoes/1773621809428_Sea Salt_hover2.png",
+    "18_Concord_hover": "Shoes/18_Concord_hover.png",
+    "18_Space Jam_hover": "Shoes/18_Space Jam_hover.png",
+    "1774096319133_Billy Hoyle_hover": "Shoes/1774096319133_Billy Hoyle_hover.png",
+    "16_White Infrared_hover": "Shoes/16_White Infrared_hover.png",
+    "16_White Infrared": "Shoes/16_White Infrared.png",
+    "16_White Infrared_hover2": "Shoes/16_White Infrared_hover2.png"
+  },
+  "colorwayMeta": {
+    "3_White Cement Reimagined": {
+      "purchaseDate": "2023-03-11",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2023"
+    },
+    "12_Black Flint": {
+      "purchaseDate": "2023-04-22",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "8",
+      "releaseYear": "2023"
+    },
+    "5_Grape": {
+      "purchaseDate": "2025-06-21",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2025"
+    },
+    "6_Reverse Infrared": {
+      "purchaseDate": "2026-02-14",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2025"
+    },
+    "14_Chicago": {
+      "purchaseDate": "2025-11-01",
+      "retailer": "Nike.com",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2025"
+    },
+    "5_Black Tongue": {
+      "purchaseDate": "2025-09-13",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "1990",
+      "story": "My first Jordans.  They were a birthday gift from my parents in November 1990.",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2025"
+    },
+    "5_Fire Red": {
+      "purchaseDate": "2025-01-04",
+      "retailer": "EBAY",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2020"
+    },
+    "16_Volt": {
+      "purchaseDate": "2023-01-22",
+      "retailer": "EBAY",
+      "size": "12",
+      "notes": "",
+      "ogYear": "",
+      "story": "I really loved these shoes when i first saw them in 1989.  Back then we called them Bo Jackson's.  The original colorway was Citron, but I prefer this colorway.  I'm hoping to add the White Infrared version to my collection at some point.",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2018"
+    },
+    "4_Black Cement": {
+      "purchaseDate": "2023-01-15",
+      "retailer": "EBAY",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "Although the Fire Red 4s were my first love, these are a close second.  I was watching game five of the Bulls v Cavs with my dad when Michael Jordan hit \"the shot\".  I paid way over retail to add these shoes to my collection.",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2019"
+    },
+    "4_Fire Red": {
+      "purchaseDate": "2023-01-07",
+      "retailer": "EBAY",
+      "size": "12",
+      "notes": "",
+      "ogYear": "",
+      "story": "I first saw this shoe in 1989 in my local shoe store and immediately fell in love.  A few people in my class had these, and I remember being quite envious of them.  This was the first sneaker I bought when I started this collection.",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2020"
+    },
+    "4_Cave Stone": {
+      "purchaseDate": "2025-09-06",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2025"
+    },
+    "15_Pixel Court": {
+      "purchaseDate": "2025-08-30",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2025"
+    },
+    "3_Black Cement": {
+      "purchaseDate": "2024-11-14",
+      "retailer": "SNKRS",
+      "size": "13",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2024"
+    },
+    "3_Rare Air": {
+      "purchaseDate": "2025-06-04",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2025"
+    },
+    "4_White Cement": {
+      "purchaseDate": "2025-05-24",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2025"
+    },
+    "13_Flint Grey": {
+      "purchaseDate": "2024-03-20",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2024"
+    },
+    "17_Air Max Day (Royal Volt)": {
+      "purchaseDate": "2024-03-26",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2024"
+    },
+    "1_Royal Reimagined": {
+      "purchaseDate": "2023-11-04",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "8",
+      "releaseYear": "2023"
+    },
+    "2_Black Cement": {
+      "purchaseDate": "2023-09-23",
+      "retailer": "Nike.com",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2023"
+    },
+    "4_Red Cement": {
+      "purchaseDate": "2023-09-09",
+      "retailer": "SNKRS",
+      "size": "13",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2023"
+    },
+    "4_A Ma Maniere": {
+      "purchaseDate": "2023-03-18",
+      "retailer": "GOAT",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2022"
+    },
+    "7_Cardinal": {
+      "purchaseDate": "2025-12-08",
+      "retailer": "GOAT",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2022"
+    },
+    "10_Steel": {
+      "purchaseDate": "2025-08-06",
+      "retailer": "GOAT",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "1994",
+      "story": "I grabbed these for the 1994 basketball season. These were the first shoes that I wore exclusively for basketball.  I would carry them around all day in my backpack and take them out for practice/games.",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2025"
+    },
+    "11_Flu Game": {
+      "purchaseDate": "2025-05-02",
+      "retailer": "GOAT",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "I had the original release of this sneaker, but in the Playoff colorway.",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2025"
+    },
+    "5_Black Metallic Reimagined": {
+      "purchaseDate": "2025-02-08",
+      "retailer": "GOAT",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2025"
+    },
+    "3_A Ma Maniere": {
+      "purchaseDate": "2025-01-03",
+      "retailer": "GOAT",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2021"
+    },
+    "15_Hot Lava": {
+      "purchaseDate": "2024-08-30",
+      "retailer": "GOAT",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "1990",
+      "story": "The first pair of Nike sneakers with an air bubble that I owned. My parents bought these for me as a graduation gift from elementary school in June 1990.  I wore them pretty much every day from June until November when they were replaced with the Black Tongue Air Jordan 5.",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2024"
+    },
+    "3_A Ma Maniere WYWS": {
+      "purchaseDate": "2024-08-27",
+      "retailer": "GOAT",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2024"
+    },
+    "6_Infrared": {
+      "purchaseDate": "2023-12-24",
+      "retailer": "GOAT",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2019"
+    },
+    "4_What the 4": {
+      "purchaseDate": "2023-03-28",
+      "retailer": "GOAT",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2019"
+    },
+    "4_A Ma Maniere WYWS": {
+      "purchaseDate": "2024-09-26",
+      "retailer": "A Ma Maniere",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2024"
+    },
+    "5_A Ma Maniere Dawn": {
+      "purchaseDate": "2023-11-27",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "LR hit on SNKRS",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2023"
+    },
+    "4_Military Blue": {
+      "purchaseDate": "2024-05-04",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "LR hit on SNKRS.",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2024"
+    },
+    "21_Purple": {
+      "purchaseDate": "2026-03-29",
+      "retailer": "EBay",
+      "size": "12",
+      "notes": "",
+      "ogYear": "",
+      "story": "My father and I went to about five different stores looking for these in June 1993.  Glad to finally add these to my collection.",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2018"
+    },
+    "1773621809428_Sea Salt": {
+      "purchaseDate": "2026-03-02",
+      "retailer": "Amazon",
+      "size": "13",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "10",
+      "releaseYear": "2025"
+    },
+    "1_Wolf Grey": {
+      "purchaseDate": "2024-07-20",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "8",
+      "releaseYear": "2024"
+    },
+    "15_Stone Blue": {
+      "purchaseDate": "2025-06-30",
+      "retailer": "GOAT",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2025"
+    },
+    "8_Playoffs": {
+      "purchaseDate": "2023-10-20",
+      "retailer": "EBAY",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "1993",
+      "story": "In 1993, I went with my father to look for the Air Force Max CB.  After hitting about five stores, I \"settled\" for these.",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2023"
+    },
+    "9_Olive": {
+      "purchaseDate": "2024-11-09",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "My first retro Jordan was this silhouette in French Blue.  I bought them in May 2002 and debuted them at Attack of the Clones in Farmingdale New York.",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2024"
+    },
+    "18_Space Jam": {
+      "purchaseDate": "",
+      "retailer": "",
+      "size": "",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "2026-12-12",
+      "saleTime": "10:00"
+    },
+    "19_Voltage Purple": {
+      "purchaseDate": "",
+      "retailer": "",
+      "size": "",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": ""
+    },
+    "19_Volt": {
+      "purchaseDate": "",
+      "retailer": "",
+      "size": "",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": ""
+    },
+    "1775259901810_Dark Grape": {
+      "purchaseDate": "",
+      "retailer": "",
+      "size": "",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": ""
+    },
+    "18_Concord": {
+      "purchaseDate": "",
+      "retailer": "",
+      "size": "",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": ""
+    },
+    "15_Black Lava": {
+      "purchaseDate": "",
+      "retailer": "",
+      "size": "",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": ""
+    },
+    "1774096319133_Billy Hoyle": {
+      "purchaseDate": "",
+      "retailer": "",
+      "size": "",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": ""
+    },
+    "16_White Infrared": {
+      "purchaseDate": "",
+      "retailer": "",
+      "size": "",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": ""
+    }
+  },
+  "tierMeta": {
+    "1_Royal Reimagined": "gold",
+    "1_Wolf Grey": "bronze",
+    "2_Black Cement": "gold",
+    "3_White Cement Reimagined": "platinum",
+    "3_Black Cement": "platinum",
+    "3_A Ma Maniere": "gold",
+    "3_Rare Air": "silver",
+    "3_A Ma Maniere WYWS": "silver",
+    "4_Fire Red": "diamond",
+    "4_Black Cement": "diamond",
+    "4_White Cement": "platinum",
+    "4_Military Blue": "platinum",
+    "4_What the 4": "gold",
+    "4_A Ma Maniere": "gold",
+    "4_A Ma Maniere WYWS": "silver",
+    "4_Cave Stone": "silver",
+    "4_Red Cement": "bronze",
+    "5_Black Tongue": "platinum",
+    "5_Black Metallic Reimagined": "platinum",
+    "5_Fire Red": "platinum",
+    "5_Grape": "platinum",
+    "5_A Ma Maniere Dawn": "silver",
+    "6_Infrared": "platinum",
+    "6_Reverse Infrared": "silver",
+    "7_Cardinal": "gold",
+    "8_Playoffs": "platinum",
+    "9_Olive": "gold",
+    "10_Steel": "platinum",
+    "11_Flu Game": "gold",
+    "12_Black Flint": "gold",
+    "13_Flint Grey": "gold",
+    "14_Chicago": "gold",
+    "15_Hot Lava": "diamond",
+    "15_Stone Blue": "gold",
+    "15_Pixel Court": "silver",
+    "16_Volt": "diamond",
+    "17_Air Max Day (Royal Volt)": "gold",
+    "18_Space Jam": "gold",
+    "19_Volt": "platinum",
+    "21_Purple": "platinum",
+    "1773621809428_Sea Salt": "bronze",
+    "1774096319133_Billy Hoyle": "platinum",
+    "15_Black Lava": "platinum",
+    "1775259901810_Dark Grape": "gold",
+    "19_Voltage Purple": "platinum",
+    "18_Concord": "gold",
+    "16_White Infrared": "gold"
+  },
+  "glowMeta": {
+    "6_Reverse Infrared": true,
+    "1_Royal Reimagined": true,
+    "2_Black Cement": true,
+    "3_Black Cement": true,
+    "3_Rare Air": true,
+    "3_A Ma Maniere WYWS": true,
+    "4_Black Cement": true,
+    "5_Black Metallic Reimagined": true,
+    "6_Infrared": true,
+    "11_Flu Game": true,
+    "21_Purple": true,
+    "8_Playoffs": true,
+    "9_Olive": true
+  },
+  "graveyardMeta": {},
+  "colorways": {
+    "AJ1": [
+      "Royal Reimagined",
+      "Wolf Grey"
+    ],
+    "AJ2": [
+      "Black Cement"
+    ],
+    "AJ3": [
+      "White Cement Reimagined",
+      "Black Cement",
+      "A Ma Maniere",
+      "Rare Air",
+      "A Ma Maniere WYWS"
+    ],
+    "AJ4": [
+      "Fire Red",
+      "Black Cement",
+      "White Cement",
+      "Military Blue",
+      "What the 4",
+      "A Ma Maniere",
+      "A Ma Maniere WYWS",
+      "Cave Stone",
+      "Red Cement"
+    ],
+    "AJ5": [
+      "Black Tongue",
+      "Black Metallic Reimagined",
+      "Fire Red",
+      "Grape",
+      "A Ma Maniere Dawn"
+    ],
+    "AJ6": [
+      "Infrared",
+      "Reverse Infrared"
+    ],
+    "AJ7": [
+      "Cardinal"
+    ],
+    "AJ8": [
+      "Playoffs"
+    ],
+    "AJ9": [
+      "Olive"
+    ],
+    "AJ10": [
+      "Steel"
+    ],
+    "AJ12": [
+      "Flu Game"
+    ],
+    "AJ13": [
+      "Black Flint"
+    ],
+    "AJ14": [
+      "Flint Grey"
+    ],
+    "AJ40": [
+      "Chicago"
+    ],
+    "ATC2": [
+      "Hot Lava",
+      "Stone Blue",
+      "Pixel Court",
+      "Black Lava"
+    ],
+    "SC2": [
+      "Volt",
+      "White Infrared"
+    ],
+    "AM86": [
+      "Air Max Day (Royal Volt)"
+    ],
+    "AJ11": [
+      "Concord",
+      "Space Jam"
+    ],
+    "ATC3": [
+      "Volt",
+      "Voltage Purple"
+    ],
+    "AFMCB": [
+      "Purple"
+    ],
+    "NB FF": [
+      "Sea Salt"
+    ],
+    "ACF": [
+      "Billy Hoyle"
+    ],
+    "ATC4": [
+      "Dark Grape"
+    ]
+  },
+  "colorwayOwned": {
+    "1_Royal Reimagined": true,
+    "1_Wolf Grey": true,
+    "2_Black Cement": true,
+    "3_White Cement Reimagined": true,
+    "3_Black Cement": true,
+    "3_A Ma Maniere": true,
+    "3_Rare Air": true,
+    "3_A Ma Maniere WYWS": true,
+    "4_Fire Red": true,
+    "4_Black Cement": true,
+    "4_White Cement": true,
+    "4_Military Blue": true,
+    "4_What the 4": true,
+    "4_A Ma Maniere": true,
+    "4_A Ma Maniere WYWS": true,
+    "4_Cave Stone": true,
+    "4_Red Cement": true,
+    "5_Black Tongue": true,
+    "5_Black Metallic Reimagined": true,
+    "5_Fire Red": true,
+    "5_Grape": true,
+    "5_A Ma Maniere Dawn": true,
+    "6_Infrared": true,
+    "6_Reverse Infrared": true,
+    "7_Cardinal": true,
+    "8_Playoffs": true,
+    "9_Olive": true,
+    "10_Steel": true,
+    "11_Flu Game": true,
+    "12_Black Flint": true,
+    "13_Flint Grey": true,
+    "14_Chicago": true,
+    "15_Hot Lava": true,
+    "15_Stone Blue": true,
+    "15_Pixel Court": true,
+    "15_Black Lava": false,
+    "16_Volt": true,
+    "16_White Infrared": false,
+    "21_Purple": true,
+    "17_Air Max Day (Royal Volt)": true,
+    "18_Concord": false,
+    "18_Space Jam": false,
+    "19_Volt": false,
+    "19_Voltage Purple": false,
+    "1773621809428_Sea Salt": true,
+    "1774096319133_Billy Hoyle": false,
+    "1775259901810_Dark Grape": false
+  },
+  "wishlistOrder": [
+    "18",
+    "15",
+    "19",
+    "1775259901810",
+    "16",
+    "1774096319133"
+  ],
+  "displayLayout": [
+    [
+      {
+        "code": "AJ1",
+        "colorway": "Royal Reimagined"
+      },
+      {
+        "code": "ATC2",
+        "colorway": "Stone Blue"
+      },
+      {
+        "code": "AJ40",
+        "colorway": "Chicago"
+      },
+      {
+        "code": "AFMCB",
+        "colorway": "Purple"
+      },
+      {
+        "code": "AJ2",
+        "colorway": "Black Cement"
+      }
+    ],
+    [
+      {
+        "code": "AJ3",
+        "colorway": "A Ma Maniere"
+      },
+      {
+        "code": "AJ3",
+        "colorway": "Rare Air"
+      },
+      {
+        "code": "AJ3",
+        "colorway": "White Cement Reimagined"
+      },
+      {
+        "code": "AJ3",
+        "colorway": "Black Cement"
+      },
+      {
+        "code": "AJ3",
+        "colorway": "A Ma Maniere WYWS"
+      }
+    ],
+    [
+      {
+        "code": "AJ4",
+        "colorway": "White Cement"
+      },
+      {
+        "code": "ATC2",
+        "colorway": "Hot Lava"
+      },
+      {
+        "code": "AJ4",
+        "colorway": "Fire Red"
+      },
+      {
+        "code": "SC2",
+        "colorway": "Volt"
+      },
+      {
+        "code": "AJ4",
+        "colorway": "Military Blue"
+      }
+    ],
+    [
+      {
+        "code": "AJ4",
+        "colorway": "A Ma Maniere WYWS"
+      },
+      {
+        "code": "AJ4",
+        "colorway": "Cave Stone"
+      },
+      {
+        "code": "AJ4",
+        "colorway": "Black Cement"
+      },
+      {
+        "code": "AJ4",
+        "colorway": "What the 4"
+      },
+      {
+        "code": "AJ4",
+        "colorway": "A Ma Maniere"
+      }
+    ],
+    [
+      {
+        "code": "AJ5",
+        "colorway": "A Ma Maniere Dawn"
+      },
+      {
+        "code": "AJ5",
+        "colorway": "Black Metallic Reimagined"
+      },
+      {
+        "code": "AJ5",
+        "colorway": "Black Tongue"
+      },
+      {
+        "code": "AJ5",
+        "colorway": "Fire Red"
+      },
+      {
+        "code": "AJ5",
+        "colorway": "Grape"
+      }
+    ],
+    [
+      {
+        "code": "AJ6",
+        "colorway": "Infrared"
+      },
+      {
+        "code": "AJ6",
+        "colorway": "Reverse Infrared"
+      },
+      {
+        "code": "AJ7",
+        "colorway": "Cardinal"
+      },
+      {
+        "code": "AJ8",
+        "colorway": "Playoffs"
+      },
+      {
+        "code": "AJ9",
+        "colorway": "Olive"
+      }
+    ],
+    [
+      {
+        "code": "AJ10",
+        "colorway": "Steel"
+      },
+      {
+        "code": "",
+        "colorway": ""
+      },
+      {
+        "code": "AJ12",
+        "colorway": "Flu Game"
+      },
+      {
+        "code": "AJ13",
+        "colorway": "Black Flint"
+      },
+      {
+        "code": "AJ14",
+        "colorway": "Flint Grey"
+      }
+    ],
+    [
+      {
+        "code": "",
+        "colorway": ""
+      },
+      {
+        "code": "AM86",
+        "colorway": "Air Max Day (Royal Volt)"
+      },
+      {
+        "code": "ATC2",
+        "colorway": "Pixel Court"
+      },
+      {
+        "code": "",
+        "colorway": ""
+      },
+      {
+        "code": "",
+        "colorway": ""
+      }
+    ]
+  ],
+  "dreamLayout": [
+    [
+      {
+        "code": "AJ1",
+        "colorway": "Royal Reimagined"
+      },
+      {
+        "code": "AJ2",
+        "colorway": "Black Cement"
+      },
+      {
+        "code": "AJ3",
+        "colorway": "White Cement Reimagined"
+      },
+      {
+        "code": "AJ3",
+        "colorway": "Black Cement"
+      },
+      {
+        "code": "AJ3",
+        "colorway": "A Ma Maniere"
+      }
+    ],
+    [
+      {
+        "code": "ATC2",
+        "colorway": "Black Lava"
+      },
+      {
+        "code": "ATC2",
+        "colorway": "Hot Lava"
+      },
+      {
+        "code": "ATC3",
+        "colorway": "Volt"
+      },
+      {
+        "code": "ATC3",
+        "colorway": "Voltage Purple"
+      },
+      {
+        "code": "ATC4",
+        "colorway": "Dark Grape"
+      }
+    ],
+    [
+      {
+        "code": "AJ4",
+        "colorway": "White Cement"
+      },
+      {
+        "code": "AJ4",
+        "colorway": "Black Cement"
+      },
+      {
+        "code": "AJ4",
+        "colorway": "Fire Red"
+      },
+      {
+        "code": "AJ4",
+        "colorway": "Military Blue"
+      },
+      {
+        "code": "AJ4",
+        "colorway": "What the 4"
+      }
+    ],
+    [
+      {
+        "code": "AJ5",
+        "colorway": "Fire Red"
+      },
+      {
+        "code": "AJ5",
+        "colorway": "Black Metallic Reimagined"
+      },
+      {
+        "code": "AJ5",
+        "colorway": "Black Tongue"
+      },
+      {
+        "code": "AJ5",
+        "colorway": "Grape"
+      },
+      {
+        "code": "AJ6",
+        "colorway": "Infrared"
+      }
+    ],
+    [
+      {
+        "code": "AJ7",
+        "colorway": "Cardinal"
+      },
+      {
+        "code": "AJ8",
+        "colorway": "Playoffs"
+      },
+      {
+        "code": "AJ9",
+        "colorway": "Olive"
+      },
+      {
+        "code": "AJ10",
+        "colorway": "Steel"
+      },
+      {
+        "code": "AJ11",
+        "colorway": "Concord"
+      }
+    ],
+    [
+      {
+        "code": "AJ12",
+        "colorway": "Flu Game"
+      },
+      {
+        "code": "AJ13",
+        "colorway": "Black Flint"
+      },
+      {
+        "code": "AJ14",
+        "colorway": "Flint Grey"
+      },
+      {
+        "code": "AJ40",
+        "colorway": "Chicago"
+      },
+      {
+        "code": "AFMCB",
+        "colorway": "Purple"
+      }
+    ],
+    [
+      {
+        "code": "",
+        "colorway": ""
+      },
+      {
+        "code": "ACF",
+        "colorway": "Billy Hoyle"
+      },
+      {
+        "code": "AM86",
+        "colorway": "Air Max Day (Royal Volt)"
+      },
+      {
+        "code": "SC2",
+        "colorway": "Volt"
+      },
+      {
+        "code": "",
+        "colorway": ""
+      }
+    ],
+    [
+      {
+        "code": "",
+        "colorway": ""
+      },
+      {
+        "code": "",
+        "colorway": ""
+      },
+      {
+        "code": "",
+        "colorway": ""
+      },
+      {
+        "code": "",
+        "colorway": ""
+      },
+      {
+        "code": "",
+        "colorway": ""
+      }
+    ]
+  ],
+  "precomputedRankings": {
+    "wornRanked": [
+      {
+        "shoeId": 3,
+        "shoeName": "Air Jordan 3",
+        "shortName": "AJ3",
+        "colorway": "White Cement Reimagined",
+        "count": 6,
+        "lastWorn": "2025-10-17"
+      },
+      {
+        "shoeId": 17,
+        "shoeName": "Air Max 86",
+        "shortName": "AM86",
+        "colorway": "Air Max Day (Royal Volt)",
+        "count": 5,
+        "lastWorn": "2025-11-28"
+      },
+      {
+        "shoeId": 16,
+        "shoeName": "Air Trainer SC2",
+        "shortName": "SC2",
+        "colorway": "Volt",
+        "count": 5,
+        "lastWorn": "2025-12-06"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "Black Cement",
+        "count": 5,
+        "lastWorn": "2025-12-24"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "Fire Red",
+        "count": 5,
+        "lastWorn": "2026-01-16"
+      },
+      {
+        "shoeId": 12,
+        "shoeName": "Air Jordan 13",
+        "shortName": "AJ13",
+        "colorway": "Black Flint",
+        "count": 5,
+        "lastWorn": "2026-04-04"
+      },
+      {
+        "shoeId": 2,
+        "shoeName": "Air Jordan 2",
+        "shortName": "AJ2",
+        "colorway": "Black Cement",
+        "count": 4,
+        "lastWorn": "2025-09-11"
+      },
+      {
+        "shoeId": 1,
+        "shoeName": "Air Jordan 1",
+        "shortName": "AJ1",
+        "colorway": "Royal Reimagined",
+        "count": 4,
+        "lastWorn": "2025-09-30"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "Military Blue",
+        "count": 4,
+        "lastWorn": "2025-10-03"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "A Ma Maniere",
+        "count": 4,
+        "lastWorn": "2025-11-27"
+      }
+    ],
+    "priceRanked": [
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "Black Cement",
+        "price": 830.93,
+        "purchaseDate": "2023-01-15"
+      },
+      {
+        "shoeId": 6,
+        "shoeName": "Air Jordan 6",
+        "shortName": "AJ6",
+        "colorway": "Infrared",
+        "price": 499.13,
+        "purchaseDate": "2023-12-24"
+      },
+      {
+        "shoeId": 10,
+        "shoeName": "Air Jordan 10",
+        "shortName": "AJ10",
+        "colorway": "Steel",
+        "price": 467.05,
+        "purchaseDate": "2025-08-06"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "What the 4",
+        "price": 464.37,
+        "purchaseDate": "2023-03-28"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "A Ma Maniere",
+        "price": 463.29,
+        "purchaseDate": "2023-03-18"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "Fire Red",
+        "price": 450.74,
+        "purchaseDate": "2023-01-07"
+      },
+      {
+        "shoeId": 15,
+        "shoeName": "Air Tech Challenge 2",
+        "shortName": "ATC2",
+        "colorway": "Hot Lava",
+        "price": 409.26,
+        "purchaseDate": "2024-08-30"
+      },
+      {
+        "shoeId": 5,
+        "shoeName": "Air Jordan 5",
+        "shortName": "AJ5",
+        "colorway": "Black Metallic Reimagined",
+        "price": 385.36,
+        "purchaseDate": "2025-02-08"
+      },
+      {
+        "shoeId": 21,
+        "shoeName": "Air Force Max CB",
+        "shortName": "AFMCB",
+        "colorway": "Purple",
+        "price": 369.27,
+        "purchaseDate": "2026-03-29"
+      },
+      {
+        "shoeId": 3,
+        "shoeName": "Air Jordan 3",
+        "shortName": "AJ3",
+        "colorway": "A Ma Maniere",
+        "price": 359.29,
+        "purchaseDate": "2025-01-03"
+      }
+    ],
+    "valueRanked": [
+      {
+        "shoeId": 16,
+        "shoeName": "Air Trainer SC2",
+        "shortName": "SC2",
+        "colorway": "Volt",
+        "price": 120.27,
+        "wears": 5,
+        "costPerWear": 24.054
+      },
+      {
+        "shoeId": 17,
+        "shoeName": "Air Max 86",
+        "shortName": "AM86",
+        "colorway": "Air Max Day (Royal Volt)",
+        "price": 162.94,
+        "wears": 5,
+        "costPerWear": 32.588
+      },
+      {
+        "shoeId": 3,
+        "shoeName": "Air Jordan 3",
+        "shortName": "AJ3",
+        "colorway": "White Cement Reimagined",
+        "price": 228.11,
+        "wears": 6,
+        "costPerWear": 38.0183
+      },
+      {
+        "shoeId": 12,
+        "shoeName": "Air Jordan 13",
+        "shortName": "AJ13",
+        "colorway": "Black Flint",
+        "price": 217.25,
+        "wears": 5,
+        "costPerWear": 43.45
+      },
+      {
+        "shoeId": 2,
+        "shoeName": "Air Jordan 2",
+        "shortName": "AJ2",
+        "colorway": "Black Cement",
+        "price": 190.09,
+        "wears": 4,
+        "costPerWear": 47.5225
+      },
+      {
+        "shoeId": 1,
+        "shoeName": "Air Jordan 1",
+        "shortName": "AJ1",
+        "colorway": "Royal Reimagined",
+        "price": 195.53,
+        "wears": 4,
+        "costPerWear": 48.8825
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "Military Blue",
+        "price": 233.54,
+        "wears": 4,
+        "costPerWear": 58.385
+      },
+      {
+        "shoeId": 5,
+        "shoeName": "Air Jordan 5",
+        "shortName": "AJ5",
+        "colorway": "A Ma Maniere Dawn",
+        "price": 244.41,
+        "wears": 4,
+        "costPerWear": 61.1025
+      },
+      {
+        "shoeId": 13,
+        "shoeName": "Air Jordan 14",
+        "shortName": "AJ14",
+        "colorway": "Flint Grey",
+        "price": 228.11,
+        "wears": 3,
+        "costPerWear": 76.0367
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "Fire Red",
+        "price": 450.74,
+        "wears": 5,
+        "costPerWear": 90.148
+      }
+    ],
+    "iceRanked": [
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "What the 4",
+        "daysOnIce": 463,
+        "purchaseDate": "2023-03-28",
+        "firstWorn": "2024-07-03"
+      },
+      {
+        "shoeId": 6,
+        "shoeName": "Air Jordan 6",
+        "shortName": "AJ6",
+        "colorway": "Infrared",
+        "daysOnIce": 285,
+        "purchaseDate": "2023-12-24",
+        "firstWorn": "2024-10-04"
+      },
+      {
+        "shoeId": 9,
+        "shoeName": "Air Jordan 9",
+        "shortName": "AJ9",
+        "colorway": "Olive",
+        "daysOnIce": 257,
+        "purchaseDate": "2024-11-09",
+        "firstWorn": "2025-07-24"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "A Ma Maniere WYWS",
+        "daysOnIce": 169,
+        "purchaseDate": "2024-09-26",
+        "firstWorn": "2025-03-14"
+      },
+      {
+        "shoeId": 5,
+        "shoeName": "Air Jordan 5",
+        "shortName": "AJ5",
+        "colorway": "Fire Red",
+        "daysOnIce": 153,
+        "purchaseDate": "2025-01-04",
+        "firstWorn": "2025-06-06"
+      },
+      {
+        "shoeId": 5,
+        "shoeName": "Air Jordan 5",
+        "shortName": "AJ5",
+        "colorway": "Black Metallic Reimagined",
+        "daysOnIce": 145,
+        "purchaseDate": "2025-02-08",
+        "firstWorn": "2025-07-03"
+      },
+      {
+        "shoeId": 3,
+        "shoeName": "Air Jordan 3",
+        "shortName": "AJ3",
+        "colorway": "Black Cement",
+        "daysOnIce": 85,
+        "purchaseDate": "2024-11-14",
+        "firstWorn": "2025-02-07"
+      },
+      {
+        "shoeId": 11,
+        "shoeName": "Air Jordan 12",
+        "shortName": "AJ12",
+        "colorway": "Flu Game",
+        "daysOnIce": 84,
+        "purchaseDate": "2025-05-02",
+        "firstWorn": "2025-07-25"
+      },
+      {
+        "shoeId": 8,
+        "shoeName": "Air Jordan 8",
+        "shortName": "AJ8",
+        "colorway": "Playoffs",
+        "daysOnIce": 80,
+        "purchaseDate": "2023-10-20",
+        "firstWorn": "2024-01-08"
+      },
+      {
+        "shoeId": 3,
+        "shoeName": "Air Jordan 3",
+        "shortName": "AJ3",
+        "colorway": "Rare Air",
+        "daysOnIce": 72,
+        "purchaseDate": "2025-06-04",
+        "firstWorn": "2025-08-15"
+      }
+    ],
+    "gapRanked": [
+      {
+        "shoeId": 8,
+        "shoeName": "Air Jordan 8",
+        "shortName": "AJ8",
+        "colorway": "Playoffs",
+        "days": 556,
+        "from": "2024-01-08",
+        "to": "2025-07-17",
+        "entryKey": "8_Playoffs_2024-01-08"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "A Ma Maniere",
+        "days": 503,
+        "from": "2023-03-18",
+        "to": "2024-08-02",
+        "entryKey": "4_A Ma Maniere_2023-03-18"
+      },
+      {
+        "shoeId": 3,
+        "shoeName": "Air Jordan 3",
+        "shortName": "AJ3",
+        "colorway": "White Cement Reimagined",
+        "days": 359,
+        "from": "2024-01-03",
+        "to": "2024-12-27",
+        "entryKey": "3_White Cement Reimagined_2024-01-03"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "Black Cement",
+        "days": 354,
+        "from": "2023-01-15",
+        "to": "2024-01-04",
+        "entryKey": "4_Black Cement_2023-01-15"
+      },
+      {
+        "shoeId": 2,
+        "shoeName": "Air Jordan 2",
+        "shortName": "AJ2",
+        "colorway": "Black Cement",
+        "days": 346,
+        "from": "2024-01-02",
+        "to": "2024-12-13",
+        "entryKey": "2_Black Cement_2024-01-02"
+      },
+      {
+        "shoeId": 16,
+        "shoeName": "Air Trainer SC2",
+        "shortName": "SC2",
+        "colorway": "Volt",
+        "days": 336,
+        "from": "2023-01-22",
+        "to": "2023-12-24",
+        "entryKey": "16_Volt_2023-01-22"
+      },
+      {
+        "shoeId": 1,
+        "shoeName": "Air Jordan 1",
+        "shortName": "AJ1",
+        "colorway": "Royal Reimagined",
+        "days": 331,
+        "from": "2024-01-01",
+        "to": "2024-11-27",
+        "entryKey": "1_Royal Reimagined_2024-01-01"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "Fire Red",
+        "days": 320,
+        "from": "2023-01-07",
+        "to": "2023-11-23",
+        "entryKey": "4_Fire Red_2023-01-07"
+      },
+      {
+        "shoeId": 16,
+        "shoeName": "Air Trainer SC2",
+        "shortName": "SC2",
+        "colorway": "Volt",
+        "days": 314,
+        "from": "2024-06-08",
+        "to": "2025-04-18",
+        "entryKey": "16_Volt_2024-06-08"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "Fire Red",
+        "days": 308,
+        "from": "2024-06-28",
+        "to": "2025-05-02",
+        "entryKey": "4_Fire Red_2024-06-28"
+      }
+    ]
+  },
+  "builtAt": "2026-04-09T00:00:24.971684Z"
+}
