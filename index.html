@@ -1071,12 +1071,12 @@
         if (!ADMIN_MODE) return;
         const handler = (e) => {
           if (e.key !== "Escape") return;
-          if (showForm)      { setShowForm(false); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan"}); setEditColorways([]); setNewColorway(""); }
           if (quickLog)      { setQuickLog(false); }
-          if (loggingId)     { setLoggingId(null); }
-          if (editingMeta)   { setEditingMeta(null); }
-          if (editingCell)   { setEditingCell(null); }
-          if (importMsg)     { setImportMsg(null); }
+          else if (editingMeta)   { setEditingMeta(null); }
+          else if (showForm)      { setShowForm(false); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan"}); setEditColorways([]); setNewColorway(""); }
+          else if (loggingId)     { setLoggingId(null); }
+          else if (editingCell)   { setEditingCell(null); }
+          else if (importMsg)     { setImportMsg(null); }
         };
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
