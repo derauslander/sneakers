@@ -432,7 +432,7 @@
       );
     }
 
-    function DisplayCell({ c, img, hoverImg, ri, onEdit, isEditing, tier = "silver", dark = false, isMobilePublic = false, isWishlist = false }) {
+    function DisplayCell({ c, img, hoverImg, ri, onEdit, isEditing, tier = "silver", dark = false, isMobilePublic = false, isWishlist = false, shoeName = null }) {
       const [hovered, setHovered] = useState(false);
       const [showHover, setShowHover] = useState(false);
       const timerRef = useRef(null);
@@ -535,8 +535,9 @@
                 <div style={{ position:"relative", maxWidth: isMobilePublic ? "90vw" : "60vw", maxHeight: isMobilePublic ? "70vh" : "60vh" }}>
                   <img src={hoverImg || img} alt={c.colorway} style={{ maxWidth: isMobilePublic ? "90vw" : "60vw", maxHeight: isMobilePublic ? "70vh" : "60vh", objectFit:"contain", filter:"drop-shadow(0 0 8px rgba(255,255,255,0.6))", display:"block" }} />
                 </div>
-                {tierInfo.label && <div style={{ marginTop:"12px", fontSize:"11px", letterSpacing:"6px", color: tierInfo.color }}>{tierInfo.label}</div>}
-                <div style={{ marginTop: tierInfo.label ? "6px" : "16px", fontSize:"13px", letterSpacing:"3px", color: tierInfo.color || c.accent }}>{c.colorway}</div>
+                {tierInfo.label && <div style={{ marginTop:"16px", fontSize:"11px", letterSpacing:"6px", color: tierInfo.color }}>{tierInfo.label}</div>}
+                <div style={{ marginTop: tierInfo.label ? "8px" : "16px", fontSize:"15px", fontWeight:"bold", letterSpacing:"2px", color:"#fff" }}>{shoeName}</div>
+                <div style={{ marginTop:"4px", fontSize:"12px", letterSpacing:"2px", color: tierInfo.color || c.accent }}>{c.colorway}</div>
                 {isMobilePublic && <div style={{ marginTop:"16px", fontSize:"10px", color:"#666", letterSpacing:"2px" }}>TAP TO CLOSE</div>}
               </div>,
           document.body)}
@@ -1961,6 +1962,10 @@
                                     setColorwayMeta(m => { const n={...m}; if(n[oldKey]){n[newKey]=n[oldKey];delete n[oldKey];} return n; });
                                     // Migrate tierMeta
                                     setTierMeta(tm => { const n={...tm}; if(n[oldKey]){n[newKey]=n[oldKey];delete n[oldKey];} return n; });
+                                    // Migrate glowMeta
+                                    setGlowMeta(gm => { const n={...gm}; if(n[oldKey]){n[newKey]=n[oldKey];delete n[oldKey];} return n; });
+                                    // Migrate colorwayOwned
+                                    setColorwayOwned(co => { const n={...co}; if(oldKey in n){n[newKey]=n[oldKey];delete n[oldKey];} return n; });
                                     // Migrate display layout
                                     setDisplayLayout(dl => dl.map(row => row.map(cell => cell.code===shoe.shortName && cell.colorway===cw ? {...cell,colorway:newName} : cell)));
                                   }
@@ -2103,7 +2108,7 @@
                                   wearDates={(wearLog[shoe.id] || []).filter(e => e.colorway === cw).map(e => e.date)}
                                   tier={tierOf(tierMeta, metaKey)}
                                   
-                                  isOnIce={(wearLog[shoe.id] || []).filter(e => e.colorway === cw).length === 0}
+                                  isOnIce={(wearLog[shoe.id] || []).filter(e => e.colorway === cw).length === 0 && !isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate)}
                                   isNewPickup={isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate)}
                                   shoeName={shoe.name}
                                   dark={dark}
@@ -2288,6 +2293,7 @@
                         tier={cellTier}
                         isMobilePublic={isMobilePublic}
                         isWishlist={cellIsWishlist}
+                        shoeName={shoe ? shoe.name : null}
                         onEdit={() => {
                           setEditingCell({ri, ci});
                           setEditShoe(cell.code || "");
@@ -2828,11 +2834,11 @@
 
                 <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", margin:"48px 0 24px" }}>THE TIER SYSTEM</div>
                 {[
-                  { tier: "diamond",  label: "✦ DIAMOND ✦",  color: dark ? "#b8f0ff" : "#0099bb", desc: "The sneakers that 10-year-old me dreamed about" },
-                  { tier: "platinum", label: "✦ PLATINUM ✦", color: "#C0C0C0", desc: "Original colorways of my favorite sneakers" },
-                  { tier: "gold",     label: "✦ GOLD ✦",     color: "#FFD700", desc: "Sneakers I'm glad are in my collection" },
-                  { tier: "silver",   label: "⬥ SILVER ⬥",   color: T.text4,   desc: "Maybe I shouldn't have bought these" },
-                  { tier: "bronze",   label: "💀 BRONZE 💀", color: "#CD7F32", desc: "Beaters" },
+                  { tier: "diamond",  label: TIERS.diamond.label,  color: dark ? "#b8f0ff" : "#0099bb", desc: "The sneakers that 10-year-old me dreamed about" },
+                  { tier: "platinum", label: TIERS.platinum.label, color: "#C0C0C0", desc: "Original colorways of my favorite sneakers" },
+                  { tier: "gold",     label: TIERS.gold.label,     color: "#FFD700", desc: "Sneakers I'm glad are in my collection" },
+                  { tier: "silver",   label: "⬥ SILVER ⬥",         color: T.text4,   desc: "Maybe I shouldn't have bought these" },
+                  { tier: "bronze",   label: TIERS.bronze.label,   color: "#CD7F32", desc: "Beaters" },
                 ].map(t => (
                   <div key={t.tier} style={{ display:"flex", alignItems:"baseline", gap:"12px", marginBottom:"12px" }}>
                     <span style={{ fontSize:"10px", letterSpacing:"3px", color:t.color, whiteSpace:"nowrap", minWidth:"120px" }}>{t.label}</span>
@@ -2887,7 +2893,8 @@
             const firstShoe = inventory[0];
             if (firstShoe) {
               setQuickShoeId(String(firstShoe.id));
-              setQuickColorway(colorways[firstShoe.shortName]?.[0] || "");
+              const ownedCws = (colorways[firstShoe.shortName] || []).filter(cw => isColorwayOwned(firstShoe.id, cw));
+              setQuickColorway(ownedCws[0] || "");
             }
           }} style={{
             position:"fixed", bottom:"28px", right:"28px", zIndex:8888,
