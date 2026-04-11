@@ -217,6 +217,7 @@
       const [showTriptych, setShowTriptych] = useState(false);
       const [triptychVisible, setTriptychVisible] = useState(false);
       const [iceGlow, setIceGlow] = useState(false);
+      const [diamondShatter, setDiamondShatter] = useState("hidden"); // "hidden" | "visible" | "shatter" | "done"
       const overlayBg = "rgba(0,0,0,0.85)";
       const timerRef = useRef(null);
       const crossfadeRef = useRef(null);
@@ -224,6 +225,24 @@
       const storyRef = useRef(null);
       const triptychRef = useRef(null);
       const iceRef = useRef(null);
+      const diamondRef = useRef(null);
+      // Generate stable random shard data for diamond shatter effect
+      const shardsRef = useRef(null);
+      if (!shardsRef.current) {
+        shardsRef.current = Array.from({ length: 10 }, (_, i) => {
+          const angle = (i / 10) * 360 + (Math.random() * 36 - 18);
+          const rad = angle * Math.PI / 180;
+          const dist = 250 + Math.random() * 300;
+          return {
+            clipPath: `polygon(50% 50%, ${50 + 48 * Math.cos(rad - 0.3)}% ${50 + 48 * Math.sin(rad - 0.3)}%, ${50 + 48 * Math.cos(rad + 0.3)}% ${50 + 48 * Math.sin(rad + 0.3)}%)`,
+            tx: Math.cos(rad) * dist,
+            ty: Math.sin(rad) * dist,
+            rot: (Math.random() - 0.5) * 720,
+            delay: Math.random() * 0.15,
+          };
+        });
+      }
+
       const hasTriptych = tier === "diamond" && hoverImg && img3 && window.innerWidth >= 768;
 
       const tierInfo = TIERS[tier] || TIERS.silver;
@@ -232,11 +251,11 @@
       const shouldCrossfade = hoverImg && (hasCrossfade || isAnniversary);
       const anniversaryGlow = !hasCrossfade && isAnniversary && shouldCrossfade;
 
-      // Diamond crossfade: scale(0.9) rotate(-3deg) → scale(1) rotate(0) over 4s
+      // Diamond crossfade: scale(0.9) rotate(-3deg) → scale(1) rotate(0) over 2s
       // Platinum crossfade: scale(0.95) → scale(1) over 3s
       const crossfadeTransformStart = tier === "diamond" ? "translateX(-50%) scale(0.8) rotate(-3deg)" : "translateX(-50%) scale(0.95)";
       const crossfadeTransformEnd = tier === "diamond" ? "translateX(-50%) scale(1) rotate(0deg)" : "translateX(-50%) scale(1)";
-      const crossfadeDuration = tier === "diamond" ? "4s" : "3s";
+      const crossfadeDuration = tier === "diamond" ? "2s" : "3s";
 
       const triggerOpen = () => {
         if (!img) return;
@@ -248,22 +267,48 @@
         setShowTriptych(false);
         setTriptychVisible(false);
         setIceGlow(false);
+        setDiamondShatter("hidden");
         // Preload all images up front so triptych has no load-time shift
         if (hasTriptych) {
           [img, hoverImg, img3].forEach(src => { if (src) { const i = new Image(); i.src = src; } });
         }
         if (hasCrossfade && shouldCrossfade) {
-          crossfadeRef.current = setTimeout(() => { setShowHover(true); setTierReveal(true);
-            if (hasTriptych) {
-              triptychRef.current = setTimeout(() => {
-                setShowTriptych(true);
-                setShowStory(true);
-                requestAnimationFrame(() => requestAnimationFrame(() => setTriptychVisible(true)));
-              }, 5000);
-            } else if (story) {
-              storyRef.current = setTimeout(() => setShowStory(true), 5000);
-            }
-          }, 200);
+          if (tier === "diamond") {
+            // Diamond shatter sequence: fade in diamond → hold → shatter + shoe reveal together
+            diamondRef.current = setTimeout(() => {
+              setDiamondShatter("visible");
+              diamondRef.current = setTimeout(() => {
+                setDiamondShatter("shatter");
+                // Start shoe reveal simultaneously — shoe bursts through the diamond
+                setShowHover(true); setTierReveal(true);
+                // Clean up shatter visuals after shards finish flying
+                diamondRef.current = setTimeout(() => {
+                  setDiamondShatter("done");
+                }, 1500);
+                if (hasTriptych) {
+                  triptychRef.current = setTimeout(() => {
+                    setShowTriptych(true);
+                    setShowStory(true);
+                    requestAnimationFrame(() => requestAnimationFrame(() => setTriptychVisible(true)));
+                  }, 5000);
+                } else if (story) {
+                  storyRef.current = setTimeout(() => setShowStory(true), 5000);
+                }
+              }, 1200);
+            }, 300);
+          } else {
+            crossfadeRef.current = setTimeout(() => { setShowHover(true); setTierReveal(true);
+              if (hasTriptych) {
+                triptychRef.current = setTimeout(() => {
+                  setShowTriptych(true);
+                  setShowStory(true);
+                  requestAnimationFrame(() => requestAnimationFrame(() => setTriptychVisible(true)));
+                }, 5000);
+              } else if (story) {
+                storyRef.current = setTimeout(() => setShowStory(true), 5000);
+              }
+            }, 200);
+          }
         } else if (tierInfo.label) {
           tierRef.current = setTimeout(() => { setTierReveal(true);
             if (story) storyRef.current = setTimeout(() => setShowStory(true), 5000);
@@ -288,6 +333,7 @@
         clearTimeout(storyRef.current);
         clearTimeout(triptychRef.current);
         clearTimeout(iceRef.current);
+        clearTimeout(diamondRef.current);
         setHovered(false);
         setShowHover(false);
         setTierGlow(false);
@@ -296,6 +342,7 @@
         setShowTriptych(false);
         setTriptychVisible(false);
         setIceGlow(false);
+        setDiamondShatter("hidden");
       };
       const handleMouseEnter = () => { if (isMobilePublic) return; timerRef.current = setTimeout(triggerOpen, 500); };
       const handleMouseLeave = () => { if (isMobilePublic) return; clearTimeout(timerRef.current); triggerClose(); };
@@ -309,6 +356,7 @@
           clearTimeout(storyRef.current);
           clearTimeout(triptychRef.current);
           clearTimeout(iceRef.current);
+          clearTimeout(diamondRef.current);
         };
       }, []);
 
@@ -361,6 +409,45 @@
                     <div style={{ display:"flex", flexDirection:"column", alignItems:"center" }}>
                       {/* Image row — fixed size always, flanking images absolute so they never affect layout */}
                       <div style={{ position:"relative", width:"100vw", height:"42vh", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                        {/* Diamond shatter effect — diamond tier only, centered in image row */}
+                        {tier === "diamond" && diamondShatter !== "done" && (
+                          <div style={{ position:"absolute", zIndex:10, display:"flex", alignItems:"center", justifyContent:"center", width:"100%", height:"100%", pointerEvents:"none" }}>
+                            {/* Intact diamond — fades in, then hidden when shatter starts */}
+                            <img src="assets/diamond.png" alt="" style={{
+                              position:"absolute",
+                              width:"180px", height:"180px", objectFit:"contain",
+                              opacity: diamondShatter === "visible" ? 1 : 0,
+                              transition: "opacity 0.7s ease-out",
+                              filter: "drop-shadow(0 0 25px rgba(184,240,255,0.8)) drop-shadow(0 0 10px rgba(255,255,255,0.6))",
+                            }} />
+                            {/* Shards — clipped copies of diamond, appear at shatter then fly outward */}
+                            {diamondShatter === "shatter" && shardsRef.current.map((shard, si) => {
+                              const shardRef = React.createRef();
+                              requestAnimationFrame(() => requestAnimationFrame(() => {
+                                if (shardRef.current) {
+                                  shardRef.current.style.transform = `translate(${shard.tx}px, ${shard.ty}px) rotate(${shard.rot}deg)`;
+                                  shardRef.current.style.opacity = "0";
+                                }
+                              }));
+                              return (
+                              <div ref={shardRef} key={si} style={{
+                                position:"absolute",
+                                width:"180px", height:"180px",
+                                clipPath: shard.clipPath,
+                                transition: `transform 1.2s cubic-bezier(0.25,0.46,0.45,0.94) ${shard.delay}s, opacity 0.7s ease-out ${shard.delay + 0.5}s`,
+                                transform: "translate(0,0) rotate(0deg)",
+                                opacity: 1,
+                                pointerEvents: "none",
+                              }}>
+                                <img src="assets/diamond.png" alt="" style={{
+                                  width:"180px", height:"180px", objectFit:"contain",
+                                  filter: "drop-shadow(0 0 12px rgba(184,240,255,0.6))",
+                                }} />
+                              </div>
+                              );
+                            })}
+                          </div>
+                        )}
                         {/* Left — img1, fades in at Act 3 */}
                         {hasTriptych && (
                           <div style={{ position:"absolute", right:"calc(50% + 20vw)", top:"50%", transform: triptychVisible ? "translateY(-50%)" : "translateY(-50%) translateX(-80px)", opacity: triptychVisible ? 1 : 0, transition:"opacity 3s ease-out 0.05s, transform 3s ease-out 0.05s", pointerEvents:"none" }}>
@@ -369,9 +456,9 @@
                         )}
                         {/* Center — always visible, never moves */}
                         <div style={{ position:"relative" }}>
-                          <img src={img} alt={label} style={{ maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: mainGlowFilter, display:"block", opacity: (shouldCrossfade && showHover) ? 0 : 1, transition:`opacity ${crossfadeDuration} ease-in-out, filter 3s ease-in-out` }} />
+                          <img src={img} alt={label} style={{ maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: mainGlowFilter, display:"block", opacity: (tier === "diamond" && (diamondShatter === "hidden" || diamondShatter === "visible")) ? 0 : (shouldCrossfade && showHover) ? 0 : 1, transition:`opacity ${crossfadeDuration} ease-in-out, filter 3s ease-in-out` }} />
                           {shouldCrossfade && (
-                            <img src={hoverImg} alt={label} style={{ position:"absolute", top:0, left:"50%", transform: showHover ? crossfadeTransformEnd : crossfadeTransformStart, maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: tier !== "diamond" ? crossfadeGlow : undefined, animation: tier === "diamond" && showHover ? "diamondReveal 4s ease-out forwards, prismaticGlow 2.5s ease-in-out 4s infinite" : "none", opacity: showHover ? 1 : 0, transition:`opacity ${crossfadeDuration} ease-in-out, transform ${crossfadeDuration} ease-in-out` }} />
+                            <img src={hoverImg} alt={label} style={{ position:"absolute", top:0, left:"50%", transform: showHover ? crossfadeTransformEnd : crossfadeTransformStart, maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: tier !== "diamond" ? crossfadeGlow : undefined, animation: tier === "diamond" && showHover ? "diamondReveal 2s ease-out forwards, prismaticGlow 2.5s ease-in-out 2s infinite" : "none", opacity: showHover ? 1 : 0, transition:`opacity ${crossfadeDuration} ease-in-out, transform ${crossfadeDuration} ease-in-out` }} />
                           )}
                         </div>
                         {/* Right — img3, fades in at Act 3 */}
@@ -550,7 +637,7 @@
       );
     }
 
-    function GraveyardCard({ entryKey, entry, T, CT, dark, setColorways, setGraveyardMeta, isMobilePublic = false }) {
+    function GraveyardCard({ entryKey, entry, T, CT, dark, setColorways, setGraveyardMeta, setColorwayOwned, setTierMeta, isMobilePublic = false }) {
       const [hovered,    setHovered]    = useState(false);
       const [showHover,  setShowHover]  = useState(false);
       const [ghosted,    setGhosted]    = useState(false);
@@ -2860,7 +2947,7 @@
                 <div style={{ marginBottom:"32px" }}>
                   <SectionHeader label={label} color={color} />
                   <div style={{ display:"flex", flexWrap:"wrap", gap:"12px" }}>
-                    {items.map(([k,e]) => <GraveyardCard key={k} entryKey={k} entry={e} T={T} CT={CT} dark={dark} setColorways={setColorways} setGraveyardMeta={setGraveyardMeta} isMobilePublic={isMobilePublic} />)}
+                    {items.map(([k,e]) => <GraveyardCard key={k} entryKey={k} entry={e} T={T} CT={CT} dark={dark} setColorways={setColorways} setGraveyardMeta={setGraveyardMeta} setColorwayOwned={setColorwayOwned} setTierMeta={setTierMeta} isMobilePublic={isMobilePublic} />)}
                   </div>
                 </div>
               );
