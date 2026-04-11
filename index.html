@@ -1772,7 +1772,7 @@
                         if (item.type === "upnext") {
                           return (
                             <div key={`upnext-${i}`} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none" }}>
-                              <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
+                              <div style={{ display:"flex", alignItems:"center", gap:"16px", minWidth:0 }}>
                                 {rotationImg && (() => {
                                   function RotationImg() {
                                     const [showAlt, setShowAlt] = React.useState(false);
@@ -1790,7 +1790,7 @@
                                   }
                                   return <RotationImg />;
                                 })()}
-                                <div>
+                                <div style={{ minWidth:0 }}>
                                   <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
                                     {isRotationOnIce
                                       ? <span><span style={{color:"#64c8ff"}}>❄️</span> TIME TO TAKE THEM OFF ICE? <span style={{color:"#64c8ff"}}>❄️</span></span>
@@ -1809,8 +1809,21 @@
                                     {longestUnwornLastDate ? `Last worn: ${formatDate(longestUnwornLastDate)}` : "Never worn"}
                                   </div>
                                 </div>
+                                {!isMobilePublic && upcomingQueue.length > 0 && (
+                                  <div style={{ display:"flex", alignItems:"center", gap:"8px", flexShrink:0 }}>
+                                    <div style={{ fontSize:"8px", letterSpacing:"3px", color: T.text5, flexShrink:0 }}>COMING UP</div>
+                                    <div style={{ display:"flex", gap:"6px", alignItems:"center" }}>
+                                      {upcomingQueue.map((entry, qi) => {
+                                        const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
+                                        return qImg ? (
+                                          <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width:"56px", height:"35px", objectFit:"cover" }} />
+                                        ) : null;
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
-                              {ADMIN_MODE && <div style={{ marginLeft:"auto", flexShrink:0 }}>
+                              {ADMIN_MODE && <div style={{ flexShrink:0 }}>
                                 <Btn label="LOG WEAR" onClick={() => { setLoggingId(longestUnworn.id); setWearDate(localDateStr()); const ownedCws = (colorways[longestUnworn.shortName] || []).filter(cw => isColorwayOwned(longestUnworn.id, cw)); setWearColorway(longestUnwornColorway || (ownedCws[0] ?? "")); }} color="#e63946" solid />
                               </div>}
                             </div>
@@ -1822,7 +1835,7 @@
                           return (
                             <div key={`lastworn-${i}`} style={{ display:"flex", alignItems:"center", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none" }}>
                               {lastWornImg && <img src={lastWornImg} alt={lastWornColorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0, filter: isLastWornPremium ? `drop-shadow(0 0 12px ${lastWornTierInfo.glowRgba})` : "none" }} />}
-                              <div>
+                              <div style={{ minWidth:0 }}>
                                 <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
                                   {isLastWornPremium ? <span><span style={{color: lastWornTierInfo.color}}>✦</span> LAST WORN <span style={{color: lastWornTierInfo.color}}>✦</span></span> : "LAST WORN"}
                                 </div>
@@ -1831,6 +1844,19 @@
                                 </div>
                                 <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{lastWornDate ? `Worn on ${formatDate(lastWornDate)}` : ""}</div>
                               </div>
+                              {!isMobilePublic && recentlyWornQueue.length > 0 && (
+                                <div style={{ display:"flex", alignItems:"center", gap:"8px", flexShrink:0 }}>
+                                  <div style={{ fontSize:"8px", letterSpacing:"3px", color: T.text5, flexShrink:0 }}>RECENT</div>
+                                  <div style={{ display:"flex", gap:"6px", alignItems:"center" }}>
+                                    {recentlyWornQueue.map((entry, qi) => {
+                                      const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
+                                      return qImg ? (
+                                        <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width:"56px", height:"35px", objectFit:"cover" }} />
+                                      ) : null;
+                                    })}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         }
@@ -1848,37 +1874,7 @@
                         );
                       })}
                     </div>
-                    {/* Queue bar — always reserves space, content only on rotation slides */}
-                    <div style={{ background: T.bg2, border:`1px solid ${getBannerBorder(currentItem)}`, borderTop:"none", padding:"10px 24px", position:"relative", minHeight:"45px", display:"flex", alignItems:"center", transition:"border-color 0.5s ease-in-out" }}>
-                      {/* COMING UP — visible on UP NEXT slide */}
-                      {upcomingQueue.length > 0 && (
-                        <div style={{ display:"flex", gap: isMobilePublic ? "8px" : "16px", alignItems:"center", position:"absolute", left: isMobilePublic ? "12px" : "24px", right: isMobilePublic ? "12px" : "24px", overflow:"hidden", opacity: currentItem.type === "upnext" ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: currentItem.type === "upnext" ? "auto" : "none" }}>
-                          <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0 }}>COMING UP</div>
-                          <div style={{ display:"flex", gap: isMobilePublic ? "6px" : "8px", alignItems:"center", overflow:"hidden", flex:1 }}>
-                            {upcomingQueue.map((entry, qi) => {
-                              const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
-                              return qImg ? (
-                                <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover", flexShrink: isMobilePublic ? 1 : 0, minWidth: isMobilePublic ? "36px" : undefined }} />
-                              ) : null;
-                            })}
-                          </div>
-                        </div>
-                      )}
-                      {/* RECENT — visible on LAST WORN slide */}
-                      {recentlyWornQueue.length > 0 && (
-                        <div style={{ display:"flex", gap: isMobilePublic ? "8px" : "16px", alignItems:"center", position:"absolute", left: isMobilePublic ? "12px" : "24px", right: isMobilePublic ? "12px" : "24px", overflow:"hidden", opacity: currentItem.type === "lastworn" ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: currentItem.type === "lastworn" ? "auto" : "none" }}>
-                          <div style={{ fontSize:"8px", letterSpacing:"3px", color:"#e63946", flexShrink:0 }}>RECENT</div>
-                          <div style={{ display:"flex", gap: isMobilePublic ? "6px" : "8px", alignItems:"center", overflow:"hidden", flex:1 }}>
-                            {recentlyWornQueue.map((entry, qi) => {
-                              const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
-                              return qImg ? (
-                                <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width: isMobilePublic ? "48px" : "72px", height: isMobilePublic ? "30px" : "45px", objectFit:"cover", flexShrink: isMobilePublic ? 1 : 0, minWidth: isMobilePublic ? "36px" : undefined }} />
-                              ) : null;
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+
                     {/* Dots — tappable navigation */}
                     {bannerItems.length > 1 && (
                       <div style={{ display:"flex", justifyContent:"center", gap:"6px", marginTop:"10px" }}>
