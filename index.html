@@ -2119,6 +2119,15 @@
                     return true;
                   };
                   const filters = [["all","ALL"],["diamond","DIAMOND"],["platinum","PLATINUM"],["gold","GOLD"],["silver","SILVER"],["bronze","BRONZE"],["onice","ON ICE"]];
+                  const tierDescriptions = {
+                    diamond: "The sneakers that 10-year-old me dreamed about",
+                    platinum: "Original colorways of my favorite sneakers",
+                    gold: "Sneakers I'm glad are in my collection",
+                    silver: "Maybe I shouldn't have bought these",
+                    bronze: "Beaters",
+                    onice: "Shoes that haven't been worn yet",
+                  };
+                  const filterDesc = tierDescriptions[collectionFilter] || null;
                   return (
                   <>
                   {isMobilePublic ? (
@@ -2132,18 +2141,22 @@
                           <option key={id} value={id}>{label}</option>
                         ))}
                       </select>
+                      {filterDesc && <div style={{ fontSize:"11px", fontStyle:"italic", color: T.text4, marginTop:"8px" }}>{filterDesc}</div>}
                     </div>
                   ) : (
-                    <div style={{ display:"flex", gap:"16px", marginBottom:"16px", flexWrap:"wrap" }}>
-                      {filters.filter(([id]) => id !== "onice" || hasOnIce).map(([id, label]) => (
-                        <button key={id} onClick={() => setCollectionFilter(id)} style={{
-                          background:"transparent", border:"none", cursor:"pointer",
-                          fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
-                          color: collectionFilter === id ? "#e63946" : T.text5,
-                          borderBottom: collectionFilter === id ? "1px solid #e63946" : "1px solid transparent",
-                          padding:"4px 0",
-                        }}>{label}</button>
-                      ))}
+                    <div style={{ marginBottom:"16px" }}>
+                      <div style={{ display:"flex", gap:"16px", flexWrap:"wrap", alignItems:"baseline" }}>
+                        {filters.filter(([id]) => id !== "onice" || hasOnIce).map(([id, label]) => (
+                          <button key={id} onClick={() => setCollectionFilter(id)} style={{
+                            background:"transparent", border:"none", cursor:"pointer",
+                            fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
+                            color: collectionFilter === id ? "#e63946" : T.text5,
+                            borderBottom: collectionFilter === id ? "1px solid #e63946" : "1px solid transparent",
+                            padding:"4px 0",
+                          }}>{label}</button>
+                        ))}
+                        {filterDesc && <span style={{ fontSize:"12px", fontStyle:"italic", color: T.text4, marginLeft:"8px" }}>{filterDesc}</span>}
+                      </div>
                     </div>
                   )}
                   <div style={{ display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" }}>
