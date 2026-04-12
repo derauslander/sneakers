@@ -155,6 +155,11 @@
     const tierExcludedFromRotation = (tier) => tier === "bronze";
     const tierAnniversaryColor = (tier) => tier === "diamond" ? "#b8f0ff" : tier === "platinum" ? "#C0C0C0" : tier === "gold" ? "#FFD700" : tier === "bronze" ? "#CD7F32" : "#aaa";
 
+    // Preload diamond audio files so first play has no delay
+    const _preloadedAudio = { glow: new Audio("assets/glow.mp3"), break: new Audio("assets/break.mp3") };
+    _preloadedAudio.glow.preload = "auto";
+    _preloadedAudio.break.preload = "auto";
+
     // One-time migration from grailMeta/beaterMeta to tierMeta
     const migrateTiers = (inventory, colorways, grailMeta, beaterMeta) => {
       const tierMeta = {};
@@ -226,6 +231,7 @@
       const triptychRef = useRef(null);
       const iceRef = useRef(null);
       const diamondRef = useRef(null);
+      const diamondAudioRef = useRef({ glow: null, shatter: null });
       // Generate stable random shard data for diamond shatter effect
       const shardsRef = useRef(null);
       if (!shardsRef.current) {
@@ -279,8 +285,10 @@
               setDiamondShatter("visible");
               diamondRef.current = setTimeout(() => {
                 setDiamondShatter("shatter");
+                try { const b = _preloadedAudio.break.cloneNode(); b.volume = 0.5; b.play().catch(()=>{}); diamondAudioRef.current.shatter = b; } catch {}
                 // Start shoe reveal simultaneously — shoe bursts through the diamond
                 setShowHover(true); setTierReveal(true);
+                try { const g = _preloadedAudio.glow.cloneNode(); g.volume = 0.5; g.play().catch(()=>{}); diamondAudioRef.current.glow = g; } catch {}
                 // Clean up shatter visuals after shards finish flying
                 diamondRef.current = setTimeout(() => {
                   setDiamondShatter("done");
@@ -334,6 +342,8 @@
         clearTimeout(triptychRef.current);
         clearTimeout(iceRef.current);
         clearTimeout(diamondRef.current);
+        try { if (diamondAudioRef.current.glow) { diamondAudioRef.current.glow.pause(); diamondAudioRef.current.glow = null; } } catch {}
+        try { if (diamondAudioRef.current.shatter) { diamondAudioRef.current.shatter.pause(); diamondAudioRef.current.shatter = null; } } catch {}
         setHovered(false);
         setShowHover(false);
         setTierGlow(false);
@@ -344,9 +354,9 @@
         setIceGlow(false);
         setDiamondShatter("hidden");
       };
-      const handleMouseEnter = () => { if (isMobilePublic) return; timerRef.current = setTimeout(triggerOpen, 500); };
-      const handleMouseLeave = () => { if (isMobilePublic) return; clearTimeout(timerRef.current); triggerClose(); };
-      const handleTap = (e) => { if (!isMobilePublic) return; e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
+      const handleMouseEnter = () => {};
+      const handleMouseLeave = () => {};
+      const handleClick = (e) => { e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
 
       useEffect(() => {
         return () => {
@@ -393,17 +403,15 @@
               <div style={{ position:"relative", display:"inline-block", width, height, overflow:"hidden", background: dark ? "#222222" : "#ffffff" }}>
                 <img
                   src={img} alt={label}
-                  onMouseEnter={handleMouseEnter}
-                  onMouseLeave={handleMouseLeave}
-                  onClick={handleTap}
-                  style={{ width, height, objectFit:"contain", border:"none", display:"block", cursor: isMobilePublic ? "pointer" : "zoom-in", transition:"opacity 0.15s" }}
+                  onClick={handleClick}
+                  style={{ width, height, objectFit:"contain", border:"none", display:"block", cursor: "pointer", transition:"opacity 0.15s" }}
                 />
                 {hovered && (
                   <div onClick={triggerClose} style={{
                     position:"fixed", top:0, left:0, width:"100vw", height:"100vh",
                     background: overlayBg, display:"flex", flexDirection:"column",
                     alignItems:"center", justifyContent:"center", zIndex:9999,
-                    pointerEvents: isMobilePublic ? "auto" : "none",
+                    pointerEvents: "auto",
                   }}>
                     {/* ── UNIFIED OVERLAY — triptych and single view coexist, no layout swap ── */}
                     <div style={{ display:"flex", flexDirection:"column", alignItems:"center" }}>
@@ -540,9 +548,9 @@
         setHovered(false);
         setShowHover(false);
       };
-      const handleMouseEnter = () => { if (isMobilePublic || !img) return; timerRef.current = setTimeout(triggerOpen, 500); };
-      const handleMouseLeave = () => { if (isMobilePublic) return; clearTimeout(timerRef.current); triggerClose(); };
-      const handleTap = (e) => { if (!isMobilePublic) return; e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
+      const handleMouseEnter = () => {};
+      const handleMouseLeave = () => {};
+      const handleClick = (e) => { if (!img) return; e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
 
       useEffect(() => {
         return () => {
@@ -577,9 +585,7 @@
             }} />
             {/* Front face */}
             <div
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-              onClick={handleTap}
+              onClick={ADMIN_MODE ? undefined : handleClick}
               style={{
                 width:"160px", height:"100px",
                 background: c.empty ? (dark ? "#2a2a2a" : "#f5f5f5") : img ? (dark ? "#1a1a1a" : "#ffffff") : c.bg,
@@ -590,7 +596,7 @@
                 display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
                 padding: img ? "0" : "6px", textAlign:"center",
                 overflow:"hidden", position:"relative",
-                cursor: isMobilePublic && img ? "pointer" : undefined,
+                cursor: (ADMIN_MODE || img) ? "pointer" : "default",
                 boxShadow: dark
                   ? "0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)"
                   : "0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
@@ -617,7 +623,7 @@
               <div onClick={triggerClose} style={{
                 position:"fixed", top:0, left:0, width:"100vw", height:"100vh",
                 background:"rgba(0,0,0,0.85)", display:"flex", flexDirection:"column",
-                alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents: isMobilePublic ? "auto" : "none",
+                alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents: "auto",
               }}>
                 <div style={{ position:"relative", maxWidth: isMobilePublic ? "90vw" : "60vw", maxHeight: isMobilePublic ? "70vh" : "60vh" }}>
                   <img src={hoverImg || img} alt={c.colorway} style={{ maxWidth: isMobilePublic ? "90vw" : "60vw", maxHeight: isMobilePublic ? "70vh" : "60vh", objectFit:"contain", filter:"drop-shadow(0 0 8px rgba(255,255,255,0.6))", display:"block" }} />
@@ -662,9 +668,9 @@
         clearTimeout(ghostRef.current);
         setHovered(false); setShowHover(false); setGhosted(false);
       };
-      const handleMouseEnter = () => { if (isMobilePublic) return; if (!entry.img) return; timerRef.current = setTimeout(triggerOpen, 500); };
-      const handleMouseLeave = () => { if (isMobilePublic) return; clearTimeout(timerRef.current); triggerClose(); };
-      const handleTap = (e) => { if (!isMobilePublic) return; e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
+      const handleMouseEnter = () => {};
+      const handleMouseLeave = () => {};
+      const handleClick = (e) => { if (!entry.img) return; e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
 
       useEffect(() => {
         return () => {
@@ -699,13 +705,13 @@
           <div style={{ position:"relative", width: imgW, height: imgH, marginBottom:"10px" }}>
             {entry.img ? (
               <>
-                <img src={entry.img} alt={entry.colorway} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={handleTap}
-                  style={{ width: imgW, height: imgH, objectFit:"cover", display:"block", cursor: isMobilePublic ? "pointer" : "zoom-in",
+                <img src={entry.img} alt={entry.colorway} onClick={handleClick}
+                  style={{ width: imgW, height: imgH, objectFit:"cover", display:"block", cursor: "pointer",
                     filter: hovered ? `drop-shadow(0 0 20px ${glowColor})` : "none",
                     opacity: hasCrossfade && entry.hoverImg && showHover ? 0 : 1,
                     transition:"opacity 3s ease-in-out, filter 0.3s ease-in-out" }} />
                 {hasCrossfade && entry.hoverImg && (
-                  <img src={entry.hoverImg} alt={entry.colorway} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} onClick={handleTap}
+                  <img src={entry.hoverImg} alt={entry.colorway} onClick={handleClick}
                     style={{ position:"absolute", top:0, left:0, width: imgW, height: imgH, objectFit:"cover",
                       filter:`drop-shadow(0 0 20px ${glowColor})`,
                       opacity: showHover ? 1 : 0, transform: showHover ? "scale(1)" : "scale(0.95)",
@@ -719,7 +725,7 @@
             )}
             {/* Hover overlay */}
             {hovered && entry.img && (
-              <div onClick={triggerClose} style={{ position:"fixed", top:0, left:0, width:"100vw", height:"100vh", background:"rgba(0,0,0,0.88)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents: isMobilePublic ? "auto" : "none" }}>
+              <div onClick={triggerClose} style={{ position:"fixed", top:0, left:0, width:"100vw", height:"100vh", background:"rgba(0,0,0,0.88)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", zIndex:9999, pointerEvents: "auto" }}>
                 <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"24px" }}>
 
                   {/* Tombstone shape */}
