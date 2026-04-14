@@ -1124,6 +1124,8 @@
       const [bannerIdx, setBannerIdx] = useState(0);
       const [collectionFilter, setCollectionFilter] = useState("all");
       const [top10Filter, setTop10Filter] = useState("worn");
+      const [timeTravelDate, setTimeTravelDate] = useState(null); // null = present, string = past date
+      const [timeTravelPicker, setTimeTravelPicker] = useState(false); // show date picker
 
       useEffect(() => {
         const interval = setInterval(() => setBannerIdx(i => i + 1), 6000);
@@ -1713,8 +1715,54 @@
             {/* ── COLLECTION ── */}
             {view === "collection" && (
               <div>
-                {/* Unified Banner — cycles through all notifications and rotation */}
-                {(() => {
+                {/* Time Travel Banner — shows when in time travel mode */}
+                {timeTravelDate && (
+                  <div style={{ background: dark ? "linear-gradient(90deg,#1a1a2a,#111122)" : "linear-gradient(90deg,#f0f8ff,#e8f4ff)", border:"1px solid #b8f0ff", padding:"16px 24px", marginBottom:"24px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
+                      <div style={{ fontSize:"18px" }}>⏳</div>
+                      <div>
+                        <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#b8f0ff", marginBottom:"4px" }}>TIME MACHINE</div>
+                        <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: T.text }}>
+                          The Vault on {formatDate(timeTravelDate)}
+                        </div>
+                        <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>
+                          {(() => {
+                            const allPD = [];
+                            inventory.forEach(shoe => {
+                              (colorways[shoe.shortName] || []).forEach(cw => {
+                                const key = `${shoe.id}_${cw}`;
+                                if (colorwayOwned[key] === false) return;
+                                const meta = colorwayMeta[key] || {};
+                                if (meta.purchaseDate) allPD.push(meta.purchaseDate);
+                              });
+                            });
+                            allPD.sort();
+                            const first = allPD[0];
+                            if (!first) return "";
+                            const days = Math.round((new Date(timeTravelDate + "T00:00:00") - new Date(first + "T00:00:00")) / 86400000);
+                            const pairsAtDate = inventory.reduce((n, shoe) => {
+                              return n + (colorways[shoe.shortName] || []).filter(cw => {
+                                const key = `${shoe.id}_${cw}`;
+                                if (colorwayOwned[key] === false) return false;
+                                const meta = colorwayMeta[key] || {};
+                                return meta.purchaseDate && meta.purchaseDate <= timeTravelDate;
+                              }).length;
+                            }, 0);
+                            return `Day ${Math.max(days, 1)} of the journey · ${pairsAtDate} ${pairsAtDate === 1 ? "pair" : "pairs"}`;
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                    <button onClick={() => setTimeTravelDate(null)} style={{
+                      background:"transparent", border:"1px solid #b8f0ff", color:"#b8f0ff",
+                      padding:"6px 14px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px",
+                      fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap",
+                    }}>✕ BACK TO PRESENT</button>
+                  </div>
+                )}
+
+                {/* Unified Banner — cycles through all notifications and rotation (hidden during time travel) */}
+                {!timeTravelDate && (() => {
                   // ── Compute UP NEXT data ──
                   const rotationTier = longestUnwornColorway ? tierOf(tierMeta, `${longestUnworn?.id}_${longestUnwornColorway}`) : "silver";
                   const rotationTierInfo = TIERS[rotationTier] || TIERS.silver;
@@ -1787,7 +1835,8 @@
                   // 6. Anniversary
                   anniversaries.forEach(a => {
                     const aImg = images[`${a.shoe.id}_${a.colorway}`] || null;
-                    bannerItems.push({ type:"anniversary", label:"✦ PURCHASE ANNIVERSARY ✦", shoe: a.shoe, colorway: a.colorway, img: aImg, subtitle:`${a.years} ${a.years === 1 ? "year" : "years"} ago today` });
+                    const aMeta = colorwayMeta[`${a.shoe.id}_${a.colorway}`] || {};
+                    bannerItems.push({ type:"anniversary", label:"✦ PURCHASE ANNIVERSARY ✦", shoe: a.shoe, colorway: a.colorway, img: aImg, subtitle:`${a.years} ${a.years === 1 ? "year" : "years"} ago today`, purchaseDate: aMeta.purchaseDate || null });
                   });
 
                   // 7. On This Day
@@ -1883,7 +1932,7 @@
                                   }
                                   return <RotationImg />;
                                 })()}
-                                <div style={{ minWidth:0 }}>
+                                <div style={{ minWidth:0, textAlign:"center" }}>
                                   <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
                                     {isRotationOnIce
                                       ? <span><span style={{color:"#64c8ff"}}>❄️</span> TIME TO TAKE THEM OFF ICE? <span style={{color:"#64c8ff"}}>❄️</span></span>
@@ -1901,20 +1950,20 @@
                                   <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>
                                     {longestUnwornLastDate ? `Last worn: ${formatDate(longestUnwornLastDate)}` : "Never worn"}
                                   </div>
-                                </div>
-                                {!isMobilePublic && upcomingQueue.length > 0 && (
-                                  <div style={{ display:"flex", alignItems:"center", gap:"8px", flexShrink:0 }}>
-                                    <div style={{ fontSize:"8px", letterSpacing:"3px", color: T.text5, flexShrink:0 }}>COMING UP</div>
-                                    <div style={{ display:"flex", gap:"6px", alignItems:"center" }}>
-                                      {upcomingQueue.map((entry, qi) => {
-                                        const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
-                                        return qImg ? (
-                                          <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width:"56px", height:"35px", objectFit:"cover" }} />
-                                        ) : null;
-                                      })}
+                                  {!isMobilePublic && upcomingQueue.length > 0 && (
+                                    <div style={{ display:"flex", alignItems:"center", gap:"8px", marginTop:"6px", justifyContent:"center" }}>
+                                      <div style={{ fontSize:"8px", letterSpacing:"3px", color: T.text5, flexShrink:0 }}>COMING UP</div>
+                                      <div style={{ display:"flex", gap:"6px", alignItems:"center" }}>
+                                        {upcomingQueue.map((entry, qi) => {
+                                          const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
+                                          return qImg ? (
+                                            <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width:"56px", height:"35px", objectFit:"cover" }} />
+                                          ) : null;
+                                        })}
+                                      </div>
                                     </div>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
                               </div>
                               {ADMIN_MODE && <div style={{ flexShrink:0 }}>
                                 <Btn label="LOG WEAR" onClick={() => { setLoggingId(longestUnworn.id); setWearDate(localDateStr()); const ownedCws = (colorways[longestUnworn.shortName] || []).filter(cw => isColorwayOwned(longestUnworn.id, cw)); setWearColorway(longestUnwornColorway || (ownedCws[0] ?? "")); }} color="#e63946" solid />
@@ -1928,7 +1977,7 @@
                           return (
                             <div key={`lastworn-${i}`} style={{ display:"flex", alignItems:"center", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none" }}>
                               {lastWornImg && <img src={lastWornImg} alt={lastWornColorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0, filter: isLastWornPremium ? `drop-shadow(0 0 12px ${lastWornTierInfo.glowRgba})` : "none" }} />}
-                              <div style={{ minWidth:0 }}>
+                              <div style={{ minWidth:0, textAlign:"center" }}>
                                 <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
                                   {isLastWornPremium ? <span><span style={{color: lastWornTierInfo.color}}>✦</span> LAST WORN <span style={{color: lastWornTierInfo.color}}>✦</span></span> : "LAST WORN"}
                                 </div>
@@ -1936,20 +1985,20 @@
                                   {lastWornShoe.name}{lastWornColorway ? ` — ${lastWornColorway}` : ""}
                                 </div>
                                 <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{lastWornDate ? `Worn on ${formatDate(lastWornDate)}` : ""}</div>
-                              </div>
-                              {!isMobilePublic && recentlyWornQueue.length > 0 && (
-                                <div style={{ display:"flex", alignItems:"center", gap:"8px", flexShrink:0 }}>
-                                  <div style={{ fontSize:"8px", letterSpacing:"3px", color: T.text5, flexShrink:0 }}>RECENT</div>
-                                  <div style={{ display:"flex", gap:"6px", alignItems:"center" }}>
-                                    {recentlyWornQueue.map((entry, qi) => {
-                                      const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
-                                      return qImg ? (
-                                        <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width:"56px", height:"35px", objectFit:"cover" }} />
-                                      ) : null;
-                                    })}
+                                {!isMobilePublic && recentlyWornQueue.length > 0 && (
+                                  <div style={{ display:"flex", alignItems:"center", gap:"8px", marginTop:"6px", justifyContent:"center" }}>
+                                    <div style={{ fontSize:"8px", letterSpacing:"3px", color: T.text5, flexShrink:0 }}>RECENT</div>
+                                    <div style={{ display:"flex", gap:"6px", alignItems:"center" }}>
+                                      {recentlyWornQueue.map((entry, qi) => {
+                                        const qImg = images[`${entry.shoe.id}_${entry.colorway}`] || null;
+                                        return qImg ? (
+                                          <img key={qi} src={qImg} alt={entry.colorway} title={`${entry.shoe.name} — ${entry.colorway}`} style={{ width:"56px", height:"35px", objectFit:"cover" }} />
+                                        ) : null;
+                                      })}
+                                    </div>
                                   </div>
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </div>
                           );
                         }
@@ -1962,6 +2011,11 @@
                               <div style={{ fontSize:"9px", letterSpacing:"4px", color: item.type === "sale" || item.type === "gotem" || item.type === "spotlight" ? "#e6b800" : "#e63946", marginBottom:"4px" }}>{item.label}</div>
                               <div style={{ fontSize:"15px", fontWeight:"bold", color: T.text }}>{item.shoe.name} — {item.colorway}</div>
                               <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{item.subtitle}</div>
+                              {item.type === "anniversary" && item.purchaseDate && (
+                                <div onClick={e => { e.stopPropagation(); setTimeTravelDate(item.purchaseDate); }} style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginTop:"6px", cursor:"pointer", textDecoration:"underline", opacity:0.8 }}>
+                                  See the vault on this day →
+                                </div>
+                              )}
                             </div>
                           </div>
                         );
@@ -1981,7 +2035,7 @@
                 })()}
 
                 {/* Wear Log Form */}
-                {loggingId && (() => {
+                {!timeTravelDate && loggingId && (() => {
                   const shoe = inventory.find(s => s.id === loggingId);
                   const shoeColorways = (colorways[shoe?.shortName] || []).filter(cw => shoe && isColorwayOwned(shoe.id, cw));
                   return (
@@ -2000,7 +2054,7 @@
                 })()}
 
                 {/* Add shoe header — admin only */}
-                {ADMIN_MODE && <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
+                {ADMIN_MODE && !timeTravelDate && <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
                   <div></div>
                   <button onClick={() => { setShowForm(!showForm); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan"}); }} style={{
                     background:"#e63946", color:T.text, border:"none", padding:"10px 20px",
@@ -2008,7 +2062,7 @@
                   }}>+ ADD SHOE</button>
                 </div>}
 
-                {ADMIN_MODE && showForm && (
+                {ADMIN_MODE && !timeTravelDate && showForm && (
                   <div style={{ background:T.bg4, border:`1px solid ${T.border2}`, padding:"24px", marginBottom:"24px" }}>
                     <div style={{ display:"flex", gap:"12px", flexWrap:"wrap", alignItems:"flex-end" }}>
                       {[["FULL NAME","name"],["SHORT CODE","shortName"]].map(([label,key]) => (
@@ -2107,15 +2161,26 @@
                   ));
                   // Filter function for colorways
                   const matchesFilter = (shoeId, cw) => {
-                    if (collectionFilter === "all") return true;
                     const key = `${shoeId}_${cw}`;
+                    // Time travel: only show colorways purchased by that date
+                    if (timeTravelDate) {
+                      const meta = colorwayMeta[key] || {};
+                      if (!meta.purchaseDate || meta.purchaseDate > timeTravelDate) return false;
+                    }
+                    if (collectionFilter === "all") return true;
                     const t = tierOf(tierMeta, key);
                     if (collectionFilter === "diamond") return t === "diamond";
                     if (collectionFilter === "platinum") return t === "platinum";
                     if (collectionFilter === "gold") return t === "gold";
                     if (collectionFilter === "silver") return t === "silver";
                     if (collectionFilter === "bronze") return t === "bronze";
-                    if (collectionFilter === "onice") return !tierExcludedFromRotation(t) && (wearLog[shoeId] || []).filter(e => e.colorway === cw).length === 0;
+                    if (collectionFilter === "onice") {
+                      if (tierExcludedFromRotation(t)) return false;
+                      const wears = timeTravelDate
+                        ? (wearLog[shoeId] || []).filter(e => e.colorway === cw && e.date <= timeTravelDate)
+                        : (wearLog[shoeId] || []).filter(e => e.colorway === cw);
+                      return wears.length === 0;
+                    }
                     return true;
                   };
                   const filters = [["all","ALL"],["diamond","DIAMOND"],["platinum","PLATINUM"],["gold","GOLD"],["silver","SILVER"],["bronze","BRONZE"],["onice","ON ICE"]];
@@ -2156,7 +2221,31 @@
                           }}>{label}</button>
                         ))}
                         {filterDesc && <span style={{ fontSize:"12px", fontStyle:"italic", color: T.text4, marginLeft:"8px" }}>{filterDesc}</span>}
+                        {ADMIN_MODE && (
+                          <button onClick={() => setTimeTravelPicker(p => !p)} title="Time Machine" style={{
+                            background: timeTravelDate ? "#b8f0ff" : "transparent",
+                            border: timeTravelDate ? "1px solid #b8f0ff" : `1px solid ${T.border2}`,
+                            color: timeTravelDate ? "#111" : T.text5,
+                            padding:"3px 8px", cursor:"pointer", fontSize:"13px", lineHeight:1,
+                            fontFamily:"'Aptos','Segoe UI',sans-serif", marginLeft:"4px",
+                          }}>⏳</button>
+                        )}
                       </div>
+                      {ADMIN_MODE && timeTravelPicker && (
+                        <div style={{ display:"flex", gap:"10px", alignItems:"center", marginTop:"10px", flexWrap:"wrap" }}>
+                          <div style={{ fontSize:"9px", letterSpacing:"2px", color: T.text5 }}>TRAVEL TO</div>
+                          <input type="date" value={timeTravelDate || localDateStr()} max={localDateStr()}
+                            onChange={e => { setTimeTravelDate(e.target.value === localDateStr() ? null : e.target.value); }}
+                            style={{ background: T.inputBg, border:`1px solid ${T.inputBorder}`, color: T.inputText, padding:"5px 10px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontSize:"12px" }} />
+                          {timeTravelDate && (
+                            <button onClick={() => { setTimeTravelDate(null); setTimeTravelPicker(false); }} style={{
+                              background:"transparent", border:`1px solid ${T.border2}`, color: T.text5,
+                              padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px",
+                              fontFamily:"'Aptos','Segoe UI',sans-serif",
+                            }}>BACK TO PRESENT</button>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                   <div style={{ display:"flex", flexWrap:"wrap", gap:"12px", alignItems:"flex-start" }}>
@@ -2178,7 +2267,7 @@
                         {/* Top: info + buttons — outside fixed height area */}
                         <div style={{ padding: isMobilePublic ? "16px" : "16px 16px 0 16px", display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom: isMobilePublic ? "0" : "8px" }}>
                           <div style={{ fontSize:"14px", color:CT.text, fontWeight:"bold", whiteSpace: isMobilePublic ? "normal" : "nowrap" }}>{shoe.name}{shoeColorways.length > 1 ? ` — ${shoeColorways.length} pairs` : ""}</div>
-                          {ADMIN_MODE && <div style={{ display:"flex", gap:"6px", flexShrink:0, marginLeft:"12px" }}>
+                          {ADMIN_MODE && !timeTravelDate && <div style={{ display:"flex", gap:"6px", flexShrink:0, marginLeft:"12px" }}>
                             <Btn label="EDIT" onClick={() => handleEdit(shoe)} color="#888" />
                             <Btn label="X" onClick={() => { if (window.confirm(`Remove ${shoe.name} from your collection? This cannot be undone.`)) setInventory(inv => inv.filter(s => s.id !== shoe.id)); }} color="#bbb" />
                           </div>}
@@ -2186,7 +2275,7 @@
                         {/* Fixed height content area */}
                         <div style={{ padding: isMobilePublic ? "0 16px 16px 16px" : "0 16px 16px 16px", height: isMobilePublic ? "auto" : (Math.ceil(shoeColorways.length / perRow) * (imgH + 30) + 40) + "px", overflow: isMobilePublic ? "visible" : "hidden", position:"relative" }}>
                         {/* Reorder arrows */}
-                        {ADMIN_MODE && <div style={{ position:"absolute", bottom:"6px", right:"6px", display:"flex", flexDirection:"column", gap:"1px" }}>
+                        {ADMIN_MODE && !timeTravelDate && <div style={{ position:"absolute", bottom:"6px", right:"6px", display:"flex", flexDirection:"column", gap:"1px" }}>
                           <button onClick={() => reorderShoe(shoe.id, -1)} style={{ background:"transparent", border:"none", color:CT.text8, cursor:"pointer", fontSize:"9px", padding:"1px 3px", lineHeight:1 }}>▲</button>
                           <button onClick={() => reorderShoe(shoe.id, 1)} style={{ background:"transparent", border:"none", color:CT.text8, cursor:"pointer", fontSize:"9px", padding:"1px 3px", lineHeight:1 }}>▼</button>
                         </div>}
@@ -2196,6 +2285,9 @@
                             const metaKey = `${shoe.id}_${cw}`;
                             const meta = colorwayMeta[metaKey] || {};
                             const isEditingThis = editingMeta && editingMeta.shoeId === shoe.id && editingMeta.colorway === cw;
+                            const cwWears = timeTravelDate
+                              ? (wearLog[shoe.id] || []).filter(e => e.colorway === cw && e.date <= timeTravelDate)
+                              : (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
                             return (
                               <div key={cw}>
                                 <ImageSlot
@@ -2207,11 +2299,11 @@
                                   bg={col.bg}
                                   width={imgW}
                                   height={imgH}
-                                  wearDates={(wearLog[shoe.id] || []).filter(e => e.colorway === cw).map(e => e.date)}
+                                  wearDates={cwWears.map(e => e.date)}
                                   tier={tierOf(tierMeta, metaKey)}
                                   
-                                  isOnIce={(wearLog[shoe.id] || []).filter(e => e.colorway === cw).length === 0 && !isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate)}
-                                  isNewPickup={isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate)}
+                                  isOnIce={cwWears.length === 0 && !isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate)}
+                                  isNewPickup={!timeTravelDate && isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate)}
                                   shoeName={shoe.name}
                                   dark={dark}
                                   isMobilePublic={isMobilePublic}
@@ -2223,7 +2315,7 @@
                                   onClear={() => setImages(imgs => { const n={...imgs}; delete n[metaKey]; return n; })}
                                 />
                                 {/* Meta summary + edit trigger */}
-                                {ADMIN_MODE && <div
+                                {ADMIN_MODE && !timeTravelDate && <div
                                   onClick={() => {
                                     setEditingMeta({ shoeId: shoe.id, colorway: cw });
                                     setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"", comfortRating: meta.comfortRating||"", releaseYear: meta.releaseYear||"" });
@@ -2238,13 +2330,13 @@
                         </div>
                         </div>{/* end fixed height area */}
                         {/* Colorway meta edit form */}
-                        {ADMIN_MODE && editingMeta && editingMeta.shoeId === shoe.id && (
+                        {ADMIN_MODE && !timeTravelDate && editingMeta && editingMeta.shoeId === shoe.id && (
                           <div style={{ padding:"0 16px 16px 16px" }}>
                           <MetaEditForm editingMeta={editingMeta} metaForm={metaForm} setMetaForm={setMetaForm} setColorwayMeta={setColorwayMeta} setEditingMeta={setEditingMeta} tierMeta={tierMeta} setTierMeta={setTierMeta} setGlowMeta={setGlowMeta} glowMeta={glowMeta} setImages={setImages} images={images} handleImageUpload={handleImageUpload} setRetiringMeta={setRetiringMeta} setRetireForm={setRetireForm} IS={IS} CT={CT} T={T} dark={dark} colorwayOwned={colorwayOwned} setColorwayOwned={setColorwayOwned} />
                           </div>
                         )}
                         {/* Retire form */}
-                        {ADMIN_MODE && retiringMeta && retiringMeta.shoeId === shoe.id && (
+                        {ADMIN_MODE && !timeTravelDate && retiringMeta && retiringMeta.shoeId === shoe.id && (
                           <div style={{ background:T.bg4, border:"1px solid #888", padding:"12px", marginTop:"8px" }}>
                             <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#888", marginBottom:"10px" }}>🪦 RETIRE — {retiringMeta.colorway}</div>
                             <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", marginBottom:"10px" }}>
@@ -2989,7 +3081,7 @@
 
           </div>
 
-          {ADMIN_MODE && <><button onClick={() => {
+          {ADMIN_MODE && !timeTravelDate && <><button onClick={() => {
             setQuickLog(true);
             setQuickDate(localDateStr());
             const firstShoe = inventory[0];
