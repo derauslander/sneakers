@@ -151,7 +151,7 @@
     };
     const TIER_OPTIONS = ["diamond","platinum","gold","silver","bronze"];
     const tierOf = (tierMeta, key) => tierMeta[key] || "silver";
-    const tierHasCrossfade = (tier) => tier === "diamond" || tier === "platinum";
+    const tierHasCrossfade = (tier) => tier === "diamond" || tier === "platinum" || tier === "gold";
     const tierExcludedFromRotation = (tier) => tier === "bronze";
     const tierAnniversaryColor = (tier) => tier === "diamond" ? "#b8f0ff" : tier === "platinum" ? "#C0C0C0" : tier === "gold" ? "#FFD700" : tier === "bronze" ? "#CD7F32" : "#aaa";
 
@@ -216,6 +216,7 @@
       const fileRef = useRef();
       const [hovered, setHovered] = useState(false);
       const [showHover, setShowHover] = useState(false);
+      const [showImg3, setShowImg3] = useState(false);
       const [tierGlow, setTierGlow] = useState(false);
       const [tierReveal, setTierReveal] = useState(false);
       const [showStory, setShowStory] = useState(false);
@@ -228,6 +229,7 @@
       const crossfadeRef = useRef(null);
       const tierRef = useRef(null);
       const storyRef = useRef(null);
+      const img3Ref = useRef(null);
       const triptychRef = useRef(null);
       const iceRef = useRef(null);
       const diamondRef = useRef(null);
@@ -250,6 +252,7 @@
       }
 
       const hasTriptych = tier === "diamond" && hoverImg && img3 && window.innerWidth >= 768;
+      const hasTripleFade = tier === "platinum" && hoverImg && img3;
 
       const tierInfo = TIERS[tier] || TIERS.silver;
       const hasCrossfade = tierHasCrossfade(tier);
@@ -257,16 +260,18 @@
       const shouldCrossfade = hoverImg && (hasCrossfade || isAnniversary);
       const anniversaryGlow = !hasCrossfade && isAnniversary && shouldCrossfade;
 
-      // Diamond crossfade: scale(0.9) rotate(-3deg) → scale(1) rotate(0) over 2s
+      // Diamond crossfade: scale(0.8) rotate(-3deg) → scale(1) rotate(0) over 2s
       // Platinum crossfade: scale(0.95) → scale(1) over 3s
-      const crossfadeTransformStart = tier === "diamond" ? "translateX(-50%) scale(0.8) rotate(-3deg)" : "translateX(-50%) scale(0.95)";
-      const crossfadeTransformEnd = tier === "diamond" ? "translateX(-50%) scale(1) rotate(0deg)" : "translateX(-50%) scale(1)";
-      const crossfadeDuration = tier === "diamond" ? "2s" : "3s";
+      // Gold crossfade: pure warm dissolve, no transform, 2.5s
+      const crossfadeTransformStart = tier === "diamond" ? "translateX(-50%) scale(0.8) rotate(-3deg)" : tier === "gold" ? "translateX(-50%)" : "translateX(-50%) scale(0.95)";
+      const crossfadeTransformEnd = tier === "diamond" ? "translateX(-50%) scale(1) rotate(0deg)" : tier === "gold" ? "translateX(-50%)" : "translateX(-50%) scale(1)";
+      const crossfadeDuration = tier === "diamond" ? "2s" : tier === "gold" ? "2.5s" : "3s";
 
       const triggerOpen = () => {
         if (!img) return;
         setHovered(true);
         setShowHover(false);
+        setShowImg3(false);
         setTierGlow(false);
         setTierReveal(false);
         setShowStory(false);
@@ -274,8 +279,8 @@
         setTriptychVisible(false);
         setIceGlow(false);
         setDiamondShatter("hidden");
-        // Preload all images up front so triptych has no load-time shift
-        if (hasTriptych) {
+        // Preload all images up front so triptych/triple-fade has no load-time shift
+        if (hasTriptych || hasTripleFade) {
           [img, hoverImg, img3].forEach(src => { if (src) { const i = new Image(); i.src = src; } });
         }
         if (hasCrossfade && shouldCrossfade) {
@@ -304,6 +309,14 @@
                 }
               }, 1200);
             }, 300);
+          } else if (hasTripleFade) {
+            // Platinum 3-image: img1 → img3 (heel tab) at 200ms → img2 (pair) + story at 5s
+            crossfadeRef.current = setTimeout(() => { setShowImg3(true); setTierReveal(true);
+              img3Ref.current = setTimeout(() => {
+                setShowHover(true);
+                if (story) setShowStory(true);
+              }, 4800);
+            }, 200);
           } else {
             crossfadeRef.current = setTimeout(() => { setShowHover(true); setTierReveal(true);
               if (hasTriptych) {
@@ -339,6 +352,7 @@
         clearTimeout(crossfadeRef.current);
         clearTimeout(tierRef.current);
         clearTimeout(storyRef.current);
+        clearTimeout(img3Ref.current);
         clearTimeout(triptychRef.current);
         clearTimeout(iceRef.current);
         clearTimeout(diamondRef.current);
@@ -346,6 +360,7 @@
         try { if (diamondAudioRef.current.shatter) { diamondAudioRef.current.shatter.pause(); diamondAudioRef.current.shatter = null; } } catch {}
         setHovered(false);
         setShowHover(false);
+        setShowImg3(false);
         setTierGlow(false);
         setTierReveal(false);
         setShowStory(false);
@@ -364,6 +379,7 @@
           clearTimeout(crossfadeRef.current);
           clearTimeout(tierRef.current);
           clearTimeout(storyRef.current);
+          clearTimeout(img3Ref.current);
           clearTimeout(triptychRef.current);
           clearTimeout(iceRef.current);
           clearTimeout(diamondRef.current);
@@ -389,6 +405,8 @@
       // Crossfade glow — diamond uses prismatic via CSS animation, others use tier color
       const crossfadeGlow = tier === "diamond"
         ? "drop-shadow(0 0 30px rgba(184,240,255,0.7)) drop-shadow(0 0 8px rgba(255,255,255,0.6))"
+        : tier === "gold"
+        ? "drop-shadow(0 0 20px rgba(255,215,0,0.3)) drop-shadow(0 0 8px rgba(255,255,255,0.4))"
         : tierInfo.glowRgba
         ? `drop-shadow(0 0 30px ${tierInfo.glowRgba}) drop-shadow(0 0 8px rgba(255,255,255,0.6))`
         : "drop-shadow(0 0 30px rgba(255,255,255,0.5)) drop-shadow(0 0 8px rgba(255,255,255,0.6))";
@@ -464,7 +482,10 @@
                         )}
                         {/* Center — always visible, never moves */}
                         <div style={{ position:"relative" }}>
-                          <img src={img} alt={label} style={{ maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: mainGlowFilter, display:"block", opacity: (tier === "diamond" && (diamondShatter === "hidden" || diamondShatter === "visible")) ? 0 : (shouldCrossfade && showHover) ? 0 : 1, transition:`opacity ${crossfadeDuration} ease-in-out, filter 3s ease-in-out` }} />
+                          <img src={img} alt={label} style={{ maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: mainGlowFilter, display:"block", opacity: (tier === "diamond" && (diamondShatter === "hidden" || diamondShatter === "visible")) ? 0 : (shouldCrossfade && (showHover || showImg3)) ? 0 : 1, transition:`opacity ${crossfadeDuration} ease-in-out, filter 3s ease-in-out` }} />
+                          {hasTripleFade && img3 && (
+                            <img src={img3} alt={label} style={{ position:"absolute", top:0, left:"50%", transform: showImg3 ? crossfadeTransformEnd : crossfadeTransformStart, maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: crossfadeGlow, opacity: showImg3 && !showHover ? 1 : 0, transition:`opacity ${crossfadeDuration} ease-in-out, transform ${crossfadeDuration} ease-in-out` }} />
+                          )}
                           {shouldCrossfade && (
                             <img src={hoverImg} alt={label} style={{ position:"absolute", top:0, left:"50%", transform: showHover ? crossfadeTransformEnd : crossfadeTransformStart, maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight:"40vh", objectFit:"contain", filter: tier !== "diamond" ? crossfadeGlow : undefined, animation: tier === "diamond" && showHover ? "diamondReveal 2s ease-out forwards, prismaticGlow 2.5s ease-in-out 2s infinite" : "none", opacity: showHover ? 1 : 0, transition:`opacity ${crossfadeDuration} ease-in-out, transform ${crossfadeDuration} ease-in-out` }} />
                           )}
