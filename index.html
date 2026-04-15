@@ -1853,11 +1853,16 @@
                     });
                   });
 
-                  // 8. Shoe of the Day — only when no news items
+                  // 8. Shoe of the Day — only when no news items, excludes up-next and last-worn
                   if (!hasNews) {
+                    const upNextKey = longestUnworn ? `${longestUnworn.id}_${longestUnwornColorway}` : null;
+                    const lastWornKey = lastWornShoe ? `${lastWornShoe.id}_${lastWornColorway}` : null;
                     const allOwned = inventory.flatMap(shoe =>
                       (colorways[shoe.shortName] || []).filter(cw => isColorwayOwned(shoe.id, cw)).map(cw => ({ shoe, colorway: cw }))
-                    );
+                    ).filter(({ shoe, colorway }) => {
+                      const key = `${shoe.id}_${colorway}`;
+                      return key !== upNextKey && key !== lastWornKey;
+                    });
                     if (allOwned.length > 0) {
                       const dateSeed = todayStr.replace(/-/g, "");
                       const seedIdx = parseInt(dateSeed, 10) % allOwned.length;
