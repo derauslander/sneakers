@@ -89,7 +89,7 @@
         if (isAdmin) {
           try { return localStorage.getItem("vault_dark") === "true"; } catch { return false; }
         }
-        return window.matchMedia("(prefers-color-scheme: dark)").matches;
+        return true; // Public site: always dark
       });
       useEffect(() => {
         document.body.classList.toggle("dark", dark);
@@ -97,13 +97,6 @@
           try { localStorage.setItem("vault_dark", dark); } catch {}
         }
       }, [dark]);
-      useEffect(() => {
-        if (isAdmin) return;
-        const mq = window.matchMedia("(prefers-color-scheme: dark)");
-        const handler = e => setDark(e.matches);
-        mq.addEventListener("change", handler);
-        return () => mq.removeEventListener("change", handler);
-      }, []);
       return [dark, setDark];
     };
 
@@ -146,7 +139,7 @@
       diamond:  { label: "✦ DIAMOND ✦",    color: "#b8f0ff", glowRgba: "rgba(184,240,255,0.8)", ripLabel: "✦ R.I.P. ✦" },
       platinum: { label: "✦ PLATINUM ✦",   color: "#C0C0C0", glowRgba: "rgba(192,192,192,0.7)", ripLabel: "✦ R.I.P. ✦" },
       gold:     { label: "✦ GOLD ✦",       color: "#FFD700", glowRgba: null,                     ripLabel: "✦ R.I.P. ✦" },
-      silver:   { label: "⬥ BUYER'S REMORSE ⬥", color: "#aaaaaa", glowRgba: null,                ripLabel: null },
+      silver:   { label: "⬥ BUYER'S REMORSE ⬥", color: "#aaaaaa", glowRgba: null,                ripLabel: "⬥ R.I.P. ⬥" },
       bronze:   { label: "💀 BEATER 💀",   color: "#CD7F32", glowRgba: "rgba(180,80,20,0.8)",   ripLabel: "💀 R.I.P. 💀" },
     };
     const TIER_OPTIONS = ["diamond","platinum","gold","silver","bronze"];
@@ -1567,6 +1560,12 @@
         }
         setColorwayOwned(o => { const n = {...o}; delete n[key]; return n; });
         setEditColorways(cws => cws.filter(c => c !== cw));
+        // Clear stale references from display grids
+        const clearLayout = layout => layout.map(row => row.map(cell =>
+          cell.code === shoe.shortName && cell.colorway === cw ? { code: "", colorway: "" } : cell
+        ));
+        setDisplayLayout(l => clearLayout(l));
+        setDreamLayout(l => clearLayout(l));
       };
 
       const exportJSON = () => {
