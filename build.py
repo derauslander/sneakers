@@ -11,7 +11,7 @@ Called automatically by build.bat
 import json
 import os
 import re
-from datetime import datetime, date
+from datetime import datetime, timezone
 
 VAULT_FILE  = "vault-data.json"
 PUBLIC_FILE = "public-data.json"
@@ -57,7 +57,7 @@ def compute_rankings(data):
     wear_counts = {}
     for shoe in inventory:
         shoe_id = shoe["id"]
-        for entry in wear_log.get(str(shoe_id), []) + wear_log.get(shoe_id, []):
+        for entry in wear_log.get(str(shoe_id), wear_log.get(shoe_id, [])):
             cw  = entry["colorway"]
             key = f"{shoe_id}_{cw}"
             if excluded(key):
@@ -218,7 +218,6 @@ def strip_ranking_prices(rankings):
             clean.pop("price", None)
             clean.pop("costPerWear", None)
             clean.pop("purchaseDate", None)
-            stripped[key] = stripped.get(key, [])
             stripped[key].append(clean)
     return stripped
 
@@ -243,7 +242,7 @@ def main():
     public_data = dict(data)
     public_data["colorwayMeta"] = strip_prices(data.get("colorwayMeta", {}))
     public_data["precomputedRankings"] = strip_ranking_prices(rankings)
-    public_data["builtAt"] = datetime.now(tz=__import__('datetime').timezone.utc).isoformat().replace("+00:00", "Z")
+    public_data["builtAt"] = datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z")
 
     # Remove exportedAt if present (replace with builtAt)
     public_data.pop("exportedAt", None)

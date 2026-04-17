@@ -147,7 +147,7 @@
       platinum: { label: "✦ PLATINUM ✦",   color: "#C0C0C0", glowRgba: "rgba(192,192,192,0.7)", ripLabel: "✦ R.I.P. ✦" },
       gold:     { label: "✦ GOLD ✦",       color: "#FFD700", glowRgba: null,                     ripLabel: "✦ R.I.P. ✦" },
       silver:   { label: "⬥ BUYER'S REMORSE ⬥", color: "#aaaaaa", glowRgba: null,                ripLabel: null },
-      bronze:   { label: "💀 BRONZE 💀",   color: "#CD7F32", glowRgba: "rgba(180,80,20,0.8)",   ripLabel: "💀 R.I.P. 💀" },
+      bronze:   { label: "💀 BEATER 💀",   color: "#CD7F32", glowRgba: "rgba(180,80,20,0.8)",   ripLabel: "💀 R.I.P. 💀" },
     };
     const TIER_OPTIONS = ["diamond","platinum","gold","silver","bronze"];
     const tierOf = (tierMeta, key) => tierMeta[key] || "silver";
@@ -233,6 +233,9 @@
       const triptychRef = useRef(null);
       const iceRef = useRef(null);
       const diamondRef = useRef(null);
+      const diamondVisibleRef = useRef(null);
+      const diamondShatterRef = useRef(null);
+      const diamondDoneRef = useRef(null);
       const diamondAudioRef = useRef({ glow: null, shatter: null });
       // Generate stable random shard data for diamond shatter effect
       const shardsRef = useRef(null);
@@ -286,16 +289,17 @@
         if (hasCrossfade && shouldCrossfade) {
           if (tier === "diamond") {
             // Diamond shatter sequence: fade in diamond → hold → shatter + shoe reveal together
-            diamondRef.current = setTimeout(() => {
+            // Each stage uses its own ref so triggerClose can cancel any pending timeout
+            diamondVisibleRef.current = setTimeout(() => {
               setDiamondShatter("visible");
-              diamondRef.current = setTimeout(() => {
+              diamondShatterRef.current = setTimeout(() => {
                 setDiamondShatter("shatter");
                 try { const b = _preloadedAudio.break.cloneNode(); b.volume = 0.5; b.play().catch(()=>{}); diamondAudioRef.current.shatter = b; } catch {}
                 // Start shoe reveal simultaneously — shoe bursts through the diamond
                 setShowHover(true); setTierReveal(true);
                 try { const g = _preloadedAudio.glow.cloneNode(); g.volume = 0.5; g.play().catch(()=>{}); diamondAudioRef.current.glow = g; } catch {}
                 // Clean up shatter visuals after shards finish flying
-                diamondRef.current = setTimeout(() => {
+                diamondDoneRef.current = setTimeout(() => {
                   setDiamondShatter("done");
                 }, 1500);
                 if (hasTriptych) {
@@ -356,6 +360,9 @@
         clearTimeout(triptychRef.current);
         clearTimeout(iceRef.current);
         clearTimeout(diamondRef.current);
+        clearTimeout(diamondVisibleRef.current);
+        clearTimeout(diamondShatterRef.current);
+        clearTimeout(diamondDoneRef.current);
         try { if (diamondAudioRef.current.glow) { diamondAudioRef.current.glow.pause(); diamondAudioRef.current.glow = null; } } catch {}
         try { if (diamondAudioRef.current.shatter) { diamondAudioRef.current.shatter.pause(); diamondAudioRef.current.shatter = null; } } catch {}
         setHovered(false);
@@ -383,6 +390,9 @@
           clearTimeout(triptychRef.current);
           clearTimeout(iceRef.current);
           clearTimeout(diamondRef.current);
+          clearTimeout(diamondVisibleRef.current);
+          clearTimeout(diamondShatterRef.current);
+          clearTimeout(diamondDoneRef.current);
         };
       }, []);
 
@@ -1188,7 +1198,8 @@
         if (!ADMIN_MODE) return;
         const handler = (e) => {
           if (e.key !== "Escape") return;
-          if (quickLog)      { setQuickLog(false); }
+          if (retiringMeta)       { setRetiringMeta(null); }
+          else if (quickLog)      { setQuickLog(false); }
           else if (editingMeta)   { setEditingMeta(null); }
           else if (showForm)      { setShowForm(false); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan"}); setEditColorways([]); setNewColorway(""); }
           else if (loggingId)     { setLoggingId(null); }
@@ -1197,7 +1208,7 @@
         };
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
-      }, [showForm, quickLog, loggingId, editingMeta, editingCell, importMsg]);
+      }, [showForm, quickLog, loggingId, editingMeta, editingCell, importMsg, retiringMeta]);
 
       // colorwayOwned determines per-colorway ownership — collection shows owned, wishlist shows unowned
       const isColorwayOwned = React.useCallback((shoeId, cw) => colorwayOwned[`${shoeId}_${cw}`] !== false, [colorwayOwned]);
@@ -1399,6 +1410,9 @@
       // Anniversary computation — find colorways purchased on today's month/day in past years
       const todayStr = localDateStr(); // YYYY-MM-DD
       const todayMD = todayStr.slice(5); // MM-DD
+
+      // "Wearing today" — true when the most recent wear is today's date.
+      const isWearingToday = !!lastWornDate && lastWornDate === todayStr;
       const anniversaries = [];
       Object.entries(colorwayMeta).forEach(([key, meta]) => {
         if (!meta.purchaseDate) return;
@@ -1843,9 +1857,13 @@
                     bannerItems.push({ type:"upnext", shoe: longestUnworn, colorway: longestUnwornColorway });
                   }
 
-                  // 4. LAST WORN
+                  // 4. LAST WORN (or WEARING TODAY if today's date matches)
                   if (lastWornShoe) {
-                    bannerItems.push({ type:"lastworn", shoe: lastWornShoe, colorway: lastWornColorway });
+                    bannerItems.push({
+                      type: isWearingToday ? "wearingtoday" : "lastworn",
+                      shoe: lastWornShoe,
+                      colorway: lastWornColorway
+                    });
                   }
 
                   // 5. GOT 'EM?
@@ -1902,7 +1920,7 @@
                   if (bannerItems.length === 0) return null;
                   const safeIdx = bannerIdx % bannerItems.length;
                   const currentItem = bannerItems[safeIdx];
-                  const isRotationSlide = currentItem.type === "upnext" || currentItem.type === "lastworn";
+                  const isRotationSlide = currentItem.type === "upnext" || currentItem.type === "lastworn" || currentItem.type === "wearingtoday";
 
                   // ── Background per slide type ──
                   const getBannerBg = (item) => {
@@ -1913,7 +1931,7 @@
                         ? dark ? "linear-gradient(90deg,#222228,#1e1e24)" : "linear-gradient(90deg,#f5f5f8,#ebebf0)"
                         : dark ? `linear-gradient(90deg,${T.bg2},${T.bg3})` : "linear-gradient(90deg,#fff5f5,#ffe8e8)";
                     }
-                    if (item.type === "lastworn") {
+                    if (item.type === "lastworn" || item.type === "wearingtoday") {
                       return lastWornTier === "diamond"
                         ? dark ? "linear-gradient(90deg,#1a1a2a,#111122)" : "linear-gradient(90deg,#f0f8ff,#e8f4ff)"
                         : lastWornTier === "platinum"
@@ -1924,7 +1942,7 @@
                   };
                   const getBannerBorder = (item) => {
                     if (item.type === "upnext") return rotationTier === "diamond" ? "#b8f0ff" : rotationTier === "platinum" ? "#C0C0C0" : "#e63946";
-                    if (item.type === "lastworn") return lastWornTier === "diamond" ? "#b8f0ff" : lastWornTier === "platinum" ? "#C0C0C0" : "#e63946";
+                    if (item.type === "lastworn" || item.type === "wearingtoday") return lastWornTier === "diamond" ? "#b8f0ff" : lastWornTier === "platinum" ? "#C0C0C0" : "#e63946";
                     if (item.type === "sale") return "#e6b800";
                     if (item.type === "gotem") return "#e6b800";
                     return T.border;
@@ -1998,6 +2016,38 @@
                           );
                         }
 
+                        // ── WEARING TODAY slide (replaces LAST WORN when today matches) ──
+                        if (item.type === "wearingtoday") {
+                          const key = `${item.shoe.id}_${item.colorway}`;
+                          const img1 = images[key] || null;
+                          const img2 = images[`${key}_hover`] || null;
+                          const img3 = images[`${key}_hover2`] || null;
+                          const imgList = [img1, img2, img3].filter(Boolean);
+                          const glowFilter = isLastWornPremium ? `drop-shadow(0 0 12px ${lastWornTierInfo.glowRgba})` : "none";
+                          const tileW = isMobilePublic ? 88 : 120;
+                          const tileH = isMobilePublic ? 55 : 75;
+                          return (
+                            <div key={`wearingtoday-${i}`} style={{ display:"flex", alignItems:"center", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none", justifyContent:"center", flexWrap:"wrap" }}>
+                              {imgList.length > 0 && (
+                                <div style={{ display:"flex", gap:"8px", flexShrink:0 }}>
+                                  {(isMobilePublic ? imgList.slice(0, 1) : imgList).map((src, ti) => (
+                                    <img key={ti} src={src} alt={item.colorway} style={{ width: tileW, height: tileH, objectFit:"cover", filter: glowFilter }} />
+                                  ))}
+                                </div>
+                              )}
+                              <div style={{ minWidth:0, textAlign:"center" }}>
+                                <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
+                                  {isLastWornPremium ? <span><span style={{color: lastWornTierInfo.color}}>✦</span> WEARING TODAY <span style={{color: lastWornTierInfo.color}}>✦</span></span> : "👟 WEARING TODAY"}
+                                </div>
+                                <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: isLastWornPremium ? lastWornTierInfo.color : T.text }}>
+                                  {item.shoe.name}{item.colorway ? ` — ${item.colorway}` : ""}
+                                </div>
+                                <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>On feet today</div>
+                              </div>
+                            </div>
+                          );
+                        }
+
                         // ── LAST WORN slide ──
                         if (item.type === "lastworn") {
                           return (
@@ -2038,7 +2088,7 @@
                               <div style={{ fontSize:"15px", fontWeight:"bold", color: T.text }}>{item.shoe.name} — {item.colorway}</div>
                               <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{item.subtitle}</div>
                               {item.type === "anniversary" && item.purchaseDate && (
-                                <div onClick={e => { e.stopPropagation(); setTimeTravelDate(item.purchaseDate); }} style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginTop:"6px", cursor:"pointer", textDecoration:"underline", opacity:0.8 }}>
+                                <div onClick={e => { e.stopPropagation(); setTimeTravelDate(item.purchaseDate); setView("collection"); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginTop:"6px", cursor:"pointer", textDecoration:"underline", opacity:0.8 }}>
                                   See the vault on this day →
                                 </div>
                               )}
@@ -3097,7 +3147,7 @@
                       {renderSection(diamonds, "✦ RETIRED DIAMOND ✦", "#b8f0ff")}
                       {renderSection(platinums, "✦ RETIRED PLATINUM ✦", "#C0C0C0")}
                       {renderSection(golds, "✦ RETIRED GOLD ✦", "#FFD700")}
-                      {renderSection(silvers, "🪦 RETIRED", T.text4)}
+                      {renderSection(silvers, "⬥ RETIRED SILVER ⬥", T.text4)}
                       {renderSection(bronzes, "💀 RETIRED BRONZE 💀", "#CD7F32")}
                     </>
                   )}
