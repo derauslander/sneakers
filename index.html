@@ -1852,18 +1852,16 @@
                     bannerItems.push({ type:"gotem", label:"✦ GOT 'EM! ✦", shoe: item.shoe, colorway: item.colorway, img: item.img, subtitle:"Welcome to The Vault" });
                   });
 
-                  // 3. UP NEXT
-                  if (longestUnworn) {
-                    bannerItems.push({ type:"upnext", shoe: longestUnworn, colorway: longestUnwornColorway });
-                  }
-
-                  // 4. LAST WORN (or WEARING TODAY if today's date matches)
-                  if (lastWornShoe) {
-                    bannerItems.push({
-                      type: isWearingToday ? "wearingtoday" : "lastworn",
-                      shoe: lastWornShoe,
-                      colorway: lastWornColorway
-                    });
+                  // 3–4. UP NEXT + LAST WORN (or single WEARING TODAY if today matches)
+                  if (isWearingToday && lastWornShoe) {
+                    bannerItems.push({ type:"wearingtoday", shoe: lastWornShoe, colorway: lastWornColorway });
+                  } else {
+                    if (longestUnworn) {
+                      bannerItems.push({ type:"upnext", shoe: longestUnworn, colorway: longestUnwornColorway });
+                    }
+                    if (lastWornShoe) {
+                      bannerItems.push({ type:"lastworn", shoe: lastWornShoe, colorway: lastWornColorway });
+                    }
                   }
 
                   // 5. GOT 'EM?
@@ -2027,7 +2025,7 @@
                           const tileW = isMobilePublic ? 88 : 120;
                           const tileH = isMobilePublic ? 55 : 75;
                           return (
-                            <div key={`wearingtoday-${i}`} style={{ display:"flex", alignItems:"center", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none", justifyContent:"center", flexWrap:"wrap" }}>
+                            <div key={`wearingtoday-${i}`} style={{ display:"flex", alignItems:"center", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none", flexWrap:"wrap" }}>
                               {imgList.length > 0 && (
                                 <div style={{ display:"flex", gap:"8px", flexShrink:0 }}>
                                   {(isMobilePublic ? imgList.slice(0, 1) : imgList).map((src, ti) => (
@@ -2035,7 +2033,7 @@
                                   ))}
                                 </div>
                               )}
-                              <div style={{ minWidth:0, textAlign:"center" }}>
+                              <div style={{ minWidth:0 }}>
                                 <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
                                   {isLastWornPremium ? <span><span style={{color: lastWornTierInfo.color}}>✦</span> WEARING TODAY <span style={{color: lastWornTierInfo.color}}>✦</span></span> : "👟 WEARING TODAY"}
                                 </div>
