@@ -825,6 +825,7 @@
 
     function MetaEditForm({ editingMeta, metaForm, setMetaForm, setColorwayMeta, setEditingMeta, tierMeta, setTierMeta, setGlowMeta, glowMeta, setImages, images, handleImageUpload, setRetiringMeta, setRetireForm, IS, CT, T, dark, isWishlist = false, colorwayOwned = {}, setColorwayOwned = null }) {
       const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
+      const deleteParams = (type) => `/delete?key=${encodeURIComponent(key)}&type=${type}&shortName=${encodeURIComponent(editingMeta.shortName || "")}&colorway=${encodeURIComponent(editingMeta.colorway)}`;
       const hoverKey = `${key}_hover`;
       const hoverImgVal = images[hoverKey];
       const currentTier = tierOf(tierMeta, key);
@@ -875,7 +876,7 @@
                     {hoverImgVal ? "REPLACE" : "UPLOAD"}
                   </button>
                   {hoverImgVal && (
-                    <button onClick={() => { setImages(imgs => { const n={...imgs}; delete n[hoverKey]; return n; }); fetch(`/delete?key=${encodeURIComponent(key)}&type=hover`, { method: "POST" }).catch(() => {}); }}
+                    <button onClick={() => { setImages(imgs => { const n={...imgs}; delete n[hoverKey]; return n; }); fetch(deleteParams("hover"), { method: "POST" }).catch(() => {}); }}
                       style={{ background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
                       REMOVE
                     </button>
@@ -912,7 +913,7 @@
                       {hover2Val ? "REPLACE" : "UPLOAD"}
                     </button>
                     {hover2Val && (
-                      <button onClick={() => { setImages(imgs => { const n={...imgs}; delete n[hover2Key]; return n; }); fetch(`/delete?key=${encodeURIComponent(key)}&type=hover2`, { method: "POST" }).catch(() => {}); }}
+                      <button onClick={() => { setImages(imgs => { const n={...imgs}; delete n[hover2Key]; return n; }); fetch(deleteParams("hover2"), { method: "POST" }).catch(() => {}); }}
                         style={{ background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
                         REMOVE
                       </button>
@@ -1006,7 +1007,7 @@
             {images[key] && (
               <button onClick={() => {
                 setImages(imgs => { const n={...imgs}; delete n[key]; return n; });
-                fetch(`/delete?key=${encodeURIComponent(key)}&type=main`, { method: "POST" }).catch(() => {});
+                fetch(deleteParams("main"), { method: "POST" }).catch(() => {});
                 setEditingMeta(null);
               }} style={btnStyle}>REMOVE PHOTO</button>
             )}
@@ -1479,8 +1480,10 @@
       const handleImageUpload = (shoeId, colorway, file, kind = "main") => {
         const key = `${shoeId}_${colorway}`;
         const storageKey = kind === "hover" ? `${key}_hover` : kind === "hover2" ? `${key}_hover2` : key;
+        const shoe = inventory.find(s => s.id === shoeId);
+        const shortName = shoe ? shoe.shortName : "";
         file.arrayBuffer().then(buffer => {
-          fetch(`/upload?key=${encodeURIComponent(key)}&type=${kind}`, {
+          fetch(`/upload?key=${encodeURIComponent(key)}&type=${kind}&shortName=${encodeURIComponent(shortName)}&colorway=${encodeURIComponent(colorway)}`, {
             method: "POST",
             headers: { "Content-Type": file.type || "image/png" },
             body: buffer,
@@ -1550,9 +1553,10 @@
           if (hasImage || hasHoverImg || hasHover2Img) {
             setImages(imgs => { const n = {...imgs}; delete n[key]; delete n[`${key}_hover`]; delete n[`${key}_hover2`]; return n; });
             // Delete actual files from Shoes/ folder via server
-            if (hasImage) fetch(`/delete?key=${encodeURIComponent(key)}&type=main`, { method: "POST" }).catch(() => {});
-            if (hasHoverImg) fetch(`/delete?key=${encodeURIComponent(key)}&type=hover`, { method: "POST" }).catch(() => {});
-            if (hasHover2Img) fetch(`/delete?key=${encodeURIComponent(key)}&type=hover2`, { method: "POST" }).catch(() => {});
+            const delParams = (type) => `/delete?key=${encodeURIComponent(key)}&type=${type}&shortName=${encodeURIComponent(shoe.shortName)}&colorway=${encodeURIComponent(cw)}`;
+            if (hasImage) fetch(delParams("main"), { method: "POST" }).catch(() => {});
+            if (hasHoverImg) fetch(delParams("hover"), { method: "POST" }).catch(() => {});
+            if (hasHover2Img) fetch(delParams("hover2"), { method: "POST" }).catch(() => {});
           }
           if (hasMeta) setColorwayMeta(m => { const n = {...m}; delete n[key]; return n; });
           if (hasTier) setTierMeta(tm => { const n = {...tm}; delete n[key]; return n; });
@@ -2172,8 +2176,23 @@
                                     const newKey = `${shoe.id}_${newName}`;
                                     // Migrate wear log
                                     setWearLog(log => ({ ...log, [shoe.id]: (log[shoe.id]||[]).map(e => e.colorway===cw ? {...e,colorway:newName} : e) }));
-                                    // Migrate images
-                                    setImages(imgs => { const n={...imgs}; if(n[oldKey]){n[newKey]=n[oldKey];delete n[oldKey];} if(n[`${oldKey}_hover`]){n[`${newKey}_hover`]=n[`${oldKey}_hover`];delete n[`${oldKey}_hover`];} if(n[`${oldKey}_hover2`]){n[`${newKey}_hover2`]=n[`${oldKey}_hover2`];delete n[`${oldKey}_hover2`];} return n; });
+                                    // Migrate images — update keys and paths
+                                    setImages(imgs => {
+                                      const n={...imgs};
+                                      const updatePath = (oldK, newK) => {
+                                        if (n[oldK]) {
+                                          // Update path to new directory/filename
+                                          n[newK] = n[oldK].replace(`/${cw}/`, `/${newName}/`).replace(`/${cw}`, `/${newName}`);
+                                          delete n[oldK];
+                                        }
+                                      };
+                                      updatePath(oldKey, newKey);
+                                      updatePath(`${oldKey}_hover`, `${newKey}_hover`);
+                                      updatePath(`${oldKey}_hover2`, `${newKey}_hover2`);
+                                      return n;
+                                    });
+                                    // Rename directory on disk via server
+                                    fetch(`/rename?shortName=${encodeURIComponent(shoe.shortName)}&oldColorway=${encodeURIComponent(cw)}&newColorway=${encodeURIComponent(newName)}`, { method: "POST" }).catch(() => {});
                                     // Migrate colorwayMeta
                                     setColorwayMeta(m => { const n={...m}; if(n[oldKey]){n[newKey]=n[oldKey];delete n[oldKey];} return n; });
                                     // Migrate tierMeta
@@ -2390,7 +2409,7 @@
                                 {/* Meta summary + edit trigger */}
                                 {ADMIN_MODE && !timeTravelDate && <div
                                   onClick={() => {
-                                    setEditingMeta({ shoeId: shoe.id, colorway: cw });
+                                    setEditingMeta({ shoeId: shoe.id, colorway: cw, shortName: shoe.shortName });
                                     setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"", comfortRating: meta.comfortRating||"", releaseYear: meta.releaseYear||"" });
                                   }}
                                   title="Edit details"
@@ -2648,7 +2667,7 @@
                                   />
                                   {ADMIN_MODE && <div
                                     onClick={() => {
-                                      setEditingMeta({ shoeId: shoe.id, colorway: cw });
+                                      setEditingMeta({ shoeId: shoe.id, colorway: cw, shortName: shoe.shortName });
                                       setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"", comfortRating: meta.comfortRating||"", releaseYear: meta.releaseYear||"" });
                                     }}
                                     title="Edit details"
@@ -3112,6 +3131,106 @@
                     <span style={{ fontSize:"14px", color:T.text3, fontStyle:"italic" }}>{t.desc}</span>
                   </div>
                 ))}
+
+                {/* ── Collection Growth Timeline ── */}
+                {(() => {
+                  // Gather purchase dates for owned colorways
+                  const points = [];
+                  inventory.forEach(shoe => {
+                    (colorways[shoe.shortName] || []).forEach(cw => {
+                      const key = `${shoe.id}_${cw}`;
+                      if (colorwayOwned[key] === false) return;
+                      const meta = colorwayMeta[key] || {};
+                      if (!meta.purchaseDate) return;
+                      points.push({ date: meta.purchaseDate, shoe: shoe.name, colorway: cw });
+                    });
+                  });
+                  if (points.length < 2) return null;
+                  points.sort((a, b) => a.date < b.date ? -1 : 1);
+
+                  // Build cumulative staircase
+                  const steps = points.map((p, i) => ({ ...p, count: i + 1 }));
+
+                  // Chart dimensions
+                  const W = 580, H = 280;
+                  const pad = { top: 20, right: 20, bottom: 50, left: 40 };
+                  const cw = W - pad.left - pad.right;
+                  const ch = H - pad.top - pad.bottom;
+
+                  // Time scale
+                  const t0 = new Date(steps[0].date + "T00:00:00").getTime();
+                  const t1 = new Date(steps[steps.length - 1].date + "T00:00:00").getTime();
+                  const tRange = t1 - t0 || 1;
+                  const x = (dateStr) => pad.left + ((new Date(dateStr + "T00:00:00").getTime() - t0) / tRange) * cw;
+                  const y = (count) => pad.top + ch - (count / steps[steps.length - 1].count) * ch;
+
+                  // Build staircase path
+                  let path = `M ${x(steps[0].date)} ${y(steps[0].count)}`;
+                  for (let i = 1; i < steps.length; i++) {
+                    // Horizontal to new x, then vertical to new y
+                    path += ` L ${x(steps[i].date)} ${y(steps[i - 1].count)}`;
+                    path += ` L ${x(steps[i].date)} ${y(steps[i].count)}`;
+                  }
+
+                  // Year labels for x-axis
+                  const startYear = new Date(steps[0].date + "T00:00:00").getFullYear();
+                  const endYear = new Date(steps[steps.length - 1].date + "T00:00:00").getFullYear();
+                  const yearLabels = [];
+                  for (let yr = startYear; yr <= endYear; yr++) {
+                    const xPos = x(`${yr}-01-01`);
+                    if (xPos >= pad.left && xPos <= W - pad.right) {
+                      yearLabels.push({ year: yr, x: xPos });
+                    }
+                  }
+
+                  // Y-axis grid lines
+                  const maxCount = steps[steps.length - 1].count;
+                  const yStep = maxCount <= 10 ? 1 : maxCount <= 20 ? 5 : 10;
+                  const yGridLines = [];
+                  for (let v = yStep; v <= maxCount; v += yStep) {
+                    yGridLines.push(v);
+                  }
+
+                  const lineColor = "#e63946";
+                  const dotColor = "#e63946";
+                  const gridColor = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+                  const textColor = T.text5;
+
+                  return (
+                    <div style={{ marginTop:"48px" }}>
+                      <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"24px" }}>COLLECTION GROWTH</div>
+                      <div style={{ overflowX:"auto" }}>
+                        <svg viewBox={`0 0 ${W} ${H}`} style={{ width:"100%", maxWidth:`${W}px`, height:"auto" }}>
+                          {/* Y grid lines */}
+                          {yGridLines.map(v => (
+                            <g key={`yg-${v}`}>
+                              <line x1={pad.left} y1={y(v)} x2={W - pad.right} y2={y(v)} stroke={gridColor} strokeWidth="1" />
+                              <text x={pad.left - 8} y={y(v) + 3} textAnchor="end" fontSize="9" fill={textColor} fontFamily="'Aptos','Segoe UI',sans-serif">{v}</text>
+                            </g>
+                          ))}
+                          {/* X axis year markers */}
+                          {yearLabels.map(yl => (
+                            <g key={`xl-${yl.year}`}>
+                              <line x1={yl.x} y1={pad.top} x2={yl.x} y2={H - pad.bottom + 8} stroke={gridColor} strokeWidth="1" />
+                              <text x={yl.x} y={H - pad.bottom + 24} textAnchor="middle" fontSize="10" fill={textColor} fontFamily="'Aptos','Segoe UI',sans-serif">{yl.year}</text>
+                            </g>
+                          ))}
+                          {/* Staircase line */}
+                          <path d={path} fill="none" stroke={lineColor} strokeWidth="2" />
+                          {/* Dots */}
+                          {steps.map((s, i) => (
+                            <circle key={i} cx={x(s.date)} cy={y(s.count)} r="3" fill={dotColor}>
+                              <title>{`#${s.count} — ${s.shoe} ${s.colorway} (${s.date})`}</title>
+                            </circle>
+                          ))}
+                          {/* Axis lines */}
+                          <line x1={pad.left} y1={pad.top} x2={pad.left} y2={H - pad.bottom} stroke={textColor} strokeWidth="1" />
+                          <line x1={pad.left} y1={H - pad.bottom} x2={W - pad.right} y2={H - pad.bottom} stroke={textColor} strokeWidth="1" />
+                        </svg>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
