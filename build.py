@@ -70,9 +70,13 @@ def compute_rankings(data):
             if entry["date"] > wear_counts[key]["lastWorn"]:
                 wear_counts[key]["lastWorn"] = entry["date"]
 
+    def _invert_date(d):
+        """Invert an ISO date string for descending sort."""
+        return [-ord(c) for c in d]
+
     worn_ranked = sorted(
         wear_counts.values(),
-        key=lambda x: (-x["count"], x["lastWorn"])
+        key=lambda x: (-x["count"], _invert_date(x["lastWorn"]))
     )[:10]
 
     # ── 2. Most Expensive ───────────────────────────────────────────────────

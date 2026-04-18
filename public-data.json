@@ -568,7 +568,6 @@
     ]
   },
   "images": {
-    "1_Royal Reimagined": "Shoes/AJ1/Royal Reimagined/Royal Reimagined.png",
     "2_Black Cement": "Shoes/AJ2/Black Cement/Black Cement.png",
     "3_White Cement Reimagined": "Shoes/AJ3/White Cement Reimagined/White Cement Reimagined.png",
     "3_Black Cement": "Shoes/AJ3/Black Cement/Black Cement.png",
@@ -708,7 +707,45 @@
     "1774096319133_Billy Hoyle_hover": "Shoes/ACF/Billy Hoyle/Billy Hoyle_hover.png",
     "16_White Infrared_hover": "Shoes/SC2/White Infrared/White Infrared_hover.png",
     "16_White Infrared": "Shoes/SC2/White Infrared/White Infrared.png",
-    "16_White Infrared_hover2": "Shoes/SC2/White Infrared/White Infrared_hover2.png"
+    "16_White Infrared_hover2": "Shoes/SC2/White Infrared/White Infrared_hover2.png",
+    "1_Wolf Grey_onfoot": "Shoes/AJ1/Wolf Grey/Wolf Grey_onfoot.png",
+    "1_Royal Reimagined": "Shoes/AJ1/Royal Reimagined/Royal Reimagined.png",
+    "1_Royal Reimagined_onfoot": "Shoes/AJ1/Royal Reimagined/Royal Reimagined_onfoot.png",
+    "2_Black Cement_onfoot": "Shoes/AJ2/Black Cement/Black Cement_onfoot.png",
+    "3_White Cement Reimagined_onfoot": "Shoes/AJ3/White Cement Reimagined/White Cement Reimagined_onfoot.png",
+    "3_Black Cement_onfoot": "Shoes/AJ3/Black Cement/Black Cement_onfoot.png",
+    "3_A Ma Maniere_onfoot": "Shoes/AJ3/A Ma Maniere/A Ma Maniere_onfoot.png",
+    "3_A Ma Maniere WYWS_onfoot": "Shoes/AJ3/A Ma Maniere WYWS/A Ma Maniere WYWS_onfoot.png",
+    "3_Rare Air_onfoot": "Shoes/AJ3/Rare Air/Rare Air_onfoot.png",
+    "17_Air Max Day (Royal Volt)_onfoot": "Shoes/AM86/Air Max Day (Royal Volt)/Air Max Day (Royal Volt)_onfoot.png",
+    "21_Purple_onfoot": "Shoes/AFMCB/Purple/Purple_onfoot.png",
+    "16_Volt_onfoot": "Shoes/SC2/Volt/Volt_onfoot.png",
+    "15_Pixel Court_onfoot": "Shoes/ATC2/Pixel Court/Pixel Court_onfoot.png",
+    "15_Hot Lava_onfoot": "Shoes/ATC2/Hot Lava/Hot Lava_onfoot.png",
+    "15_Stone Blue_onfoot": "Shoes/ATC2/Stone Blue/Stone Blue_onfoot.png",
+    "14_Chicago_onfoot": "Shoes/AJ40/Chicago/Chicago_onfoot.png",
+    "13_Flint Grey_onfoot": "Shoes/AJ14/Flint Grey/Flint Grey_onfoot.png",
+    "12_Black Flint_onfoot": "Shoes/AJ13/Black Flint/Black Flint_onfoot.png",
+    "11_Flu Game_onfoot": "Shoes/AJ12/Flu Game/Flu Game_onfoot.png",
+    "10_Steel_onfoot": "Shoes/AJ10/Steel/Steel_onfoot.png",
+    "9_Olive_onfoot": "Shoes/AJ9/Olive/Olive_onfoot.png",
+    "8_Playoffs_onfoot": "Shoes/AJ8/Playoffs/Playoffs_onfoot.png",
+    "6_Reverse Infrared_onfoot": "Shoes/AJ6/Reverse Infrared/Reverse Infrared_onfoot.png",
+    "6_Infrared_onfoot": "Shoes/AJ6/Infrared/Infrared_onfoot.png",
+    "5_A Ma Maniere Dawn_onfoot": "Shoes/AJ5/A Ma Maniere Dawn/A Ma Maniere Dawn_onfoot.png",
+    "5_Grape_onfoot": "Shoes/AJ5/Grape/Grape_onfoot.png",
+    "5_Fire Red_onfoot": "Shoes/AJ5/Fire Red/Fire Red_onfoot.png",
+    "5_Black Metallic Reimagined_onfoot": "Shoes/AJ5/Black Metallic Reimagined/Black Metallic Reimagined_onfoot.png",
+    "5_Black Tongue_onfoot": "Shoes/AJ5/Black Tongue/Black Tongue_onfoot.png",
+    "4_Red Cement_onfoot": "Shoes/AJ4/Red Cement/Red Cement_onfoot.png",
+    "4_Cave Stone_onfoot": "Shoes/AJ4/Cave Stone/Cave Stone_onfoot.png",
+    "4_Fire Red_onfoot": "Shoes/AJ4/Fire Red/Fire Red_onfoot.png",
+    "4_Black Cement_onfoot": "Shoes/AJ4/Black Cement/Black Cement_onfoot.png",
+    "4_White Cement_onfoot": "Shoes/AJ4/White Cement/White Cement_onfoot.png",
+    "4_Military Blue_onfoot": "Shoes/AJ4/Military Blue/Military Blue_onfoot.png",
+    "4_What the 4_onfoot": "Shoes/AJ4/What the 4/What the 4_onfoot.png",
+    "4_A Ma Maniere_onfoot": "Shoes/AJ4/A Ma Maniere/A Ma Maniere_onfoot.png",
+    "4_A Ma Maniere WYWS_onfoot": "Shoes/AJ4/A Ma Maniere WYWS/A Ma Maniere WYWS_onfoot.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -1844,28 +1881,12 @@
         "lastWorn": "2025-10-17"
       },
       {
-        "shoeId": 17,
-        "shoeName": "Air Max 86",
-        "shortName": "AM86",
-        "colorway": "Air Max Day (Royal Volt)",
+        "shoeId": 12,
+        "shoeName": "Air Jordan 13",
+        "shortName": "AJ13",
+        "colorway": "Black Flint",
         "count": 5,
-        "lastWorn": "2025-11-28"
-      },
-      {
-        "shoeId": 16,
-        "shoeName": "Air Trainer SC2",
-        "shortName": "SC2",
-        "colorway": "Volt",
-        "count": 5,
-        "lastWorn": "2025-12-06"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Black Cement",
-        "count": 5,
-        "lastWorn": "2025-12-24"
+        "lastWorn": "2026-04-04"
       },
       {
         "shoeId": 4,
@@ -1876,36 +1897,44 @@
         "lastWorn": "2026-01-16"
       },
       {
-        "shoeId": 12,
-        "shoeName": "Air Jordan 13",
-        "shortName": "AJ13",
-        "colorway": "Black Flint",
-        "count": 5,
-        "lastWorn": "2026-04-04"
-      },
-      {
-        "shoeId": 2,
-        "shoeName": "Air Jordan 2",
-        "shortName": "AJ2",
-        "colorway": "Black Cement",
-        "count": 4,
-        "lastWorn": "2025-09-11"
-      },
-      {
-        "shoeId": 1,
-        "shoeName": "Air Jordan 1",
-        "shortName": "AJ1",
-        "colorway": "Royal Reimagined",
-        "count": 4,
-        "lastWorn": "2025-09-30"
-      },
-      {
         "shoeId": 4,
         "shoeName": "Air Jordan 4",
         "shortName": "AJ4",
-        "colorway": "Military Blue",
+        "colorway": "Black Cement",
+        "count": 5,
+        "lastWorn": "2025-12-24"
+      },
+      {
+        "shoeId": 16,
+        "shoeName": "Air Trainer SC2",
+        "shortName": "SC2",
+        "colorway": "Volt",
+        "count": 5,
+        "lastWorn": "2025-12-06"
+      },
+      {
+        "shoeId": 17,
+        "shoeName": "Air Max 86",
+        "shortName": "AM86",
+        "colorway": "Air Max Day (Royal Volt)",
+        "count": 5,
+        "lastWorn": "2025-11-28"
+      },
+      {
+        "shoeId": 6,
+        "shoeName": "Air Jordan 6",
+        "shortName": "AJ6",
+        "colorway": "Infrared",
         "count": 4,
-        "lastWorn": "2025-10-03"
+        "lastWorn": "2026-04-11"
+      },
+      {
+        "shoeId": 5,
+        "shoeName": "Air Jordan 5",
+        "shortName": "AJ5",
+        "colorway": "A Ma Maniere Dawn",
+        "count": 4,
+        "lastWorn": "2026-01-23"
       },
       {
         "shoeId": 4,
@@ -1914,6 +1943,14 @@
         "colorway": "A Ma Maniere",
         "count": 4,
         "lastWorn": "2025-11-27"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "Military Blue",
+        "count": 4,
+        "lastWorn": "2025-10-03"
       }
     ],
     "priceRanked": [
@@ -2235,5 +2272,5 @@
       }
     ]
   },
-  "builtAt": "2026-04-17T23:44:55.769575Z"
+  "builtAt": "2026-04-18T13:44:00.401272Z"
 }

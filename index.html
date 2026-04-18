@@ -51,6 +51,15 @@
       0%   { filter: blur(8px) drop-shadow(0 0 35px rgba(184,240,255,0.8)) drop-shadow(0 0 12px rgba(255,255,255,0.7)); }
       100% { filter: blur(0px) drop-shadow(0 0 35px rgba(184,240,255,0.8)) drop-shadow(0 0 12px rgba(255,255,255,0.7)); }
     }
+    @keyframes shardFly {
+      0%   { transform: translate(0,0) rotate(0deg); opacity: 1; }
+      60%  { opacity: 1; }
+      100% { transform: translate(var(--shard-tx), var(--shard-ty)) rotate(var(--shard-rot)); opacity: 0; }
+    }
+    @keyframes drawerSlideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
@@ -205,7 +214,7 @@
       );
     }
 
-    function ImageSlot({ img, hoverImg, img3, label, accent, bg, onUpload, onClear, width = 96, height = 60, wearDates = [], tier = "silver", purchaseDate = null, size = null, ogYear = null, story = null, isOnIce = false, dark = false, shoeName = null, isMobilePublic = false, isNewPickup = false }) {
+    function ImageSlot({ img, hoverImg, img3, label, accent, bg, onUpload, onClear, width = 96, height = 60, wearDates = [], tier = "silver", purchaseDate = null, size = null, ogYear = null, story = null, isOnIce = false, dark = false, shoeName = null, isMobilePublic = false, isNewPickup = false, onfootImg = null, retailer = null, releaseYear = null, comfortRating = null, purchasePrice = null }) {
       const fileRef = useRef();
       const [hovered, setHovered] = useState(false);
       const [showHover, setShowHover] = useState(false);
@@ -217,15 +226,16 @@
       const [triptychVisible, setTriptychVisible] = useState(false);
       const [iceGlow, setIceGlow] = useState(false);
       const [diamondShatter, setDiamondShatter] = useState("hidden"); // "hidden" | "visible" | "shatter" | "done"
+      const [showStats, setShowStats] = useState(false);
       const overlayBg = "rgba(0,0,0,0.85)";
       const timerRef = useRef(null);
       const crossfadeRef = useRef(null);
       const tierRef = useRef(null);
+      const glowRef = useRef(null);
       const storyRef = useRef(null);
       const img3Ref = useRef(null);
       const triptychRef = useRef(null);
       const iceRef = useRef(null);
-      const diamondRef = useRef(null);
       const diamondVisibleRef = useRef(null);
       const diamondShatterRef = useRef(null);
       const diamondDoneRef = useRef(null);
@@ -275,6 +285,7 @@
         setTriptychVisible(false);
         setIceGlow(false);
         setDiamondShatter("hidden");
+        setShowStats(false);
         // Preload all images up front so triptych/triple-fade has no load-time shift
         if (hasTriptych || hasTripleFade) {
           [img, hoverImg, img3].forEach(src => { if (src) { const i = new Image(); i.src = src; } });
@@ -339,7 +350,7 @@
           storyRef.current = setTimeout(() => setShowStory(true), 5000);
         }
         if (tierInfo.glowRgba) {
-          tierRef.current = setTimeout(() => setTierGlow(true), 200);
+          glowRef.current = setTimeout(() => setTierGlow(true), 200);
         }
         if (isOnIce) {
           iceRef.current = setTimeout(() => setIceGlow(true), 200);
@@ -348,11 +359,11 @@
       const triggerClose = () => {
         clearTimeout(crossfadeRef.current);
         clearTimeout(tierRef.current);
+        clearTimeout(glowRef.current);
         clearTimeout(storyRef.current);
         clearTimeout(img3Ref.current);
         clearTimeout(triptychRef.current);
         clearTimeout(iceRef.current);
-        clearTimeout(diamondRef.current);
         clearTimeout(diamondVisibleRef.current);
         clearTimeout(diamondShatterRef.current);
         clearTimeout(diamondDoneRef.current);
@@ -368,8 +379,8 @@
         setTriptychVisible(false);
         setIceGlow(false);
         setDiamondShatter("hidden");
-      };
-      const handleMouseEnter = () => {};
+        setShowStats(false);
+      };      const handleMouseEnter = () => {};
       const handleMouseLeave = () => {};
       const handleClick = (e) => { e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
 
@@ -378,11 +389,11 @@
           clearTimeout(timerRef.current);
           clearTimeout(crossfadeRef.current);
           clearTimeout(tierRef.current);
+          clearTimeout(glowRef.current);
           clearTimeout(storyRef.current);
           clearTimeout(img3Ref.current);
           clearTimeout(triptychRef.current);
           clearTimeout(iceRef.current);
-          clearTimeout(diamondRef.current);
           clearTimeout(diamondVisibleRef.current);
           clearTimeout(diamondShatterRef.current);
           clearTimeout(diamondDoneRef.current);
@@ -450,22 +461,15 @@
                               filter: "drop-shadow(0 0 25px rgba(184,240,255,0.8)) drop-shadow(0 0 10px rgba(255,255,255,0.6))",
                             }} />
                             {/* Shards — clipped copies of diamond, appear at shatter then fly outward */}
-                            {diamondShatter === "shatter" && shardsRef.current.map((shard, si) => {
-                              const shardRef = React.createRef();
-                              requestAnimationFrame(() => requestAnimationFrame(() => {
-                                if (shardRef.current) {
-                                  shardRef.current.style.transform = `translate(${shard.tx}px, ${shard.ty}px) rotate(${shard.rot}deg)`;
-                                  shardRef.current.style.opacity = "0";
-                                }
-                              }));
-                              return (
-                              <div ref={shardRef} key={si} style={{
+                            {diamondShatter === "shatter" && shardsRef.current.map((shard, si) => (
+                              <div key={si} style={{
                                 position:"absolute",
                                 width:"180px", height:"180px",
                                 clipPath: shard.clipPath,
-                                transition: `transform 1.2s cubic-bezier(0.25,0.46,0.45,0.94) ${shard.delay}s, opacity 0.7s ease-out ${shard.delay + 0.5}s`,
-                                transform: "translate(0,0) rotate(0deg)",
-                                opacity: 1,
+                                "--shard-tx": `${shard.tx}px`,
+                                "--shard-ty": `${shard.ty}px`,
+                                "--shard-rot": `${shard.rot}deg`,
+                                animation: `shardFly 1.2s cubic-bezier(0.25,0.46,0.45,0.94) ${shard.delay}s forwards`,
                                 pointerEvents: "none",
                               }}>
                                 <img src="assets/diamond.png" alt="" style={{
@@ -473,8 +477,7 @@
                                   filter: "drop-shadow(0 0 12px rgba(184,240,255,0.6))",
                                 }} />
                               </div>
-                              );
-                            })}
+                            ))}
                           </div>
                         )}
                         {/* Left — img1, fades in at Act 3 */}
@@ -500,10 +503,10 @@
                           </div>
                         )}
                       </div>
-                      {/* Text area — fixed height, always reserved so center never shifts */}
-                      <div style={{ height:"80px", width:"100%", textAlign:"center", position:"relative" }}>
-                        {/* Act 1+2 metadata — fades out when story/triptych arrives */}
-                        <div style={{ position:"absolute", width:"100%", opacity: showStory ? 0 : 1, transition:"opacity 1s ease-in-out" }}>
+                      {/* Text area — shoe info always visible, story fades in below */}
+                      <div style={{ height:"120px", width:"100%", textAlign:"center", position:"relative" }}>
+                        {/* Shoe identity — always visible */}
+                        <div>
                           {tierInfo.label && <div style={{ fontSize:"11px", letterSpacing:"6px", color: tierInfo.color, opacity: tierReveal ? 1 : 0, transition:"opacity 3s ease-in-out" }}>{tierInfo.label}</div>}
                           {isOnIce && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#64c8ff", marginTop:"6px", opacity: iceGlow ? 1 : 0, transition:"opacity 3s ease-in-out" }}>❄️ ON ICE ❄️</div>}
                           {anniversaryGlow && <div style={{ fontSize:"11px", letterSpacing:"6px", color: tierAnniversaryColor(tier), marginTop:"6px", opacity: showHover ? 1 : 0, transition:"opacity 3s ease-in-out" }}>✦ ANNIVERSARY ✦</div>}
@@ -511,21 +514,79 @@
                           <div style={{ marginTop:(tierInfo.label||isOnIce||anniversaryGlow||isNewPickup)?"6px":"0", fontSize:"13px", letterSpacing:"3px", color: nameColor, transition:"color 3s ease-in-out" }}>
                             {shoeName ? `${shoeName} — ${label}` : label}
                           </div>
+                        </div>
+                        {/* Stats — fade out in place when story arrives */}
+                        <div style={{ position:"absolute", left:0, right:0, opacity: showStory ? 0 : 1, transition:"opacity 1s ease-in-out" }}>
                           {ogYear && <div style={{ marginTop:"4px", fontSize:"10px", color:"#fff", letterSpacing:"1px" }}>Originally Owned in {ogYear}</div>}
                           {purchaseDate && <div style={{ marginTop:"8px", fontSize:"10px", color: dark ? "#777" : "#aaa", letterSpacing:"1px" }}>Purchase Date: {new Date(purchaseDate + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}</div>}
                           {size && <div style={{ marginTop:"4px", fontSize:"10px", color: dark ? "#777" : "#aaa", letterSpacing:"1px" }}>Size: {size}</div>}
                           {sortedDates.length > 0 && <div style={{ marginTop:"4px", fontSize:"10px", color: dark ? "#777" : "#aaa", letterSpacing:"1px" }}>Last Worn: {new Date(sortedDates[0] + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}</div>}
                           {isMobilePublic && <div style={{ marginTop:"16px", fontSize:"10px", color:"#666", letterSpacing:"2px" }}>TAP TO CLOSE</div>}
                         </div>
-                        {/* Act 2 story / Act 3 story+triptych label — fades in */}
+                        {/* Story — fades in over the stats area */}
                         {story && (
-                          <div style={{ position:"absolute", width:"100%", opacity: showStory ? 1 : 0, transition:"opacity 2s ease-in-out" }}>
-                            {hasTriptych && tierInfo.label && <div style={{ fontSize:"11px", letterSpacing:"6px", color: tierInfo.color, marginBottom:"10px", opacity: triptychVisible ? 1 : 0, transition:"opacity 2s ease-in-out" }}>{tierInfo.label}</div>}
-                            <div style={{ fontSize:"13px", color:"#fff", lineHeight:"1.8", letterSpacing:"0.5px" }}>{story}</div>
+                          <div style={{ position:"absolute", left:0, right:0, opacity: showStory ? 1 : 0, transition:"opacity 2s ease-in-out" }}>
+                            <div style={{ fontSize:"13px", color:"#fff", lineHeight:"1.8", letterSpacing:"0.5px", maxWidth:"600px", margin:"0 auto" }}>{story}</div>
                           </div>
                         )}
                       </div>
                     </div>
+                    {/* STATS button — bottom-right of overlay */}
+                    <div onClick={e => e.stopPropagation()} style={{ position:"absolute", bottom: isMobilePublic ? "16px" : "28px", right: isMobilePublic ? "16px" : "28px", zIndex:20 }}>
+                      <button onClick={() => setShowStats(s => !s)} style={{
+                        background: showStats ? "#e63946" : "rgba(255,255,255,0.1)",
+                        border: showStats ? "1px solid #e63946" : "1px solid rgba(255,255,255,0.25)",
+                        color: showStats ? "#fff" : "rgba(255,255,255,0.6)",
+                        padding:"6px 14px", cursor:"pointer", fontSize:"9px", letterSpacing:"3px",
+                        fontFamily:"'Aptos','Segoe UI',sans-serif",
+                        transition:"all 0.3s ease",
+                      }}>STATS</button>
+                    </div>
+                    {/* Stats drawer — slides up from bottom */}
+                    {showStats && (
+                      <div onClick={e => e.stopPropagation()} style={{
+                        position:"absolute", bottom:0, left:0, right:0,
+                        background:"rgba(0,0,0,0.95)", borderTop:"1px solid rgba(255,255,255,0.15)",
+                        maxHeight: isMobilePublic ? "60vh" : "50vh", overflowY:"auto",
+                        padding: isMobilePublic ? "20px 16px 80px" : "28px 32px 80px",
+                        animation:"drawerSlideUp 0.3s ease-out",
+                      }}>
+                        <div style={{ maxWidth:"600px", margin:"0 auto" }}>
+                          {/* On-feet photo */}
+                          {onfootImg && (
+                            <div style={{ textAlign:"center", marginBottom:"20px" }}>
+                              <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"10px" }}>FIRST WEAR</div>
+                              <img src={onfootImg} alt="On feet" style={{ maxWidth: isMobilePublic ? "80vw" : "300px", maxHeight:"200px", objectFit:"contain", border:"1px solid rgba(255,255,255,0.1)" }} />
+                            </div>
+                          )}
+                          {/* Details grid */}
+                          <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"10px" }}>DETAILS</div>
+                          <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr 1fr" : "1fr 1fr 1fr", gap:"8px 20px", marginBottom:"20px" }}>
+                            {purchaseDate && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>PURCHASED</div><div style={{ fontSize:"11px", color:"#ccc" }}>{new Date(purchaseDate + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}</div></div>}
+                            {ADMIN_MODE && purchasePrice && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>PRICE</div><div style={{ fontSize:"11px", color:"#ccc" }}>{purchasePrice}</div></div>}
+                            {ADMIN_MODE && retailer && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>RETAILER</div><div style={{ fontSize:"11px", color:"#ccc" }}>{retailer}</div></div>}
+                            {size && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>SIZE</div><div style={{ fontSize:"11px", color:"#ccc" }}>{size}</div></div>}
+                            {ogYear && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>OG YEAR</div><div style={{ fontSize:"11px", color:"#ccc" }}>{ogYear}</div></div>}
+                            {releaseYear && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>RELEASE</div><div style={{ fontSize:"11px", color:"#ccc" }}>{releaseYear}</div></div>}
+                            {comfortRating && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>COMFORT</div><div style={{ fontSize:"11px", color:"#ccc" }}>{comfortRating}/10</div></div>}
+                            {sortedDates.length > 0 && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>TOTAL WEARS</div><div style={{ fontSize:"11px", color:"#ccc" }}>{sortedDates.length}</div></div>}
+                          </div>
+                          {/* Wear history */}
+                          {sortedDates.length > 0 && (
+                            <div>
+                              <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"10px" }}>WEAR HISTORY</div>
+                              <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap:"4px 16px" }}>
+                                {sortedDates.map((d, i) => (
+                                  <div key={`${d}-${i}`} style={{ fontSize:"11px", color: i === 0 ? "#ccc" : "#777", padding:"3px 0", borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
+                                    {new Date(d + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -671,7 +732,6 @@
       const [hovered,    setHovered]    = useState(false);
       const [showHover,  setShowHover]  = useState(false);
       const [ghosted,    setGhosted]    = useState(false);
-      const timerRef     = useRef(null);
       const crossfadeRef = useRef(null);
       const ghostRef     = useRef(null);
 
@@ -698,7 +758,6 @@
 
       useEffect(() => {
         return () => {
-          clearTimeout(timerRef.current);
           clearTimeout(crossfadeRef.current);
           clearTimeout(ghostRef.current);
         };
@@ -926,6 +985,44 @@
                     const file = e.target.files[0];
                     if (!file) return;
                     handleImageUpload(editingMeta.shoeId, editingMeta.colorway, file, "hover2");
+                    e.target.value = "";
+                  }} />
+              </div>
+            );
+          })()}
+          {/* On-feet photo upload — collection only */}
+          {!isWishlist && (() => {
+            const onfootKey = `${key}_onfoot`;
+            const onfootVal = images[onfootKey];
+            let onfootInputEl = null;
+            return (
+              <div style={{ marginBottom:"10px" }}>
+                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#4cc9f0", marginBottom:"6px" }}>👟 ON-FEET PHOTO (FIRST WEAR)</div>
+                <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                  {onfootVal
+                    ? <img src={onfootVal} alt="on feet" style={{ width:"80px", height:"50px", objectFit:"cover", border:"1px solid #4cc9f0" }} />
+                    : <div style={{ width:"80px", height:"50px", background: dark ? "#2a2a2a" : "#f0f0f0", border:"1px dashed #4cc9f0", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px", color:"#4cc9f0", cursor:"pointer" }}
+                        onClick={() => onfootInputEl && onfootInputEl.click()}>+</div>
+                  }
+                  <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
+                    <button onClick={() => onfootInputEl && onfootInputEl.click()}
+                      style={{ background:"transparent", border:"1px solid #4cc9f0", color:"#4cc9f0", padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
+                      {onfootVal ? "REPLACE" : "UPLOAD"}
+                    </button>
+                    {onfootVal && (
+                      <button onClick={() => { setImages(imgs => { const n={...imgs}; delete n[onfootKey]; return n; }); fetch(deleteParams("onfoot"), { method: "POST" }).catch(() => {}); }}
+                        style={{ background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
+                        REMOVE
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div style={{ fontSize:"8px", color: CT.text6, marginTop:"4px", letterSpacing:"1px" }}>Shown in the stats drawer overlay</div>
+                <input ref={el => onfootInputEl = el} type="file" accept="image/*" style={{ display:"none" }}
+                  onChange={e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    handleImageUpload(editingMeta.shoeId, editingMeta.colorway, file, "onfoot");
                     e.target.value = "";
                   }} />
               </div>
@@ -1245,7 +1342,7 @@
           });
         });
         const wornRanked = Object.values(wearCounts)
-          .sort((a, b) => b.count !== a.count ? b.count - a.count : a.lastWorn < b.lastWorn ? -1 : a.lastWorn > b.lastWorn ? 1 : 0)
+          .sort((a, b) => b.count !== a.count ? b.count - a.count : a.lastWorn > b.lastWorn ? -1 : a.lastWorn < b.lastWorn ? 1 : 0)
           .slice(0, 10);
 
         // Most Expensive
@@ -1479,7 +1576,7 @@
 
       const handleImageUpload = (shoeId, colorway, file, kind = "main") => {
         const key = `${shoeId}_${colorway}`;
-        const storageKey = kind === "hover" ? `${key}_hover` : kind === "hover2" ? `${key}_hover2` : key;
+        const storageKey = kind === "hover" ? `${key}_hover` : kind === "hover2" ? `${key}_hover2` : kind === "onfoot" ? `${key}_onfoot` : key;
         const shoe = inventory.find(s => s.id === shoeId);
         const shortName = shoe ? shoe.shortName : "";
         file.arrayBuffer().then(buffer => {
@@ -1546,17 +1643,19 @@
         const hasGlow = !!glowMeta[key];
         const hasHoverImg = !!images[`${key}_hover`];
         const hasHover2Img = !!images[`${key}_hover2`];
-        if (hasWear || hasImage || hasMeta || hasTier || hasGlow || hasHoverImg || hasHover2Img) {
-          const msg = [hasWear && "wear history", (hasImage || hasHoverImg || hasHover2Img) && "image(s)", hasMeta && "details"].filter(Boolean).join(", ");
+        const hasOnfootImg = !!images[`${key}_onfoot`];
+        if (hasWear || hasImage || hasMeta || hasTier || hasGlow || hasHoverImg || hasHover2Img || hasOnfootImg) {
+          const msg = [hasWear && "wear history", (hasImage || hasHoverImg || hasHover2Img || hasOnfootImg) && "image(s)", hasMeta && "details"].filter(Boolean).join(", ");
           if (!window.confirm(`"${cw}" has ${msg} attached. Deleting it will remove all of that data. Are you sure?`)) return;
           if (hasWear) setWearLog(log => ({ ...log, [shoe.id]: (log[shoe.id] || []).filter(e => e.colorway !== cw) }));
-          if (hasImage || hasHoverImg || hasHover2Img) {
-            setImages(imgs => { const n = {...imgs}; delete n[key]; delete n[`${key}_hover`]; delete n[`${key}_hover2`]; return n; });
+          if (hasImage || hasHoverImg || hasHover2Img || hasOnfootImg) {
+            setImages(imgs => { const n = {...imgs}; delete n[key]; delete n[`${key}_hover`]; delete n[`${key}_hover2`]; delete n[`${key}_onfoot`]; return n; });
             // Delete actual files from Shoes/ folder via server
             const delParams = (type) => `/delete?key=${encodeURIComponent(key)}&type=${type}&shortName=${encodeURIComponent(shoe.shortName)}&colorway=${encodeURIComponent(cw)}`;
             if (hasImage) fetch(delParams("main"), { method: "POST" }).catch(() => {});
             if (hasHoverImg) fetch(delParams("hover"), { method: "POST" }).catch(() => {});
             if (hasHover2Img) fetch(delParams("hover2"), { method: "POST" }).catch(() => {});
+            if (hasOnfootImg) fetch(delParams("onfoot"), { method: "POST" }).catch(() => {});
           }
           if (hasMeta) setColorwayMeta(m => { const n = {...m}; delete n[key]; return n; });
           if (hasTier) setTierMeta(tm => { const n = {...tm}; delete n[key]; return n; });
@@ -2403,6 +2502,11 @@
                                   size={(colorwayMeta[metaKey] || {}).size || null}
                                   ogYear={(colorwayMeta[metaKey] || {}).ogYear || null}
                                   story={(colorwayMeta[metaKey] || {}).story || null}
+                                  onfootImg={images[`${metaKey}_onfoot`] || null}
+                                  retailer={(colorwayMeta[metaKey] || {}).retailer || null}
+                                  releaseYear={(colorwayMeta[metaKey] || {}).releaseYear || null}
+                                  comfortRating={(colorwayMeta[metaKey] || {}).comfortRating || null}
+                                  purchasePrice={(colorwayMeta[metaKey] || {}).purchasePrice || null}
                                   onUpload={file => handleImageUpload(shoe.id, cw, file)}
                                   onClear={() => setImages(imgs => { const n={...imgs}; delete n[metaKey]; return n; })}
                                 />
