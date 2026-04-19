@@ -430,14 +430,14 @@ body.admin .admin-only-flex { display: flex; }
 
 /* Tile colors */
 .tile[data-value="2"]    { background: #2a2a2a; border: 1px solid #444; }
-.tile[data-value="4"]    { background: #333333; border: 1px solid #555; }
-.tile[data-value="8"]    { background: #e63946; color: #fff; }
-.tile[data-value="16"]   { background: #cc2f3b; color: #fff; }
-.tile[data-value="32"]   { background: #b22530; color: #fff; }
-.tile[data-value="64"]   { background: #991b25; color: #fff; }
+.tile[data-value="4"]    { background: #4a4a4a; border: 1px solid #666; }
+.tile[data-value="8"]    { background: #8b2500; color: #fff; }
+.tile[data-value="16"]   { background: #b22530; color: #fff; }
+.tile[data-value="32"]   { background: #e63946; color: #fff; }
+.tile[data-value="64"]   { background: #8b0045; color: #fff; }
 .tile[data-value="128"]  { background: #CD7F32; color: #1a1a1a; }
 .tile[data-value="256"]  { background: #FFD700; color: #1a1a1a; }
-.tile[data-value="512"]  { background: #C0C0C0; color: #1a1a1a; }
+.tile[data-value="512"]  { background: #9966CC; color: #fff; }
 .tile[data-value="1024"] { background: #C0C0C0; color: #1a1a1a; border: 1px solid #ddd; }
 .tile[data-value="2048"] { background: #b8f0ff; color: #1a1a1a; box-shadow: 0 0 20px rgba(184,240,255,0.4); }
 .tile[data-value="4096"] { background: linear-gradient(135deg, #b8f0ff, #e63946); color: #fff; box-shadow: 0 0 20px rgba(184,240,255,0.4); }
@@ -493,6 +493,69 @@ body.admin .admin-only-flex { display: flex; }
   font-size: 10px;
   letter-spacing: 2px;
   cursor: pointer;
+}
+
+/* Win overlay — 4096 celebration */
+.win-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  z-index: 200;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.win-overlay.show { display: flex; }
+
+@keyframes winGlow {
+  0%   { filter: drop-shadow(0 0 30px rgba(184,240,255,0.6)) drop-shadow(0 0 10px rgba(255,255,255,0.4)); }
+  50%  { filter: drop-shadow(0 0 50px rgba(184,240,255,0.9)) drop-shadow(0 0 20px rgba(255,255,255,0.6)); }
+  100% { filter: drop-shadow(0 0 30px rgba(184,240,255,0.6)) drop-shadow(0 0 10px rgba(255,255,255,0.4)); }
+}
+
+@keyframes winFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes winTitleReveal {
+  from { opacity: 0; letter-spacing: 12px; }
+  to   { opacity: 1; letter-spacing: 8px; }
+}
+
+.win-image {
+  max-width: 80vw;
+  max-height: 50vh;
+  object-fit: contain;
+  animation: winFadeIn 2s ease-out, winGlow 3s ease-in-out 2s infinite;
+}
+
+.win-title {
+  font-size: 13px;
+  letter-spacing: 8px;
+  color: #b8f0ff;
+  animation: winTitleReveal 2s ease-out;
+}
+
+.win-score-label {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #666;
+}
+
+.win-score {
+  font-size: 28px;
+  font-weight: bold;
+  color: #f0f0f0;
+}
+
+.win-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .how-to {
@@ -606,6 +669,18 @@ body.admin .admin-only-flex { display: flex; }
       <h2>GAME OVER</h2>
       <div class="final-score" id="final-score">0</div>
       <button id="retry-btn">TRY AGAIN</button>
+    </div>
+  </div>
+
+  <!-- Win overlay — fixed to viewport, above everything -->
+  <div class="win-overlay" id="win-overlay">
+    <div class="win-title">✦ THE VAULT ✦</div>
+    <img class="win-image" src="../assets/vault-display.png" alt="The Vault" />
+    <div class="win-score-label">FINAL SCORE</div>
+    <div class="win-score" id="win-score">0</div>
+    <div class="win-actions">
+      <button class="btn-primary" id="win-new-game-btn">NEW GAME</button>
+      <button class="btn-secondary" id="win-puzzles-btn">PUZZLES</button>
     </div>
   </div>
 
@@ -1044,6 +1119,13 @@ function move(dir) {
     renderFull();
     animating = false;
 
+    // Check for 4096 — you win!
+    if (mergeTargets.some(t => t.value >= 4096)) {
+      gameOver = true;
+      setTimeout(showWin, 600);
+      return;
+    }
+
     if (checkGameOver()) {
       gameOver = true;
       setTimeout(showGameOver, 400);
@@ -1149,6 +1231,11 @@ function showGameOver() {
   document.getElementById('game-over').classList.add('show');
 }
 
+function showWin() {
+  document.getElementById('win-score').textContent = score;
+  document.getElementById('win-overlay').classList.add('show');
+}
+
 function startGame() {
   tiles = [];
   tileIdCounter = 0;
@@ -1156,6 +1243,7 @@ function startGame() {
   gameOver = false;
   animating = false;
   document.getElementById('game-over').classList.remove('show');
+  document.getElementById('win-overlay').classList.remove('show');
   addRandomTile();
   addRandomTile();
   renderFull();
@@ -1199,6 +1287,8 @@ document.getElementById('setup-cancel-btn-2').addEventListener('click', () => { 
 document.getElementById('save-puzzle-btn').addEventListener('click', savePuzzle);
 document.getElementById('new-game-btn').addEventListener('click', startGame);
 document.getElementById('retry-btn').addEventListener('click', startGame);
+document.getElementById('win-new-game-btn').addEventListener('click', startGame);
+document.getElementById('win-puzzles-btn').addEventListener('click', () => { document.getElementById('win-overlay').classList.remove('show'); showScreen('select-screen'); renderPuzzleList(); });
 document.getElementById('back-to-select-btn').addEventListener('click', () => { showScreen('select-screen'); renderPuzzleList(); });
 document.getElementById('edit-puzzle-btn').addEventListener('click', () => { if (currentPuzzleId) openSetup(currentPuzzleId); });
 document.getElementById('backup-btn').addEventListener('click', backupPuzzles);

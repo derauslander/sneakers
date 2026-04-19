@@ -17,7 +17,25 @@
         "2048": "../Shoes/AJ4/Black%20Cement/Black%20Cement_hover.png",
         "4096": "../Shoes/AJ4/Fire%20Red/Fire%20Red_hover.png"
       }
+    },
+    {
+      "id": 1776620894144,
+      "name": "Air Tech Challenge 2 (Original Colorways)",
+      "tiles": {
+        "2": "../Shoes/ATC2/Pixel%20Court/Pixel%20Court.png",
+        "4": "../Shoes/ATC2/Stone%20Blue/Stone%20Blue.png",
+        "8": "../Shoes/ATC2/Black%20Lava/Black%20Lava.png",
+        "16": "../Shoes/ATC2/Hot%20Lava/Hot%20Lava.png",
+        "32": "../Shoes/ATC2/Pixel%20Court/Pixel%20Court_hover2.png",
+        "64": "../Shoes/ATC2/Stone%20Blue/Stone%20Blue_hover2.png",
+        "128": "../Shoes/ATC2/Black%20Lava/Black%20Lava_hover2.png",
+        "256": "../Shoes/ATC2/Hot%20Lava/Hot%20Lava_hover2.png",
+        "512": "../Shoes/ATC2/Pixel%20Court/Pixel%20Court_hover.png",
+        "1024": "../Shoes/ATC2/Stone%20Blue/Stone%20Blue_hover.png",
+        "2048": "../Shoes/ATC2/Black%20Lava/Black%20Lava_hover.png",
+        "4096": "../Shoes/ATC2/Hot%20Lava/Hot%20Lava_hover.png"
+      }
     }
   ],
-  "exportedAt": "2026-04-19T16:15:28.411Z"
+  "exportedAt": "2026-04-19T17:48:16.087Z"
 }
