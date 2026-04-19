@@ -532,8 +532,8 @@
                       </div>
                     </div>
                     {/* STATS button — bottom-right of overlay */}
-                    <div onClick={e => e.stopPropagation()} style={{ position:"absolute", bottom: isMobilePublic ? "16px" : "28px", right: isMobilePublic ? "16px" : "28px", zIndex:20 }}>
-                      <button onClick={() => setShowStats(s => !s)} style={{
+                    <div onClick={e => { e.stopPropagation(); if (showStats) setShowStats(false); }} style={{ position:"absolute", bottom: isMobilePublic ? "16px" : "28px", right: isMobilePublic ? "16px" : "28px", zIndex:20 }}>
+                      <button onClick={(e) => { e.stopPropagation(); setShowStats(s => !s); }} style={{
                         background: showStats ? "#e63946" : "rgba(255,255,255,0.1)",
                         border: showStats ? "1px solid #e63946" : "1px solid rgba(255,255,255,0.25)",
                         color: showStats ? "#fff" : "rgba(255,255,255,0.6)",
@@ -544,7 +544,7 @@
                     </div>
                     {/* Stats drawer — slides up from bottom */}
                     {showStats && (
-                      <div onClick={e => e.stopPropagation()} style={{
+                      <div onClick={e => { e.stopPropagation(); setShowStats(false); }} style={{
                         position:"absolute", bottom:0, left:0, right:0,
                         background:"rgba(0,0,0,0.95)", borderTop:"1px solid rgba(255,255,255,0.15)",
                         maxHeight: isMobilePublic ? "60vh" : "50vh", overflowY:"auto",
@@ -578,8 +578,9 @@
                               <div>
                                 <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"10px" }}>WEAR HISTORY</div>
                                 <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr 1fr" : "1fr 1fr 1fr", gap:"4px 16px" }}>
-                                  {sortedDates.map((d, i) => (
-                                    <div key={`${d}-${i}`} style={{ fontSize:"11px", color: i === 0 ? "#ccc" : "#777", padding:"3px 0", borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
+                                  {[...sortedDates].reverse().map((d, i, arr) => (
+                                    <div key={`${d}-${i}`} style={{ fontSize:"11px", color:"#ccc", padding:"3px 0", display:"flex", gap:"6px", fontWeight: i === arr.length - 1 ? "bold" : "normal" }}>
+                                      <span style={{ color:"#555", fontSize:"10px", minWidth:"20px" }}>{i + 1}</span>
                                       {new Date(d + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}
                                     </div>
                                   ))}
