@@ -551,39 +551,42 @@
                         padding: isMobilePublic ? "20px 16px 80px" : "28px 32px 80px",
                         animation:"drawerSlideUp 0.3s ease-out",
                       }}>
-                        <div style={{ maxWidth:"600px", margin:"0 auto" }}>
-                          {/* On-feet photo */}
+                        <div style={{ maxWidth:"800px", margin:"0 auto", display: isMobilePublic || !onfootImg ? "block" : "flex", gap:"32px", alignItems:"flex-start" }}>
+                          {/* Left column — on-feet photo (desktop) */}
                           {onfootImg && (
-                            <div style={{ textAlign:"center", marginBottom:"20px" }}>
+                            <div style={{ flex: isMobilePublic ? undefined : "0 0 45%", textAlign:"center", marginBottom: isMobilePublic ? "20px" : 0 }}>
                               <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"10px" }}>FIRST WEAR</div>
-                              <img src={onfootImg} alt="On feet" style={{ maxWidth: isMobilePublic ? "80vw" : "300px", maxHeight:"200px", objectFit:"contain", border:"1px solid rgba(255,255,255,0.1)" }} />
+                              <img src={onfootImg} alt="On feet" style={{ width:"100%", maxHeight: isMobilePublic ? "250px" : "38vh", objectFit:"contain" }} />
                             </div>
                           )}
-                          {/* Details grid */}
-                          <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"10px" }}>DETAILS</div>
-                          <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr 1fr" : "1fr 1fr 1fr", gap:"8px 20px", marginBottom:"20px" }}>
-                            {purchaseDate && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>PURCHASED</div><div style={{ fontSize:"11px", color:"#ccc" }}>{new Date(purchaseDate + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}</div></div>}
-                            {ADMIN_MODE && purchasePrice && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>PRICE</div><div style={{ fontSize:"11px", color:"#ccc" }}>{purchasePrice}</div></div>}
-                            {ADMIN_MODE && retailer && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>RETAILER</div><div style={{ fontSize:"11px", color:"#ccc" }}>{retailer}</div></div>}
-                            {size && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>SIZE</div><div style={{ fontSize:"11px", color:"#ccc" }}>{size}</div></div>}
-                            {ogYear && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>OG YEAR</div><div style={{ fontSize:"11px", color:"#ccc" }}>{ogYear}</div></div>}
-                            {releaseYear && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>RELEASE</div><div style={{ fontSize:"11px", color:"#ccc" }}>{releaseYear}</div></div>}
-                            {comfortRating && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>COMFORT</div><div style={{ fontSize:"11px", color:"#ccc" }}>{comfortRating}/10</div></div>}
-                            {sortedDates.length > 0 && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>TOTAL WEARS</div><div style={{ fontSize:"11px", color:"#ccc" }}>{sortedDates.length}</div></div>}
-                          </div>
-                          {/* Wear history */}
-                          {sortedDates.length > 0 && (
-                            <div>
-                              <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"10px" }}>WEAR HISTORY</div>
-                              <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr 1fr" : "1fr 1fr 1fr 1fr", gap:"4px 16px" }}>
-                                {sortedDates.map((d, i) => (
-                                  <div key={`${d}-${i}`} style={{ fontSize:"11px", color: i === 0 ? "#ccc" : "#777", padding:"3px 0", borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
-                                    {new Date(d + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}
-                                  </div>
-                                ))}
+                          {/* Right column — details + wear history */}
+                          <div style={{ flex:1, minWidth:0 }}>
+                            {/* Details grid */}
+                            <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"10px" }}>DETAILS</div>
+                            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px 20px", marginBottom:"20px" }}>
+                              {purchaseDate && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>PURCHASED</div><div style={{ fontSize:"11px", color:"#ccc" }}>{new Date(purchaseDate + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}</div></div>}
+                              {ADMIN_MODE && purchasePrice && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>PRICE</div><div style={{ fontSize:"11px", color:"#ccc" }}>{purchasePrice}</div></div>}
+                              {ADMIN_MODE && retailer && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>RETAILER</div><div style={{ fontSize:"11px", color:"#ccc" }}>{retailer}</div></div>}
+                              {size && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>SIZE</div><div style={{ fontSize:"11px", color:"#ccc" }}>{size}</div></div>}
+                              {ogYear && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>OG YEAR</div><div style={{ fontSize:"11px", color:"#ccc" }}>{ogYear}</div></div>}
+                              {releaseYear && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>RELEASE</div><div style={{ fontSize:"11px", color:"#ccc" }}>{releaseYear}</div></div>}
+                              {comfortRating && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>COMFORT</div><div style={{ fontSize:"11px", color:"#ccc" }}>{comfortRating}/10</div></div>}
+                              {sortedDates.length > 0 && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>TOTAL WEARS</div><div style={{ fontSize:"11px", color:"#ccc" }}>{sortedDates.length}</div></div>}
+                            </div>
+                            {/* Wear history */}
+                            {sortedDates.length > 0 && (
+                              <div>
+                                <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"10px" }}>WEAR HISTORY</div>
+                                <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr 1fr" : "1fr 1fr 1fr", gap:"4px 16px" }}>
+                                  {sortedDates.map((d, i) => (
+                                    <div key={`${d}-${i}`} style={{ fontSize:"11px", color: i === 0 ? "#ccc" : "#777", padding:"3px 0", borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
+                                      {new Date(d + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
