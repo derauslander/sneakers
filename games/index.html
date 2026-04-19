@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>2048 — The Vault</title>
+<meta property="og:title" content="2048 — The Vault" />
+<meta property="og:description" content="A sneaker-themed 2048 puzzle game from The Vault." />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 680 680' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='680' height='680' fill='%23000000' rx='80'/%3E%3Ccircle cx='340' cy='340' r='280' fill='none' stroke='%23e63946' stroke-width='24'/%3E%3Ccircle cx='340' cy='340' r='180' fill='none' stroke='%23e63946' stroke-width='16'/%3E%3Ccircle cx='340' cy='340' r='60' fill='%23e63946'/%3E%3Cline x1='340' y1='60' x2='340' y2='160' stroke='%23e63946' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='340' y1='520' x2='340' y2='620' stroke='%23e63946' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='60' y1='340' x2='160' y2='340' stroke='%23e63946' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='520' y1='340' x2='620' y2='340' stroke='%23e63946' stroke-width='20' stroke-linecap='round'/%3E%3C/svg%3E" />
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Aptos', 'Segoe UI', sans-serif;
+  background: #1a1a1a;
+  color: #f0f0f0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── ADMIN FLAG ─── */
+.admin-only { display: none; }
+body.admin .admin-only { display: block; }
+body.admin .admin-only-inline { display: inline-block; }
+body.admin .admin-only-flex { display: flex; }
+
+/* ─── SCREENS ─── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ─── PUZZLE SELECT SCREEN ─── */
+#select-screen {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 20px 60px;
+}
+
+.select-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.select-header h1 {
+  font-size: 11px;
+  letter-spacing: 6px;
+  color: #e63946;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.select-header h2 {
+  font-size: 24px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #f0f0f0;
+}
+
+.puzzle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.puzzle-item {
+  background: #222222;
+  border: 1px solid #333333;
+  padding: 16px 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: border-color 0.2s;
+}
+
+.puzzle-item:hover {
+  border-color: #e63946;
+}
+
+.puzzle-item-name {
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: #f0f0f0;
+}
+
+.puzzle-item-count {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #666;
+}
+
+.puzzle-item-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.back-link {
+  display: block;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #666;
+  text-decoration: none;
+  margin-top: 32px;
+  transition: color 0.2s;
+}
+
+.back-link:hover { color: #e63946; }
+
+/* ─── SETUP SCREEN (ADMIN) ─── */
+#setup-screen {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 20px 60px;
+}
+
+.setup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.setup-title {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: #e63946;
+}
+
+.setup-section {
+  background: #222222;
+  border: 1px solid #333333;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.setup-section h2 {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #e63946;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.setup-input {
+  width: 100%;
+  padding: 8px 12px;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  color: #f0f0f0;
+  font-family: 'Aptos', 'Segoe UI', sans-serif;
+  font-size: 13px;
+}
+
+.setup-input:focus {
+  outline: none;
+  border-color: #e63946;
+}
+
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.tile-config {
+  background: #2a2a2a;
+  border: 1px solid #333;
+  padding: 12px;
+  text-align: center;
+}
+
+.tile-config.has-image {
+  border-color: #e63946;
+}
+
+.tile-label {
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #f0f0f0;
+  margin-bottom: 8px;
+}
+
+.tile-preview {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 8px;
+  background: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px dashed #444;
+}
+
+.tile-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.tile-preview.empty::after {
+  content: '+';
+  font-size: 18px;
+  color: #444;
+}
+
+.tile-url-input {
+  width: 100%;
+  padding: 6px 8px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #f0f0f0;
+  font-family: 'Aptos', 'Segoe UI', sans-serif;
+  font-size: 10px;
+  margin-bottom: 6px;
+}
+
+.tile-url-input:focus {
+  outline: none;
+  border-color: #e63946;
+}
+
+.file-upload-btn {
+  display: inline-block;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid #444;
+  color: #888;
+  font-size: 9px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  font-family: 'Aptos', 'Segoe UI', sans-serif;
+  transition: all 0.2s;
+}
+
+.file-upload-btn:hover {
+  border-color: #e63946;
+  color: #f0f0f0;
+}
+
+.clear-btn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 9px;
+  cursor: pointer;
+  margin-left: 6px;
+  text-decoration: underline;
+  font-family: 'Aptos', 'Segoe UI', sans-serif;
+}
+
+.clear-btn:hover { color: #e63946; }
+
+.btn-primary {
+  background: #e63946;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-family: 'Aptos', 'Segoe UI', sans-serif;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid #444;
+  color: #888;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-family: 'Aptos', 'Segoe UI', sans-serif;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  border-color: #e63946;
+  color: #f0f0f0;
+}
+
+.btn-danger {
+  background: transparent;
+  border: 1px solid #666;
+  color: #666;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-family: 'Aptos', 'Segoe UI', sans-serif;
+}
+
+.btn-danger:hover {
+  border-color: #e63946;
+  color: #e63946;
+}
+
+.setup-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+/* ─── GAME SCREEN ─── */
+#game-screen {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 30px 16px 60px;
+}
+
+.game-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.game-title {
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: #e63946;
+}
+
+.game-title-name {
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #f0f0f0;
+  margin-top: 4px;
+}
+
+.score-area {
+  display: flex;
+  gap: 8px;
+}
+
+.score-box {
+  background: #222222;
+  border: 1px solid #333;
+  padding: 8px 16px;
+  text-align: center;
+  min-width: 70px;
+}
+
+.score-box label {
+  display: block;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.score-box .val {
+  font-size: 16px;
+  font-weight: bold;
+  color: #f0f0f0;
+}
+
+.game-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* ─── GRID ─── */
+.grid-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.grid-bg {
+  position: absolute;
+  inset: 0;
+  background: #222222;
+  border: 1px solid #333;
+  display: grid;
+  grid-template: repeat(4, 1fr) / repeat(4, 1fr);
+  gap: 8px;
+  padding: 8px;
+}
+
+.grid-cell-bg {
+  background: #2a2a2a;
+}
+
+.tile-layer {
+  position: absolute;
+  inset: 0;
+}
+
+/* Tiles */
+.tile {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: top 0.15s ease-in-out, left 0.15s ease-in-out;
+  overflow: hidden;
+}
+
+.tile-number {
+  font-size: 22px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  z-index: 2;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.tile-bg-img {
+  position: absolute;
+  inset: 0;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.tile-bg-img + .tile-number {
+  display: none;
+}
+
+/* Tile colors */
+.tile[data-value="2"]    { background: #2a2a2a; border: 1px solid #444; }
+.tile[data-value="4"]    { background: #333333; border: 1px solid #555; }
+.tile[data-value="8"]    { background: #e63946; color: #fff; }
+.tile[data-value="16"]   { background: #cc2f3b; color: #fff; }
+.tile[data-value="32"]   { background: #b22530; color: #fff; }
+.tile[data-value="64"]   { background: #991b25; color: #fff; }
+.tile[data-value="128"]  { background: #CD7F32; color: #1a1a1a; }
+.tile[data-value="256"]  { background: #FFD700; color: #1a1a1a; }
+.tile[data-value="512"]  { background: #C0C0C0; color: #1a1a1a; }
+.tile[data-value="1024"] { background: #C0C0C0; color: #1a1a1a; border: 1px solid #ddd; }
+.tile[data-value="2048"] { background: #b8f0ff; color: #1a1a1a; box-shadow: 0 0 20px rgba(184,240,255,0.4); }
+.tile[data-value="4096"] { background: linear-gradient(135deg, #b8f0ff, #e63946); color: #fff; box-shadow: 0 0 20px rgba(184,240,255,0.4); }
+
+@keyframes tile-pop {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+@keyframes tile-merge {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+.tile-new { animation: tile-pop 0.25s ease; }
+.tile-merged { animation: tile-merge 0.25s ease; }
+
+/* Game over overlay */
+.game-over-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(26,26,26,0.88);
+  z-index: 100;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.game-over-overlay.show { display: flex; }
+
+.game-over-overlay h2 {
+  font-size: 11px;
+  letter-spacing: 6px;
+  color: #e63946;
+}
+
+.game-over-overlay .final-score {
+  font-size: 32px;
+  font-weight: bold;
+  color: #f0f0f0;
+}
+
+.game-over-overlay button {
+  padding: 10px 24px;
+  background: #e63946;
+  border: none;
+  color: white;
+  font-family: 'Aptos', 'Segoe UI', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  cursor: pointer;
+}
+
+.how-to {
+  color: #666;
+  font-size: 10px;
+  letter-spacing: 1px;
+  margin-top: 16px;
+  text-align: center;
+}
+
+.how-to strong { color: #888; }
+
+/* Status message */
+.status-msg {
+  text-align: center;
+  padding: 10px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+}
+
+.status-msg.success { background: #0a2a0a; border: 1px solid #333; color: #e63946; }
+.status-msg.error { background: #2a0a0a; border: 1px solid #333; color: #e63946; }
+
+/* Mobile */
+@media (max-width: 520px) {
+  .tile-grid { grid-template-columns: repeat(2, 1fr); }
+  .grid-bg { padding: 6px; gap: 6px; }
+  .game-title-name { font-size: 14px; }
+  .tile-number { font-size: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════ PUZZLE SELECT SCREEN ════════ -->
+<div id="select-screen" class="screen active">
+  <div class="select-header">
+    <h1>THE VAULT</h1>
+    <h2>2048</h2>
+  </div>
+
+  <div class="puzzle-list" id="puzzle-list"></div>
+
+  <div class="admin-only" style="text-align:center; margin-top:20px;">
+    <button class="btn-primary" id="create-puzzle-btn">+ NEW PUZZLE</button>
+  </div>
+
+  <div class="admin-only" style="text-align:center; margin-top:20px;">
+    <div style="display:flex; gap:8px; justify-content:center;">
+      <button class="btn-secondary" id="backup-btn">⬇ BACKUP</button>
+      <button class="btn-secondary" id="restore-btn-trigger">⬆ RESTORE</button>
+      <input type="file" id="restore-file" accept=".json" style="display:none">
+    </div>
+  </div>
+
+  <a href="../index.html" class="back-link">← BACK TO THE VAULT</a>
+</div>
+
+<!-- ════════ SETUP SCREEN (ADMIN) ════════ -->
+<div id="setup-screen" class="screen">
+  <div class="setup-header">
+    <div class="setup-title" id="setup-title">NEW PUZZLE</div>
+    <button class="btn-secondary" id="setup-cancel-btn">CANCEL</button>
+  </div>
+
+  <div class="setup-section">
+    <h2>Puzzle Name</h2>
+    <input class="setup-input" id="puzzle-name-input" type="text" placeholder="e.g. Air Jordan">
+  </div>
+
+  <div class="setup-section">
+    <h2>Tile Images</h2>
+    <p style="color:#666; font-size:10px; letter-spacing:1px; margin-bottom:12px;">
+      Paste an image URL or upload a file for each tile level. Leave blank to show the number.
+    </p>
+    <div class="tile-grid" id="tile-config-grid"></div>
+  </div>
+
+  <div class="setup-actions">
+    <button class="btn-primary" id="save-puzzle-btn">SAVE PUZZLE</button>
+    <button class="btn-secondary" id="setup-cancel-btn-2">CANCEL</button>
+  </div>
+
+  <div id="setup-status"></div>
+</div>
+
+<!-- ════════ GAME SCREEN ════════ -->
+<div id="game-screen" class="screen">
+  <div class="game-header">
+    <div>
+      <div class="game-title">2048</div>
+      <div class="game-title-name" id="game-title-display">The Vault</div>
+    </div>
+    <div class="score-area">
+      <div class="score-box"><label>Score</label><div class="val" id="score-display">0</div></div>
+      <div class="score-box"><label>Best</label><div class="val" id="best-display">0</div></div>
+    </div>
+  </div>
+
+  <div class="game-actions">
+    <button class="btn-secondary" id="new-game-btn">NEW GAME</button>
+    <button class="btn-secondary" id="back-to-select-btn">PUZZLES</button>
+    <button class="btn-secondary admin-only" id="edit-puzzle-btn">EDIT</button>
+  </div>
+
+  <div class="grid-wrapper" id="grid-wrapper">
+    <div class="grid-bg" id="grid-bg"></div>
+    <div class="tile-layer" id="tile-layer"></div>
+    <div class="game-over-overlay" id="game-over">
+      <h2>GAME OVER</h2>
+      <div class="final-score" id="final-score">0</div>
+      <button id="retry-btn">TRY AGAIN</button>
+    </div>
+  </div>
+
+  <p class="how-to">Use <strong>ARROW KEYS</strong> or <strong>SWIPE</strong> to move tiles</p>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  ADMIN MODE
+// ═══════════════════════════════════════════
+const ADMIN_MODE = false; // build.bat flips to false
+
+if (ADMIN_MODE) document.body.classList.add('admin');
+
+// ═══════════════════════════════════════════
+//  PUZZLE DATA
+// ═══════════════════════════════════════════
+const TILE_VALUES = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096];
+let puzzles = []; // array of { id, name, tiles: { 2: "url", 4: "url", ... } }
+let currentPuzzleId = null;
+let editingPuzzleId = null;
+let tileImages = {}; // active tile images for current game
+
+// Load puzzles from localStorage (admin) or inline data (public)
+function loadPuzzles() {
+  if (ADMIN_MODE) {
+    try {
+      const stored = localStorage.getItem('vault_2048_puzzles');
+      if (stored) puzzles = JSON.parse(stored);
+    } catch {}
+    if (puzzles.length === 0) {
+      puzzles.push({ id: Date.now(), name: 'The Vault', tiles: {} });
+    }
+    renderPuzzleList();
+  } else {
+    // Public site: load from puzzle-data.json
+    fetch('puzzle-data.json')
+      .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
+      .then(data => {
+        puzzles = data.puzzles || [];
+        if (puzzles.length === 0) {
+          puzzles.push({ id: 1, name: 'The Vault', tiles: {} });
+        }
+        renderPuzzleList();
+        // If only one puzzle, skip the select screen and start playing
+        if (puzzles.length === 1) {
+          startPuzzle(puzzles[0].id);
+        }
+      })
+      .catch(() => {
+        puzzles = [{ id: 1, name: 'The Vault', tiles: {} }];
+        renderPuzzleList();
+      });
+  }
+}
+
+function savePuzzles() {
+  if (!ADMIN_MODE) return;
+  try {
+    localStorage.setItem('vault_2048_puzzles', JSON.stringify(puzzles));
+  } catch (e) { console.error(e); }
+}
+
+// ═══════════════════════════════════════════
+//  SCREEN MANAGEMENT
+// ═══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ═══════════════════════════════════════════
+//  PUZZLE SELECT SCREEN
+// ═══════════════════════════════════════════
+function renderPuzzleList() {
+  const list = document.getElementById('puzzle-list');
+  list.innerHTML = '';
+
+  puzzles.forEach(p => {
+    const imageCount = Object.keys(p.tiles || {}).filter(k => p.tiles[k]).length;
+    const item = document.createElement('div');
+    item.className = 'puzzle-item';
+    item.innerHTML = `
+      <div>
+        <div class="puzzle-item-name">${p.name}</div>
+        <div class="puzzle-item-count">${imageCount} / ${TILE_VALUES.length} TILES</div>
+      </div>
+      <div class="puzzle-item-actions">
+        ${ADMIN_MODE ? `
+          <button class="btn-secondary" data-edit="${p.id}" style="padding:4px 10px; font-size:9px;">EDIT</button>
+          <button class="btn-danger" data-delete="${p.id}" style="padding:4px 10px; font-size:9px;">✕</button>
+        ` : ''}
+      </div>
+    `;
+
+    // Click to play
+    item.addEventListener('click', (e) => {
+      if (e.target.closest('[data-edit]') || e.target.closest('[data-delete]')) return;
+      startPuzzle(p.id);
+    });
+
+    // Edit button
+    const editBtn = item.querySelector('[data-edit]');
+    if (editBtn) {
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openSetup(p.id);
+      });
+    }
+
+    // Delete button
+    const delBtn = item.querySelector('[data-delete]');
+    if (delBtn) {
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (puzzles.length <= 1) { alert('You need at least one puzzle.'); return; }
+        if (confirm(`Delete "${p.name}"?`)) {
+          puzzles = puzzles.filter(pp => pp.id !== p.id);
+          savePuzzles();
+          renderPuzzleList();
+        }
+      });
+    }
+
+    list.appendChild(item);
+  });
+}
+
+function startPuzzle(id) {
+  const puzzle = puzzles.find(p => p.id === id);
+  if (!puzzle) return;
+  currentPuzzleId = id;
+  tileImages = { ...(puzzle.tiles || {}) };
+  document.getElementById('game-title-display').textContent = puzzle.name;
+  showScreen('game-screen');
+
+  // Build grid background cells
+  const gridBg = document.getElementById('grid-bg');
+  gridBg.innerHTML = '';
+  for (let i = 0; i < 16; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'grid-cell-bg';
+    gridBg.appendChild(cell);
+  }
+
+  startGame();
+}
+
+// ═══════════════════════════════════════════
+//  SETUP SCREEN (ADMIN)
+// ═══════════════════════════════════════════
+let setupTileImages = {};
+
+function openSetup(puzzleId) {
+  editingPuzzleId = puzzleId || null;
+  const puzzle = puzzleId ? puzzles.find(p => p.id === puzzleId) : null;
+
+  document.getElementById('setup-title').textContent = puzzle ? `EDIT — ${puzzle.name.toUpperCase()}` : 'NEW PUZZLE';
+  document.getElementById('puzzle-name-input').value = puzzle ? puzzle.name : '';
+  setupTileImages = puzzle ? { ...(puzzle.tiles || {}) } : {};
+
+  buildSetupGrid();
+  showScreen('setup-screen');
+}
+
+function buildSetupGrid() {
+  const grid = document.getElementById('tile-config-grid');
+  grid.innerHTML = '';
+
+  TILE_VALUES.forEach(val => {
+    const hasImg = !!setupTileImages[val];
+    const div = document.createElement('div');
+    div.className = 'tile-config' + (hasImg ? ' has-image' : '');
+    div.id = 'config-' + val;
+    div.innerHTML = `
+      <div class="tile-label">${val}</div>
+      <div class="tile-preview ${hasImg ? '' : 'empty'}" id="preview-${val}">
+        ${hasImg ? `<img src="${setupTileImages[val]}">` : ''}
+      </div>
+      <input class="tile-url-input" id="url-${val}" type="text" placeholder="AJ4/Fire Red/Fire Red.png"
+        value="${hasImg && !setupTileImages[val].startsWith('data:') ? setupTileImages[val].replace('../Shoes/', '').replace(/%20/g, ' ') : ''}">
+      <label class="file-upload-btn">
+        UPLOAD
+        <input type="file" accept="image/*" style="display:none" data-val="${val}">
+      </label>
+      <button class="clear-btn" data-val="${val}">Clear</button>
+    `;
+    grid.appendChild(div);
+  });
+
+  // URL input listeners
+  grid.querySelectorAll('.tile-url-input').forEach(input => {
+    const val = parseInt(input.id.replace('url-', ''));
+    input.addEventListener('change', () => {
+      const raw = input.value.trim();
+      if (raw) {
+        // Auto-prefix ../Shoes/ if not already a full URL or data URI
+        let url = raw;
+        if (!url.startsWith('http') && !url.startsWith('data:') && !url.startsWith('../')) {
+          url = '../Shoes/' + url;
+        }
+        // Encode spaces
+        url = url.replace(/ /g, '%20');
+        setupTileImages[val] = url;
+        updatePreview(val);
+      }
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { input.blur(); input.dispatchEvent(new Event('change')); }
+    });
+  });
+
+  // File upload listeners
+  grid.querySelectorAll('input[type="file"]').forEach(input => {
+    input.addEventListener('change', e => {
+      const val = parseInt(input.dataset.val);
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        setupTileImages[val] = ev.target.result;
+        document.getElementById('url-' + val).value = '';
+        updatePreview(val);
+      };
+      reader.readAsDataURL(file);
+    });
+  });
+
+  // Clear buttons
+  grid.querySelectorAll('.clear-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = parseInt(btn.dataset.val);
+      delete setupTileImages[val];
+      document.getElementById('url-' + val).value = '';
+      updatePreview(val);
+    });
+  });
+}
+
+function updatePreview(val) {
+  const preview = document.getElementById('preview-' + val);
+  const config = document.getElementById('config-' + val);
+  if (setupTileImages[val]) {
+    preview.className = 'tile-preview';
+    preview.innerHTML = `<img src="${setupTileImages[val]}">`;
+    config.classList.add('has-image');
+  } else {
+    preview.className = 'tile-preview empty';
+    preview.innerHTML = '';
+    config.classList.remove('has-image');
+  }
+}
+
+function savePuzzle() {
+  const name = document.getElementById('puzzle-name-input').value.trim();
+  if (!name) { alert('Please enter a puzzle name.'); return; }
+
+  if (editingPuzzleId) {
+    // Update existing
+    const idx = puzzles.findIndex(p => p.id === editingPuzzleId);
+    if (idx >= 0) {
+      puzzles[idx].name = name;
+      puzzles[idx].tiles = { ...setupTileImages };
+    }
+  } else {
+    // Create new
+    puzzles.push({ id: Date.now(), name, tiles: { ...setupTileImages } });
+  }
+
+  savePuzzles();
+  renderPuzzleList();
+  showScreen('select-screen');
+}
+
+// ═══════════════════════════════════════════
+//  BACKUP / RESTORE
+// ═══════════════════════════════════════════
+function backupPuzzles() {
+  const data = { puzzles, exportedAt: new Date().toISOString() };
+  const json = JSON.stringify(data, null, 2);
+
+  fetch('/games/backup-puzzles', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: json,
+  })
+  .then(r => r.json())
+  .then(result => {
+    if (result.success) showStatus('Backup saved!', 'success');
+    else showStatus(result.error || 'Backup failed.', 'error');
+  })
+  .catch(() => {
+    // Fallback to browser download
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `puzzle-data-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
+function restorePuzzles(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.puzzles && Array.isArray(data.puzzles)) {
+        puzzles = data.puzzles;
+        savePuzzles();
+        renderPuzzleList();
+        showStatus('Puzzles restored!', 'success');
+      } else {
+        showStatus('Invalid puzzle file.', 'error');
+      }
+    } catch {
+      showStatus('Invalid JSON file.', 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function showStatus(msg, type) {
+  // Show on select screen
+  const existing = document.querySelector('.status-msg');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.className = `status-msg ${type}`;
+  div.textContent = msg;
+  document.getElementById('puzzle-list').before(div);
+  setTimeout(() => div.remove(), 4000);
+}
+
+// ═══════════════════════════════════════════
+//  2048 GAME ENGINE
+// ═══════════════════════════════════════════
+const SIZE = 4;
+const ANIM_DURATION = 150;
+let tiles = [];
+let tileIdCounter = 0;
+let score = 0, best = 0, gameOver = false, animating = false;
+
+function cellOccupied(r, c) {
+  return tiles.find(t => t.row === r && t.col === c);
+}
+
+function addRandomTile() {
+  const empty = [];
+  for (let r = 0; r < SIZE; r++)
+    for (let c = 0; c < SIZE; c++)
+      if (!cellOccupied(r, c)) empty.push([r, c]);
+  if (empty.length === 0) return null;
+  const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+  const t = { id: tileIdCounter++, value: Math.random() < 0.9 ? 2 : 4, row: r, col: c, isNew: true };
+  tiles.push(t);
+  return t;
+}
+
+function dirVec(dir) {
+  return { up: {r:-1,c:0}, down: {r:1,c:0}, left: {r:0,c:-1}, right: {r:0,c:1} }[dir];
+}
+
+function buildTraversals(dir) {
+  const rows = [...Array(SIZE).keys()];
+  const cols = [...Array(SIZE).keys()];
+  if (dir === 'down') rows.reverse();
+  if (dir === 'right') cols.reverse();
+  return { rows, cols };
+}
+
+function move(dir) {
+  if (gameOver || animating) return;
+
+  const vec = dirVec(dir);
+  const { rows, cols } = buildTraversals(dir);
+  let moved = false;
+  const mergedIds = new Set();
+  const mergeTargets = [];
+
+  const grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+  tiles.forEach(t => { grid[t.row][t.col] = t; });
+
+  rows.forEach(r => {
+    cols.forEach(c => {
+      const tile = grid[r][c];
+      if (!tile) return;
+
+      let nr = r, nc = c;
+      while (true) {
+        const tr = nr + vec.r, tc = nc + vec.c;
+        if (tr < 0 || tr >= SIZE || tc < 0 || tc >= SIZE) break;
+        const blocker = grid[tr][tc];
+        if (!blocker) {
+          nr = tr; nc = tc;
+        } else if (blocker.value === tile.value && !mergedIds.has(blocker.id)) {
+          nr = tr; nc = tc;
+          break;
+        } else {
+          break;
+        }
+      }
+
+      if (nr !== r || nc !== c) {
+        moved = true;
+        grid[r][c] = null;
+        const target = grid[nr][nc];
+        if (target && target.value === tile.value) {
+          target.value *= 2;
+          score += target.value;
+          mergedIds.add(target.id);
+          mergeTargets.push(target);
+          tile.row = nr;
+          tile.col = nc;
+          tile._removeAfterAnim = true;
+        } else {
+          tile.row = nr;
+          tile.col = nc;
+          grid[nr][nc] = tile;
+        }
+      }
+    });
+  });
+
+  if (!moved) return;
+
+  if (best < score) best = score;
+  animating = true;
+
+  renderPositions();
+
+  setTimeout(() => {
+    tiles = tiles.filter(t => !t._removeAfterAnim);
+    mergeTargets.forEach(t => { t.isMerged = true; });
+    addRandomTile();
+    renderFull();
+    animating = false;
+
+    if (checkGameOver()) {
+      gameOver = true;
+      setTimeout(showGameOver, 400);
+    }
+  }, ANIM_DURATION + 20);
+}
+
+function checkGameOver() {
+  if (tiles.length < SIZE * SIZE) return false;
+  for (const t of tiles) {
+    const neighbors = [
+      tiles.find(o => o.row === t.row && o.col === t.col + 1),
+      tiles.find(o => o.row === t.row + 1 && o.col === t.col)
+    ];
+    for (const n of neighbors) {
+      if (n && n.value === t.value) return false;
+    }
+  }
+  return true;
+}
+
+// ═══════════════════════════════════════════
+//  RENDERING
+// ═══════════════════════════════════════════
+let tileSize, gapSize;
+
+function calcSizes() {
+  const wrapper = document.getElementById('grid-wrapper');
+  const w = wrapper.clientWidth;
+  gapSize = w > 400 ? 8 : 6;
+  tileSize = (w - gapSize * 2 - gapSize * 3) / 4;
+}
+
+function tilePos(r, c) {
+  return {
+    left: gapSize + c * (tileSize + gapSize),
+    top: gapSize + r * (tileSize + gapSize)
+  };
+}
+
+function createTileEl(t) {
+  const pos = tilePos(t.row, t.col);
+  const el = document.createElement('div');
+  el.className = 'tile';
+  el.dataset.value = t.value;
+  el.dataset.tileId = t.id;
+  el.style.width = tileSize + 'px';
+  el.style.height = tileSize + 'px';
+  el.style.left = pos.left + 'px';
+  el.style.top = pos.top + 'px';
+
+  if (tileImages[t.value]) {
+    const bg = document.createElement('div');
+    bg.className = 'tile-bg-img';
+    bg.style.backgroundImage = `url(${tileImages[t.value]})`;
+    el.appendChild(bg);
+  }
+
+  const num = document.createElement('div');
+  num.className = 'tile-number';
+  if (tileSize < 80) num.style.fontSize = '16px';
+  num.textContent = t.value;
+  el.appendChild(num);
+
+  if (t.isNew) { el.classList.add('tile-new'); t.isNew = false; }
+  if (t.isMerged) { el.classList.add('tile-merged'); t.isMerged = false; }
+
+  return el;
+}
+
+function renderPositions() {
+  calcSizes();
+  const layer = document.getElementById('tile-layer');
+
+  tiles.forEach(t => {
+    let el = layer.querySelector(`[data-tile-id="${t.id}"]`);
+    if (!el) {
+      el = createTileEl(t);
+      layer.appendChild(el);
+    }
+    const pos = tilePos(t.row, t.col);
+    el.style.left = pos.left + 'px';
+    el.style.top = pos.top + 'px';
+    el.style.width = tileSize + 'px';
+    el.style.height = tileSize + 'px';
+  });
+
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('best-display').textContent = best;
+}
+
+function renderFull() {
+  calcSizes();
+  const layer = document.getElementById('tile-layer');
+  layer.innerHTML = '';
+  tiles.forEach(t => { layer.appendChild(createTileEl(t)); });
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('best-display').textContent = best;
+}
+
+function showGameOver() {
+  document.getElementById('final-score').textContent = score;
+  document.getElementById('game-over').classList.add('show');
+}
+
+function startGame() {
+  tiles = [];
+  tileIdCounter = 0;
+  score = 0;
+  gameOver = false;
+  animating = false;
+  document.getElementById('game-over').classList.remove('show');
+  addRandomTile();
+  addRandomTile();
+  renderFull();
+}
+
+// ═══════════════════════════════════════════
+//  INPUT HANDLING
+// ═══════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (document.getElementById('game-screen').classList.contains('active')) {
+    const map = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
+    if (map[e.key]) { e.preventDefault(); move(map[e.key]); }
+  }
+});
+
+let touchStartX, touchStartY;
+document.addEventListener('touchstart', e => {
+  if (!document.getElementById('game-screen').classList.contains('active')) return;
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchend', e => {
+  if (!document.getElementById('game-screen').classList.contains('active')) return;
+  if (!touchStartX) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  const absDx = Math.abs(dx), absDy = Math.abs(dy);
+  if (Math.max(absDx, absDy) < 30) return;
+  if (absDx > absDy) move(dx > 0 ? 'right' : 'left');
+  else move(dy > 0 ? 'down' : 'up');
+  touchStartX = touchStartY = null;
+}, { passive: true });
+
+// ═══════════════════════════════════════════
+//  EVENT LISTENERS
+// ═══════════════════════════════════════════
+document.getElementById('create-puzzle-btn').addEventListener('click', () => openSetup(null));
+document.getElementById('setup-cancel-btn').addEventListener('click', () => { showScreen('select-screen'); });
+document.getElementById('setup-cancel-btn-2').addEventListener('click', () => { showScreen('select-screen'); });
+document.getElementById('save-puzzle-btn').addEventListener('click', savePuzzle);
+document.getElementById('new-game-btn').addEventListener('click', startGame);
+document.getElementById('retry-btn').addEventListener('click', startGame);
+document.getElementById('back-to-select-btn').addEventListener('click', () => { showScreen('select-screen'); renderPuzzleList(); });
+document.getElementById('edit-puzzle-btn').addEventListener('click', () => { if (currentPuzzleId) openSetup(currentPuzzleId); });
+document.getElementById('backup-btn').addEventListener('click', backupPuzzles);
+document.getElementById('restore-btn-trigger').addEventListener('click', () => document.getElementById('restore-file').click());
+document.getElementById('restore-file').addEventListener('change', e => {
+  if (e.target.files[0]) restorePuzzles(e.target.files[0]);
+  e.target.value = '';
+});
+
+window.addEventListener('resize', () => {
+  if (document.getElementById('game-screen').classList.contains('active') && tiles.length) renderFull();
+});
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+loadPuzzles();
+</script>
+</body>
+</html>

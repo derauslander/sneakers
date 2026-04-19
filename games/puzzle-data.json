@@ -1,0 +1,23 @@
+{
+  "puzzles": [
+    {
+      "id": 1776615138007,
+      "name": "Air Jordan 4 (Original Colorways)",
+      "tiles": {
+        "2": "../Shoes/AJ4/Military%20Blue/Military%20Blue.png",
+        "4": "../Shoes/AJ4/White%20Cement/White%20Cement.png",
+        "8": "../Shoes/AJ4/Black%20Cement/Black%20Cement.png",
+        "16": "../Shoes/AJ4/Fire%20Red/Fire%20Red.png",
+        "32": "../Shoes/AJ4/Military%20Blue/Military%20Blue_hover2.png",
+        "64": "../Shoes/AJ4/White%20Cement/White%20Cement_hover2.png",
+        "128": "../Shoes/AJ4/Black%20Cement/Black%20Cement_hover2.png",
+        "256": "../Shoes/AJ4/Fire%20Red/Fire%20Red_hover2.png",
+        "512": "../Shoes/AJ4/Military%20Blue/Military%20Blue_hover.png",
+        "1024": "../Shoes/AJ4/White%20Cement/White%20Cement_hover.png",
+        "2048": "../Shoes/AJ4/Black%20Cement/Black%20Cement_hover.png",
+        "4096": "../Shoes/AJ4/Fire%20Red/Fire%20Red_hover.png"
+      }
+    }
+  ],
+  "exportedAt": "2026-04-19T16:15:28.411Z"
+}

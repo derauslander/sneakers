@@ -886,6 +886,126 @@
       );
     }
 
+    function CollectionGrowthChart({ points, dark, T, isMobilePublic }) {
+      const [selected, setSelected] = useState(null);
+      const containerRef = useRef(null);
+
+      const steps = points.map((p, i) => ({ ...p, count: i + 1 }));
+
+      const W = 580, H = 280;
+      const pad = { top: 20, right: 20, bottom: 50, left: 40 };
+      const chartW = W - pad.left - pad.right;
+      const chartH = H - pad.top - pad.bottom;
+
+      const t0 = new Date(steps[0].date + "T00:00:00").getTime();
+      const t1 = new Date(steps[steps.length - 1].date + "T00:00:00").getTime();
+      const tRange = t1 - t0 || 1;
+      const x = (dateStr) => pad.left + ((new Date(dateStr + "T00:00:00").getTime() - t0) / tRange) * chartW;
+      const y = (count) => pad.top + chartH - (count / steps[steps.length - 1].count) * chartH;
+
+      let path = `M ${x(steps[0].date)} ${y(steps[0].count)}`;
+      for (let i = 1; i < steps.length; i++) {
+        path += ` L ${x(steps[i].date)} ${y(steps[i - 1].count)}`;
+        path += ` L ${x(steps[i].date)} ${y(steps[i].count)}`;
+      }
+
+      const startYear = new Date(steps[0].date + "T00:00:00").getFullYear();
+      const endYear = new Date(steps[steps.length - 1].date + "T00:00:00").getFullYear();
+      const yearLabels = [];
+      for (let yr = startYear; yr <= endYear; yr++) {
+        const xPos = x(`${yr}-01-01`);
+        if (xPos >= pad.left && xPos <= W - pad.right) yearLabels.push({ year: yr, x: xPos });
+      }
+
+      const maxCount = steps[steps.length - 1].count;
+      const yStep = maxCount <= 10 ? 1 : maxCount <= 20 ? 5 : 10;
+      const yGridLines = [];
+      for (let v = yStep; v <= maxCount; v += yStep) yGridLines.push(v);
+
+      const lineColor = "#e63946";
+      const dotColor = "#e63946";
+      const gridColor = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+      const textColor = T.text5;
+
+      const handleDotClick = (e, i) => {
+        e.stopPropagation();
+        setSelected(selected === i ? null : i);
+      };
+
+      // Compute tooltip position as percentage of SVG for responsive positioning
+      const tooltipFor = (i) => {
+        const s = steps[i];
+        const dotX = x(s.date);
+        const dotY = y(s.count);
+        const pctX = (dotX / W) * 100;
+        const pctY = (dotY / H) * 100;
+        // Flip tooltip left if dot is in the right 30% of chart
+        const flipX = pctX > 70;
+        // Flip tooltip below if dot is in the top 30% of chart
+        const flipY = pctY < 30;
+        return { s, pctX, pctY, flipX, flipY };
+      };
+
+      return (
+        <div style={{ marginTop:"48px" }}>
+          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"24px" }}>COLLECTION GROWTH</div>
+          <div ref={containerRef} style={{ overflowX:"auto", position:"relative" }} onClick={() => setSelected(null)}>
+            <svg viewBox={`0 0 ${W} ${H}`} style={{ width:"100%", maxWidth:`${W}px`, height:"auto", display:"block" }}>
+              {yGridLines.map(v => (
+                <g key={`yg-${v}`}>
+                  <line x1={pad.left} y1={y(v)} x2={W - pad.right} y2={y(v)} stroke={gridColor} strokeWidth="1" />
+                  <text x={pad.left - 8} y={y(v) + 3} textAnchor="end" fontSize="9" fill={textColor} fontFamily="'Aptos','Segoe UI',sans-serif">{v}</text>
+                </g>
+              ))}
+              {yearLabels.map(yl => (
+                <g key={`xl-${yl.year}`}>
+                  <line x1={yl.x} y1={pad.top} x2={yl.x} y2={H - pad.bottom + 8} stroke={gridColor} strokeWidth="1" />
+                  <text x={yl.x} y={H - pad.bottom + 24} textAnchor="middle" fontSize="10" fill={textColor} fontFamily="'Aptos','Segoe UI',sans-serif">{yl.year}</text>
+                </g>
+              ))}
+              <path d={path} fill="none" stroke={lineColor} strokeWidth="2" />
+              {steps.map((s, i) => (
+                <circle key={i} cx={x(s.date)} cy={y(s.count)} r={selected === i ? 5 : 3.5} fill={selected === i ? "#fff" : dotColor}
+                  stroke={selected === i ? dotColor : "none"} strokeWidth={selected === i ? 2 : 0}
+                  style={{ cursor:"pointer", transition:"r 0.15s" }}
+                  onClick={e => handleDotClick(e, i)} />
+              ))}
+              <line x1={pad.left} y1={pad.top} x2={pad.left} y2={H - pad.bottom} stroke={textColor} strokeWidth="1" />
+              <line x1={pad.left} y1={H - pad.bottom} x2={W - pad.right} y2={H - pad.bottom} stroke={textColor} strokeWidth="1" />
+            </svg>
+            {/* Tooltip card */}
+            {selected !== null && (() => {
+              const { s, pctX, pctY, flipX, flipY } = tooltipFor(selected);
+              return (
+                <div onClick={e => e.stopPropagation()} style={{
+                  position:"absolute",
+                  left: flipX ? undefined : `${pctX}%`,
+                  right: flipX ? `${100 - pctX}%` : undefined,
+                  top: flipY ? `${pctY}%` : undefined,
+                  bottom: flipY ? undefined : `${100 - pctY}%`,
+                  marginLeft: flipX ? undefined : "8px",
+                  marginRight: flipX ? "8px" : undefined,
+                  marginTop: flipY ? "8px" : undefined,
+                  marginBottom: flipY ? undefined : "8px",
+                  background: dark ? "rgba(30,30,30,0.95)" : "rgba(255,255,255,0.95)",
+                  border: `1px solid ${dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"}`,
+                  padding:"8px 12px",
+                  pointerEvents:"auto",
+                  whiteSpace:"nowrap",
+                  zIndex:5,
+                }}>
+                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginBottom:"4px" }}>#{s.count}</div>
+                  <div style={{ fontSize:"12px", fontWeight:"bold", color: T.text, marginBottom:"2px" }}>{s.shoe}</div>
+                  <div style={{ fontSize:"11px", color: T.text3 }}>{s.colorway}</div>
+                  <div style={{ fontSize:"10px", color: T.text5, marginTop:"4px" }}>{new Date(s.date + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}</div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      );
+    }
+
     function MetaEditForm({ editingMeta, metaForm, setMetaForm, setColorwayMeta, setEditingMeta, tierMeta, setTierMeta, setGlowMeta, glowMeta, setImages, images, handleImageUpload, setRetiringMeta, setRetireForm, IS, CT, T, dark, isWishlist = false, colorwayOwned = {}, setColorwayOwned = null }) {
       const key = `${editingMeta.shoeId}_${editingMeta.colorway}`;
       const deleteParams = (type) => `/delete?key=${encodeURIComponent(key)}&type=${type}&shortName=${encodeURIComponent(editingMeta.shortName || "")}&colorway=${encodeURIComponent(editingMeta.colorway)}`;
@@ -1165,6 +1285,8 @@
 
       const [inventory,    setInventory]    = useState(() => ADMIN_MODE ? load("vault_inventory", []) : []);
       const importRef = useRef();
+      const eggRef = useRef(0);
+      const eggTimerRef = useRef(null);
       const [importMsg, setImportMsg] = useState(null);
       const [wearLog,        setWearLog]        = useState(() => ADMIN_MODE ? load("vault_wearlog_v3", {}) : {});
       const [images,         setImages]         = useState(() => ADMIN_MODE ? load("vault_images", {}) : {});
@@ -3215,7 +3337,15 @@
             {/* ── ABOUT ── */}
             {view === "about" && (
               <div style={{ maxWidth:"640px", margin:"0 auto", padding:"16px 0" }}>
-                <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"32px" }}>ABOUT THE VAULT</div>
+                <div onClick={() => {
+                  eggRef.current++;
+                  clearTimeout(eggTimerRef.current);
+                  eggTimerRef.current = setTimeout(() => { eggRef.current = 0; }, 2000);
+                  if (eggRef.current >= 5) {
+                    eggRef.current = 0;
+                    window.location.href = ADMIN_MODE ? "games/2048.html" : "games/";
+                  }
+                }} style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"32px", cursor:"default", userSelect:"none" }}>ABOUT THE VAULT</div>
                 <p style={{ fontSize:"15px", color:T.text2, lineHeight:"2", marginBottom:"24px", fontStyle:"italic" }}>
                   The first time I saw the Air Jordan 4 sitting in the window of my local shoe store, I was hooked. Every trip to the mall meant one thing: making my way to Foot Locker and staring at the shoes worn by my favorite athletes — Michael Jordan, Andre Agassi, and Bo Jackson. I'd stand there daydreaming about the day I could own all of them.
                 </p>
@@ -3255,89 +3385,7 @@
                   });
                   if (points.length < 2) return null;
                   points.sort((a, b) => a.date < b.date ? -1 : 1);
-
-                  // Build cumulative staircase
-                  const steps = points.map((p, i) => ({ ...p, count: i + 1 }));
-
-                  // Chart dimensions
-                  const W = 580, H = 280;
-                  const pad = { top: 20, right: 20, bottom: 50, left: 40 };
-                  const cw = W - pad.left - pad.right;
-                  const ch = H - pad.top - pad.bottom;
-
-                  // Time scale
-                  const t0 = new Date(steps[0].date + "T00:00:00").getTime();
-                  const t1 = new Date(steps[steps.length - 1].date + "T00:00:00").getTime();
-                  const tRange = t1 - t0 || 1;
-                  const x = (dateStr) => pad.left + ((new Date(dateStr + "T00:00:00").getTime() - t0) / tRange) * cw;
-                  const y = (count) => pad.top + ch - (count / steps[steps.length - 1].count) * ch;
-
-                  // Build staircase path
-                  let path = `M ${x(steps[0].date)} ${y(steps[0].count)}`;
-                  for (let i = 1; i < steps.length; i++) {
-                    // Horizontal to new x, then vertical to new y
-                    path += ` L ${x(steps[i].date)} ${y(steps[i - 1].count)}`;
-                    path += ` L ${x(steps[i].date)} ${y(steps[i].count)}`;
-                  }
-
-                  // Year labels for x-axis
-                  const startYear = new Date(steps[0].date + "T00:00:00").getFullYear();
-                  const endYear = new Date(steps[steps.length - 1].date + "T00:00:00").getFullYear();
-                  const yearLabels = [];
-                  for (let yr = startYear; yr <= endYear; yr++) {
-                    const xPos = x(`${yr}-01-01`);
-                    if (xPos >= pad.left && xPos <= W - pad.right) {
-                      yearLabels.push({ year: yr, x: xPos });
-                    }
-                  }
-
-                  // Y-axis grid lines
-                  const maxCount = steps[steps.length - 1].count;
-                  const yStep = maxCount <= 10 ? 1 : maxCount <= 20 ? 5 : 10;
-                  const yGridLines = [];
-                  for (let v = yStep; v <= maxCount; v += yStep) {
-                    yGridLines.push(v);
-                  }
-
-                  const lineColor = "#e63946";
-                  const dotColor = "#e63946";
-                  const gridColor = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
-                  const textColor = T.text5;
-
-                  return (
-                    <div style={{ marginTop:"48px" }}>
-                      <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"24px" }}>COLLECTION GROWTH</div>
-                      <div style={{ overflowX:"auto" }}>
-                        <svg viewBox={`0 0 ${W} ${H}`} style={{ width:"100%", maxWidth:`${W}px`, height:"auto" }}>
-                          {/* Y grid lines */}
-                          {yGridLines.map(v => (
-                            <g key={`yg-${v}`}>
-                              <line x1={pad.left} y1={y(v)} x2={W - pad.right} y2={y(v)} stroke={gridColor} strokeWidth="1" />
-                              <text x={pad.left - 8} y={y(v) + 3} textAnchor="end" fontSize="9" fill={textColor} fontFamily="'Aptos','Segoe UI',sans-serif">{v}</text>
-                            </g>
-                          ))}
-                          {/* X axis year markers */}
-                          {yearLabels.map(yl => (
-                            <g key={`xl-${yl.year}`}>
-                              <line x1={yl.x} y1={pad.top} x2={yl.x} y2={H - pad.bottom + 8} stroke={gridColor} strokeWidth="1" />
-                              <text x={yl.x} y={H - pad.bottom + 24} textAnchor="middle" fontSize="10" fill={textColor} fontFamily="'Aptos','Segoe UI',sans-serif">{yl.year}</text>
-                            </g>
-                          ))}
-                          {/* Staircase line */}
-                          <path d={path} fill="none" stroke={lineColor} strokeWidth="2" />
-                          {/* Dots */}
-                          {steps.map((s, i) => (
-                            <circle key={i} cx={x(s.date)} cy={y(s.count)} r="3" fill={dotColor}>
-                              <title>{`#${s.count} — ${s.shoe} ${s.colorway} (${s.date})`}</title>
-                            </circle>
-                          ))}
-                          {/* Axis lines */}
-                          <line x1={pad.left} y1={pad.top} x2={pad.left} y2={H - pad.bottom} stroke={textColor} strokeWidth="1" />
-                          <line x1={pad.left} y1={H - pad.bottom} x2={W - pad.right} y2={H - pad.bottom} stroke={textColor} strokeWidth="1" />
-                        </svg>
-                      </div>
-                    </div>
-                  );
+                  return <CollectionGrowthChart points={points} dark={dark} T={T} isMobilePublic={isMobilePublic} />;
                 })()}
               </div>
             )}
