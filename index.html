@@ -555,7 +555,7 @@
                           {/* Left column — on-feet photo (desktop) */}
                           {onfootImg && (
                             <div style={{ flex: isMobilePublic ? undefined : "0 0 45%", textAlign:"center", marginBottom: isMobilePublic ? "20px" : 0 }}>
-                              <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"10px" }}>FIRST WEAR</div>
+                              <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"10px" }}>ON FEET</div>
                               <img src={onfootImg} alt="On feet" style={{ width:"100%", maxHeight: isMobilePublic ? "250px" : "38vh", objectFit:"contain" }} />
                             </div>
                           )}
@@ -1000,7 +1000,7 @@
             let onfootInputEl = null;
             return (
               <div style={{ marginBottom:"10px" }}>
-                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#4cc9f0", marginBottom:"6px" }}>👟 ON-FEET PHOTO (FIRST WEAR)</div>
+                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#4cc9f0", marginBottom:"6px" }}>👟 ON-FEET PHOTO</div>
                 <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
                   {onfootVal
                     ? <img src={onfootVal} alt="on feet" style={{ width:"80px", height:"50px", objectFit:"cover", border:"1px solid #4cc9f0" }} />
