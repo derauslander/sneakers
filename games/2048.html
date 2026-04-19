@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
 <title>2048 — The Vault</title>
-<meta property="og:title" content="2048 — The Vault" />
-<meta property="og:description" content="A sneaker-themed 2048 puzzle game from The Vault." />
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg viewBox='0 0 680 680' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='680' height='680' fill='%23000000' rx='80'/%3E%3Ccircle cx='340' cy='340' r='280' fill='none' stroke='%23e63946' stroke-width='24'/%3E%3Ccircle cx='340' cy='340' r='180' fill='none' stroke='%23e63946' stroke-width='16'/%3E%3Ccircle cx='340' cy='340' r='60' fill='%23e63946'/%3E%3Cline x1='340' y1='60' x2='340' y2='160' stroke='%23e63946' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='340' y1='520' x2='340' y2='620' stroke='%23e63946' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='60' y1='340' x2='160' y2='340' stroke='%23e63946' stroke-width='20' stroke-linecap='round'/%3E%3Cline x1='520' y1='340' x2='620' y2='340' stroke='%23e63946' stroke-width='20' stroke-linecap='round'/%3E%3C/svg%3E" />
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -21,8 +19,6 @@ body {
 /* ─── ADMIN FLAG ─── */
 .admin-only { display: none; }
 body.admin .admin-only { display: block; }
-body.admin .admin-only-inline { display: inline-block; }
-body.admin .admin-only-flex { display: flex; }
 
 /* ─── SCREENS ─── */
 .screen { display: none; }
@@ -558,6 +554,52 @@ body.admin .admin-only-flex { display: flex; }
   margin-top: 12px;
 }
 
+/* 2048 checkpoint overlay */
+.checkpoint-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(26,26,26,0.92);
+  z-index: 100;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.checkpoint-overlay.show { display: flex; }
+
+.checkpoint-title {
+  font-size: 13px;
+  letter-spacing: 6px;
+  color: #e63946;
+}
+
+.checkpoint-score-label {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #666;
+}
+
+.checkpoint-score {
+  font-size: 24px;
+  font-weight: bold;
+  color: #f0f0f0;
+}
+
+.checkpoint-prompt {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.checkpoint-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
 .how-to {
   color: #666;
   font-size: 10px;
@@ -640,7 +682,6 @@ body.admin .admin-only-flex { display: flex; }
     <button class="btn-secondary" id="setup-cancel-btn-2">CANCEL</button>
   </div>
 
-  <div id="setup-status"></div>
 </div>
 
 <!-- ════════ GAME SCREEN ════════ -->
@@ -669,6 +710,16 @@ body.admin .admin-only-flex { display: flex; }
       <h2>GAME OVER</h2>
       <div class="final-score" id="final-score">0</div>
       <button id="retry-btn">TRY AGAIN</button>
+    </div>
+    <div class="checkpoint-overlay" id="checkpoint">
+      <div class="checkpoint-title">✦ 2048 ✦</div>
+      <div class="checkpoint-score-label">SCORE</div>
+      <div class="checkpoint-score" id="checkpoint-score">0</div>
+      <div class="checkpoint-prompt">Can you reach 4096?</div>
+      <div class="checkpoint-actions">
+        <button class="btn-primary" id="checkpoint-continue-btn">KEEP GOING</button>
+        <button class="btn-secondary" id="checkpoint-new-btn">NEW GAME</button>
+      </div>
     </div>
   </div>
 
@@ -815,6 +866,13 @@ function startPuzzle(id) {
   currentPuzzleId = id;
   tileImages = { ...(puzzle.tiles || {}) };
   document.getElementById('game-title-display').textContent = puzzle.name;
+
+  // Load best score for this puzzle
+  try {
+    const stored = localStorage.getItem('vault_2048_best_' + id);
+    best = stored ? parseInt(stored) : 0;
+  } catch { best = 0; }
+
   showScreen('game-screen');
 
   // Build grid background cells
@@ -1022,7 +1080,7 @@ const SIZE = 4;
 const ANIM_DURATION = 150;
 let tiles = [];
 let tileIdCounter = 0;
-let score = 0, best = 0, gameOver = false, animating = false;
+let score = 0, best = 0, gameOver = false, animating = false, passed2048 = false;
 
 function cellOccupied(r, c) {
   return tiles.find(t => t.row === r && t.col === c);
@@ -1107,7 +1165,12 @@ function move(dir) {
 
   if (!moved) return;
 
-  if (best < score) best = score;
+  if (best < score) {
+    best = score;
+    if (currentPuzzleId) {
+      try { localStorage.setItem('vault_2048_best_' + currentPuzzleId, best); } catch {}
+    }
+  }
   animating = true;
 
   renderPositions();
@@ -1123,6 +1186,14 @@ function move(dir) {
     if (mergeTargets.some(t => t.value >= 4096)) {
       gameOver = true;
       setTimeout(showWin, 600);
+      return;
+    }
+
+    // Check for 2048 — checkpoint, ask to continue
+    if (!passed2048 && mergeTargets.some(t => t.value >= 2048)) {
+      passed2048 = true;
+      animating = true; // pause input while checkpoint is showing
+      setTimeout(showCheckpoint, 400);
       return;
     }
 
@@ -1231,6 +1302,16 @@ function showGameOver() {
   document.getElementById('game-over').classList.add('show');
 }
 
+function showCheckpoint() {
+  document.getElementById('checkpoint-score').textContent = score;
+  document.getElementById('checkpoint').classList.add('show');
+}
+
+function dismissCheckpoint() {
+  document.getElementById('checkpoint').classList.remove('show');
+  animating = false;
+}
+
 function showWin() {
   document.getElementById('win-score').textContent = score;
   document.getElementById('win-overlay').classList.add('show');
@@ -1242,7 +1323,9 @@ function startGame() {
   score = 0;
   gameOver = false;
   animating = false;
+  passed2048 = false;
   document.getElementById('game-over').classList.remove('show');
+  document.getElementById('checkpoint').classList.remove('show');
   document.getElementById('win-overlay').classList.remove('show');
   addRandomTile();
   addRandomTile();
@@ -1287,6 +1370,8 @@ document.getElementById('setup-cancel-btn-2').addEventListener('click', () => { 
 document.getElementById('save-puzzle-btn').addEventListener('click', savePuzzle);
 document.getElementById('new-game-btn').addEventListener('click', startGame);
 document.getElementById('retry-btn').addEventListener('click', startGame);
+document.getElementById('checkpoint-continue-btn').addEventListener('click', dismissCheckpoint);
+document.getElementById('checkpoint-new-btn').addEventListener('click', startGame);
 document.getElementById('win-new-game-btn').addEventListener('click', startGame);
 document.getElementById('win-puzzles-btn').addEventListener('click', () => { document.getElementById('win-overlay').classList.remove('show'); showScreen('select-screen'); renderPuzzleList(); });
 document.getElementById('back-to-select-btn').addEventListener('click', () => { showScreen('select-screen'); renderPuzzleList(); });

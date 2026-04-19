@@ -35,7 +35,25 @@
         "2048": "../Shoes/ATC2/Black%20Lava/Black%20Lava_hover.png",
         "4096": "../Shoes/ATC2/Hot%20Lava/Hot%20Lava_hover.png"
       }
+    },
+    {
+      "id": 1776631505255,
+      "name": "Air Jordan (1-12)",
+      "tiles": {
+        "2": "../Shoes/AJ1/Royal%20Reimagined/Royal%20Reimagined.png",
+        "4": "../Shoes/AJ2/Black%20Cement/Black%20Cement.png",
+        "8": "../Shoes/AJ3/Black%20Cement/Black%20Cement.png",
+        "16": "../Shoes/AJ4/Fire%20Red/Fire%20Red.png",
+        "32": "../Shoes/AJ5/Grape/Grape.png",
+        "64": "../Shoes/AJ6/Infrared/Infrared.png",
+        "128": "../Shoes/AJ7/Cardinal/Cardinal.png",
+        "256": "../Shoes/AJ8/Playoffs/Playoffs.png",
+        "512": "../Shoes/AJ9/Olive/Olive.png",
+        "1024": "../Shoes/AJ10/Steel/Steel.png",
+        "2048": "../Shoes/AJ11/Space%20Jam/Space%20Jam.png",
+        "4096": "../Shoes/AJ12/Flu%20Game/Flu%20Game.png"
+      }
     }
   ],
-  "exportedAt": "2026-04-19T17:48:16.087Z"
+  "exportedAt": "2026-04-19T20:45:09.260Z"
 }
