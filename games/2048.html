@@ -1083,7 +1083,7 @@ let tileIdCounter = 0;
 let score = 0, best = 0, gameOver = false, animating = false, passed2048 = false;
 
 function cellOccupied(r, c) {
-  return tiles.find(t => t.row === r && t.col === c);
+  return tiles.some(t => t.row === r && t.col === c);
 }
 
 function addRandomTile() {

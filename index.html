@@ -380,8 +380,7 @@
         setIceGlow(false);
         setDiamondShatter("hidden");
         setShowStats(false);
-      };      const handleMouseEnter = () => {};
-      const handleMouseLeave = () => {};
+      };
       const handleClick = (e) => { e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
 
       useEffect(() => {
@@ -637,8 +636,6 @@
         setHovered(false);
         setShowHover(false);
       };
-      const handleMouseEnter = () => {};
-      const handleMouseLeave = () => {};
       const handleClick = (e) => { if (!img) return; e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
 
       useEffect(() => {
@@ -756,8 +753,6 @@
         clearTimeout(ghostRef.current);
         setHovered(false); setShowHover(false); setGhosted(false);
       };
-      const handleMouseEnter = () => {};
-      const handleMouseLeave = () => {};
       const handleClick = (e) => { if (!entry.img) return; e.stopPropagation(); hovered ? triggerClose() : triggerOpen(); };
 
       useEffect(() => {
