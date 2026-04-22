@@ -2099,9 +2099,11 @@
                     bannerItems.push({ type:"anniversary", label:"✦ PURCHASE ANNIVERSARY ✦", shoe: a.shoe, colorway: a.colorway, img: aImg, subtitle:`${a.years} ${a.years === 1 ? "year" : "years"} ago today`, purchaseDate: aMeta.purchaseDate || null });
                   });
 
-                  // 7. On This Day
+                  // 7. On This Day (skip colorways that already have a purchase anniversary today)
+                  const anniversaryKeys = new Set(anniversaries.map(a => `${a.shoe.id}_${a.colorway}`));
                   inventory.forEach(shoe => {
                     (colorways[shoe.shortName] || []).filter(cw => isColorwayOwned(shoe.id, cw)).forEach(cw => {
+                      if (anniversaryKeys.has(`${shoe.id}_${cw}`)) return;
                       const wears = (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
                       if (wears.length === 0) return;
                       const firstWear = [...wears].sort((a, b) => a.date < b.date ? -1 : 1)[0].date;
