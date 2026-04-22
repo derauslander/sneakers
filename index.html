@@ -2304,13 +2304,13 @@
 
                         // ── News slides (sale, gotem, gotemq, anniversary, onthisday, spotlight) ──
                         return (
-                          <div key={`${item.type}-${i}`} style={{ display:"flex", alignItems:"center", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none" }}>
-                            {item.img && <img src={item.img} alt={item.colorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0 }} />}
-                            <div>
-                              <div style={{ fontSize:"9px", letterSpacing:"4px", color: item.type === "sale" || item.type === "gotem" || item.type === "spotlight" ? "#e6b800" : "#e63946", marginBottom:"4px" }}>{item.label}</div>
-                              <div style={{ fontSize:"15px", fontWeight:"bold", color: T.text }}>{item.shoe.name} — {item.colorway}</div>
+                          <div key={`${item.type}-${i}`} style={{ display:"flex", alignItems:"center", gap: isMobilePublic ? "12px" : "16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none" }}>
+                            {item.img && <img src={item.img} alt={item.colorway} style={{ width: isMobilePublic ? "88px" : "120px", height: isMobilePublic ? "55px" : "75px", objectFit:"cover", flexShrink:0 }} />}
+                            <div style={{ minWidth:0 }}>
+                              <div style={{ fontSize:"9px", letterSpacing: isMobilePublic ? "3px" : "4px", color: item.type === "sale" || item.type === "gotem" || item.type === "spotlight" ? "#e6b800" : "#e63946", marginBottom:"4px" }}>{item.label}</div>
+                              <div style={{ fontSize: isMobilePublic ? "13px" : "15px", fontWeight:"bold", color: T.text }}>{item.shoe.name} — {item.colorway}</div>
                               <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{item.subtitle}</div>
-                              {item.type === "anniversary" && item.purchaseDate && (
+                              {item.type === "anniversary" && item.purchaseDate && !isMobilePublic && (
                                 <div onClick={e => { e.stopPropagation(); setTimeTravelDate(item.purchaseDate); setView("collection"); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginTop:"6px", cursor:"pointer", textDecoration:"underline", opacity:0.8 }}>
                                   See the vault on this day →
                                 </div>
