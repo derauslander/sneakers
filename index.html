@@ -60,6 +60,10 @@
       from { transform: translateY(100%); }
       to   { transform: translateY(0); }
     }
+    @keyframes storyFadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body>
@@ -1369,11 +1373,26 @@
       const [top10Filter, setTop10Filter] = useState("worn");
       const [timeTravelDate, setTimeTravelDate] = useState(null); // null = present, string = past date
       const [timeTravelPicker, setTimeTravelPicker] = useState(false); // show date picker
+      const [storySlideshow, setStorySlideshow] = useState(null); // null = off, { index, entries } = active
 
       useEffect(() => {
         const interval = setInterval(() => setBannerIdx(i => i + 1), 6000);
         return () => clearInterval(interval);
       }, []);
+
+      // Story slideshow keyboard navigation
+      useEffect(() => {
+        if (!storySlideshow) return;
+        const handler = (e) => {
+          if (e.key === "Escape") setStorySlideshow(null);
+          else if (e.key === "ArrowRight" && storySlideshow.index < storySlideshow.entries.length - 1)
+            setStorySlideshow(s => ({ ...s, index: s.index + 1 }));
+          else if (e.key === "ArrowLeft" && storySlideshow.index > 0)
+            setStorySlideshow(s => ({ ...s, index: s.index - 1 }));
+        };
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
+      }, [storySlideshow]);
 
       // Apply public data once loaded
       useEffect(() => {
@@ -2475,6 +2494,10 @@
 
                 {/* Shoe Cards */}
                 {(() => {
+                  // Check if any OG colorways exist
+                  const hasOG = inventory.some(shoe => (colorways[shoe.shortName] || []).some(cw =>
+                    isColorwayOwned(shoe.id, cw) && (colorwayMeta[`${shoe.id}_${cw}`] || {}).ogYear
+                  ));
                   // Check if any on-ice colorways exist
                   const hasOnIce = inventory.some(shoe => (colorways[shoe.shortName] || []).some(cw =>
                     isColorwayOwned(shoe.id, cw) &&
@@ -2495,6 +2518,10 @@
                     if (collectionFilter === "gold") return t === "gold";
                     if (collectionFilter === "silver") return t === "silver";
                     if (collectionFilter === "bronze") return t === "bronze";
+                    if (collectionFilter === "og") {
+                      const meta = colorwayMeta[key] || {};
+                      return !!meta.ogYear;
+                    }
                     if (collectionFilter === "onice") {
                       if (tierExcludedFromRotation(t)) return false;
                       const wears = timeTravelDate
@@ -2504,13 +2531,14 @@
                     }
                     return true;
                   };
-                  const filters = [["all","ALL"],["diamond","DIAMOND"],["platinum","PLATINUM"],["gold","GOLD"],["silver","SILVER"],["bronze","BRONZE"],["onice","ON ICE"]];
+                  const filters = [["all","ALL"],["diamond","DIAMOND"],["platinum","PLATINUM"],["gold","GOLD"],["silver","SILVER"],["bronze","BRONZE"],["og","OG"],["onice","ON ICE"]];
                   const tierDescriptions = {
                     diamond: "The sneakers that 10-year-old me dreamed about",
                     platinum: "Original colorways of my favorite sneakers",
                     gold: "Sneakers I'm glad are in my collection",
                     silver: "Maybe I shouldn't have bought these",
                     bronze: "Beaters",
+                    og: "Owned the original release",
                     onice: "Shoes that haven't been worn yet",
                   };
                   const filterDesc = tierDescriptions[collectionFilter] || null;
@@ -2523,7 +2551,7 @@
                         padding:"8px 12px", fontSize:"10px", letterSpacing:"3px",
                         fontFamily:"'Aptos','Segoe UI',sans-serif", width:"100%",
                       }}>
-                        {filters.filter(([id]) => id !== "onice" || hasOnIce).map(([id, label]) => (
+                        {filters.filter(([id]) => (id !== "onice" || hasOnIce) && (id !== "og" || hasOG)).map(([id, label]) => (
                           <option key={id} value={id}>{label}</option>
                         ))}
                       </select>
@@ -2532,7 +2560,7 @@
                   ) : (
                     <div style={{ marginBottom:"16px" }}>
                       <div style={{ display:"flex", gap:"16px", flexWrap:"wrap", alignItems:"baseline" }}>
-                        {filters.filter(([id]) => id !== "onice" || hasOnIce).map(([id, label]) => (
+                        {filters.filter(([id]) => (id !== "onice" || hasOnIce) && (id !== "og" || hasOG)).map(([id, label]) => (
                           <button key={id} onClick={() => setCollectionFilter(id)} style={{
                             background:"transparent", border:"none", cursor:"pointer",
                             fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
@@ -3374,6 +3402,37 @@
                   </div>
                 ))}
 
+                {/* ── Stories Slideshow Button ── */}
+                {(() => {
+                  const TIER_ORDER = { diamond: 0, platinum: 1, gold: 2, silver: 3, bronze: 4 };
+                  const storyEntries = [];
+                  inventory.forEach(shoe => {
+                    (colorways[shoe.shortName] || []).forEach(cw => {
+                      const key = `${shoe.id}_${cw}`;
+                      if (colorwayOwned[key] === false) return;
+                      const meta = colorwayMeta[key] || {};
+                      if (!meta.story) return;
+                      const tier = tierOf(tierMeta, key);
+                      storyEntries.push({ shoeId: shoe.id, shoe, colorway: cw, key, tier, story: meta.story });
+                    });
+                  });
+                  storyEntries.sort((a, b) => (TIER_ORDER[a.tier] ?? 3) - (TIER_ORDER[b.tier] ?? 3) || a.shoeId - b.shoeId);
+                  if (storyEntries.length === 0) return null;
+                  return (
+                    <div style={{ marginTop:"48px", marginBottom:"0", textAlign:"center" }}>
+                      <button onClick={() => setStorySlideshow({ index: 0, entries: storyEntries })} style={{
+                        background:"transparent", border:"1px solid #e63946", color:"#e63946",
+                        padding:"10px 32px", cursor:"pointer", fontSize:"10px", letterSpacing:"4px",
+                        fontFamily:"'Aptos','Segoe UI',sans-serif", transition:"all 0.3s ease",
+                      }}
+                        onMouseEnter={e => { e.target.style.background = "#e63946"; e.target.style.color = "#fff"; }}
+                        onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.color = "#e63946"; }}
+                      >STORIES</button>
+                      <div style={{ fontSize:"10px", color:T.text5, marginTop:"8px", letterSpacing:"1px" }}>{storyEntries.length} shoes with stories</div>
+                    </div>
+                  );
+                })()}
+
                 {/* ── Collection Growth Timeline ── */}
                 {(() => {
                   // Gather purchase dates for owned colorways
@@ -3430,6 +3489,101 @@
                 </div>
               );
             })()}
+
+            {/* ── STORY SLIDESHOW ── */}
+            {storySlideshow && ReactDOM.createPortal(
+              (() => {
+                const { index, entries } = storySlideshow;
+                const entry = entries[index];
+                const tier = entry.tier;
+                const tierInfo = TIERS[tier] || TIERS.silver;
+                const img = images[entry.key] || null;
+                const hoverImg = images[`${entry.key}_hover`] || null;
+                const goTo = (i) => setStorySlideshow({ ...storySlideshow, index: i });
+                const close = () => setStorySlideshow(null);
+                return (
+                  <div style={{
+                    position:"fixed", top:0, left:0, width:"100vw", height:"100vh",
+                    background:"rgba(0,0,0,0.92)", display:"flex", flexDirection:"column",
+                    alignItems:"center", justifyContent:"center", zIndex:10000,
+                  }}>
+                    {/* Close button */}
+                    <button onClick={close} style={{
+                      position:"absolute", top:"20px", right:"24px", background:"transparent",
+                      border:"none", color:"rgba(255,255,255,0.4)", fontSize:"20px", cursor:"pointer",
+                      fontFamily:"'Aptos','Segoe UI',sans-serif", zIndex:2,
+                    }}>✕</button>
+
+                    {/* Counter */}
+                    <div style={{ position:"absolute", top:"24px", left:"50%", transform:"translateX(-50%)",
+                      fontSize:"10px", letterSpacing:"3px", color:"rgba(255,255,255,0.3)" }}>
+                      {index + 1} / {entries.length}
+                    </div>
+
+                    {/* Main content */}
+                    <div key={entry.key} style={{ display:"flex", flexDirection:"column", alignItems:"center", maxWidth:"700px", padding:"0 24px", animation:"storyFadeIn 0.8s ease-out" }}>
+                      {/* Shoe image */}
+                      {img && (
+                        <div style={{ position:"relative", marginBottom:"24px" }}>
+                          <img src={hoverImg || img} alt={entry.colorway} style={{
+                            maxWidth: isMobilePublic ? "80vw" : "45vw", maxHeight:"35vh", objectFit:"contain", display:"block",
+                            filter: tierInfo.glowRgba
+                              ? `drop-shadow(0 0 25px ${tierInfo.glowRgba}) drop-shadow(0 0 8px rgba(255,255,255,0.3))`
+                              : "drop-shadow(0 0 8px rgba(255,255,255,0.6))",
+                          }} />
+                        </div>
+                      )}
+
+                      {/* Tier label */}
+                      {tierInfo.label && (
+                        <div style={{ fontSize:"11px", letterSpacing:"6px", color: tierInfo.color, marginBottom:"8px" }}>{tierInfo.label}</div>
+                      )}
+
+                      {/* Shoe name */}
+                      <div style={{ fontSize:"15px", fontWeight:"bold", letterSpacing:"2px", color: tierInfo.color || "#fff", marginBottom:"4px" }}>{entry.shoe.name}</div>
+                      <div style={{ fontSize:"12px", letterSpacing:"2px", color: tierInfo.color || "#aaa", marginBottom:"24px" }}>{entry.colorway}</div>
+
+                      {/* Story */}
+                      <div style={{ fontSize:"14px", color:"#ccc", lineHeight:"2.2", textAlign:"center", fontStyle:"italic", maxWidth:"560px" }}>{entry.story}</div>
+                    </div>
+
+                    {/* Navigation */}
+                    <div style={{ position:"absolute", bottom:"32px", display:"flex", gap:"24px", alignItems:"center" }}>
+                      <button onClick={() => goTo(index - 1)} disabled={index === 0} style={{
+                        background:"transparent", border:"1px solid " + (index === 0 ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.3)"),
+                        color: index === 0 ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.6)",
+                        padding:"8px 20px", cursor: index === 0 ? "default" : "pointer", fontSize:"10px", letterSpacing:"3px",
+                        fontFamily:"'Aptos','Segoe UI',sans-serif",
+                      }}>PREV</button>
+                      {index < entries.length - 1 ? (
+                        <button onClick={() => goTo(index + 1)} style={{
+                          background:"transparent", border:"1px solid rgba(255,255,255,0.3)",
+                          color:"rgba(255,255,255,0.6)", padding:"8px 20px", cursor:"pointer", fontSize:"10px", letterSpacing:"3px",
+                          fontFamily:"'Aptos','Segoe UI',sans-serif",
+                        }}>NEXT</button>
+                      ) : (
+                        <button onClick={close} style={{
+                          background:"transparent", border:"1px solid #e63946",
+                          color:"#e63946", padding:"8px 20px", cursor:"pointer", fontSize:"10px", letterSpacing:"3px",
+                          fontFamily:"'Aptos','Segoe UI',sans-serif",
+                        }}>CLOSE</button>
+                      )}
+                    </div>
+
+                    {/* Progress dots */}
+                    <div style={{ position:"absolute", bottom:"16px", display:"flex", gap:"6px" }}>
+                      {entries.map((_, i) => (
+                        <div key={i} onClick={() => goTo(i)} style={{
+                          width:"6px", height:"6px", borderRadius:"50%", cursor:"pointer",
+                          background: i === index ? "#e63946" : "rgba(255,255,255,0.2)",
+                          transition:"background 0.3s ease",
+                        }} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })(),
+            document.body)}
 
           </div>
 
