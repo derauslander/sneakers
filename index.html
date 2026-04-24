@@ -2060,7 +2060,7 @@
 
                   // ── Build unified items in priority order ──
                   const bannerItems = [];
-                  const hasNews = saleAlerts.length > 0 || gotEmCelebrations.length > 0 || gotEmQuestions.length > 0 || anniversaries.length > 0;
+                  const hasNews = isWearingToday || saleAlerts.length > 0 || gotEmCelebrations.length > 0 || gotEmQuestions.length > 0 || anniversaries.length > 0;
 
                   // 1. Sale Alerts
                   saleAlerts.forEach(item => {
@@ -2123,7 +2123,11 @@
                       (colorways[shoe.shortName] || []).filter(cw => isColorwayOwned(shoe.id, cw)).map(cw => ({ shoe, colorway: cw }))
                     ).filter(({ shoe, colorway }) => {
                       const key = `${shoe.id}_${colorway}`;
-                      return key !== upNextKey && key !== lastWornKey;
+                      if (key === upNextKey || key === lastWornKey) return false;
+                      if (tierExcludedFromRotation(tierOf(tierMeta, key))) return false;
+                      const meta = colorwayMeta[key] || {};
+                      if (isNewPickupCheck(meta.purchaseDate)) return false;
+                      return true;
                     });
                     if (allOwned.length > 0) {
                       const dateSeed = todayStr.replace(/-/g, "");
@@ -2411,6 +2415,7 @@
                                       updatePath(oldKey, newKey);
                                       updatePath(`${oldKey}_hover`, `${newKey}_hover`);
                                       updatePath(`${oldKey}_hover2`, `${newKey}_hover2`);
+                                      updatePath(`${oldKey}_onfoot`, `${newKey}_onfoot`);
                                       return n;
                                     });
                                     // Rename directory on disk via server
@@ -2425,6 +2430,8 @@
                                     setColorwayOwned(co => { const n={...co}; if(oldKey in n){n[newKey]=n[oldKey];delete n[oldKey];} return n; });
                                     // Migrate display layout
                                     setDisplayLayout(dl => dl.map(row => row.map(cell => cell.code===shoe.shortName && cell.colorway===cw ? {...cell,colorway:newName} : cell)));
+                                    // Migrate dream layout
+                                    setDreamLayout(dl => dl.map(row => row.map(cell => cell.code===shoe.shortName && cell.colorway===cw ? {...cell,colorway:newName} : cell)));
                                   }
                                 }
                                 setRenamingColorwayIdx(null);

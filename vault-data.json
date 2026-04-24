@@ -508,6 +508,10 @@
       {
         "date": "2024-09-13",
         "colorway": "Hot Lava"
+      },
+      {
+        "date": "2026-04-24",
+        "colorway": "Hot Lava"
       }
     ],
     "16": [
@@ -1028,7 +1032,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "",
+      "story": "Probably my least favorite of the first 14 Jordans.  I remember skipping these when they came out in 1992.  ",
       "saleDate": "",
       "saleTime": "",
       "comfortRating": "",
@@ -1054,7 +1058,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "I had the original release of this sneaker, but in the Playoff colorway.",
+      "story": "I had the original release of this sneaker, but in the Playoff colorway.  My neighbor Tom had them, so he agreed to give them to me if i bought him a pair of foamposites.",
       "saleDate": "",
       "saleTime": "",
       "comfortRating": "",
@@ -1421,8 +1425,8 @@
       "White Cement Reimagined",
       "Black Cement",
       "A Ma Maniere",
-      "Rare Air",
-      "A Ma Maniere WYWS"
+      "A Ma Maniere WYWS",
+      "Rare Air"
     ],
     "AJ4": [
       "Fire Red",
@@ -1917,5 +1921,5 @@
       }
     ]
   ],
-  "exportedAt": "2026-04-18T13:43:45.892Z"
+  "exportedAt": "2026-04-24T10:11:46.815Z"
 }

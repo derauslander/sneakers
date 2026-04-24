@@ -1339,6 +1339,19 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('game-screen').classList.contains('active')) {
     const map = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
     if (map[e.key]) { e.preventDefault(); move(map[e.key]); }
+    // Admin debug: press W to trigger win
+    if (ADMIN_MODE && e.key === 'w') {
+      tiles = [];
+      tileIdCounter = 0;
+      const t = { id: tileIdCounter++, value: 2048, row: 0, col: 0, isNew: false };
+      const t2 = { id: tileIdCounter++, value: 2048, row: 0, col: 1, isNew: false };
+      tiles.push(t, t2);
+      score = 9999;
+      passed2048 = true;
+      gameOver = false;
+      animating = false;
+      renderFull();
+    }
   }
 });
 
