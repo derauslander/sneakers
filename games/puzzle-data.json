@@ -42,8 +42,8 @@
       "tiles": {
         "2": "../Shoes/AJ1/Royal%20Reimagined/Royal%20Reimagined.png",
         "4": "../Shoes/AJ2/Black%20Cement/Black%20Cement.png",
-        "8": "../Shoes/AJ3/Black%20Cement/Black%20Cement.png",
-        "16": "../Shoes/AJ4/Fire%20Red/Fire%20Red.png",
+        "8": "../Shoes/AJ3/White%20Cement%20Reimagined/White%20Cement%20Reimagined.png",
+        "16": "../Shoes/AJ4/Black%20Cement/Black%20Cement.png",
         "32": "../Shoes/AJ5/Grape/Grape.png",
         "64": "../Shoes/AJ6/Infrared/Infrared.png",
         "128": "../Shoes/AJ7/Cardinal/Cardinal.png",
@@ -55,5 +55,5 @@
       }
     }
   ],
-  "exportedAt": "2026-04-19T20:45:09.260Z"
+  "exportedAt": "2026-04-25T14:19:35.240Z"
 }
