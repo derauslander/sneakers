@@ -1374,6 +1374,7 @@
       const [timeTravelDate, setTimeTravelDate] = useState(null); // null = present, string = past date
       const [timeTravelPicker, setTimeTravelPicker] = useState(false); // show date picker
       const [storySlideshow, setStorySlideshow] = useState(null); // null = off, { index, entries } = active
+      const [contextMenu, setContextMenu] = useState(null); // null = off, { x, y, shoeId, colorway, shortName } = active
 
       useEffect(() => {
         const interval = setInterval(() => setBannerIdx(i => i + 1), 6000);
@@ -1393,6 +1394,21 @@
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
       }, [storySlideshow]);
+
+      // Context menu close on click/scroll/escape
+      useEffect(() => {
+        if (!contextMenu) return;
+        const close = () => setContextMenu(null);
+        const escClose = (e) => { if (e.key === "Escape") close(); };
+        window.addEventListener("click", close);
+        window.addEventListener("scroll", close, true);
+        window.addEventListener("keydown", escClose);
+        return () => {
+          window.removeEventListener("click", close);
+          window.removeEventListener("scroll", close, true);
+          window.removeEventListener("keydown", escClose);
+        };
+      }, [contextMenu]);
 
       // Apply public data once loaded
       useEffect(() => {
@@ -2638,7 +2654,10 @@
                               ? (wearLog[shoe.id] || []).filter(e => e.colorway === cw && e.date <= timeTravelDate)
                               : (wearLog[shoe.id] || []).filter(e => e.colorway === cw);
                             return (
-                              <div key={cw}>
+                              <div key={cw} onContextMenu={ADMIN_MODE && !timeTravelDate ? (e) => {
+                                e.preventDefault();
+                                setContextMenu({ x: e.clientX, y: e.clientY, shoeId: shoe.id, colorway: cw, shortName: shoe.shortName, shoeName: shoe.name, shoeCategory: shoe.category });
+                              } : undefined}>
                                 <ImageSlot
                                   img={images[metaKey] || null}
                                   hoverImg={images[`${metaKey}_hover`] || null}
@@ -3579,6 +3598,97 @@
                           transition:"background 0.3s ease",
                         }} />
                       ))}
+                    </div>
+                  </div>
+                );
+              })(),
+            document.body)}
+
+            {/* ── CONTEXT MENU ── */}
+            {ADMIN_MODE && contextMenu && ReactDOM.createPortal(
+              (() => {
+                const { x, y, shoeId, colorway, shortName, shoeName, shoeCategory } = contextMenu;
+                const shoe = inventory.find(s => s.id === shoeId);
+                const metaKey = `${shoeId}_${colorway}`;
+                const currentTier = tierOf(tierMeta, metaKey);
+                const tierOptions = ["diamond", "platinum", "gold", "silver", "bronze"];
+                const menuItems = [
+                  { label: "LOG WEAR", icon: "👟", action: () => {
+                    setLoggingId(shoeId);
+                    setWearDate(localDateStr());
+                    setWearColorway(colorway);
+                    setContextMenu(null);
+                  }},
+                  { label: "EDIT SHOE", icon: "✏️", action: () => {
+                    if (shoe) handleEdit(shoe);
+                    setContextMenu(null);
+                  }},
+                  { label: "EDIT COLORWAY", icon: "🎨", action: () => {
+                    const meta = colorwayMeta[metaKey] || {};
+                    setEditingMeta({ shoeId, colorway, shortName });
+                    setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"", comfortRating: meta.comfortRating||"", releaseYear: meta.releaseYear||"" });
+                    setContextMenu(null);
+                  }},
+                  { label: "CHANGE TIER", icon: "⭐", submenu: true },
+                  { type: "divider" },
+                  { label: "MOVE TO GRAVEYARD", icon: "🪦", danger: true, action: () => {
+                    setEditingMeta({ shoeId, colorway, shortName });
+                    setRetiringMeta({ shoeId, colorway, shortName });
+                    setRetireForm({ reason: "Worn Out", dateRetired: localDateStr(), story: "" });
+                    setContextMenu(null);
+                  }},
+                ];
+                // Position: keep menu on screen
+                const menuW = 200, menuH = 220;
+                const adjX = x + menuW > window.innerWidth ? x - menuW : x;
+                const adjY = y + menuH > window.innerHeight ? y - menuH : y;
+                return (
+                  <div style={{ position:"fixed", top:0, left:0, width:"100vw", height:"100vh", zIndex:11000 }} onClick={() => setContextMenu(null)} onContextMenu={e => { e.preventDefault(); setContextMenu(null); }}>
+                    <div style={{ position:"fixed", top: adjY, left: adjX, background: dark ? "#1a1a1a" : "#fff", border:`1px solid ${dark ? "#333" : "#ddd"}`, boxShadow:"0 4px 20px rgba(0,0,0,0.4)", minWidth:"180px", zIndex:11001, fontFamily:"'Aptos','Segoe UI',sans-serif" }} onClick={e => e.stopPropagation()}>
+                      {/* Header */}
+                      <div style={{ padding:"8px 12px", fontSize:"10px", letterSpacing:"2px", color: T.text5, borderBottom:`1px solid ${dark ? "#333" : "#eee"}`, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                        {colorway}
+                      </div>
+                      {menuItems.map((item, idx) => {
+                        if (item.type === "divider") return <div key={idx} style={{ borderTop:`1px solid ${dark ? "#333" : "#eee"}`, margin:"2px 0" }} />;
+                        if (item.submenu) {
+                          return (
+                            <div key={idx} style={{ position:"relative" }}>
+                              <div style={{ padding:"7px 12px", fontSize:"11px", color: T.text, cursor:"default", display:"flex", alignItems:"center", gap:"8px" }}>
+                                <span style={{ fontSize:"12px" }}>{item.icon}</span>
+                                <span style={{ letterSpacing:"1px" }}>{item.label}</span>
+                              </div>
+                              <div style={{ padding:"4px 12px 6px 32px", display:"flex", gap:"4px", flexWrap:"wrap" }}>
+                                {tierOptions.map(t => (
+                                  <button key={t} onClick={() => {
+                                    setTierMeta(tm => ({ ...tm, [metaKey]: t }));
+                                    setContextMenu(null);
+                                  }} style={{
+                                    background: t === currentTier ? (TIERS[t]?.color || "#888") : "transparent",
+                                    color: t === currentTier ? "#000" : (TIERS[t]?.color || T.text4),
+                                    border: `1px solid ${TIERS[t]?.color || "#888"}`,
+                                    fontSize:"8px", letterSpacing:"1px", padding:"2px 6px", cursor:"pointer",
+                                    fontFamily:"'Aptos','Segoe UI',sans-serif", textTransform:"uppercase",
+                                  }}>{t === "diamond" ? "💎" : t === "platinum" ? "PT" : t === "gold" ? "AU" : t === "silver" ? "AG" : "💀"}</button>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div key={idx} onClick={item.action} style={{
+                            padding:"7px 12px", fontSize:"11px", cursor:"pointer",
+                            color: item.danger ? "#e63946" : T.text,
+                            display:"flex", alignItems:"center", gap:"8px",
+                          }}
+                            onMouseEnter={e => e.currentTarget.style.background = dark ? "#2a2a2a" : "#f0f0f0"}
+                            onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                          >
+                            <span style={{ fontSize:"12px" }}>{item.icon}</span>
+                            <span style={{ letterSpacing:"1px" }}>{item.label}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
