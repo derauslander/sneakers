@@ -2212,7 +2212,7 @@
 
                   return (
                   <div style={{ marginBottom:"24px" }}>
-                    <div style={{ background: getBannerBg(currentItem), border:`1px solid ${getBannerBorder(currentItem)}`, padding:"16px 24px", position:"relative", minHeight: isMobilePublic ? "90px" : "130px", transition:"background 0.5s ease-in-out" }}>
+                    <div style={{ background: getBannerBg(currentItem), border:`1px solid ${getBannerBorder(currentItem)}`, padding:"16px 24px", position:"relative", minHeight: isMobilePublic ? "70px" : "130px", transition:"background 0.5s ease-in-out" }}>
                       {bannerItems.map((item, i) => {
                         const isActive = i === safeIdx;
 
@@ -2238,7 +2238,7 @@
                                   }
                                   return <RotationImg />;
                                 })()}
-                                <div style={{ minWidth:"360px", maxWidth:"360px", textAlign:"center" }}>
+                                <div style={{ minWidth: isMobilePublic ? 0 : "360px", maxWidth: isMobilePublic ? undefined : "360px", textAlign:"center" }}>
                                   <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
                                     {isRotationOnIce
                                       ? <span><span style={{color:"#64c8ff"}}>❄️</span> TIME TO TAKE THEM OFF ICE? <span style={{color:"#64c8ff"}}>❄️</span></span>
@@ -2315,7 +2315,7 @@
                           return (
                             <div key={`lastworn-${i}`} style={{ display:"flex", alignItems:"flex-start", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none" }}>
                               {lastWornImg && <img src={lastWornImg} alt={lastWornColorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0, filter: isLastWornPremium ? `drop-shadow(0 0 12px ${lastWornTierInfo.glowRgba})` : "none" }} />}
-                              <div style={{ minWidth:"360px", maxWidth:"360px", textAlign:"center" }}>
+                              <div style={{ minWidth: isMobilePublic ? 0 : "360px", maxWidth: isMobilePublic ? undefined : "360px", textAlign:"center" }}>
                                 <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
                                   {isLastWornPremium ? <span><span style={{color: lastWornTierInfo.color}}>✦</span> LAST WORN <span style={{color: lastWornTierInfo.color}}>✦</span></span> : "LAST WORN"}
                                 </div>
