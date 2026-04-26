@@ -161,10 +161,14 @@
     const tierExcludedFromRotation = (tier) => tier === "bronze";
     const tierAnniversaryColor = (tier) => tier === "diamond" ? "#b8f0ff" : tier === "platinum" ? "#C0C0C0" : tier === "gold" ? "#FFD700" : tier === "bronze" ? "#CD7F32" : "#aaa";
 
-    // Preload diamond audio files so first play has no delay
-    const _preloadedAudio = { glow: new Audio("assets/glow.mp3"), break: new Audio("assets/break.mp3") };
-    _preloadedAudio.glow.preload = "auto";
-    _preloadedAudio.break.preload = "auto";
+    // Preload diamond audio files after page settles so they don't compete with images
+    const _preloadedAudio = { glow: null, break: null };
+    setTimeout(() => {
+      _preloadedAudio.glow = new Audio("assets/glow.mp3");
+      _preloadedAudio.glow.preload = "auto";
+      _preloadedAudio.break = new Audio("assets/break.mp3");
+      _preloadedAudio.break.preload = "auto";
+    }, 2000);
 
     // One-time migration from grailMeta/beaterMeta to tierMeta
     const migrateTiers = (inventory, colorways, grailMeta, beaterMeta) => {
@@ -302,10 +306,10 @@
               setDiamondShatter("visible");
               diamondShatterRef.current = setTimeout(() => {
                 setDiamondShatter("shatter");
-                try { const b = _preloadedAudio.break.cloneNode(); b.volume = 0.5; b.play().catch(()=>{}); diamondAudioRef.current.shatter = b; } catch {}
+                try { if (_preloadedAudio.break) { const b = _preloadedAudio.break.cloneNode(); b.volume = 0.5; b.play().catch(()=>{}); diamondAudioRef.current.shatter = b; } } catch {}
                 // Start shoe reveal simultaneously — shoe bursts through the diamond
                 setShowHover(true); setTierReveal(true);
-                try { const g = _preloadedAudio.glow.cloneNode(); g.volume = 0.5; g.play().catch(()=>{}); diamondAudioRef.current.glow = g; } catch {}
+                try { if (_preloadedAudio.glow) { const g = _preloadedAudio.glow.cloneNode(); g.volume = 0.5; g.play().catch(()=>{}); diamondAudioRef.current.glow = g; } } catch {}
                 // Clean up shatter visuals after shards finish flying
                 diamondDoneRef.current = setTimeout(() => {
                   setDiamondShatter("done");
@@ -3632,7 +3636,6 @@
                   { label: "CHANGE TIER", icon: "⭐", submenu: true },
                   { type: "divider" },
                   { label: "MOVE TO GRAVEYARD", icon: "🪦", danger: true, action: () => {
-                    setEditingMeta({ shoeId, colorway, shortName });
                     setRetiringMeta({ shoeId, colorway, shortName });
                     setRetireForm({ reason: "Worn Out", dateRetired: localDateStr(), story: "" });
                     setContextMenu(null);
