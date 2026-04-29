@@ -3214,7 +3214,7 @@
                 if (top10Filter === "price" && ADMIN_MODE) return `$${entry.price.toFixed(2)}`;
                 if (top10Filter === "value") return ADMIN_MODE ? `$${entry.costPerWear.toFixed(2)}/wear (${entry.wears} wears · $${entry.price.toFixed(2)})` : `Worn ${entry.wears} ${entry.wears === 1 ? "Time" : "Times"}`;
                 if (top10Filter === "ice") return `${entry.daysOnIce} ${entry.daysOnIce === 1 ? "day" : "days"} on ice`;
-                if (top10Filter === "gap") return `${entry.days} ${entry.days === 1 ? "day" : "days"} gap · ${entry.from} → ${entry.to}`;
+                if (top10Filter === "gap") return `${entry.days} ${entry.days === 1 ? "day" : "days"} gap · ${formatDate(entry.from)} → ${formatDate(entry.to)}`;
                 return null;
               };
 
