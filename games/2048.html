@@ -816,7 +816,7 @@ function renderPuzzleList() {
     item.className = 'puzzle-item';
     item.innerHTML = `
       <div>
-        <div class="puzzle-item-name">${p.name}</div>
+        <div class="puzzle-item-name"></div>
         <div class="puzzle-item-count">${imageCount} / ${TILE_VALUES.length} TILES</div>
       </div>
       <div class="puzzle-item-actions">
@@ -826,6 +826,8 @@ function renderPuzzleList() {
         ` : ''}
       </div>
     `;
+    // Set name via textContent to prevent XSS from puzzle names containing HTML
+    item.querySelector('.puzzle-item-name').textContent = p.name;
 
     // Click to play
     item.addEventListener('click', (e) => {

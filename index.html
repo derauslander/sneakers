@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -2435,6 +2435,16 @@
                                 if (newName && newName !== cw) {
                                   // Rename colorway — update all related data
                                   const shoe = editId !== null ? inventory.find(s => s.id === editId) : null;
+                                  // Guard against renaming onto an existing colorway —
+                                  // would clobber files on disk and corrupt client state.
+                                  const existsInEdit = editColorways.some((c, j) => j !== i && c === newName);
+                                  const existsInSaved = shoe && (colorways[shoe.shortName] || []).some(c => c !== cw && c === newName);
+                                  if (existsInEdit || existsInSaved) {
+                                    setImportMsg({ type:"error", text: `"${newName}" already exists for this shoe.` });
+                                    setTimeout(() => setImportMsg(null), 4000);
+                                    setRenamingColorwayIdx(null);
+                                    return;
+                                  }
                                   setEditColorways(cws => { const n=[...cws]; n[i]=newName; return n; });
                                   if (shoe) {
                                     const oldKey = `${shoe.id}_${cw}`;
@@ -2457,8 +2467,18 @@
                                       updatePath(`${oldKey}_onfoot`, `${newKey}_onfoot`);
                                       return n;
                                     });
-                                    // Rename directory on disk via server
-                                    fetch(`/rename?shortName=${encodeURIComponent(shoe.shortName)}&oldColorway=${encodeURIComponent(cw)}&newColorway=${encodeURIComponent(newName)}`, { method: "POST" }).catch(() => {});
+                                    // Rename directory on disk via server.
+                                    // Surface non-OK responses so the user knows if the
+                                    // disk and the client state are out of sync.
+                                    fetch(`/rename?shortName=${encodeURIComponent(shoe.shortName)}&oldColorway=${encodeURIComponent(cw)}&newColorway=${encodeURIComponent(newName)}`, { method: "POST" })
+                                      .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+                                      .then(({ ok, data }) => {
+                                        if (!ok) {
+                                          setImportMsg({ type:"error", text: `Server rename failed: ${data.error || "unknown error"}. Files on disk may not match app state.` });
+                                          setTimeout(() => setImportMsg(null), 6000);
+                                        }
+                                      })
+                                      .catch(() => {});
                                     // Migrate colorwayMeta
                                     setColorwayMeta(m => { const n={...m}; if(n[oldKey]){n[newKey]=n[oldKey];delete n[oldKey];} return n; });
                                     // Migrate tierMeta
