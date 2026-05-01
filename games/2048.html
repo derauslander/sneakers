@@ -917,17 +917,24 @@ function buildSetupGrid() {
     div.id = 'config-' + val;
     div.innerHTML = `
       <div class="tile-label">${val}</div>
-      <div class="tile-preview ${hasImg ? '' : 'empty'}" id="preview-${val}">
-        ${hasImg ? `<img src="${setupTileImages[val]}">` : ''}
-      </div>
-      <input class="tile-url-input" id="url-${val}" type="text" placeholder="AJ4/Fire Red/Fire Red.png"
-        value="${hasImg && !setupTileImages[val].startsWith('data:') ? setupTileImages[val].replace('../Shoes/', '').replace(/%20/g, ' ') : ''}">
+      <div class="tile-preview ${hasImg ? '' : 'empty'}" id="preview-${val}"></div>
+      <input class="tile-url-input" id="url-${val}" type="text" placeholder="AJ4/Fire Red/Fire Red.png">
       <label class="file-upload-btn">
         UPLOAD
         <input type="file" accept="image/*" style="display:none" data-val="${val}">
       </label>
       <button class="clear-btn" data-val="${val}">Clear</button>
     `;
+    // Set image src and input value via DOM to prevent XSS from crafted URLs
+    if (hasImg) {
+      const img = document.createElement('img');
+      img.src = setupTileImages[val];
+      div.querySelector('.tile-preview').appendChild(img);
+    }
+    const urlInput = div.querySelector('.tile-url-input');
+    if (hasImg && !setupTileImages[val].startsWith('data:')) {
+      urlInput.value = setupTileImages[val].replace('../Shoes/', '').replace(/%20/g, ' ');
+    }
     grid.appendChild(div);
   });
 
@@ -985,7 +992,10 @@ function updatePreview(val) {
   const config = document.getElementById('config-' + val);
   if (setupTileImages[val]) {
     preview.className = 'tile-preview';
-    preview.innerHTML = `<img src="${setupTileImages[val]}">`;
+    preview.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = setupTileImages[val];
+    preview.appendChild(img);
     config.classList.add('has-image');
   } else {
     preview.className = 'tile-preview empty';

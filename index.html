@@ -1343,11 +1343,8 @@
       const [editShoe,       setEditShoe]       = useState("");
       const [editCw,         setEditCw]         = useState("");
       const [view,           setView]           = useState("collection");
+      const [reviewMonth,    setReviewMonth]    = useState(null);
       const [showForm,       setShowForm]       = useState(false);
-      const [quickLog,       setQuickLog]       = useState(false);
-      const [quickShoeId,    setQuickShoeId]    = useState("");
-      const [quickColorway,  setQuickColorway]  = useState("");
-      const [quickDate,      setQuickDate]      = useState(() => localDateStr());
       const [editId,         setEditId]         = useState(null);
       const [newShoe,        setNewShoe]        = useState({ name:"", shortName:"", category:"Jordan" });
       const [editColorways,  setEditColorways]  = useState([]);
@@ -1368,6 +1365,7 @@
       const [editingMeta,    setEditingMeta]    = useState(null);
       const [metaForm,       setMetaForm]       = useState({ purchaseDate:"", purchasePrice:"", retailer:"", size:"", notes:"", ogYear:"", story:"", saleDate:"", saleTime:"", comfortRating:"", releaseYear:"" });
       const [bannerIdx, setBannerIdx] = useState(0);
+      const [wearImgIdx, setWearImgIdx] = useState(0);
       const [collectionFilter, setCollectionFilter] = useState("all");
       const [top10Filter, setTop10Filter] = useState("worn");
       const [timeTravelDate, setTimeTravelDate] = useState(null); // null = present, string = past date
@@ -1377,6 +1375,12 @@
 
       useEffect(() => {
         const interval = setInterval(() => setBannerIdx(i => i + 1), 6000);
+        return () => clearInterval(interval);
+      }, []);
+
+      // Cycle wearing-today images every 5s
+      useEffect(() => {
+        const interval = setInterval(() => setWearImgIdx(i => i + 1), 5000);
         return () => clearInterval(interval);
       }, []);
 
@@ -1445,7 +1449,6 @@
         const handler = (e) => {
           if (e.key !== "Escape") return;
           if (retiringMeta)       { setRetiringMeta(null); }
-          else if (quickLog)      { setQuickLog(false); }
           else if (editingMeta)   { setEditingMeta(null); }
           else if (showForm)      { setShowForm(false); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan"}); setEditColorways([]); setNewColorway(""); }
           else if (loggingId)     { setLoggingId(null); }
@@ -1454,7 +1457,7 @@
         };
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
-      }, [showForm, quickLog, loggingId, editingMeta, editingCell, importMsg, retiringMeta]);
+      }, [showForm, loggingId, editingMeta, editingCell, importMsg, retiringMeta]);
 
       // colorwayOwned determines per-colorway ownership — collection shows owned, wishlist shows unowned
       const isColorwayOwned = React.useCallback((shoeId, cw) => colorwayOwned[`${shoeId}_${cw}`] !== false, [colorwayOwned]);
@@ -1960,7 +1963,7 @@
 
           {/* Nav */}
           <div style={{ display:"flex", borderBottom: isMobilePublic ? `1px solid ${T.border}` : "none", background: T.navBg, alignItems:"center" }}>
-            {(ADMIN_MODE ? ["collection","display","wishlist","graveyard","history","stats","about"] : ["collection", ...(!isMobile ? ["display"] : []), "wishlist", ...(Object.keys(graveyardMeta).length > 0 ? ["graveyard"] : []), "stats", "about"]).map(v => (
+            {(ADMIN_MODE ? ["collection","display","wishlist","graveyard","history","stats","review","about"] : ["collection", ...(!isMobile ? ["display"] : []), "wishlist", ...(Object.keys(graveyardMeta).length > 0 ? ["graveyard"] : []), "stats", ...(new Date().getMonth() === 0 ? ["review"] : []), "about"]).map(v => (
               <button key={v} onClick={() => setView(v)} style={{
                 padding: isMobilePublic ? "12px 0" : "14px 28px",
                 flex: isMobilePublic ? "1 1 0" : undefined,
@@ -1970,8 +1973,9 @@
                 letterSpacing: isMobilePublic ? "2px" : "4px",
                 textTransform:"uppercase", fontFamily:"'Aptos','Segoe UI',sans-serif",
                 textAlign: isMobilePublic ? "center" : undefined,
+                whiteSpace:"nowrap",
                 animation: v==="wishlist" && wishlistHasSale && view!=="wishlist" ? "saleGlow 1.5s ease-in-out infinite" : "none",
-              }}>{v === "stats" ? "top 10" : v}</button>
+              }}>{v === "stats" ? "top 10" : v === "review" ? `${new Date().getFullYear() - 1} review` : v}</button>
             ))}
             {/* Desktop: stats + dark mode toggle right-aligned in nav */}
             {!isMobilePublic && <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:"20px", padding:"0 20px" }}>
@@ -2277,33 +2281,43 @@
                           );
                         }
 
-                        // ── WEARING TODAY slide (replaces LAST WORN when today matches) ──
+                        // ── ON FEET TODAY slide (replaces LAST WORN when today matches) ──
                         if (item.type === "wearingtoday") {
                           const key = `${item.shoe.id}_${item.colorway}`;
                           const img1 = images[key] || null;
                           const img2 = images[`${key}_hover`] || null;
                           const img3 = images[`${key}_hover2`] || null;
-                          const imgList = [img1, img2, img3].filter(Boolean);
+                          // Cycle order: main, hover2, hover (1, 3, 2)
+                          const cycleOrder = [img1, img3, img2].filter(Boolean);
+                          const soloSlide = bannerItems.length === 1;
                           const glowFilter = isLastWornPremium ? `drop-shadow(0 0 12px ${lastWornTierInfo.glowRgba})` : "none";
                           const tileW = isMobilePublic ? 88 : 120;
                           const tileH = isMobilePublic ? 55 : 75;
                           return (
                             <div key={`wearingtoday-${i}`} style={{ display:"flex", alignItems:"flex-start", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none", flexWrap:"wrap" }}>
-                              {imgList.length > 0 && (
-                                <div style={{ display:"flex", gap:"8px", flexShrink:0 }}>
-                                  {(isMobilePublic ? imgList.slice(0, 1) : imgList).map((src, ti) => (
-                                    <img key={ti} src={src} alt={item.colorway} style={{ width: tileW, height: tileH, objectFit:"cover", filter: glowFilter }} />
-                                  ))}
+                              {cycleOrder.length > 0 && (
+                                <div style={{ flexShrink:0, position:"relative", width: tileW, height: tileH }}>
+                                  {soloSlide && cycleOrder.length > 1 ? (
+                                    cycleOrder.map((src, ti) => (
+                                      <img key={ti} src={src} alt={item.colorway} style={{
+                                        width: tileW, height: tileH, objectFit:"cover", filter: glowFilter,
+                                        position: ti === 0 ? "relative" : "absolute", top:0, left:0,
+                                        opacity: (wearImgIdx % cycleOrder.length) === ti ? 1 : 0,
+                                        transition:"opacity 1s ease-in-out",
+                                      }} />
+                                    ))
+                                  ) : (
+                                    <img src={cycleOrder[0]} alt={item.colorway} style={{ width: tileW, height: tileH, objectFit:"cover", filter: glowFilter }} />
+                                  )}
                                 </div>
                               )}
                               <div style={{ minWidth:0 }}>
                                 <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
-                                  {isLastWornPremium ? <span><span style={{color: lastWornTierInfo.color}}>✦</span> WEARING TODAY <span style={{color: lastWornTierInfo.color}}>✦</span></span> : "👟 WEARING TODAY"}
+                                  {isLastWornPremium ? <span><span style={{color: lastWornTierInfo.color}}>✦</span> ON FEET TODAY <span style={{color: lastWornTierInfo.color}}>✦</span></span> : "👟 ON FEET TODAY"}
                                 </div>
                                 <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: isLastWornPremium ? lastWornTierInfo.color : T.text }}>
                                   {item.shoe.name}{item.colorway ? ` — ${item.colorway}` : ""}
                                 </div>
-                                <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>On feet today</div>
                               </div>
                             </div>
                           );
@@ -3404,6 +3418,219 @@
               );
             })()}
 
+            {/* ── YEAR IN REVIEW ── */}
+            {view === "review" && (() => {
+              const reviewYear = new Date().getFullYear() - 1;
+              const yearStr = String(reviewYear);
+
+              // ── Gather all wears for the review year ──
+              const yearWears = [];
+              inventory.forEach(shoe => {
+                const entries = wearLog[shoe.id] || wearLog[String(shoe.id)] || [];
+                entries.forEach(e => {
+                  if (e.date.startsWith(yearStr)) {
+                    const key = `${shoe.id}_${e.colorway}`;
+                    yearWears.push({ shoe, colorway: e.colorway, date: e.date, key, img: images[key] || null });
+                  }
+                });
+              });
+              yearWears.sort((a, b) => a.date < b.date ? -1 : 1);
+
+              // ── Monthly totals ──
+              const monthCounts = Array(12).fill(0);
+              const monthWears = Array.from({ length: 12 }, () => []);
+              yearWears.forEach(w => {
+                const m = parseInt(w.date.substring(5, 7), 10) - 1;
+                monthCounts[m]++;
+                monthWears[m].push(w);
+              });
+              const maxMonth = Math.max(...monthCounts, 1);
+
+              // ── Bar chart colors — two red shades alternating by quarter ──
+              const barColor = (m) => m < 3 || (m >= 6 && m < 9) ? "#e63946" : "#a52833";
+
+              // ── New pickups (purchased in review year) ──
+              const newPickups = [];
+              inventory.forEach(shoe => {
+                (colorways[shoe.shortName] || []).forEach(cw => {
+                  const key = `${shoe.id}_${cw}`;
+                  const meta = colorwayMeta[key] || {};
+                  if (meta.purchaseDate && meta.purchaseDate.startsWith(yearStr)) {
+                    newPickups.push({ shoe, colorway: cw, key, purchaseDate: meta.purchaseDate, img: images[key] || null });
+                  }
+                });
+              });
+              newPickups.sort((a, b) => a.purchaseDate < b.purchaseDate ? -1 : 1);
+
+              // ── Ice breakers — owned before review year, first worn in review year ──
+              const iceBreakers = [];
+              inventory.forEach(shoe => {
+                const entries = wearLog[shoe.id] || wearLog[String(shoe.id)] || [];
+                const byCw = {};
+                entries.forEach(e => {
+                  if (!byCw[e.colorway] || e.date < byCw[e.colorway]) byCw[e.colorway] = e.date;
+                });
+                Object.entries(byCw).forEach(([cw, firstDate]) => {
+                  if (!firstDate.startsWith(yearStr)) return;
+                  const key = `${shoe.id}_${cw}`;
+                  const meta = colorwayMeta[key] || {};
+                  const pd = meta.purchaseDate;
+                  if (pd && !pd.startsWith(yearStr)) {
+                    const daysOnIce = Math.round((new Date(firstDate + "T00:00:00") - new Date(pd + "T00:00:00")) / 86400000);
+                    iceBreakers.push({ shoe, colorway: cw, key, purchaseDate: pd, firstWorn: firstDate, daysOnIce, img: images[key] || null });
+                  }
+                });
+              });
+              iceBreakers.sort((a, b) => a.firstWorn < b.firstWorn ? -1 : 1);
+
+              // ── Retired pairs (moved to graveyard in review year) ──
+              const retiredPairs = [];
+              Object.entries(graveyardMeta).forEach(([entryKey, entry]) => {
+                if (entry.retiredDate && entry.retiredDate.startsWith(yearStr)) {
+                  retiredPairs.push({ entryKey, ...entry });
+                }
+              });
+
+              // ── Bar chart SVG ──
+              const MONTHS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+              const W = 760, H = 260;
+              const pad = { top: 20, right: 16, bottom: 40, left: 36 };
+              const chartW = W - pad.left - pad.right;
+              const chartH = H - pad.top - pad.bottom;
+              const barW = chartW / 12;
+              const barPad = 0;
+              const gridColor = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+
+              // Y-axis grid
+              const yStep = maxMonth <= 5 ? 1 : maxMonth <= 15 ? 2 : 5;
+              const yGridLines = [];
+              for (let v = yStep; v <= maxMonth; v += yStep) yGridLines.push(v);
+
+              // ── Selected month state (declared at top level as reviewMonth) ──
+
+              const imgW = isMobilePublic ? 80 : 100;
+              const imgH = Math.round(imgW * 0.625);
+
+              return (
+                <div style={{ padding:"16px 0" }}>
+                  <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"32px" }}>{reviewYear} YEAR IN REVIEW</div>
+
+                  {/* ── Headline: Total Wears ── */}
+                  <div style={{ textAlign:"center", marginBottom:"48px" }}>
+                    <div style={{ fontSize:"48px", fontWeight:"bold", color:T.text, fontVariantNumeric:"tabular-nums" }}>{yearWears.length}</div>
+                    <div style={{ fontSize:"10px", letterSpacing:"4px", color:T.text5, marginTop:"4px" }}>TOTAL WEARS IN {reviewYear}</div>
+                  </div>
+
+                  {/* ── Monthly Bar Chart ── */}
+                  <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"24px" }}>MONTH BY MONTH</div>
+                  <div style={{ overflowX:"auto", position:"relative", maxWidth: isMobilePublic ? "100%" : "66%", }}>
+                    <svg viewBox={`0 0 ${W} ${H}`} style={{ width:"100%", height:"auto", display:"block" }}>
+                      {/* Y-axis grid lines */}
+                      {yGridLines.map(v => (
+                        <g key={`yg-${v}`}>
+                          <line x1={pad.left} y1={pad.top + chartH - (v / maxMonth) * chartH} x2={W - pad.right} y2={pad.top + chartH - (v / maxMonth) * chartH} stroke={gridColor} strokeWidth="1" />
+                          <text x={pad.left - 8} y={pad.top + chartH - (v / maxMonth) * chartH + 3} textAnchor="end" fontSize="9" fill={T.text5} fontFamily="'Aptos','Segoe UI',sans-serif">{v}</text>
+                        </g>
+                      ))}
+                      {/* Bars */}
+                      {monthCounts.map((count, m) => {
+                        const barHeight = count > 0 ? (count / maxMonth) * chartH : 0;
+                        const bx = pad.left + m * barW + barPad;
+                        const bw = barW - barPad * 2;
+                        const by = pad.top + chartH - barHeight;
+                        return (
+                          <g key={m} style={{ cursor: count > 0 ? "pointer" : "default" }} onClick={() => count > 0 && setReviewMonth(reviewMonth === m ? null : m)}>
+                            {count > 0 && <rect x={bx} y={by} width={bw} height={barHeight} fill={barColor(m)}
+                              stroke={dark ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.5)"} strokeWidth="1"
+                              opacity={reviewMonth === null || reviewMonth === m ? 1 : 0.3}
+                              style={{ transition:"opacity 0.2s" }} />}
+                            {count > 0 && <text x={bx + bw / 2} y={by - 6} textAnchor="middle" fontSize="9" fill={T.text4} fontFamily="'Aptos','Segoe UI',sans-serif">{count}</text>}
+                            <text x={pad.left + m * barW + barW / 2} y={H - pad.bottom + 16} textAnchor="middle" fontSize="8" letterSpacing="1" fill={reviewMonth === m ? "#e63946" : T.text5} fontFamily="'Aptos','Segoe UI',sans-serif" style={{ transition:"fill 0.2s" }}>{MONTHS[m]}</text>
+                          </g>
+                        );
+                      })}
+                      {/* Axes */}
+                      <line x1={pad.left} y1={pad.top} x2={pad.left} y2={H - pad.bottom} stroke={T.text5} strokeWidth="1" />
+                      <line x1={pad.left} y1={H - pad.bottom} x2={W - pad.right} y2={H - pad.bottom} stroke={T.text5} strokeWidth="1" />
+                    </svg>
+                  </div>
+
+                  {/* ── Selected month detail ── */}
+                  {reviewMonth !== null && monthWears[reviewMonth].length > 0 && (
+                    <div style={{ marginTop:"16px", padding:"16px", background:dark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)", borderRadius:"4px" }}>
+                      <div style={{ fontSize:"9px", letterSpacing:"3px", color:T.text5, marginBottom:"12px" }}>{MONTHS[reviewMonth]} {reviewYear}</div>
+                      <div style={{ display:"flex", flexWrap:"wrap", gap:"12px" }}>
+                        {monthWears[reviewMonth].map((w, i) => (
+                          <div key={i} style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+                            {w.img && <img src={w.img} alt="" style={{ width:`${imgW * 0.6}px`, height:`${imgH * 0.6}px`, objectFit:"contain" }} />}
+                            <div>
+                              <div style={{ fontSize:"11px", fontWeight:"bold", color:T.text }}>{w.shoe.name}</div>
+                              <div style={{ fontSize:"10px", color:T.text3 }}>{w.colorway}</div>
+                              <div style={{ fontSize:"9px", color:T.text5 }}>{formatDate(w.date)}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Ice Breakers ── */}
+                  {iceBreakers.length > 0 && (
+                    <div style={{ marginTop:"32px" }}>
+                      <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#64c8ff", marginBottom:"24px" }}>❄️ TAKEN OFF ICE</div>
+                      <div style={{ display:"grid", gridTemplateColumns:`repeat(auto-fill, minmax(${isMobilePublic ? "130px" : "150px"}, 1fr))`, gap:"16px" }}>
+                        {iceBreakers.map((ib, i) => (
+                          <div key={i} style={{ textAlign:"center" }}>
+                            <div style={{ width:"100%", aspectRatio:"16/10", background:dark ? "#222" : "#f5f2ee", display:"flex", alignItems:"center", justifyContent:"center", borderRadius:"4px", marginBottom:"8px" }}>
+                              {ib.img ? <img src={ib.img} alt="" style={{ width:"85%", height:"85%", objectFit:"contain" }} /> : <div style={{ fontSize:"24px", opacity:0.2 }}>👟</div>}
+                            </div>
+                            <div style={{ fontSize:"11px", fontWeight:"bold", color:T.text }}>{ib.shoe.name}</div>
+                            <div style={{ fontSize:"10px", color:T.text3 }}>{ib.colorway}</div>
+                            <div style={{ fontSize:"9px", color:"#64c8ff", marginTop:"2px" }}>{ib.daysOnIce} days on ice</div>
+                            <div style={{ fontSize:"9px", color:T.text5 }}>First worn {formatDate(ib.firstWorn)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── New Pickups ── */}
+                  {newPickups.length > 0 && (
+                    <div style={{ marginTop:"48px" }}>
+                      <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"24px" }}>NEW PICKUPS</div>
+                      <div style={{ display:"grid", gridTemplateColumns:`repeat(auto-fill, minmax(${isMobilePublic ? "130px" : "150px"}, 1fr))`, gap:"16px" }}>
+                        {newPickups.map((p, i) => (
+                          <div key={i} style={{ textAlign:"center" }}>
+                            <div style={{ width:"100%", aspectRatio:"16/10", background:dark ? "#222" : "#f5f2ee", display:"flex", alignItems:"center", justifyContent:"center", borderRadius:"4px", marginBottom:"8px" }}>
+                              {p.img ? <img src={p.img} alt="" style={{ width:"85%", height:"85%", objectFit:"contain" }} /> : <div style={{ fontSize:"24px", opacity:0.2 }}>👟</div>}
+                            </div>
+                            <div style={{ fontSize:"11px", fontWeight:"bold", color:T.text }}>{p.shoe.name}</div>
+                            <div style={{ fontSize:"10px", color:T.text3 }}>{p.colorway}</div>
+                            <div style={{ fontSize:"9px", color:T.text5, marginTop:"2px" }}>{formatDate(p.purchaseDate)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Retired Pairs (conditional) ── */}
+                  {retiredPairs.length > 0 && (
+                    <div style={{ marginTop:"48px" }}>
+                      <div style={{ fontSize:"11px", letterSpacing:"4px", color:T.text5, marginBottom:"24px" }}>🪦 RETIRED</div>
+                      <div style={{ display:"grid", gridTemplateColumns:`repeat(auto-fill, minmax(${isMobilePublic ? "140px" : "160px"}, 1fr))`, gap:"16px" }}>
+                        {retiredPairs.map((rp, i) => (
+                          <div key={i} style={{ textAlign:"center", opacity:0.7 }}>
+                            <div style={{ fontSize:"11px", fontWeight:"bold", color:T.text }}>{rp.shoeName || rp.name}</div>
+                            <div style={{ fontSize:"10px", color:T.text3 }}>{rp.colorway}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* ── ABOUT ── */}
             {view === "about" && (
               <div style={{ maxWidth:"640px", margin:"0 auto", padding:"16px 0" }}>
@@ -3715,74 +3942,6 @@
 
           </div>
 
-          {ADMIN_MODE && !timeTravelDate && <><button onClick={() => {
-            setQuickLog(true);
-            setQuickDate(localDateStr());
-            const firstShoe = inventory[0];
-            if (firstShoe) {
-              setQuickShoeId(String(firstShoe.id));
-              const ownedCws = (colorways[firstShoe.shortName] || []).filter(cw => isColorwayOwned(firstShoe.id, cw));
-              setQuickColorway(ownedCws[0] || "");
-            }
-          }} style={{
-            position:"fixed", bottom:"28px", right:"28px", zIndex:8888,
-            background:"#e63946", color:"#fff", border:"none", borderRadius:"50%",
-            width:"56px", height:"56px", fontSize:"22px", cursor:"pointer",
-            boxShadow:"0 4px 16px rgba(0,0,0,0.3)", display:"flex", alignItems:"center", justifyContent:"center",
-            fontFamily:"'Aptos','Segoe UI',sans-serif",
-          }} title="Log a wear">👟</button>
-
-          {/* Quick Log Modal */}
-          {quickLog && (() => {
-            const qShoe = inventory.find(s => String(s.id) === String(quickShoeId));
-            const qColorways = qShoe ? (colorways[qShoe.shortName] || []).filter(cw => isColorwayOwned(qShoe.id, cw)) : [];
-            return (
-              <div onClick={() => setQuickLog(false)} style={{
-                position:"fixed", top:0, left:0, width:"100vw", height:"100vh",
-                background:"rgba(0,0,0,0.6)", zIndex:9000, display:"flex", alignItems:"center", justifyContent:"center",
-              }}>
-                <div onClick={e => e.stopPropagation()} style={{
-                  background: T.bg, border:`1px solid ${T.border}`, padding:"28px", minWidth:"320px", maxWidth:"440px", width:"90vw",
-                }}>
-                  <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"20px" }}>LOG A WEAR</div>
-                  <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
-                    <div>
-                      <div style={{ fontSize:"9px", letterSpacing:"2px", color: T.text5, marginBottom:"6px" }}>SHOE</div>
-                      <select value={quickShoeId} onChange={e => {
-                        setQuickShoeId(e.target.value);
-                        const s = inventory.find(sh => String(sh.id) === e.target.value);
-                        const ownedCws = s ? (colorways[s.shortName] || []).filter(cw => isColorwayOwned(s.id, cw)) : [];
-                        setQuickColorway(ownedCws[0] || "");
-                      }} style={{ ...IS, width:"100%" }}>
-                        {inventory.map(s => <option key={s.id} value={String(s.id)}>{s.name}</option>)}
-                      </select>
-                    </div>
-                    {qColorways.length > 0 && (
-                      <div>
-                        <div style={{ fontSize:"9px", letterSpacing:"2px", color: T.text5, marginBottom:"6px" }}>COLORWAY</div>
-                        <select value={quickColorway} onChange={e => setQuickColorway(e.target.value)} style={{ ...IS, width:"100%" }}>
-                          {qColorways.map(cw => <option key={cw} value={cw}>{cw}</option>)}
-                        </select>
-                      </div>
-                    )}
-                    <div>
-                      <div style={{ fontSize:"9px", letterSpacing:"2px", color: T.text5, marginBottom:"6px" }}>DATE</div>
-                      <input type="date" value={quickDate} onChange={e => setQuickDate(e.target.value)} style={{ ...IS, width:"100%" }} />
-                    </div>
-                    <div style={{ display:"flex", gap:"8px", marginTop:"8px" }}>
-                      <button onClick={() => {
-                        if (!quickShoeId || !quickColorway) return;
-                        const entry = { date: quickDate, colorway: quickColorway };
-                        setWearLog(log => ({ ...log, [quickShoeId]: [...(log[quickShoeId] || []), entry] }));
-                        setQuickLog(false);
-                      }} style={{ background:"#e63946", color:"#fff", border:"none", padding:"10px 20px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", flex:1 }}>CONFIRM</button>
-                      <button onClick={() => setQuickLog(false)} style={{ background:"transparent", border:`1px solid ${T.border}`, color: T.text4, padding:"10px 20px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>CANCEL</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}</>}
 
         </div>
       );

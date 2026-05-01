@@ -2098,6 +2098,7 @@
         "shortName": "AJ4",
         "colorway": "What the 4",
         "daysOnIce": 463,
+        "purchaseDate": "2023-03-28",
         "firstWorn": "2024-07-03"
       },
       {
@@ -2106,6 +2107,7 @@
         "shortName": "AJ6",
         "colorway": "Infrared",
         "daysOnIce": 285,
+        "purchaseDate": "2023-12-24",
         "firstWorn": "2024-10-04"
       },
       {
@@ -2114,6 +2116,7 @@
         "shortName": "AJ9",
         "colorway": "Olive",
         "daysOnIce": 257,
+        "purchaseDate": "2024-11-09",
         "firstWorn": "2025-07-24"
       },
       {
@@ -2122,6 +2125,7 @@
         "shortName": "AJ4",
         "colorway": "A Ma Maniere WYWS",
         "daysOnIce": 169,
+        "purchaseDate": "2024-09-26",
         "firstWorn": "2025-03-14"
       },
       {
@@ -2130,6 +2134,7 @@
         "shortName": "AJ5",
         "colorway": "Fire Red",
         "daysOnIce": 153,
+        "purchaseDate": "2025-01-04",
         "firstWorn": "2025-06-06"
       },
       {
@@ -2138,6 +2143,7 @@
         "shortName": "AJ5",
         "colorway": "Black Metallic Reimagined",
         "daysOnIce": 145,
+        "purchaseDate": "2025-02-08",
         "firstWorn": "2025-07-03"
       },
       {
@@ -2146,6 +2152,7 @@
         "shortName": "AJ3",
         "colorway": "Black Cement",
         "daysOnIce": 85,
+        "purchaseDate": "2024-11-14",
         "firstWorn": "2025-02-07"
       },
       {
@@ -2154,6 +2161,7 @@
         "shortName": "AJ12",
         "colorway": "Flu Game",
         "daysOnIce": 84,
+        "purchaseDate": "2025-05-02",
         "firstWorn": "2025-07-25"
       },
       {
@@ -2162,6 +2170,7 @@
         "shortName": "AJ8",
         "colorway": "Playoffs",
         "daysOnIce": 80,
+        "purchaseDate": "2023-10-20",
         "firstWorn": "2024-01-08"
       },
       {
@@ -2170,6 +2179,7 @@
         "shortName": "AJ3",
         "colorway": "Rare Air",
         "daysOnIce": 72,
+        "purchaseDate": "2025-06-04",
         "firstWorn": "2025-08-15"
       }
     ],
@@ -2276,5 +2286,5 @@
       }
     ]
   },
-  "builtAt": "2026-05-01T10:07:04.019571Z"
+  "builtAt": "2026-05-01T19:57:36.063038Z"
 }

@@ -213,15 +213,25 @@ def strip_prices(colorway_meta):
     return stripped
 
 def strip_ranking_prices(rankings):
-    """Remove price/costPerWear from ranking entries so dollar amounts stay private."""
+    """Remove price/costPerWear from ranking entries so dollar amounts stay private.
+    purchaseDate is stripped from price/value rankings (it's financial context) but
+    preserved on iceRanked (where it's the start of the on-ice window) and gapRanked."""
+    # Fields to strip per ranking — only remove purchaseDate where it implies price context
+    STRIP_FIELDS = {
+        "wornRanked":  ("price", "costPerWear", "purchaseDate"),
+        "priceRanked": ("price", "costPerWear", "purchaseDate"),
+        "valueRanked": ("price", "costPerWear", "purchaseDate"),
+        "iceRanked":   ("price", "costPerWear"),
+        "gapRanked":   ("price", "costPerWear"),
+    }
     stripped = {}
     for key, entries in rankings.items():
+        fields = STRIP_FIELDS.get(key, ("price", "costPerWear", "purchaseDate"))
         stripped[key] = []
         for entry in entries:
             clean = dict(entry)
-            clean.pop("price", None)
-            clean.pop("costPerWear", None)
-            clean.pop("purchaseDate", None)
+            for f in fields:
+                clean.pop(f, None)
             stripped[key].append(clean)
     return stripped
 
