@@ -230,7 +230,6 @@
       const [tierGlow, setTierGlow] = useState(false);
       const [tierReveal, setTierReveal] = useState(false);
       const [showStory, setShowStory] = useState(false);
-      const [showTriptych, setShowTriptych] = useState(false);
       const [triptychVisible, setTriptychVisible] = useState(false);
       const [iceGlow, setIceGlow] = useState(false);
       const [diamondShatter, setDiamondShatter] = useState("hidden"); // "hidden" | "visible" | "shatter" | "done"
@@ -289,7 +288,6 @@
         setTierGlow(false);
         setTierReveal(false);
         setShowStory(false);
-        setShowTriptych(false);
         setTriptychVisible(false);
         setIceGlow(false);
         setDiamondShatter("hidden");
@@ -316,7 +314,6 @@
                 }, 1500);
                 if (hasTriptych) {
                   triptychRef.current = setTimeout(() => {
-                    setShowTriptych(true);
                     setShowStory(true);
                     requestAnimationFrame(() => requestAnimationFrame(() => setTriptychVisible(true)));
                   }, 5000);
@@ -337,7 +334,6 @@
             crossfadeRef.current = setTimeout(() => { setShowHover(true); setTierReveal(true);
               if (hasTriptych) {
                 triptychRef.current = setTimeout(() => {
-                  setShowTriptych(true);
                   setShowStory(true);
                   requestAnimationFrame(() => requestAnimationFrame(() => setTriptychVisible(true)));
                 }, 5000);
@@ -383,7 +379,6 @@
         setTierGlow(false);
         setTierReveal(false);
         setShowStory(false);
-        setShowTriptych(false);
         setTriptychVisible(false);
         setIceGlow(false);
         setDiamondShatter("hidden");
