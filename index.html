@@ -64,6 +64,23 @@
       from { opacity: 0; transform: translateY(16px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+    /* Respect reduced-motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    /* P3 wide-gamut color upgrades on capable displays */
+    @media (color-gamut: p3) {
+      :root {
+        --vault-red: color(display-p3 0.9 0.22 0.27);
+        --tier-gold: color(display-p3 1 0.84 0);
+        --tier-diamond: color(display-p3 0.72 0.94 1);
+        --tier-platinum: color(display-p3 0.75 0.75 0.75);
+      }
+    }
   </style>
 </head>
 <body>
@@ -100,7 +117,12 @@
     const useDarkMode = (isAdmin) => {
       const [dark, setDark] = useState(() => {
         if (isAdmin) {
-          try { return localStorage.getItem("vault_dark") === "true"; } catch { return false; }
+          try {
+            const stored = localStorage.getItem("vault_dark");
+            if (stored !== null) return stored === "true";
+          } catch {}
+          // No explicit preference — follow OS
+          return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
         }
         return true; // Public site: always dark
       });
@@ -2296,20 +2318,24 @@
                           return (
                             <div key={`wearingtoday-${i}`} style={{ display:"flex", alignItems:"flex-start", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none", flexWrap:"wrap" }}>
                               {cycleOrder.length > 0 && (
-                                <div style={{ flexShrink:0, position:"relative", width: tileW, height: tileH }}>
-                                  {soloSlide && cycleOrder.length > 1 ? (
-                                    cycleOrder.map((src, ti) => (
+                                soloSlide && cycleOrder.length > 1 ? (
+                                  <div style={{ flexShrink:0, position:"relative", width: tileW, height: tileH }}>
+                                    {cycleOrder.map((src, ti) => (
                                       <img key={ti} src={src} alt={item.colorway} style={{
                                         width: tileW, height: tileH, objectFit:"cover", filter: glowFilter,
                                         position: ti === 0 ? "relative" : "absolute", top:0, left:0,
                                         opacity: (wearImgIdx % cycleOrder.length) === ti ? 1 : 0,
                                         transition:"opacity 1s ease-in-out",
                                       }} />
-                                    ))
-                                  ) : (
-                                    <img src={cycleOrder[0]} alt={item.colorway} style={{ width: tileW, height: tileH, objectFit:"cover", filter: glowFilter }} />
-                                  )}
-                                </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div style={{ display:"flex", gap:"8px", flexShrink:0 }}>
+                                    {(isMobilePublic ? cycleOrder.slice(0, 1) : cycleOrder).map((src, ti) => (
+                                      <img key={ti} src={src} alt={item.colorway} style={{ width: tileW, height: tileH, objectFit:"cover", filter: glowFilter }} />
+                                    ))}
+                                  </div>
+                                )
                               )}
                               <div style={{ minWidth:0 }}>
                                 <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
