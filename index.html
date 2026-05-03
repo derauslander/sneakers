@@ -21,6 +21,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --vault-red: #e63946;
+      --vault-red-dark: #a52833;
+      --tier-gold: #FFD700;
+      --tier-diamond: #b8f0ff;
+      --tier-diamond-dark: #0099bb;
+      --tier-platinum: #C0C0C0;
+    }
     body { background: #ffffff; font-family: 'Aptos', 'Segoe UI', sans-serif; color: #111111; transition: background 0.3s, color 0.3s; }
     body.dark { background: #1a1a1a; color: #f0f0f0; }
     input[type=date]::-webkit-calendar-picker-indicator { filter: none; }
@@ -76,8 +84,10 @@
     @media (color-gamut: p3) {
       :root {
         --vault-red: color(display-p3 0.9 0.22 0.27);
+        --vault-red-dark: color(display-p3 0.65 0.16 0.2);
         --tier-gold: color(display-p3 1 0.84 0);
         --tier-diamond: color(display-p3 0.72 0.94 1);
+        --tier-diamond-dark: color(display-p3 0 0.6 0.73);
         --tier-platinum: color(display-p3 0.75 0.75 0.75);
       }
     }
@@ -171,9 +181,9 @@
 
     // ── Tier System ──────────────────────────────────────────────────────
     const TIERS = {
-      diamond:  { label: "✦ DIAMOND ✦",    color: "#b8f0ff", glowRgba: "rgba(184,240,255,0.8)", ripLabel: "✦ R.I.P. ✦" },
-      platinum: { label: "✦ PLATINUM ✦",   color: "#C0C0C0", glowRgba: "rgba(192,192,192,0.7)", ripLabel: "✦ R.I.P. ✦" },
-      gold:     { label: "✦ GOLD ✦",       color: "#FFD700", glowRgba: null,                     ripLabel: "✦ R.I.P. ✦" },
+      diamond:  { label: "✦ DIAMOND ✦",    color: "var(--tier-diamond)", glowRgba: "rgba(184,240,255,0.8)", ripLabel: "✦ R.I.P. ✦" },
+      platinum: { label: "✦ PLATINUM ✦",   color: "var(--tier-platinum)", glowRgba: "rgba(192,192,192,0.7)", ripLabel: "✦ R.I.P. ✦" },
+      gold:     { label: "✦ GOLD ✦",       color: "var(--tier-gold)", glowRgba: null,                     ripLabel: "✦ R.I.P. ✦" },
       silver:   { label: "⬥ BUYER'S REMORSE ⬥", color: "#aaaaaa", glowRgba: null,                ripLabel: "⬥ R.I.P. ⬥" },
       bronze:   { label: "💀 BEATER 💀",   color: "#CD7F32", glowRgba: "rgba(180,80,20,0.8)",   ripLabel: "💀 R.I.P. 💀" },
     };
@@ -181,7 +191,7 @@
     const tierOf = (tierMeta, key) => tierMeta[key] || "silver";
     const tierHasCrossfade = (tier) => tier === "diamond" || tier === "platinum" || tier === "gold";
     const tierExcludedFromRotation = (tier) => tier === "bronze";
-    const tierAnniversaryColor = (tier) => tier === "diamond" ? "#b8f0ff" : tier === "platinum" ? "#C0C0C0" : tier === "gold" ? "#FFD700" : tier === "bronze" ? "#CD7F32" : "#aaa";
+    const tierAnniversaryColor = (tier) => tier === "diamond" ? "var(--tier-diamond)" : tier === "platinum" ? "var(--tier-platinum)" : tier === "gold" ? "var(--tier-gold)" : tier === "bronze" ? "#CD7F32" : "#aaa";
 
     // Preload diamond audio files after page settles so they don't compete with images
     const _preloadedAudio = { glow: null, break: null };
@@ -450,7 +460,7 @@
         : "drop-shadow(0 0 30px rgba(255,255,255,0.5)) drop-shadow(0 0 8px rgba(255,255,255,0.6))";
 
       // Name color on hover
-      const nameColor = tierInfo.color && tierReveal ? tierInfo.color : isOnIce && iceGlow ? "#64c8ff" : anniversaryGlow && showHover ? "#FFD700" : isNewPickup ? "#FFD700" : "#fff";
+      const nameColor = tierInfo.color && tierReveal ? tierInfo.color : isOnIce && iceGlow ? "#64c8ff" : anniversaryGlow && showHover ? "var(--tier-gold)" : isNewPickup ? "var(--tier-gold)" : "#fff";
 
       return (
         <div style={{ position:"relative", display:"inline-block" }}>
@@ -534,7 +544,7 @@
                           {tierInfo.label && <div style={{ fontSize:"11px", letterSpacing:"6px", color: tierInfo.color, opacity: tierReveal ? 1 : 0, transition:"opacity 3s ease-in-out" }}>{tierInfo.label}</div>}
                           {isOnIce && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#64c8ff", marginTop:"6px", opacity: iceGlow ? 1 : 0, transition:"opacity 3s ease-in-out" }}>❄️ ON ICE ❄️</div>}
                           {anniversaryGlow && <div style={{ fontSize:"11px", letterSpacing:"6px", color: tierAnniversaryColor(tier), marginTop:"6px", opacity: showHover ? 1 : 0, transition:"opacity 3s ease-in-out" }}>✦ ANNIVERSARY ✦</div>}
-                          {isNewPickup && tier === "silver" && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"#FFD700", marginTop:"6px" }}>✦ NEW PICKUP ✦</div>}
+                          {isNewPickup && tier === "silver" && <div style={{ fontSize:"11px", letterSpacing:"6px", color:"var(--tier-gold)", marginTop:"6px" }}>✦ NEW PICKUP ✦</div>}
                           <div style={{ marginTop:(tierInfo.label||isOnIce||anniversaryGlow||isNewPickup)?"6px":"0", fontSize:"13px", letterSpacing:"3px", color: nameColor, transition:"color 3s ease-in-out" }}>
                             {shoeName ? `${shoeName} — ${label}` : label}
                           </div>
@@ -558,8 +568,8 @@
                     {/* STATS button — bottom-right of overlay */}
                     <div onClick={e => { e.stopPropagation(); if (showStats) setShowStats(false); }} style={{ position:"absolute", bottom: isMobilePublic ? "16px" : "28px", right: isMobilePublic ? "16px" : "28px", zIndex:20 }}>
                       <button onClick={(e) => { e.stopPropagation(); setShowStats(s => !s); }} style={{
-                        background: showStats ? "#e63946" : "rgba(255,255,255,0.1)",
-                        border: showStats ? "1px solid #e63946" : "1px solid rgba(255,255,255,0.25)",
+                        background: showStats ? "var(--vault-red)" : "rgba(255,255,255,0.1)",
+                        border: showStats ? "1px solid var(--vault-red)" : "1px solid rgba(255,255,255,0.25)",
                         color: showStats ? "#fff" : "rgba(255,255,255,0.6)",
                         padding:"6px 14px", cursor:"pointer", fontSize:"9px", letterSpacing:"3px",
                         fontFamily:"'Aptos','Segoe UI',sans-serif",
@@ -579,14 +589,14 @@
                           {/* Left column — on-feet photo (desktop) */}
                           {onfootImg && (
                             <div style={{ flex: isMobilePublic ? undefined : "0 0 45%", textAlign:"center", marginBottom: isMobilePublic ? "20px" : 0 }}>
-                              <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"10px" }}>ON FEET</div>
+                              <div style={{ fontSize:"9px", letterSpacing:"3px", color:"var(--vault-red)", marginBottom:"10px" }}>ON FEET</div>
                               <img src={onfootImg} alt="On feet" style={{ width:"100%", maxHeight: isMobilePublic ? "250px" : "38vh", objectFit:"contain" }} />
                             </div>
                           )}
                           {/* Right column — details + wear history */}
                           <div style={{ flex:1, minWidth:0 }}>
                             {/* Details grid */}
-                            <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"10px" }}>DETAILS</div>
+                            <div style={{ fontSize:"9px", letterSpacing:"3px", color:"var(--vault-red)", marginBottom:"10px" }}>DETAILS</div>
                             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px 20px", marginBottom:"20px" }}>
                               {purchaseDate && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>PURCHASED</div><div style={{ fontSize:"11px", color:"#ccc" }}>{new Date(purchaseDate + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}</div></div>}
                               {ADMIN_MODE && purchasePrice && <div><div style={{ fontSize:"8px", letterSpacing:"2px", color:"#666", marginBottom:"2px" }}>PRICE</div><div style={{ fontSize:"11px", color:"#ccc" }}>{purchasePrice}</div></div>}
@@ -600,7 +610,7 @@
                             {/* Wear history */}
                             {sortedDates.length > 0 && (
                               <div>
-                                <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"10px" }}>WEAR HISTORY</div>
+                                <div style={{ fontSize:"9px", letterSpacing:"3px", color:"var(--vault-red)", marginBottom:"10px" }}>WEAR HISTORY</div>
                                 <div style={{ display:"grid", gridTemplateColumns: isMobilePublic ? "1fr 1fr" : "1fr 1fr 1fr", gap:"4px 16px" }}>
                                   {[...sortedDates].reverse().map((d, i, arr) => (
                                     <div key={`${d}-${i}`} style={{ fontSize:"11px", color:"#ccc", padding:"3px 0", display:"flex", gap:"6px", fontWeight: i === arr.length - 1 ? "bold" : "normal" }}>
@@ -618,7 +628,7 @@
                   </div>
                 )}
               </div>
-              <div style={{ fontSize:"11px", color:"#666", marginTop:"4px", maxWidth:width, textAlign:"center", lineHeight:"1.3", wordBreak:"break-word" }}>{label}{isNewPickup && <span style={{ fontSize:"9px", letterSpacing:"2px", color:"#FFD700", fontWeight:"bold", marginLeft:"5px" }}>NEW</span>}</div>
+              <div style={{ fontSize:"11px", color:"#666", marginTop:"4px", maxWidth:width, textAlign:"center", lineHeight:"1.3", wordBreak:"break-word" }}>{label}{isNewPickup && <span style={{ fontSize:"9px", letterSpacing:"2px", color:"var(--tier-gold)", fontWeight:"bold", marginLeft:"5px" }}>NEW</span>}</div>
               
             </div>
           ) : (
@@ -701,7 +711,7 @@
                 width:"160px", height:"100px",
                 background: c.empty ? (dark ? "#2a2a2a" : "#f5f5f5") : img ? (dark ? "#1a1a1a" : "#ffffff") : c.bg,
                 border: isEditing ? "2px solid #f4a261"
-                  : isWishlist ? "1px dashed #e63946"
+                  : isWishlist ? "1px dashed var(--vault-red)"
                   : dark ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.08)",
                 borderBottom: dark ? "2px solid rgba(255,255,255,0.06)" : "2px solid rgba(0,0,0,0.1)",
                 display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
@@ -942,8 +952,8 @@
       const yGridLines = [];
       for (let v = yStep; v <= maxCount; v += yStep) yGridLines.push(v);
 
-      const lineColor = "#e63946";
-      const dotColor = "#e63946";
+      const lineColor = "var(--vault-red)";
+      const dotColor = "var(--vault-red)";
       const gridColor = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
       const textColor = T.text5;
 
@@ -968,7 +978,7 @@
 
       return (
         <div style={{ marginTop:"48px" }}>
-          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"24px" }}>COLLECTION GROWTH</div>
+          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"var(--vault-red)", marginBottom:"24px" }}>COLLECTION GROWTH</div>
           <div ref={containerRef} style={{ overflowX:"auto", position:"relative" }} onClick={() => setSelected(null)}>
             <svg viewBox={`0 0 ${W} ${H}`} style={{ width:"100%", maxWidth:`${W}px`, height:"auto", display:"block" }}>
               {yGridLines.map(v => (
@@ -1014,7 +1024,7 @@
                   whiteSpace:"nowrap",
                   zIndex:5,
                 }}>
-                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginBottom:"4px" }}>#{s.count}</div>
+                  <div style={{ fontSize:"9px", letterSpacing:"2px", color:"var(--vault-red)", marginBottom:"4px" }}>#{s.count}</div>
                   <div style={{ fontSize:"12px", fontWeight:"bold", color: T.text, marginBottom:"2px" }}>{s.shoe}</div>
                   <div style={{ fontSize:"11px", color: T.text3 }}>{s.colorway}</div>
                   <div style={{ fontSize:"10px", color: T.text5, marginTop:"4px" }}>{new Date(s.date + "T00:00:00").toLocaleDateString("en-US", { month:"2-digit", day:"2-digit", year:"numeric" })}</div>
@@ -1038,7 +1048,7 @@
       const btnStyle = { background:"transparent", border:"1px solid #bbb", color:CT.text7, padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" };
       return (
         <div style={{ background:T.bg2, border:`1px solid ${T.border}`, padding:"12px", marginTop: isWishlist ? "10px" : undefined }}>
-          <div style={{ fontSize:"9px", letterSpacing:"3px", color:"#e63946", marginBottom:"8px" }}>
+          <div style={{ fontSize:"9px", letterSpacing:"3px", color:"var(--vault-red)", marginBottom:"8px" }}>
             {editingMeta.colorway} — DETAILS
           </div>
           {/* Tier dropdown */}
@@ -1066,16 +1076,16 @@
           {/* Hover image upload */}
           {(
             <div style={{ marginBottom:"10px" }}>
-              <div style={{ fontSize:"9px", letterSpacing:"2px", color: hasCrossfade ? (tierInfo.color || "#e63946") : "#e63946", marginBottom:"6px" }}>{hasCrossfade ? "✦ HOVER IMAGE (IMG 2)" : "✦ 2ND IMAGE (ANNIVERSARY)"}</div>
+              <div style={{ fontSize:"9px", letterSpacing:"2px", color: hasCrossfade ? (tierInfo.color || "var(--vault-red)") : "var(--vault-red)", marginBottom:"6px" }}>{hasCrossfade ? "✦ HOVER IMAGE (IMG 2)" : "✦ 2ND IMAGE (ANNIVERSARY)"}</div>
               <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
                 {hoverImgVal
-                  ? <img src={hoverImgVal} alt="hover" style={{ width:"80px", height:"50px", objectFit:"cover", border:`1px solid ${tierInfo.color || "#FFD700"}` }} />
-                  : <div style={{ width:"80px", height:"50px", background: dark ? "#2a2a2a" : "#f0f0f0", border:`1px dashed ${tierInfo.color || "#FFD700"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px", color: tierInfo.color || "#FFD700", cursor:"pointer" }}
+                  ? <img src={hoverImgVal} alt="hover" style={{ width:"80px", height:"50px", objectFit:"cover", border:`1px solid ${tierInfo.color || "var(--tier-gold)"}` }} />
+                  : <div style={{ width:"80px", height:"50px", background: dark ? "#2a2a2a" : "#f0f0f0", border:`1px dashed ${tierInfo.color || "var(--tier-gold)"}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px", color: tierInfo.color || "var(--tier-gold)", cursor:"pointer" }}
                       onClick={() => hoverUploadRef.current.click()}>+</div>
                 }
                 <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
                   <button onClick={() => hoverUploadRef.current.click()}
-                    style={{ background:"transparent", border:`1px solid ${tierInfo.color || "#FFD700"}`, color: tierInfo.color || "#FFD700", padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
+                    style={{ background:"transparent", border:`1px solid ${tierInfo.color || "var(--tier-gold)"}`, color: tierInfo.color || "var(--tier-gold)", padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
                     {hoverImgVal ? "REPLACE" : "UPLOAD"}
                   </button>
                   {hoverImgVal && (
@@ -1103,16 +1113,16 @@
             let hover2InputEl = null;
             return (
               <div style={{ marginBottom:"10px" }}>
-                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#b8f0ff", marginBottom:"6px" }}>✦ DETAIL IMAGE (IMG 3 · DISPLAY)</div>
+                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"var(--tier-diamond)", marginBottom:"6px" }}>✦ DETAIL IMAGE (IMG 3 · DISPLAY)</div>
                 <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
                   {hover2Val
-                    ? <img src={hover2Val} alt="detail" style={{ width:"80px", height:"50px", objectFit:"cover", border:"1px solid #b8f0ff" }} />
-                    : <div style={{ width:"80px", height:"50px", background: dark ? "#2a2a2a" : "#f0f0f0", border:"1px dashed #b8f0ff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px", color:"#b8f0ff", cursor:"pointer" }}
+                    ? <img src={hover2Val} alt="detail" style={{ width:"80px", height:"50px", objectFit:"cover", border:"1px solid var(--tier-diamond)" }} />
+                    : <div style={{ width:"80px", height:"50px", background: dark ? "#2a2a2a" : "#f0f0f0", border:"1px dashed var(--tier-diamond)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px", color:"var(--tier-diamond)", cursor:"pointer" }}
                         onClick={() => hover2InputEl && hover2InputEl.click()}>+</div>
                   }
                   <div style={{ display:"flex", flexDirection:"column", gap:"6px" }}>
                     <button onClick={() => hover2InputEl && hover2InputEl.click()}
-                      style={{ background:"transparent", border:"1px solid #b8f0ff", color:"#b8f0ff", padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
+                      style={{ background:"transparent", border:"1px solid var(--tier-diamond)", color:"var(--tier-diamond)", padding:"4px 10px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif" }}>
                       {hover2Val ? "REPLACE" : "UPLOAD"}
                     </button>
                     {hover2Val && (
@@ -1229,11 +1239,11 @@
           {isWishlist && (
             <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", alignItems:"flex-end", marginTop:"8px" }}>
               <div style={{ flex:"1 1 120px" }}>
-                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginBottom:"4px" }}>🛒 SALE DATE</div>
+                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"var(--vault-red)", marginBottom:"4px" }}>🛒 SALE DATE</div>
                 <input type="date" value={metaForm.saleDate} onChange={e => setMetaForm(f => ({...f, saleDate:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
               </div>
               <div style={{ flex:"1 1 100px" }}>
-                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginBottom:"4px" }}>🛒 SALE TIME</div>
+                <div style={{ fontSize:"9px", letterSpacing:"2px", color:"var(--vault-red)", marginBottom:"4px" }}>🛒 SALE TIME</div>
                 <input type="time" value={metaForm.saleTime} onChange={e => setMetaForm(f => ({...f, saleTime:e.target.value}))} style={{...IS, fontSize:"11px", padding:"5px"}} />
               </div>
             </div>
@@ -1243,7 +1253,7 @@
             <button onClick={() => {
               setColorwayMeta(m => ({ ...m, [key]: { ...metaForm } }));
               setEditingMeta(null);
-            }} style={{ background:"#e63946", color:"#fff", border:"none", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>SAVE</button>
+            }} style={{ background:"var(--vault-red)", color:"#fff", border:"none", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>SAVE</button>
             <button onClick={() => setEditingMeta(null)} style={btnStyle}>CANCEL</button>
             {images[key] && (
               <button onClick={() => {
@@ -1625,12 +1635,12 @@
       // Loading / error screens (public only) — must be after all hooks/memos
       if (!ADMIN_MODE && publicLoading) return (
         <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", flexDirection:"column", gap:"16px" }}>
-          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946" }}>LOADING THE VAULT...</div>
+          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"var(--vault-red)" }}>LOADING THE VAULT...</div>
         </div>
       );
       if (!ADMIN_MODE && publicError) return (
         <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", flexDirection:"column", gap:"16px" }}>
-          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946" }}>VAULT UNAVAILABLE</div>
+          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"var(--vault-red)" }}>VAULT UNAVAILABLE</div>
           <div style={{ fontSize:"10px", color:"#aaa" }}>{publicError}</div>
         </div>
       );
@@ -1934,7 +1944,7 @@
       };
 
       const IS = { background: T.inputBg, border:`1px solid ${T.inputBorder}`, color: T.inputText, padding:"8px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontSize:"13px", width:"100%" };
-      const CAT = { Jordan: { bg: T.categoryBg, accent: "#e63946" }, Nike: { bg: T.categoryBg, accent: "#e63946" }, "New Balance": { bg: T.categoryBg, accent: "#e63946" }, Adidas: { bg: T.categoryBg, accent: "#e63946" }, Asics: { bg: T.categoryBg, accent: "#e63946" } };
+      const CAT = { Jordan: { bg: T.categoryBg, accent: "var(--vault-red)" }, Nike: { bg: T.categoryBg, accent: "var(--vault-red)" }, "New Balance": { bg: T.categoryBg, accent: "var(--vault-red)" }, Adidas: { bg: T.categoryBg, accent: "var(--vault-red)" }, Asics: { bg: T.categoryBg, accent: "var(--vault-red)" } };
 
       const getCellStyle = (cell) => {
         if (!cell.code || cell.code === "") return { empty: true };
@@ -1957,7 +1967,7 @@
       return (
         <div style={{ minHeight:"100vh", background: T.bg }}>
 
-          <div style={{ background:"#000000", borderBottom:"2px solid #e63946", position:"relative", minHeight: isMobilePublic ? "80px" : "200px", display:"flex", alignItems:"center" }}>
+          <div style={{ background:"#000000", borderBottom:"2px solid var(--vault-red)", position:"relative", minHeight: isMobilePublic ? "80px" : "200px", display:"flex", alignItems:"center" }}>
             <img src="assets/banner.png" alt="" style={{ position:"absolute", top:0, left:0, width:"100%", height: isMobilePublic ? "80px" : "200px", objectFit:"cover", objectPosition:"center" }} />
             {/* Title — fills remaining space, layered */}
             <div style={{ flex:1, display:"flex", justifyContent:"center", alignItems:"center", position:"relative", zIndex:2, pointerEvents:"none" }}>
@@ -1965,10 +1975,10 @@
               <img src="assets/title1.png" alt="The Vault" style={{ position:"absolute", display:"block", height: isMobilePublic ? "20px" : "60px", objectFit:"contain", animation:"fadeInTitle 1.5s ease-in-out 1s both", filter:"drop-shadow(0px 0px 4px rgba(0,0,0,1)) drop-shadow(0px 0px 8px rgba(0,0,0,1))" }} />
             </div>
             {/* Admin buttons — solid black panel */}
-            {ADMIN_MODE && <div style={{ position:"relative", zIndex:2, flexShrink:0, display:"flex", gap:"24px", textAlign:"center", alignItems:"center", background:"#000000", borderLeft:"2px solid #e63946", padding:"16px 32px", height:"200px" }}>
+            {ADMIN_MODE && <div style={{ position:"relative", zIndex:2, flexShrink:0, display:"flex", gap:"24px", textAlign:"center", alignItems:"center", background:"#000000", borderLeft:"2px solid var(--vault-red)", padding:"16px 32px", height:"200px" }}>
               <div style={{ display:"flex", flexDirection:"column", gap:"8px" }}>
-                <button onClick={exportJSON} style={{ background:"#e63946", color:"#000", border:"none", padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontWeight:"bold", whiteSpace:"nowrap" }}>⬇ BACKUP</button>
-                <button onClick={() => importRef.current.click()} style={{ background:"transparent", color:"#e63946", border:"1px solid #4cc9f0", padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>⬆ RESTORE</button>
+                <button onClick={exportJSON} style={{ background:"var(--vault-red)", color:"#000", border:"none", padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontWeight:"bold", whiteSpace:"nowrap" }}>⬇ BACKUP</button>
+                <button onClick={() => importRef.current.click()} style={{ background:"transparent", color:"var(--vault-red)", border:"1px solid #4cc9f0", padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>⬆ RESTORE</button>
                 <button onClick={() => { if (window.confirm("Clear all images? This cannot be undone.")) { setImages({}); save("vault_images", {}); } }} style={{ background:"transparent", color: T.text5, border:`1px solid ${T.text5}`, padding:"8px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>✕ CLEAR IMAGES</button>
                 <input ref={importRef} type="file" accept=".json" style={{ display:"none" }}
                   onChange={e => { if (e.target.files[0]) importJSON(e.target.files[0]); e.target.value=""; }} />
@@ -1978,7 +1988,7 @@
 
           {/* Import message */}
           {ADMIN_MODE && importMsg && (
-            <div style={{ background: importMsg.type==="success" ? "#0a2a0a" : "#2a0a0a", borderBottom:`1px solid #e63946`, padding:"12px 32px", fontSize:"11px", letterSpacing:"2px", color:"#e63946", textAlign:"center" }}>
+            <div style={{ background: importMsg.type==="success" ? "#0a2a0a" : "#2a0a0a", borderBottom:`1px solid var(--vault-red)`, padding:"12px 32px", fontSize:"11px", letterSpacing:"2px", color:"var(--vault-red)", textAlign:"center" }}>
               {importMsg.text}
             </div>
           )}
@@ -1989,7 +1999,7 @@
               <button key={v} onClick={() => setView(v)} style={{
                 padding: isMobilePublic ? "12px 0" : "14px 28px",
                 flex: isMobilePublic ? "1 1 0" : undefined,
-                background:view===v?"#e63946":"transparent",
+                background:view===v?"var(--vault-red)":"transparent",
                 color:view===v?"#fff": T.text4, border:"none", cursor:"pointer",
                 fontSize: isMobilePublic ? "9px" : "11px",
                 letterSpacing: isMobilePublic ? "2px" : "4px",
@@ -2004,7 +2014,7 @@
               <div style={{ display:"flex", gap:"16px", alignItems:"center" }}>
                 {(ADMIN_MODE ? [["PAIRS",total],["OPEN BOXES",empty],["WISHLIST",wishlistCount]] : [["PAIRS",total],["WISHLIST",wishlistCount]]).map(([label,val]) => (
                   <div key={label} style={{ display:"flex", alignItems:"center", gap:"6px" }}>
-                    <span style={{ fontSize:"14px", fontWeight:"bold", color:"#e63946" }}>{val}</span>
+                    <span style={{ fontSize:"14px", fontWeight:"bold", color:"var(--vault-red)" }}>{val}</span>
                     <span style={{ fontSize:"9px", letterSpacing:"2px", color: T.text5 }}>{label}</span>
                   </div>
                 ))}
@@ -2020,7 +2030,7 @@
             <div style={{ display:"flex", justifyContent:"center", alignItems:"center", gap:"20px", padding:"8px 16px", background: T.navBg, borderBottom:`1px solid ${T.border}` }}>
               {[["PAIRS",total],["WISHLIST",wishlistCount]].map(([label,val]) => (
                 <div key={label} style={{ display:"flex", alignItems:"center", gap:"5px" }}>
-                  <span style={{ fontSize:"12px", fontWeight:"bold", color:"#e63946" }}>{val}</span>
+                  <span style={{ fontSize:"12px", fontWeight:"bold", color:"var(--vault-red)" }}>{val}</span>
                   <span style={{ fontSize:"8px", letterSpacing:"2px", color: T.text5 }}>{label}</span>
                 </div>
               ))}
@@ -2035,11 +2045,11 @@
               <div>
                 {/* Time Travel Banner — shows when in time travel mode */}
                 {timeTravelDate && (
-                  <div style={{ background: dark ? "linear-gradient(90deg,#1a1a2a,#111122)" : "linear-gradient(90deg,#f0f8ff,#e8f4ff)", border:"1px solid #b8f0ff", padding:"16px 24px", marginBottom:"24px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+                  <div style={{ background: dark ? "linear-gradient(90deg,#1a1a2a,#111122)" : "linear-gradient(90deg,#f0f8ff,#e8f4ff)", border:"1px solid var(--tier-diamond)", padding:"16px 24px", marginBottom:"24px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                     <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
                       <div style={{ fontSize:"18px" }}>⏳</div>
                       <div>
-                        <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#b8f0ff", marginBottom:"4px" }}>TIME MACHINE</div>
+                        <div style={{ fontSize:"9px", letterSpacing:"4px", color:"var(--tier-diamond)", marginBottom:"4px" }}>TIME MACHINE</div>
                         <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: T.text }}>
                           The Vault on {formatDate(timeTravelDate)}
                         </div>
@@ -2072,7 +2082,7 @@
                       </div>
                     </div>
                     <button onClick={() => setTimeTravelDate(null)} style={{
-                      background:"transparent", border:"1px solid #b8f0ff", color:"#b8f0ff",
+                      background:"transparent", border:"1px solid var(--tier-diamond)", color:"var(--tier-diamond)",
                       padding:"6px 14px", cursor:"pointer", fontSize:"9px", letterSpacing:"2px",
                       fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap",
                     }}>✕ BACK TO PRESENT</button>
@@ -2228,8 +2238,8 @@
                     return dark ? `linear-gradient(90deg,${T.bg2},${T.bg3})` : `linear-gradient(90deg,${T.bg},${T.bg2})`;
                   };
                   const getBannerBorder = (item) => {
-                    if (item.type === "upnext") return rotationTier === "diamond" ? "#b8f0ff" : rotationTier === "platinum" ? "#C0C0C0" : "#e63946";
-                    if (item.type === "lastworn" || item.type === "wearingtoday") return lastWornTier === "diamond" ? "#b8f0ff" : lastWornTier === "platinum" ? "#C0C0C0" : "#e63946";
+                    if (item.type === "upnext") return rotationTier === "diamond" ? "var(--tier-diamond)" : rotationTier === "platinum" ? "var(--tier-platinum)" : "var(--vault-red)";
+                    if (item.type === "lastworn" || item.type === "wearingtoday") return lastWornTier === "diamond" ? "var(--tier-diamond)" : lastWornTier === "platinum" ? "var(--tier-platinum)" : "var(--vault-red)";
                     if (item.type === "sale") return "#e6b800";
                     if (item.type === "gotem") return "#e6b800";
                     return T.border;
@@ -2264,7 +2274,7 @@
                                   return <RotationImg />;
                                 })()}
                                 <div style={{ minWidth: isMobilePublic ? 0 : "360px", maxWidth: isMobilePublic ? undefined : "360px", textAlign:"center" }}>
-                                  <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
+                                  <div style={{ fontSize:"9px", letterSpacing:"4px", color:"var(--vault-red)", marginBottom:"4px" }}>
                                     {isRotationOnIce
                                       ? <span><span style={{color:"#64c8ff"}}>❄️</span> TIME TO TAKE THEM OFF ICE? <span style={{color:"#64c8ff"}}>❄️</span></span>
                                       : rotationTierInfo.color
@@ -2297,7 +2307,7 @@
                                 </div>
                               </div>
                               {ADMIN_MODE && <div style={{ flexShrink:0, marginLeft:"auto" }}>
-                                <Btn label="LOG WEAR" onClick={() => { setLoggingId(longestUnworn.id); setWearDate(localDateStr()); const ownedCws = (colorways[longestUnworn.shortName] || []).filter(cw => isColorwayOwned(longestUnworn.id, cw)); setWearColorway(longestUnwornColorway || (ownedCws[0] ?? "")); }} color="#e63946" solid />
+                                <Btn label="LOG WEAR" onClick={() => { setLoggingId(longestUnworn.id); setWearDate(localDateStr()); const ownedCws = (colorways[longestUnworn.shortName] || []).filter(cw => isColorwayOwned(longestUnworn.id, cw)); setWearColorway(longestUnwornColorway || (ownedCws[0] ?? "")); }} color="var(--vault-red)" solid />
                               </div>}
                             </div>
                           );
@@ -2338,7 +2348,7 @@
                                 )
                               )}
                               <div style={{ minWidth:0 }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
+                                <div style={{ fontSize:"9px", letterSpacing:"4px", color:"var(--vault-red)", marginBottom:"4px" }}>
                                   {isLastWornPremium ? <span><span style={{color: lastWornTierInfo.color}}>✦</span> ON FEET TODAY <span style={{color: lastWornTierInfo.color}}>✦</span></span> : "👟 ON FEET TODAY"}
                                 </div>
                                 <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: isLastWornPremium ? lastWornTierInfo.color : T.text }}>
@@ -2355,7 +2365,7 @@
                             <div key={`lastworn-${i}`} style={{ display:"flex", alignItems:"flex-start", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none" }}>
                               {lastWornImg && <img src={lastWornImg} alt={lastWornColorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0, filter: isLastWornPremium ? `drop-shadow(0 0 12px ${lastWornTierInfo.glowRgba})` : "none" }} />}
                               <div style={{ minWidth: isMobilePublic ? 0 : "360px", maxWidth: isMobilePublic ? undefined : "360px", textAlign:"center" }}>
-                                <div style={{ fontSize:"9px", letterSpacing:"4px", color:"#e63946", marginBottom:"4px" }}>
+                                <div style={{ fontSize:"9px", letterSpacing:"4px", color:"var(--vault-red)", marginBottom:"4px" }}>
                                   {isLastWornPremium ? <span><span style={{color: lastWornTierInfo.color}}>✦</span> LAST WORN <span style={{color: lastWornTierInfo.color}}>✦</span></span> : "LAST WORN"}
                                 </div>
                                 <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: isLastWornPremium ? lastWornTierInfo.color : T.text }}>
@@ -2385,11 +2395,11 @@
                           <div key={`${item.type}-${i}`} style={{ display:"flex", alignItems:"flex-start", gap: isMobilePublic ? "12px" : "16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none" }}>
                             {item.img && <img src={item.img} alt={item.colorway} style={{ width: isMobilePublic ? "88px" : "120px", height: isMobilePublic ? "55px" : "75px", objectFit:"cover", flexShrink:0 }} />}
                             <div style={{ minWidth:0 }}>
-                              <div style={{ fontSize:"9px", letterSpacing: isMobilePublic ? "3px" : "4px", color: item.type === "sale" || item.type === "gotem" || item.type === "spotlight" ? "#e6b800" : "#e63946", marginBottom:"4px" }}>{item.label}</div>
+                              <div style={{ fontSize:"9px", letterSpacing: isMobilePublic ? "3px" : "4px", color: item.type === "sale" || item.type === "gotem" || item.type === "spotlight" ? "#e6b800" : "var(--vault-red)", marginBottom:"4px" }}>{item.label}</div>
                               <div style={{ fontSize: isMobilePublic ? "13px" : "15px", fontWeight:"bold", color: T.text }}>{item.shoe.name} — {item.colorway}</div>
                               <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{item.subtitle}</div>
                               {item.type === "anniversary" && item.purchaseDate && !isMobilePublic && (
-                                <div onClick={e => { e.stopPropagation(); setTimeTravelDate(item.purchaseDate); setView("collection"); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ fontSize:"9px", letterSpacing:"2px", color:"#e63946", marginTop:"6px", cursor:"pointer", textDecoration:"underline", opacity:0.8 }}>
+                                <div onClick={e => { e.stopPropagation(); setTimeTravelDate(item.purchaseDate); setView("collection"); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ fontSize:"9px", letterSpacing:"2px", color:"var(--vault-red)", marginTop:"6px", cursor:"pointer", textDecoration:"underline", opacity:0.8 }}>
                                   See the vault on this day →
                                 </div>
                               )}
@@ -2403,7 +2413,7 @@
                     {bannerItems.length > 1 && (
                       <div style={{ display:"flex", justifyContent:"center", gap:"6px", marginTop:"10px" }}>
                         {bannerItems.map((_, i) => (
-                          <div key={i} onClick={() => setBannerIdx(i)} style={{ width:"8px", height:"8px", borderRadius:"50%", background: i === safeIdx ? "#e63946" : (dark ? "#444" : "#ccc"), cursor:"pointer", transition:"background 0.3s" }} />
+                          <div key={i} onClick={() => setBannerIdx(i)} style={{ width:"8px", height:"8px", borderRadius:"50%", background: i === safeIdx ? "var(--vault-red)" : (dark ? "#444" : "#ccc"), cursor:"pointer", transition:"background 0.3s" }} />
                         ))}
                       </div>
                     )}
@@ -2417,14 +2427,14 @@
                   const shoeColorways = (colorways[shoe?.shortName] || []).filter(cw => shoe && isColorwayOwned(shoe.id, cw));
                   return (
                     <div style={{ background: T.bg4, border:"1px solid #f4a261", padding:"16px 24px", marginBottom:"24px", display:"flex", alignItems:"center", gap:"12px", flexWrap:"wrap" }}>
-                      <div style={{ fontSize:"10px", letterSpacing:"3px", color:"#e63946", marginRight:"4px" }}>LOGGING: {shoe?.name}</div>
+                      <div style={{ fontSize:"10px", letterSpacing:"3px", color:"var(--vault-red)", marginRight:"4px" }}>LOGGING: {shoe?.name}</div>
                       <select value={wearColorway} onChange={e => setWearColorway(e.target.value)}
                         style={{ ...IS, width:"auto", minWidth:"180px" }}>
                         {shoeColorways.map(cw => <option key={cw} value={cw}>{cw}</option>)}
                       </select>
                       <input type="date" value={wearDate} onChange={e => setWearDate(e.target.value)}
                         style={{ ...IS, width:"auto" }} />
-                      <Btn label="CONFIRM" onClick={logWear} color="#e63946" solid />
+                      <Btn label="CONFIRM" onClick={logWear} color="var(--vault-red)" solid />
                       <Btn label="CANCEL"  onClick={() => setLoggingId(null)} color="#666" />
                     </div>
                   );
@@ -2434,7 +2444,7 @@
                 {ADMIN_MODE && !timeTravelDate && <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
                   <div></div>
                   <button onClick={() => { setShowForm(!showForm); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan"}); }} style={{
-                    background:"#e63946", color:T.text, border:"none", padding:"10px 20px",
+                    background:"var(--vault-red)", color:T.text, border:"none", padding:"10px 20px",
                     cursor:"pointer", fontSize:"11px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
                   }}>+ ADD SHOE</button>
                 </div>}
@@ -2536,7 +2546,7 @@
                             <span style={{ flex:1, fontSize:"12px", color:T.text }}>{cw}</span>
                           )}
                           <button onClick={() => setRenamingColorwayIdx(isRenaming ? null : i)} title="Rename"
-                            style={{ background:"transparent", border:`1px solid ${T.border2}`, color: isRenaming ? "#e63946" : T.text4, padding:"2px 8px", cursor:"pointer", fontSize:"11px" }}>✎</button>
+                            style={{ background:"transparent", border:`1px solid ${T.border2}`, color: isRenaming ? "var(--vault-red)" : T.text4, padding:"2px 8px", cursor:"pointer", fontSize:"11px" }}>✎</button>
                           <button onClick={() => setEditColorways(cws => { const n=[...cws]; [n[i-1],n[i]]=[n[i],n[i-1]]; return n; })} disabled={i===0}
                             style={{ background:"transparent", border:`1px solid ${T.border2}`, color: i===0 ? T.text8 : T.text4, padding:"2px 8px", cursor: i===0?"default":"pointer", fontSize:"11px" }}>↑</button>
                           <button onClick={() => setEditColorways(cws => { const n=[...cws]; [n[i],n[i+1]]=[n[i+1],n[i]]; return n; })} disabled={i===editColorways.length-1}
@@ -2553,11 +2563,11 @@
                           onKeyDown={e => { if (e.key==="Enter" && newColorway.trim()) { setEditColorways(cws => [...cws, newColorway.trim()]); setNewColorway(""); }}}
                           style={{...IS, flex:1}} />
                         <button onClick={() => { if (newColorway.trim()) { setEditColorways(cws => [...cws, newColorway.trim()]); setNewColorway(""); }}}
-                          style={{ background:"#e63946", color:"#fff", border:"none", padding:"8px 14px", cursor:"pointer", fontSize:"11px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>+ ADD</button>
+                          style={{ background:"var(--vault-red)", color:"#fff", border:"none", padding:"8px 14px", cursor:"pointer", fontSize:"11px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>+ ADD</button>
                       </div>
                     </div>
                     <div style={{ display:"flex", gap:"8px", marginTop:"16px" }}>
-                      <button onClick={handleAdd} style={{ background:"#e63946", color:T.text, border:"none", padding:"10px 16px", cursor:"pointer", fontSize:"11px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>
+                      <button onClick={handleAdd} style={{ background:"var(--vault-red)", color:T.text, border:"none", padding:"10px 16px", cursor:"pointer", fontSize:"11px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>
                         {editId !== null ? "SAVE" : "ADD"}
                       </button>
                       <button onClick={() => { setShowForm(false); setEditId(null); setNewShoe({name:"",shortName:"",category:"Jordan"}); setEditColorways([]); setNewColorway(""); }} style={{ background:"transparent", border:"1px solid #bbb", color:T.text7, padding:"10px 16px", cursor:"pointer", fontSize:"11px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>
@@ -2639,16 +2649,16 @@
                           <button key={id} onClick={() => setCollectionFilter(id)} style={{
                             background:"transparent", border:"none", cursor:"pointer",
                             fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
-                            color: collectionFilter === id ? "#e63946" : T.text5,
-                            borderBottom: collectionFilter === id ? "1px solid #e63946" : "1px solid transparent",
+                            color: collectionFilter === id ? "var(--vault-red)" : T.text5,
+                            borderBottom: collectionFilter === id ? "1px solid var(--vault-red)" : "1px solid transparent",
                             padding:"4px 0",
                           }}>{label}</button>
                         ))}
                         {filterDesc && <span style={{ fontSize:"12px", fontStyle:"italic", color: T.text4, marginLeft:"8px" }}>{filterDesc}</span>}
                         {ADMIN_MODE && (
                           <button onClick={() => setTimeTravelPicker(p => !p)} title="Time Machine" style={{
-                            background: timeTravelDate ? "#b8f0ff" : "transparent",
-                            border: timeTravelDate ? "1px solid #b8f0ff" : `1px solid ${T.border2}`,
+                            background: timeTravelDate ? "var(--tier-diamond)" : "transparent",
+                            border: timeTravelDate ? "1px solid var(--tier-diamond)" : `1px solid ${T.border2}`,
                             color: timeTravelDate ? "#111" : T.text5,
                             padding:"3px 8px", cursor:"pointer", fontSize:"13px", lineHeight:1,
                             fontFamily:"'Aptos','Segoe UI',sans-serif", marginLeft:"4px",
@@ -2753,7 +2763,7 @@
                                     setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"", comfortRating: meta.comfortRating||"", releaseYear: meta.releaseYear||"" });
                                   }}
                                   title="Edit details"
-                                  style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : ((meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? T.text3 : T.text6), marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
+                                  style={{ fontSize:"9px", color: isEditingThis ? "var(--vault-red)" : ((meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? T.text3 : T.text6), marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
                                   {(meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer) ? `sz ${meta.size}` : "· · ·"}
                                 </div>}
                               </div>
@@ -2852,8 +2862,8 @@
                 <div style={{ display:"flex", gap:"8px", marginBottom:"20px" }}>
                   {[["my","MY DISPLAY"],["dream","DREAM DISPLAY"]].map(([mode, label]) => (
                     <button key={mode} onClick={() => { setDisplayMode(mode); setEditingCell(null); }} style={{
-                      background: displayMode === mode ? "#e63946" : "transparent",
-                      border: `1px solid ${displayMode === mode ? "#e63946" : T.border2}`,
+                      background: displayMode === mode ? "var(--vault-red)" : "transparent",
+                      border: `1px solid ${displayMode === mode ? "var(--vault-red)" : T.border2}`,
                       color: displayMode === mode ? "#fff" : T.text4,
                       padding:"6px 16px", cursor:"pointer", fontSize:"10px", letterSpacing:"3px",
                       fontFamily:"'Aptos','Segoe UI',sans-serif",
@@ -2864,7 +2874,7 @@
                 {/* Edit panel */}
                 {ADMIN_MODE && editingCell && (
                   <div style={{ background:T.bg4, border:"1px solid #f4a261", padding:"16px 24px", marginBottom:"24px", display:"flex", alignItems:"center", gap:"12px", flexWrap:"wrap" }}>
-                    <div style={{ fontSize:"10px", letterSpacing:"3px", color:"#e63946" }}>EDITING BOX {editingCell.ri + 1}-{editingCell.ci + 1}</div>
+                    <div style={{ fontSize:"10px", letterSpacing:"3px", color:"var(--vault-red)" }}>EDITING BOX {editingCell.ri + 1}-{editingCell.ci + 1}</div>
                     <select value={editShoe} onChange={e => { setEditShoe(e.target.value); setEditCw(colorways[e.target.value]?.[0] || ""); }}
                       style={{ background:T.inputBg, border:`1px solid ${T.inputBorder}`, color:T.inputText, padding:"8px", fontFamily:"'Aptos','Segoe UI',sans-serif", fontSize:"13px", minWidth:"160px" }}>
                       <option value="">— Empty —</option>
@@ -2889,13 +2899,13 @@
                       );
                       setActiveLayout(newLayout);
                       setEditingCell(null);
-                    }} color="#e63946" solid />
+                    }} color="var(--vault-red)" solid />
                     <Btn label="CANCEL" onClick={() => setEditingCell(null)} color="#666" />
                   </div>
                 )}
 
                 <div style={{ fontSize:"9px", letterSpacing:"4px", color:T.text6, marginBottom:"16px" }}>
-                  {isDream ? <>DREAM DISPLAY · HOW IT COULD LOOK <span style={{ letterSpacing:"2px", opacity:0.7 }}>(<span style={{ display:"inline-block", width:"14px", height:"10px", border:"1px dashed #e63946", marginRight:"4px", marginLeft:"2px", verticalAlign:"middle" }}></span>DASHED BORDER = WISHLIST)</span></> : "MY COLLECTION · AS CURRENTLY DISPLAYED IN MY OFFICE"}
+                  {isDream ? <>DREAM DISPLAY · HOW IT COULD LOOK <span style={{ letterSpacing:"2px", opacity:0.7 }}>(<span style={{ display:"inline-block", width:"14px", height:"10px", border:"1px dashed var(--vault-red)", marginRight:"4px", marginLeft:"2px", verticalAlign:"middle" }}></span>DASHED BORDER = WISHLIST)</span></> : "MY COLLECTION · AS CURRENTLY DISPLAYED IN MY OFFICE"}
                 </div>
                 {(() => {
                   const gridW = 5 * 160 + 4 * 8;
@@ -3011,7 +3021,7 @@
                                       setMetaForm({ purchaseDate: meta.purchaseDate||"", purchasePrice: meta.purchasePrice||"", retailer: meta.retailer||"", size: meta.size||"", notes: meta.notes||"", ogYear: meta.ogYear||"", story: meta.story||"", saleDate: meta.saleDate||"", saleTime: meta.saleTime||"", comfortRating: meta.comfortRating||"", releaseYear: meta.releaseYear||"" });
                                     }}
                                     title="Edit details"
-                                    style={{ fontSize:"9px", color: isEditingThis ? "#e63946" : T.text6, marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
+                                    style={{ fontSize:"9px", color: isEditingThis ? "var(--vault-red)" : T.text6, marginTop:"3px", textAlign:"center", cursor:"pointer", maxWidth: imgW, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis", textDecoration:"underline", letterSpacing:"1px" }}>
                                     · · ·
                                   </div>}
                                 </div>
@@ -3119,9 +3129,9 @@
               };
 
               const colStyle = (col) => ({
-                padding:"10px 16px", fontSize:"10px", letterSpacing:"3px", color: sortCol===col ? "#e63946" : T.text,
+                padding:"10px 16px", fontSize:"10px", letterSpacing:"3px", color: sortCol===col ? "var(--vault-red)" : T.text,
                 cursor:"pointer", userSelect:"none", textAlign:"left", background:"transparent",
-                border:"none", fontFamily:"'Aptos','Segoe UI',sans-serif", borderBottom: sortCol===col ? "2px solid #e63946" : "2px solid transparent",
+                border:"none", fontFamily:"'Aptos','Segoe UI',sans-serif", borderBottom: sortCol===col ? "2px solid var(--vault-red)" : "2px solid transparent",
                 whiteSpace:"nowrap",
               });
 
@@ -3131,8 +3141,8 @@
                 <button key={id} onClick={() => { setHistDatePreset(id); if (id !== "custom") { setHistDateFrom(""); setHistDateTo(""); } }} style={{
                   background:"transparent", border:"none", cursor:"pointer",
                   fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
-                  color: histDatePreset === id ? "#e63946" : T.text5,
-                  borderBottom: histDatePreset === id ? "1px solid #e63946" : "1px solid transparent",
+                  color: histDatePreset === id ? "var(--vault-red)" : T.text5,
+                  borderBottom: histDatePreset === id ? "1px solid var(--vault-red)" : "1px solid transparent",
                   padding:"4px 0",
                 }}>{label}</button>
               );
@@ -3146,7 +3156,7 @@
                       <div style={{ fontSize:"11px", letterSpacing:"4px", color:T.text4 }}>WEAR HISTORY</div>
                       <div style={{ fontSize:"10px", color:T.text3, marginTop:"4px" }}>{filtered.length}{filtered.length !== allEntries.length ? ` of ${allEntries.length}` : ""} total wears</div>
                     </div>
-                    <Btn label="EXPORT CSV" onClick={exportCSV} color="#e63946" />
+                    <Btn label="EXPORT CSV" onClick={exportCSV} color="var(--vault-red)" />
                   </div>
                   {/* Filter bar */}
                   <div style={{ background:T.bg2, border:`1px solid ${T.border}`, padding:"12px 16px", marginBottom:"16px" }}>
@@ -3239,7 +3249,7 @@
               const rest = ranked.slice(3);
               const podiumOrder = [podium[1], podium[0], podium[2]];
               const podiumHeights = [80, 110, 55];
-              const podiumColors = ["#C0C0C0", "#FFD700", "#CD7F32"];
+              const podiumColors = ["var(--tier-platinum)", "var(--tier-gold)", "#CD7F32"];
               const podiumLabels = ["2", "1", "3"];
               const imgW = isMobilePublic ? 72 : 120;
               const imgH = Math.round(imgW * 0.625);
@@ -3274,8 +3284,8 @@
                         <button key={id} onClick={() => setTop10Filter(id)} style={{
                           background:"transparent", border:"none", cursor:"pointer",
                           fontSize:"9px", letterSpacing:"3px", fontFamily:"'Aptos','Segoe UI',sans-serif",
-                          color: top10Filter === id ? "#e63946" : T.text5,
-                          borderBottom: top10Filter === id ? "1px solid #e63946" : "1px solid transparent",
+                          color: top10Filter === id ? "var(--vault-red)" : T.text5,
+                          borderBottom: top10Filter === id ? "1px solid var(--vault-red)" : "1px solid transparent",
                           padding:"4px 0",
                         }}>{label}</button>
                       ))}
@@ -3309,7 +3319,9 @@
                               <div style={{ fontSize: isMobilePublic ? "9px" : "11px", color: T.text3, marginTop:"2px" }}>{entry.colorway}</div>
                               {sub && <div style={{ fontSize: isMobilePublic ? "8px" : "9px", color:T.text5, marginTop:"6px", letterSpacing:"1px" }}>{sub}</div>}
                             </div>
-                            <div style={{ width:"100%", height: isMobilePublic ? Math.round(h * 0.5) : h, background: `linear-gradient(180deg, ${color}33, ${color}11)`, borderLeft:`1px solid ${color}`, borderRight:`1px solid ${color}`, borderBottom:`1px solid ${color}` }} />
+                            <div style={{ width:"100%", height: isMobilePublic ? Math.round(h * 0.5) : h, borderLeft:`1px solid ${color}`, borderRight:`1px solid ${color}`, borderBottom:`1px solid ${color}`, position:"relative", overflow:"hidden" }}>
+                              <div style={{ position:"absolute", inset:0, background:color, opacity:0.12 }} />
+                            </div>
                           </div>
                         );
                       })}
@@ -3322,7 +3334,7 @@
                         const metaKey = `${entry.shoe.id}_${entry.colorway}`;
                         const img = images[metaKey] || null;
                         const entryTier = tierOf(tierMeta, metaKey); const entryTierInfo = TIERS[entryTier] || TIERS.silver;
-                        const color = i === 0 ? "#FFD700" : i === 1 ? "#C0C0C0" : "#CD7F32";
+                        const color = i === 0 ? "var(--tier-gold)" : i === 1 ? "var(--tier-platinum)" : "#CD7F32";
                         const sub = subtitle(entry);
                         return (
                           <div key={metaKey} style={{ background:T.cardBg, border:`1px solid ${color}`, padding:"16px" }}>
@@ -3473,7 +3485,7 @@
               const maxMonth = Math.max(...monthCounts, 1);
 
               // ── Bar chart colors — two red shades alternating by quarter ──
-              const barColor = (m) => m < 3 || (m >= 6 && m < 9) ? "#e63946" : "#a52833";
+              const barColor = (m) => m < 3 || (m >= 6 && m < 9) ? "var(--vault-red)" : "var(--vault-red-dark)";
 
               // ── New pickups (purchased in review year) ──
               const newPickups = [];
@@ -3539,7 +3551,7 @@
 
               return (
                 <div style={{ padding:"16px 0" }}>
-                  <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"32px" }}>{reviewYear} YEAR IN REVIEW</div>
+                  <div style={{ fontSize:"11px", letterSpacing:"4px", color:"var(--vault-red)", marginBottom:"32px" }}>{reviewYear} YEAR IN REVIEW</div>
 
                   {/* ── Headline: Total Wears ── */}
                   <div style={{ textAlign:"center", marginBottom:"48px" }}>
@@ -3548,7 +3560,7 @@
                   </div>
 
                   {/* ── Monthly Bar Chart ── */}
-                  <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"24px" }}>MONTH BY MONTH</div>
+                  <div style={{ fontSize:"11px", letterSpacing:"4px", color:"var(--vault-red)", marginBottom:"24px" }}>MONTH BY MONTH</div>
                   <div style={{ overflowX:"auto", position:"relative", maxWidth: isMobilePublic ? "100%" : "66%", }}>
                     <svg viewBox={`0 0 ${W} ${H}`} style={{ width:"100%", height:"auto", display:"block" }}>
                       {/* Y-axis grid lines */}
@@ -3571,7 +3583,7 @@
                               opacity={reviewMonth === null || reviewMonth === m ? 1 : 0.3}
                               style={{ transition:"opacity 0.2s" }} />}
                             {count > 0 && <text x={bx + bw / 2} y={by - 6} textAnchor="middle" fontSize="9" fill={T.text4} fontFamily="'Aptos','Segoe UI',sans-serif">{count}</text>}
-                            <text x={pad.left + m * barW + barW / 2} y={H - pad.bottom + 16} textAnchor="middle" fontSize="8" letterSpacing="1" fill={reviewMonth === m ? "#e63946" : T.text5} fontFamily="'Aptos','Segoe UI',sans-serif" style={{ transition:"fill 0.2s" }}>{MONTHS[m]}</text>
+                            <text x={pad.left + m * barW + barW / 2} y={H - pad.bottom + 16} textAnchor="middle" fontSize="8" letterSpacing="1" fill={reviewMonth === m ? "var(--vault-red)" : T.text5} fontFamily="'Aptos','Segoe UI',sans-serif" style={{ transition:"fill 0.2s" }}>{MONTHS[m]}</text>
                           </g>
                         );
                       })}
@@ -3623,7 +3635,7 @@
                   {/* ── New Pickups ── */}
                   {newPickups.length > 0 && (
                     <div style={{ marginTop:"48px" }}>
-                      <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"24px" }}>NEW PICKUPS</div>
+                      <div style={{ fontSize:"11px", letterSpacing:"4px", color:"var(--vault-red)", marginBottom:"24px" }}>NEW PICKUPS</div>
                       <div style={{ display:"grid", gridTemplateColumns:`repeat(auto-fill, minmax(${isMobilePublic ? "130px" : "150px"}, 1fr))`, gap:"16px" }}>
                         {newPickups.map((p, i) => (
                           <div key={i} style={{ textAlign:"center" }}>
@@ -3668,7 +3680,7 @@
                     eggRef.current = 0;
                     window.location.href = ADMIN_MODE ? "games/2048.html" : "games/";
                   }
-                }} style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", marginBottom:"32px", cursor:"default", userSelect:"none" }}>ABOUT THE VAULT</div>
+                }} style={{ fontSize:"11px", letterSpacing:"4px", color:"var(--vault-red)", marginBottom:"32px", cursor:"default", userSelect:"none" }}>ABOUT THE VAULT</div>
                 <p style={{ fontSize:"15px", color:T.text2, lineHeight:"2", marginBottom:"24px", fontStyle:"italic" }}>
                   The first time I saw the Air Jordan 4 sitting in the window of my local shoe store, I was hooked. Every trip to the mall meant one thing: making my way to Foot Locker and staring at the shoes worn by my favorite athletes — Michael Jordan, Andre Agassi, and Bo Jackson. I'd stand there daydreaming about the day I could own all of them.
                 </p>
@@ -3679,11 +3691,11 @@
                   This collection is for that 10 year old boy who never stopped looking through the glass.
                 </p>
 
-                <div style={{ fontSize:"11px", letterSpacing:"4px", color:"#e63946", margin:"48px 0 24px" }}>THE TIER SYSTEM</div>
+                <div style={{ fontSize:"11px", letterSpacing:"4px", color:"var(--vault-red)", margin:"48px 0 24px" }}>THE TIER SYSTEM</div>
                 {[
-                  { tier: "diamond",  label: TIERS.diamond.label,  color: dark ? "#b8f0ff" : "#0099bb", desc: "The sneakers that 10-year-old me dreamed about" },
-                  { tier: "platinum", label: TIERS.platinum.label, color: "#C0C0C0", desc: "Original colorways of my favorite sneakers" },
-                  { tier: "gold",     label: TIERS.gold.label,     color: "#FFD700", desc: "Sneakers I'm glad are in my collection" },
+                  { tier: "diamond",  label: TIERS.diamond.label,  color: dark ? "var(--tier-diamond)" : "var(--tier-diamond-dark)", desc: "The sneakers that 10-year-old me dreamed about" },
+                  { tier: "platinum", label: TIERS.platinum.label, color: "var(--tier-platinum)", desc: "Original colorways of my favorite sneakers" },
+                  { tier: "gold",     label: TIERS.gold.label,     color: "var(--tier-gold)", desc: "Sneakers I'm glad are in my collection" },
                   { tier: "silver",   label: "⬥ SILVER ⬥",         color: T.text4,   desc: "Maybe I shouldn't have bought these" },
                   { tier: "bronze",   label: TIERS.bronze.label,   color: "#CD7F32", desc: "Beaters" },
                 ].map(t => (
@@ -3712,12 +3724,12 @@
                   return (
                     <div style={{ marginTop:"48px", marginBottom:"0", textAlign:"center" }}>
                       <button onClick={() => setStorySlideshow({ index: 0, entries: storyEntries })} style={{
-                        background:"transparent", border:"1px solid #e63946", color:"#e63946",
+                        background:"transparent", border:"1px solid var(--vault-red)", color:"var(--vault-red)",
                         padding:"10px 32px", cursor:"pointer", fontSize:"10px", letterSpacing:"4px",
                         fontFamily:"'Aptos','Segoe UI',sans-serif", transition:"all 0.3s ease",
                       }}
-                        onMouseEnter={e => { e.target.style.background = "#e63946"; e.target.style.color = "#fff"; }}
-                        onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.color = "#e63946"; }}
+                        onMouseEnter={e => { e.target.style.background = "var(--vault-red)"; e.target.style.color = "#fff"; }}
+                        onMouseLeave={e => { e.target.style.background = "transparent"; e.target.style.color = "var(--vault-red)"; }}
                       >STORIES</button>
                       <div style={{ fontSize:"10px", color:T.text5, marginTop:"8px", letterSpacing:"1px" }}>{storyEntries.length} shoes with stories</div>
                     </div>
@@ -3770,9 +3782,9 @@
                     <div style={{ fontSize:"11px", letterSpacing:"4px", color:T.text5 }}>🪦 THE GRAVEYARD IS EMPTY</div>
                   ) : (
                     <>
-                      {renderSection(diamonds, "✦ RETIRED DIAMOND ✦", "#b8f0ff")}
-                      {renderSection(platinums, "✦ RETIRED PLATINUM ✦", "#C0C0C0")}
-                      {renderSection(golds, "✦ RETIRED GOLD ✦", "#FFD700")}
+                      {renderSection(diamonds, "✦ RETIRED DIAMOND ✦", "var(--tier-diamond)")}
+                      {renderSection(platinums, "✦ RETIRED PLATINUM ✦", "var(--tier-platinum)")}
+                      {renderSection(golds, "✦ RETIRED GOLD ✦", "var(--tier-gold)")}
                       {renderSection(silvers, "⬥ RETIRED SILVER ⬥", T.text4)}
                       {renderSection(bronzes, "💀 RETIRED BRONZE 💀", "#CD7F32")}
                     </>
@@ -3854,8 +3866,8 @@
                         }}>NEXT</button>
                       ) : (
                         <button onClick={close} style={{
-                          background:"transparent", border:"1px solid #e63946",
-                          color:"#e63946", padding:"8px 20px", cursor:"pointer", fontSize:"10px", letterSpacing:"3px",
+                          background:"transparent", border:"1px solid var(--vault-red)",
+                          color:"var(--vault-red)", padding:"8px 20px", cursor:"pointer", fontSize:"10px", letterSpacing:"3px",
                           fontFamily:"'Aptos','Segoe UI',sans-serif",
                         }}>CLOSE</button>
                       )}
@@ -3866,7 +3878,7 @@
                       {entries.map((_, i) => (
                         <div key={i} onClick={() => goTo(i)} style={{
                           width:"6px", height:"6px", borderRadius:"50%", cursor:"pointer",
-                          background: i === index ? "#e63946" : "rgba(255,255,255,0.2)",
+                          background: i === index ? "var(--vault-red)" : "rgba(255,255,255,0.2)",
                           transition:"background 0.3s ease",
                         }} />
                       ))}
@@ -3949,7 +3961,7 @@
                         return (
                           <div key={idx} onClick={item.action} style={{
                             padding:"7px 12px", fontSize:"11px", cursor:"pointer",
-                            color: item.danger ? "#e63946" : T.text,
+                            color: item.danger ? "var(--vault-red)" : T.text,
                             display:"flex", alignItems:"center", gap:"8px",
                           }}
                             onMouseEnter={e => e.currentTarget.style.background = dark ? "#2a2a2a" : "#f0f0f0"}
