@@ -2322,11 +2322,14 @@
                           // Cycle order: main, hover2, hover (1, 3, 2)
                           const cycleOrder = [img1, img3, img2].filter(Boolean);
                           const soloSlide = bannerItems.length === 1;
+                          const isDiamond = lastWornTier === "diamond";
                           const glowFilter = isLastWornPremium ? `drop-shadow(0 0 12px ${lastWornTierInfo.glowRgba})` : "none";
+                          const diamondImgStyle = isDiamond ? { animation: "prismaticGlow 4s ease-in-out infinite" } : {};
                           const tileW = isMobilePublic ? 88 : 120;
                           const tileH = isMobilePublic ? 55 : 75;
                           return (
                             <div key={`wearingtoday-${i}`} style={{ display:"flex", alignItems:"flex-start", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none", flexWrap:"wrap" }}>
+                              {/* Diamond watermark */}
                               {cycleOrder.length > 0 && (
                                 soloSlide && cycleOrder.length > 1 ? (
                                   <div style={{ flexShrink:0, position:"relative", width: tileW, height: tileH }}>
@@ -2336,13 +2339,14 @@
                                         position: ti === 0 ? "relative" : "absolute", top:0, left:0,
                                         opacity: (wearImgIdx % cycleOrder.length) === ti ? 1 : 0,
                                         transition:"opacity 1s ease-in-out",
+                                        ...diamondImgStyle,
                                       }} />
                                     ))}
                                   </div>
                                 ) : (
                                   <div style={{ display:"flex", gap:"8px", flexShrink:0 }}>
                                     {(isMobilePublic ? cycleOrder.slice(0, 1) : cycleOrder).map((src, ti) => (
-                                      <img key={ti} src={src} alt={item.colorway} style={{ width: tileW, height: tileH, objectFit:"cover", filter: glowFilter }} />
+                                      <img key={ti} src={src} alt={item.colorway} style={{ width: tileW, height: tileH, objectFit:"cover", filter: glowFilter, ...diamondImgStyle }} />
                                     ))}
                                   </div>
                                 )
@@ -2391,11 +2395,15 @@
                         }
 
                         // ── News slides (sale, gotem, gotemq, anniversary, onthisday, spotlight) ──
+                        const newsKey = `${item.shoe.id}_${item.colorway}`;
+                        const newsTier = tierOf(tierMeta, newsKey);
+                        const isNewsDiamond = item.type === "spotlight" && newsTier === "diamond";
+                        const newsGlow = isNewsDiamond ? { animation: "prismaticGlow 4s ease-in-out infinite" } : {};
                         return (
                           <div key={`${item.type}-${i}`} style={{ display:"flex", alignItems:"flex-start", gap: isMobilePublic ? "12px" : "16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none" }}>
-                            {item.img && <img src={item.img} alt={item.colorway} style={{ width: isMobilePublic ? "88px" : "120px", height: isMobilePublic ? "55px" : "75px", objectFit:"cover", flexShrink:0 }} />}
+                            {item.img && <img src={item.img} alt={item.colorway} style={{ width: isMobilePublic ? "88px" : "120px", height: isMobilePublic ? "55px" : "75px", objectFit:"cover", flexShrink:0, ...newsGlow }} />}
                             <div style={{ minWidth:0 }}>
-                              <div style={{ fontSize:"9px", letterSpacing: isMobilePublic ? "3px" : "4px", color: item.type === "sale" || item.type === "gotem" || item.type === "spotlight" ? "#e6b800" : "var(--vault-red)", marginBottom:"4px" }}>{item.label}</div>
+                              <div style={{ fontSize:"9px", letterSpacing: isMobilePublic ? "3px" : "4px", color: isNewsDiamond ? "var(--tier-diamond)" : (item.type === "sale" || item.type === "gotem" || item.type === "spotlight") ? "#e6b800" : "var(--vault-red)", marginBottom:"4px" }}>{isNewsDiamond ? "💎 SHOE OF THE DAY 💎" : item.label}</div>
                               <div style={{ fontSize: isMobilePublic ? "13px" : "15px", fontWeight:"bold", color: T.text }}>{item.shoe.name} — {item.colorway}</div>
                               <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{item.subtitle}</div>
                               {item.type === "anniversary" && item.purchaseDate && !isMobilePublic && (
