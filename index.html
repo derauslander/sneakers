@@ -2210,7 +2210,7 @@
                       const purchaseLine = pickMeta.purchaseDate ? `Purchased ${formatDate(pickMeta.purchaseDate)}` : null;
                       const wearLine = `Worn ${pickWears} ${pickWears === 1 ? "time" : "times"}`;
                       const sub = [purchaseLine, wearLine].filter(Boolean).join(" · ");
-                      bannerItems.push({ type:"spotlight", label:"✦ SHOE OF THE DAY ✦", shoe: pick.shoe, colorway: pick.colorway, img: pickImg, subtitle: sub });
+                      bannerItems.push({ type:"spotlight", label:"✦ SNEAKER OF THE DAY ✦", shoe: pick.shoe, colorway: pick.colorway, img: pickImg, subtitle: sub });
                     }
                   }
 
@@ -2403,7 +2403,7 @@
                           <div key={`${item.type}-${i}`} style={{ display:"flex", alignItems:"flex-start", gap: isMobilePublic ? "12px" : "16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none" }}>
                             {item.img && <img src={item.img} alt={item.colorway} style={{ width: isMobilePublic ? "88px" : "120px", height: isMobilePublic ? "55px" : "75px", objectFit:"cover", flexShrink:0, ...newsGlow }} />}
                             <div style={{ minWidth:0 }}>
-                              <div style={{ fontSize:"9px", letterSpacing: isMobilePublic ? "3px" : "4px", color: isNewsDiamond ? "var(--tier-diamond)" : (item.type === "sale" || item.type === "gotem" || item.type === "spotlight") ? "#e6b800" : "var(--vault-red)", marginBottom:"4px" }}>{isNewsDiamond ? "💎 SHOE OF THE DAY 💎" : item.label}</div>
+                              <div style={{ fontSize:"9px", letterSpacing: isMobilePublic ? "3px" : "4px", color: isNewsDiamond ? "var(--tier-diamond)" : (item.type === "sale" || item.type === "gotem" || item.type === "spotlight") ? "#e6b800" : "var(--vault-red)", marginBottom:"4px" }}>{isNewsDiamond ? "💎 SNEAKER OF THE DAY 💎" : item.label}</div>
                               <div style={{ fontSize: isMobilePublic ? "13px" : "15px", fontWeight:"bold", color: T.text }}>{item.shoe.name} — {item.colorway}</div>
                               <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{item.subtitle}</div>
                               {item.type === "anniversary" && item.purchaseDate && !isMobilePublic && (
