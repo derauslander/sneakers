@@ -72,6 +72,10 @@
       from { opacity: 0; transform: translateY(16px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+    @keyframes heroFadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
     /* Respect reduced-motion preference */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
@@ -1304,6 +1308,199 @@
       );
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // OnFeetHero — full-viewport "On Feet Today" overlay that animates down
+    // into the banner OFD slot on first visit each day. Tap anywhere during
+    // the hold phase to trigger the shrink immediately. prefers-reduced-motion
+    // skips the animation entirely. The component is responsible only for the
+    // visual transition; once it unmounts, the banner takes over showing the
+    // same shoe as its OFD slide. The parent is responsible for pinning the
+    // banner to the OFD slide while the hero is active so the shrink lands
+    // visually on the right slot.
+    // ─────────────────────────────────────────────────────────────────────────
+    function OnFeetHero({ shoe, colorway, imgs, tier, tierInfo, bannerRef, onComplete, dark }) {
+      const HOLD_MS = 4000;
+      const SHRINK_MS = 1000;
+      // 3 images: cycle dwell ≈ 1300ms × 3 ≈ 3900ms, leaves a hair of buffer
+      // before the 4000ms hold ends so the last image is fully settled at shrink.
+      // 1 image: no cycle, just a static hold. 2 images: dwell ≈ 1700ms each.
+      const FADE_MS = 600;
+      const safeImgs = (imgs && imgs.length > 0) ? imgs : [null];
+      const dwellMs = safeImgs.length === 1 ? HOLD_MS : Math.floor((HOLD_MS - FADE_MS) / safeImgs.length);
+
+      const [phase, setPhase] = React.useState("hold"); // "hold" → "shrink" → done
+      const [cycleIdx, setCycleIdx] = React.useState(0);
+      const [targetRect, setTargetRect] = React.useState(null);
+      const reducedMotion = React.useRef(false);
+      const completedRef = useRef(false);
+
+      // Detect reduced-motion once on mount.
+      React.useEffect(() => {
+        try {
+          reducedMotion.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        } catch (e) { reducedMotion.current = false; }
+      }, []);
+
+      // Measure the banner's bounding rect — the shrink target. We re-measure
+      // on resize/orientation change in case layout shifts before shrink fires,
+      // but stop re-measuring once the shrink starts so a mid-animation resize
+      // doesn't jolt the transition.
+      React.useEffect(() => {
+        if (phase === "shrink") return;
+        const measure = () => {
+          if (!bannerRef || !bannerRef.current) return;
+          const r = bannerRef.current.getBoundingClientRect();
+          setTargetRect({ top: r.top, left: r.left, width: r.width, height: r.height });
+        };
+        measure();
+        window.addEventListener("resize", measure);
+        return () => window.removeEventListener("resize", measure);
+      }, [bannerRef, phase]);
+
+      // Single completion callback — guards against double-fire from both the
+      // setTimeout chain and a tap-to-shrink racing each other.
+      const complete = React.useCallback(() => {
+        if (completedRef.current) return;
+        completedRef.current = true;
+        onComplete && onComplete();
+      }, [onComplete]);
+
+      // Hold timer → schedule the shrink. If reduced-motion, complete immediately
+      // without ever mounting the visible animation.
+      React.useEffect(() => {
+        if (reducedMotion.current) {
+          complete();
+          return;
+        }
+        const t1 = setTimeout(() => setPhase("shrink"), HOLD_MS);
+        return () => clearTimeout(t1);
+      }, [complete]);
+
+      // Cycle through the images during the hold phase. Stops when shrink
+      // starts so whichever image is currently up stays through the shrink.
+      React.useEffect(() => {
+        if (phase !== "hold") return;
+        if (safeImgs.length <= 1) return;
+        const interval = setInterval(() => {
+          setCycleIdx(i => Math.min(i + 1, safeImgs.length - 1));
+        }, dwellMs);
+        return () => clearInterval(interval);
+      }, [phase, safeImgs.length, dwellMs]);
+
+      // Shrink timer → unmount once the CSS transition has completed.
+      React.useEffect(() => {
+        if (phase !== "shrink") return;
+        const t = setTimeout(complete, SHRINK_MS);
+        return () => clearTimeout(t);
+      }, [phase, complete]);
+
+      // Tap-to-skip: any click during hold triggers the shrink immediately.
+      const handleTap = () => {
+        if (phase === "hold") setPhase("shrink");
+      };
+
+      if (reducedMotion.current) return null;
+
+      const isDiamond = tier === "diamond";
+      const isPremium = tier === "diamond" || tier === "platinum";
+      const tierColor = tierInfo ? tierInfo.color : "var(--vault-red)";
+      const glowFilter = isPremium && tierInfo ? `drop-shadow(0 0 24px ${tierInfo.glowRgba})` : "none";
+      const diamondAnim = isDiamond ? "prismaticGlow 4s ease-in-out infinite" : "none";
+
+      // Build the container style. During "hold", we cover the viewport. During
+      // "shrink", we transition to the banner's bounding rect. The transition
+      // is on `clip-path` + `transform` + `opacity` — we use position: fixed
+      // with explicit top/left/width/height because animating those directly
+      // triggers layout, but for a single full-screen → bounded-rect morph
+      // that fires at most once per day, the perf cost is negligible and the
+      // code stays simple. (FLIP via transform would need a separate measure-
+      // before/after pass; not worth it here.)
+      const baseStyle = {
+        position: "fixed",
+        zIndex: 9999,
+        transition: phase === "shrink"
+          ? `top ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), left ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), width ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), height ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), opacity ${SHRINK_MS}ms ease-in-out`
+          : "none",
+        animation: phase === "hold" ? "heroFadeIn 0.6s ease-out" : "none",
+        cursor: phase === "hold" ? "pointer" : "default",
+        background: dark ? "#0a0a0a" : "#fafafa",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden",
+      };
+
+      // Hold phase covers the viewport; shrink phase moves to the banner rect.
+      const positionStyle = phase === "hold" || !targetRect
+        ? { top: 0, left: 0, width: "100vw", height: "100vh", opacity: 1 }
+        : { top: `${targetRect.top}px`, left: `${targetRect.left}px`, width: `${targetRect.width}px`, height: `${targetRect.height}px`, opacity: 0 };
+
+      // Image sizing scales between hold (large) and shrink (small, banner-sized).
+      const imgSize = phase === "hold"
+        ? { width: "min(60vw, 480px)", height: "min(60vw, 480px)", maxHeight: "55vh" }
+        : { width: "120px", height: "75px" };
+      // Container that holds the stacked crossfading images. Stack uses
+      // position:relative so each img can position:absolute against it.
+      const imgContainerStyle = {
+        ...imgSize,
+        position: "relative",
+        transition: `width ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), height ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1)`,
+      };
+      const baseImgStyle = {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        objectFit: "contain",
+        filter: glowFilter,
+        animation: diamondAnim,
+        transition: `opacity ${FADE_MS}ms ease-in-out`,
+      };
+
+      const labelStyle = {
+        fontSize: phase === "hold" ? "14px" : "9px",
+        letterSpacing: phase === "hold" ? "8px" : "4px",
+        color: "var(--vault-red)",
+        marginBottom: phase === "hold" ? "32px" : "8px",
+        transition: `font-size ${SHRINK_MS}ms ease, letter-spacing ${SHRINK_MS}ms ease, margin-bottom ${SHRINK_MS}ms ease, opacity ${SHRINK_MS}ms ease`,
+        opacity: phase === "shrink" ? 0 : 1,
+        textAlign: "center",
+      };
+      const nameStyle = {
+        fontSize: phase === "hold" ? "28px" : "16px",
+        fontWeight: "bold",
+        color: isPremium ? tierColor : (dark ? "#f0f0f0" : "#111"),
+        marginTop: phase === "hold" ? "32px" : "8px",
+        transition: `font-size ${SHRINK_MS}ms ease, margin-top ${SHRINK_MS}ms ease, opacity ${SHRINK_MS}ms ease`,
+        opacity: phase === "shrink" ? 0 : 1,
+        textAlign: "center",
+        padding: "0 24px",
+      };
+
+      return (
+        <div style={{ ...baseStyle, ...positionStyle }} onClick={handleTap}>
+          <div style={labelStyle}>
+            {isPremium ? <span><span style={{color: tierColor}}>✦</span> ON FEET TODAY <span style={{color: tierColor}}>✦</span></span> : "👟 ON FEET TODAY"}
+          </div>
+          <div style={imgContainerStyle}>
+            {safeImgs.map((src, i) => src && (
+              <img
+                key={i}
+                src={src}
+                alt={colorway || ""}
+                style={{ ...baseImgStyle, opacity: i === cycleIdx ? 1 : 0 }}
+              />
+            ))}
+          </div>
+          <div style={nameStyle}>
+            {shoe ? shoe.name : ""}{colorway ? ` — ${colorway}` : ""}
+          </div>
+        </div>
+      );
+    }
+
     function App() {
       const isMobile = useIsMobile();
       const isMobilePublic = !ADMIN_MODE && isMobile;
@@ -1416,10 +1613,23 @@
       const [storySlideshow, setStorySlideshow] = useState(null); // null = off, { index, entries } = active
       const [contextMenu, setContextMenu] = useState(null); // null = off, { x, y, shoeId, colorway, shortName } = active
 
+      // OnFeetHero state — null = undecided (still figuring out whether to show),
+      // "active" = hero is showing/animating, "done" = decision made, no hero.
+      // The decision is made in a useEffect once after first render, gated on
+      // isWearingToday (computed below) and a localStorage day-flag so the hero
+      // shows at most once per day. Public-data load is async so we defer the
+      // decision until publicData is available (or admin mode, where it's instant).
+      const [heroState, setHeroState] = useState(null);
+      const bannerRef = useRef(null);
+
       useEffect(() => {
+        // Don't tick the banner while the hero overlay is animating — pinning
+        // bannerIdx to the OFD slide is also handled below, so this is belt
+        // and suspenders.
+        if (heroState === "active") return;
         const interval = setInterval(() => setBannerIdx(i => i + 1), 6000);
         return () => clearInterval(interval);
-      }, []);
+      }, [heroState]);
 
       // Cycle wearing-today images every 5s
       useEffect(() => {
@@ -1705,6 +1915,71 @@
 
       // "Wearing today" — true when the most recent wear is today's date.
       const isWearingToday = !!lastWornDate && lastWornDate === todayStr;
+
+      // Hoisted tier/image info for the most-recently-worn pair — used by both the
+      // banner OFD slide (computed again inline in the banner IIFE for back-compat)
+      // and the OnFeetHero overlay below.
+      const lastWornHeroKey = lastWornShoe && lastWornColorway ? `${lastWornShoe.id}_${lastWornColorway}` : null;
+      const lastWornHeroTier = lastWornHeroKey ? tierOf(tierMeta, lastWornHeroKey) : "silver";
+      const lastWornHeroTierInfo = TIERS[lastWornHeroTier] || TIERS.silver;
+      const lastWornHeroImg = lastWornHeroKey ? images[lastWornHeroKey] || null : null;
+      // Hover/hover2 images for the hero's 3-image cycle. Order shown is
+      // [hover2, main, hover] — leading with hover2 (typically the pair angle)
+      // gives the hero a different rhythm than the banner OFD slide which
+      // leads with main. Filtered to drop nulls in the parent.
+      const lastWornHeroImg2 = lastWornHeroKey ? images[`${lastWornHeroKey}_hover`] || null : null;
+      const lastWornHeroImg3 = lastWornHeroKey ? images[`${lastWornHeroKey}_hover2`] || null : null;
+      const lastWornHeroImgs = [lastWornHeroImg3, lastWornHeroImg, lastWornHeroImg2].filter(Boolean);
+
+      // Decide whether to show the OnFeetHero overlay. Runs once heroState is null
+      // and we have enough data to make the call. In admin mode that's immediate;
+      // in public mode we wait until publicData has loaded so isWearingToday and
+      // lastWornHeroImg reflect real values rather than empty defaults.
+      useEffect(() => {
+        if (heroState !== null) return;
+        if (!ADMIN_MODE && !publicData) return; // public: wait for data load
+
+        const dataReady = ADMIN_MODE || !!publicData;
+        if (!dataReady) return;
+
+        // No OFD shoe today → no hero, ever. Mark decision done so banner runs normally.
+        if (!isWearingToday || !lastWornShoe) { setHeroState("done"); return; }
+        // At least one image required — without any, the hero would be blank.
+        if (lastWornHeroImgs.length === 0) { setHeroState("done"); return; }
+
+        // Reduced-motion: skip the hero entirely. Checking here (not inside the
+        // hero component) prevents a sub-frame mount/unmount flash, since the
+        // hero never enters the render tree at all.
+        let reducedMotion = false;
+        try {
+          reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        } catch (e) { /* matchMedia unavailable */ }
+        if (reducedMotion) { setHeroState("done"); return; }
+
+        // No once-per-day gating — the hero fires on every page load when
+        // there's something on feet today. Tap-to-skip handles impatience.
+        setHeroState("active");
+      }, [heroState, publicData, isWearingToday, lastWornShoe, lastWornHeroImgs.length, lastWornHeroKey, todayStr]);
+
+      // While the hero is active, pin bannerIdx to the OFD slide's index in
+      // bannerItems. We can't compute bannerItems up here without duplicating
+      // a lot of logic, so instead the banner IIFE (below) does the pinning
+      // when it knows its own slide order. This effect is a fallback that
+      // resets bannerIdx to 0 when the hero deactivates so the rotation
+      // resumes cleanly from the first slide.
+      const heroPrevRef = useRef(null);
+      useEffect(() => {
+        if (heroPrevRef.current === "active" && heroState === "done") {
+          // Hero just finished — reset banner to slide 0 so rotation starts fresh.
+          // The OFD slide is typically slide 0 anyway when isWearingToday is true.
+          setBannerIdx(0);
+        }
+        heroPrevRef.current = heroState;
+      }, [heroState]);
+
+      const onHeroComplete = React.useCallback(() => {
+        setHeroState("done");
+      }, []);
       const anniversaries = [];
       Object.entries(colorwayMeta).forEach(([key, meta]) => {
         if (!meta.purchaseDate) return;
@@ -1992,6 +2267,19 @@
       return (
         <div style={{ minHeight:"100vh", background: T.bg }}>
 
+          {heroState === "active" && (
+            <OnFeetHero
+              shoe={lastWornShoe}
+              colorway={lastWornColorway}
+              imgs={lastWornHeroImgs}
+              tier={lastWornHeroTier}
+              tierInfo={lastWornHeroTierInfo}
+              bannerRef={bannerRef}
+              onComplete={onHeroComplete}
+              dark={dark}
+            />
+          )}
+
           <div style={{ background:"#000000", borderBottom:"2px solid var(--vault-red)", position:"relative", minHeight: isMobilePublic ? "80px" : "200px", display:"flex", alignItems:"center" }}>
             <img src="assets/banner.png" alt="" style={{ position:"absolute", top:0, left:0, width:"100%", height: isMobilePublic ? "80px" : "200px", objectFit:"cover", objectPosition:"center" }} />
             {/* Title — fills remaining space, layered */}
@@ -2240,7 +2528,14 @@
                   }
 
                   if (bannerItems.length === 0) return null;
-                  const safeIdx = bannerIdx % bannerItems.length;
+                  // While the OnFeetHero overlay is animating, force the banner to
+                  // show the wearingtoday slide so the hero shrinks down onto the
+                  // matching shoe. Otherwise the banner could be on, say, an
+                  // anniversary slide when the hero lands, which would be jarring.
+                  const wearingTodayIdx = bannerItems.findIndex(it => it.type === "wearingtoday");
+                  const safeIdx = (heroState === "active" && wearingTodayIdx >= 0)
+                    ? wearingTodayIdx
+                    : bannerIdx % bannerItems.length;
                   const currentItem = bannerItems[safeIdx];
                   const isRotationSlide = currentItem.type === "upnext" || currentItem.type === "lastworn" || currentItem.type === "wearingtoday";
 
@@ -2272,7 +2567,7 @@
 
                   return (
                   <div style={{ marginBottom:"24px" }}>
-                    <div style={{ background: getBannerBg(currentItem), border:`1px solid ${getBannerBorder(currentItem)}`, padding:"16px 24px", position:"relative", minHeight: isMobilePublic ? "70px" : "130px", transition:"background 0.5s ease-in-out" }}>
+                    <div ref={bannerRef} style={{ background: getBannerBg(currentItem), border:`1px solid ${getBannerBorder(currentItem)}`, padding:"16px 24px", position:"relative", minHeight: isMobilePublic ? "70px" : "130px", transition:"background 0.5s ease-in-out" }}>
                       {bannerItems.map((item, i) => {
                         const isActive = i === safeIdx;
 
