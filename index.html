@@ -1934,10 +1934,20 @@
         const dataReady = ADMIN_MODE || !!publicData;
         if (!dataReady) return;
 
+        // ── DEBUG (temporary) — log every gate so we can see why hero might not fire on live site
+        console.log("[hero] decision effect running", {
+          heroState, ADMIN_MODE, hasPublicData: !!publicData,
+          isWearingToday, lastWornShoe: lastWornShoe && { id: lastWornShoe.id, name: lastWornShoe.name },
+          lastWornColorway, lastWornDate, todayStr,
+          lastWornHeroKey, lastWornHeroImgsLen: lastWornHeroImgs.length,
+          firstImg: lastWornHeroImgs[0] || null
+        });
+        // ── END DEBUG
+
         // No OFD shoe today → no hero, ever. Mark decision done so banner runs normally.
-        if (!isWearingToday || !lastWornShoe) { setHeroState("done"); return; }
+        if (!isWearingToday || !lastWornShoe) { console.log("[hero] skip: not wearing today or no shoe"); setHeroState("done"); return; }
         // At least one image required — without any, the hero would be blank.
-        if (lastWornHeroImgs.length === 0) { setHeroState("done"); return; }
+        if (lastWornHeroImgs.length === 0) { console.log("[hero] skip: no images"); setHeroState("done"); return; }
 
         // Reduced-motion: skip the hero entirely. Checking here (not inside the
         // hero component) prevents a sub-frame mount/unmount flash, since the
@@ -1946,10 +1956,11 @@
         try {
           reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         } catch (e) { /* matchMedia unavailable */ }
-        if (reducedMotion) { setHeroState("done"); return; }
+        if (reducedMotion) { console.log("[hero] skip: prefers-reduced-motion"); setHeroState("done"); return; }
 
         // No once-per-day gating — the hero fires on every page load when
         // there's something on feet today. Tap-to-skip handles impatience.
+        console.log("[hero] FIRING — setting heroState to active");
         setHeroState("active");
       }, [heroState, publicData, isWearingToday, lastWornShoe, lastWornHeroImgs.length, lastWornHeroKey, todayStr]);
 
