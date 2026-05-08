@@ -27,6 +27,22 @@ def parse_price(raw):
     except ValueError:
         return None
 
+def warn_malformed_prices(data):
+    """Scan colorwayMeta once and warn about prices that are non-empty but unparseable.
+    Called before compute_rankings so the user sees malformed-price notices upfront,
+    not buried after ranking summaries."""
+    colorway_meta = data.get("colorwayMeta", {})
+    bad = []
+    for key, meta in colorway_meta.items():
+        raw = meta.get("purchasePrice")
+        if raw and parse_price(raw) is None:
+            bad.append((key, raw))
+    if bad:
+        print(f"\n  WARNING: {len(bad)} colorway(s) have malformed prices that will be excluded from rankings:")
+        for key, raw in bad:
+            print(f"    {key}: {raw!r}")
+        print()
+
 def days_between(date_a, date_b):
     """Return integer days between two ISO date strings (date_b - date_a)."""
     fmt = "%Y-%m-%d"
@@ -242,6 +258,8 @@ def main():
 
     with open(VAULT_FILE, "r", encoding="utf-8") as f:
         data = json.load(f)
+
+    warn_malformed_prices(data)
 
     print(f"  Computing rankings from {VAULT_FILE}...")
     rankings = compute_rankings(data)

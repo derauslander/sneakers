@@ -1251,6 +1251,17 @@
           {/* Action buttons */}
           <div style={{ display:"flex", gap:"8px", marginTop:"10px", flexWrap:"wrap" }}>
             <button onClick={() => {
+              // Validate purchasePrice: empty is fine, but if non-empty it must parse as a positive number.
+              // Mirrors the parse logic in build.py / top10Rankings: strip non-digit/dot chars, then parseFloat.
+              const rawPrice = (metaForm.purchasePrice || "").trim();
+              if (rawPrice) {
+                const cleaned = rawPrice.replace(/[^0-9.]/g, "");
+                const parsed = parseFloat(cleaned);
+                if (!cleaned || isNaN(parsed) || parsed <= 0 || (cleaned.match(/\./g) || []).length > 1) {
+                  alert(`Invalid price: "${rawPrice}"\n\nEnter a value like "250" or "$250.00". Remove any extra decimal points.`);
+                  return;
+                }
+              }
               setColorwayMeta(m => ({ ...m, [key]: { ...metaForm } }));
               setEditingMeta(null);
             }} style={{ background:"var(--vault-red)", color:"#fff", border:"none", padding:"6px 14px", cursor:"pointer", fontSize:"10px", letterSpacing:"2px", fontFamily:"'Aptos','Segoe UI',sans-serif", whiteSpace:"nowrap" }}>SAVE</button>
@@ -1775,17 +1786,31 @@
             headers: { "Content-Type": file.type || "image/png" },
             body: buffer,
           })
-          .then(r => r.json())
+          .then(r => {
+            // Surface server-side errors (400 traversal reject, 413 too large, etc.)
+            // instead of silently dropping them. Without this check, a non-2xx
+            // response would still parse as JSON and skip the data.path branch
+            // with no feedback to the user.
+            if (!r.ok) {
+              return r.json().catch(() => ({ error: `Upload failed (HTTP ${r.status})` }))
+                .then(err => { throw new Error(err.error || `Upload failed (HTTP ${r.status})`); });
+            }
+            return r.json();
+          })
           .then(data => {
-            if (data.path) {
+            if (data && data.path) {
               setImages(imgs => ({ ...imgs, [storageKey]: data.path }));
             }
           })
-          .catch(() => {
-            // Fallback to base64 if server not available
-            const reader = new FileReader();
-            reader.onload = (e) => setImages(imgs => ({ ...imgs, [storageKey]: e.target.result }));
-            reader.readAsDataURL(file);
+          .catch(err => {
+            // Server unreachable or returned an error. We deliberately do NOT
+            // fall back to base64-in-localStorage — base64 image blobs blow
+            // through the 5MB localStorage budget fast, and they end up baked
+            // into public-data.json on the next BACKUP, leaking large data
+            // URIs to the public site. Surface the error and let the user
+            // retry once the server is reachable.
+            const msg = err && err.message ? err.message : "Upload failed (server unreachable)";
+            alert(`Image upload failed: ${msg}\n\nMake sure server.py is running, then try again.`);
           });
         });
       };
