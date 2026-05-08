@@ -1853,18 +1853,10 @@
           : allCards;
       }, [inventory, colorways, colorwayOwned, wishlistOrder]);
 
-      // Loading / error screens (public only) — must be after all hooks/memos
-      if (!ADMIN_MODE && publicLoading) return (
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", flexDirection:"column", gap:"16px" }}>
-          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"var(--vault-red)" }}>LOADING THE VAULT...</div>
-        </div>
-      );
-      if (!ADMIN_MODE && publicError) return (
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", flexDirection:"column", gap:"16px" }}>
-          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"var(--vault-red)" }}>VAULT UNAVAILABLE</div>
-          <div style={{ fontSize:"10px", color:"#aaa" }}>{publicError}</div>
-        </div>
-      );
+      // Loading / error early returns moved below — must come AFTER all hooks
+      // (including the OnFeetHero decision hooks, which were added later and
+      // sit further down). Returning early here would skip them on the loading
+      // render and trip React error #310 once data lands.
 
       const filledCells = displayLayout.flat().filter(c => c.code && c.code !== "").length;
       const empty    = 40 - filledCells;
@@ -1980,6 +1972,21 @@
       const onHeroComplete = React.useCallback(() => {
         setHeroState("done");
       }, []);
+
+      // Loading / error screens (public only) — must come AFTER every hook
+      // call above. If you add a new hook in App, put it ABOVE this block.
+      if (!ADMIN_MODE && publicLoading) return (
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", flexDirection:"column", gap:"16px" }}>
+          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"var(--vault-red)" }}>LOADING THE VAULT...</div>
+        </div>
+      );
+      if (!ADMIN_MODE && publicError) return (
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100vh", flexDirection:"column", gap:"16px" }}>
+          <div style={{ fontSize:"11px", letterSpacing:"4px", color:"var(--vault-red)" }}>VAULT UNAVAILABLE</div>
+          <div style={{ fontSize:"10px", color:"#aaa" }}>{publicError}</div>
+        </div>
+      );
+
       const anniversaries = [];
       Object.entries(colorwayMeta).forEach(([key, meta]) => {
         if (!meta.purchaseDate) return;
