@@ -1318,12 +1318,12 @@
     // banner to the OFD slide while the hero is active so the shrink lands
     // visually on the right slot.
     // ─────────────────────────────────────────────────────────────────────────
-    function OnFeetHero({ shoe, colorway, imgs, tier, tierInfo, bannerRef, onComplete, dark }) {
-      const HOLD_MS = 4000;
+    function OnFeetHero({ shoe, colorway, imgs, tier, tierInfo, isFirstWear, bannerRef, onComplete, dark }) {
+      const HOLD_MS = 6000;
       const SHRINK_MS = 1000;
-      // 3 images: cycle dwell ≈ 1300ms × 3 ≈ 3900ms, leaves a hair of buffer
-      // before the 4000ms hold ends so the last image is fully settled at shrink.
-      // 1 image: no cycle, just a static hold. 2 images: dwell ≈ 1700ms each.
+      // 3 images: dwell ≈ 1800ms × 3 ≈ 5400ms, leaves a hair of buffer before
+      // the 6000ms hold ends so the last image is fully settled at shrink.
+      // 1 image: no cycle, just a static hold. 2 images: dwell ≈ 2700ms each.
       const FADE_MS = 600;
       const safeImgs = (imgs && imgs.length > 0) ? imgs : [null];
       const dwellMs = safeImgs.length === 1 ? HOLD_MS : Math.floor((HOLD_MS - FADE_MS) / safeImgs.length);
@@ -1482,7 +1482,17 @@
       return (
         <div style={{ ...baseStyle, ...positionStyle }} onClick={handleTap}>
           <div style={labelStyle}>
-            {isPremium ? <span><span style={{color: tierColor}}>✦</span> ON FEET TODAY <span style={{color: tierColor}}>✦</span></span> : "👟 ON FEET TODAY"}
+            {(() => {
+              // Label text varies on first-wear (off-ice moment) and tier
+              // (premium pairs get sparkle markers in tier color, others
+              // get a sneaker emoji). Stays in the same letterspaced
+              // typography either way.
+              const labelText = isFirstWear ? "FIRST WEAR TODAY" : "ON FEET TODAY";
+              const emoji = isFirstWear ? "🧊" : "👟";
+              return isPremium
+                ? <span><span style={{color: tierColor}}>✦</span> {labelText} <span style={{color: tierColor}}>✦</span></span>
+                : `${emoji} ${labelText}`;
+            })()}
           </div>
           <div style={imgContainerStyle}>
             {safeImgs.map((src, i) => src && (
@@ -1521,6 +1531,34 @@
           .catch(e => { setPublicError(e.message); setPublicLoading(false); });
       }, []);
 
+      // ─────────────────────────────────────────────────────────────────────
+      // VAULT STATE — adding a new field?
+      //
+      // Every field in this block represents one piece of the vault's data
+      // model. Each one has to be wired into SIX different places, in this
+      // order, or you'll get subtle bugs (data not loading on public site,
+      // not persisting in admin, not surviving a BACKUP/IMPORT round-trip,
+      // etc.). The list below is the canonical checklist:
+      //
+      //   1. useState declaration here, with admin-loads-from-localStorage
+      //      and public-defaults-to-empty: useState(() => ADMIN_MODE ?
+      //      load("vault_X", DEFAULT) : DEFAULT)
+      //   2. Population effect (search "if (ADMIN_MODE || !publicData)
+      //      return;" — adds setX(publicData.X || DEFAULT))
+      //   3. Persistence effect (search "save(\"vault_" — adds
+      //      useEffect(() => save("vault_X", X), [X]))
+      //   4. BACKUP serialization (search "exportedAt: new Date()" — adds X
+      //      to the const data = {...} object)
+      //   5. IMPORT/restore handler (search "if (data.inventory)" — adds
+      //      conditional setX + save call)
+      //   6. build.py (only if the field affects rankings or needs price-
+      //      stripping; otherwise just gets passed through)
+      //
+      // The dual data flow (admin reads localStorage, public reads
+      // public-data.json) is the reason for steps 1+2+3. The BACKUP/IMPORT
+      // pair is steps 4+5. Skip any one and you'll find out via a
+      // confusing-as-hell bug days later.
+      // ─────────────────────────────────────────────────────────────────────
       const [inventory,    setInventory]    = useState(() => ADMIN_MODE ? load("vault_inventory", []) : []);
       const importRef = useRef();
       const eggRef = useRef(0);
@@ -1923,6 +1961,18 @@
       const lastWornHeroImg3 = lastWornHeroKey ? images[`${lastWornHeroKey}_hover2`] || null : null;
       const lastWornHeroImgs = [lastWornHeroImg3, lastWornHeroImg, lastWornHeroImg2].filter(Boolean);
 
+      // First-wear detection — true when today's wear is the only wear log
+      // entry for this colorway. Used by the hero to swap "ON FEET TODAY"
+      // for "FIRST WEAR TODAY" when a pair comes off ice for the first time.
+      // Strict: requires exactly one entry and that entry to be today. A pair
+      // that's been worn before doesn't qualify even if there's been a long
+      // gap. False unless isWearingToday is also true.
+      const isFirstWear = (() => {
+        if (!isWearingToday || !lastWornShoe || !lastWornColorway) return false;
+        const entries = (wearLog[lastWornShoe.id] || []).filter(e => e.colorway === lastWornColorway);
+        return entries.length === 1 && entries[0].date === todayStr;
+      })();
+
       // Decide whether to show the OnFeetHero overlay. Runs once heroState is null
       // and we have enough data to make the call. In admin mode that's immediate;
       // in public mode we wait until publicData has loaded so isWearingToday and
@@ -1956,10 +2006,48 @@
         } catch (e) { /* matchMedia unavailable */ }
         if (reducedMotion) { setHeroState("done"); return; }
 
-        // No once-per-day gating — the hero fires on every page load when
-        // there's something on feet today. Tap-to-skip handles impatience.
-        setHeroState("active");
-      }, [heroState, publicData, inventory.length, isWearingToday, lastWornShoe, lastWornHeroImgs.length, lastWornHeroKey, todayStr]);
+        // Preload the first image before firing. Without this, on a slow
+        // connection or cold cache the hero overlay can render before the
+        // image bytes arrive — you'd see the dramatic full-screen reveal of
+        // empty space, then the image would pop in awkwardly. We preload
+        // image 1 (hover2, the first-shown image in the cycle) only; the
+        // other two have ~1.8s and ~3.6s of runway during the cycle to
+        // finish loading naturally. Cap the wait at 3s so a totally offline
+        // user doesn't stare at a banner forever — they just get no hero.
+        // Cached images resolve effectively instantly on repeat visits.
+        const PRELOAD_TIMEOUT_MS = 3000;
+        let cancelled = false;
+        const preloadImg = new Image();
+        const timeoutId = setTimeout(() => {
+          if (cancelled) return;
+          cancelled = true;
+          // Treated as failure — skip the hero rather than fire blind.
+          setHeroState("done");
+        }, PRELOAD_TIMEOUT_MS);
+        preloadImg.onload = () => {
+          if (cancelled) return;
+          cancelled = true;
+          clearTimeout(timeoutId);
+          setHeroState("active");
+        };
+        preloadImg.onerror = () => {
+          if (cancelled) return;
+          cancelled = true;
+          clearTimeout(timeoutId);
+          // First image failed (404, network error). Skip rather than fire
+          // with a broken-image placeholder.
+          setHeroState("done");
+        };
+        preloadImg.src = lastWornHeroImgs[0];
+
+        return () => {
+          // Effect re-run or unmount while preload was in flight. Don't fire
+          // the load/error handlers — the cancelled flag also guards against
+          // late callbacks resolving after this cleanup.
+          cancelled = true;
+          clearTimeout(timeoutId);
+        };
+      }, [heroState, publicData, inventory.length, isWearingToday, lastWornShoe, lastWornHeroImgs[0], lastWornHeroImgs.length, lastWornHeroKey, todayStr]);
 
       // While the hero is active, pin bannerIdx to the OFD slide's index in
       // bannerItems. We can't compute bannerItems up here without duplicating
@@ -2289,6 +2377,7 @@
               imgs={lastWornHeroImgs}
               tier={lastWornHeroTier}
               tierInfo={lastWornHeroTierInfo}
+              isFirstWear={isFirstWear}
               bannerRef={bannerRef}
               onComplete={onHeroComplete}
               dark={dark}
