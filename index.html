@@ -233,13 +233,15 @@
     const tierExcludedFromRotation = (tier) => tier === "bronze";
     const tierAnniversaryColor = (tier) => tier === "diamond" ? "var(--tier-diamond)" : tier === "platinum" ? "var(--tier-platinum)" : tier === "gold" ? "var(--tier-gold)" : tier === "bronze" ? "#CD7F32" : "#aaa";
 
-    // Preload diamond audio files after page settles so they don't compete with images
-    const _preloadedAudio = { glow: null, break: null };
+    // Preload audio files after page settles so they don't compete with images
+    const _preloadedAudio = { glow: null, break: null, whoosh: null };
     setTimeout(() => {
       _preloadedAudio.glow = new Audio("assets/glow.mp3");
       _preloadedAudio.glow.preload = "auto";
       _preloadedAudio.break = new Audio("assets/break.mp3");
       _preloadedAudio.break.preload = "auto";
+      _preloadedAudio.whoosh = new Audio("assets/whoosh.mp3");
+      _preloadedAudio.whoosh.preload = "auto";
     }, 2000);
 
     // One-time migration from grailMeta/beaterMeta to tierMeta
@@ -1358,7 +1360,7 @@
     // responsible for pinning the banner to the OFD slide while the hero is
     // active so the shrink lands visually on the right slot.
     // ─────────────────────────────────────────────────────────────────────────
-    function OnFeetHero({ shoe, colorway, imgs, tier, tierInfo, isFirstWear, bannerRef, onComplete, dark }) {
+    function OnFeetHero({ shoe, colorway, imgs, tier, tierInfo, isFirstWear, bannerRef, onComplete, enableSound, dark }) {
       // ── Timing constants ────────────────────────────────────────────────
       const INTRO_MS       = 1200;   // stage 1: label-only hold
       const FLY_PER_MS     = 1200;   // stage 2: per-image flythrough duration
@@ -1389,7 +1391,7 @@
       const starfieldLayers = React.useMemo(() => {
         const FIELD_W = 2400;  // virtual canvas width (px) — wider than viewport so warp doesn't reveal edges
         const FIELD_H = 1600;  // virtual canvas height
-        const STARS_PER_LAYER = 120;
+        const STARS_PER_LAYER = 200;
         const NUM_LAYERS = 3;
         const layers = [];
         // Deterministic-ish randomness using a simple LCG so a remount
@@ -1443,6 +1445,64 @@
         completedRef.current = true;
         onComplete && onComplete();
       }, [onComplete]);
+
+      // Audio: schedule a whoosh for each flythrough image when sound is
+      // enabled. enableSound only goes true when the user clicks the OFD
+      // banner to replay — that click is the user gesture that lets the
+      // browser unblock audio. On initial page load enableSound is false
+      // and this effect is a no-op, so we never fight autoplay policy.
+      //
+      // The clip is loaded from `assets/whoosh.mp3` relative to the HTML,
+      // alongside the other audio (glow.mp3, break.mp3) and images. For
+      // the public site, build.bat already copies assets/, so no extra
+      // build step is needed.
+      //
+      // Volume is capped low (0.35) — a flythrough you can't bear to replay
+      // is worse than no audio at all. If a clip fails to load or play
+      // (404, codec, etc.), we swallow the error rather than throwing.
+      React.useEffect(() => {
+        if (phase !== "flythrough") return;
+        if (!enableSound) return;
+        if (!hasFlythrough) return;
+
+        const audioInstances = [];
+        const timers = [];
+        const WHOOSH_VOLUME = 0.35;
+        // Negative lead = start the clip slightly *after* the flythrough begins.
+        // The whoosh file we use peaks ~500ms in, and the visual punch-through
+        // happens ~840ms into each 1200ms flythrough. Triggering at +350ms puts
+        // the audio peak right on top of the visual peak.
+        const WHOOSH_LEAD_MS = -350;
+
+        safeImgs.forEach((src, i) => {
+          if (!src) return;
+          // Fire at start of each image's flythrough, minus a small lead so
+          // a whoosh's natural attack lines up with the visual punch-through.
+          const startAt = Math.max(0, flyStarts[i] - WHOOSH_LEAD_MS);
+          const t = setTimeout(() => {
+            try {
+              const audio = new Audio("assets/whoosh.mp3");
+              audio.volume = WHOOSH_VOLUME;
+              audioInstances.push(audio);
+              // play() returns a Promise that rejects when blocked; swallow it.
+              const p = audio.play();
+              if (p && typeof p.catch === "function") p.catch(() => {});
+            } catch (e) {
+              // Audio constructor or play() threw synchronously — ignore.
+            }
+          }, startAt);
+          timers.push(t);
+        });
+
+        return () => {
+          // On cleanup (phase change, unmount, rapid replay): cancel pending
+          // schedule and stop any in-flight clips so audio doesn't pile up.
+          timers.forEach(clearTimeout);
+          audioInstances.forEach(a => {
+            try { a.pause(); a.currentTime = 0; } catch (e) {}
+          });
+        };
+      }, [phase, enableSound, hasFlythrough]);
 
       // Phase scheduler. Each stage advances on a timer; reduced-motion
       // short-circuits the whole sequence by completing immediately.
@@ -1837,7 +1897,6 @@
       const [editingMeta,    setEditingMeta]    = useState(null);
       const [metaForm,       setMetaForm]       = useState({ purchaseDate:"", purchasePrice:"", retailer:"", size:"", notes:"", ogYear:"", story:"", saleDate:"", saleTime:"", comfortRating:"", releaseYear:"" });
       const [bannerIdx, setBannerIdx] = useState(0);
-      const [wearImgIdx, setWearImgIdx] = useState(0);
       const [collectionFilter, setCollectionFilter] = useState("all");
       const [top10Filter, setTop10Filter] = useState("worn");
       const [timeTravelDate, setTimeTravelDate] = useState(null); // null = present, string = past date
@@ -1853,21 +1912,49 @@
       // decision until publicData is available (or admin mode, where it's instant).
       const [heroState, setHeroState] = useState(null);
       const bannerRef = useRef(null);
+      // Brief hold on the OFD slide after the hero completes, so the just-
+      // shrunk slide doesn't immediately slide away. Released after
+      // HERO_POST_HOLD_MS, after which normal rotation resumes.
+      const [heroPostHold, setHeroPostHold] = useState(false);
+      // Whether the next hero playback should play sound effects. Off on
+      // initial page load (browsers block autoplay audio without a user
+      // gesture), on for replay clicks (the click itself is the gesture
+      // that unlocks audio). Reset to false after each playback so the
+      // next initial load stays silent.
+      const [heroEnableSound, setHeroEnableSound] = useState(false);
 
       useEffect(() => {
         // Don't tick the banner while the hero overlay is animating — pinning
         // bannerIdx to the OFD slide is also handled below, so this is belt
         // and suspenders.
         if (heroState === "active") return;
+        // Also pause rotation during the post-hero hold so the OFD slide
+        // gets a beat after landing before the cycle resumes.
+        if (heroPostHold) return;
         const interval = setInterval(() => setBannerIdx(i => i + 1), 6000);
         return () => clearInterval(interval);
-      }, [heroState]);
+      }, [heroState, heroPostHold]);
 
-      // Cycle wearing-today images every 5s
+      // When the hero finishes, hold the OFD slide for a few seconds before
+      // letting the banner rotation resume. Watches the heroState transition
+      // from "active" to "done". Also resets the hold flag if a new hero
+      // starts mid-hold (click-to-replay on the OFD slide), so the old hold
+      // doesn't leak across into the new playback.
+      const heroPostHoldPrevRef = useRef(null);
       useEffect(() => {
-        const interval = setInterval(() => setWearImgIdx(i => i + 1), 5000);
-        return () => clearInterval(interval);
-      }, []);
+        const HERO_POST_HOLD_MS = 4000;
+        // Cancel any in-flight hold when a new hero starts (e.g. replay during hold).
+        if (heroState === "active") {
+          setHeroPostHold(false);
+        }
+        if (heroPostHoldPrevRef.current === "active" && heroState === "done") {
+          setHeroPostHold(true);
+          const t = setTimeout(() => setHeroPostHold(false), HERO_POST_HOLD_MS);
+          heroPostHoldPrevRef.current = heroState;
+          return () => clearTimeout(t);
+        }
+        heroPostHoldPrevRef.current = heroState;
+      }, [heroState]);
 
       // Story slideshow keyboard navigation
       useEffect(() => {
@@ -2140,6 +2227,22 @@
       // "Wearing today" — true when the most recent wear is today's date.
       const isWearingToday = !!lastWornDate && lastWornDate === todayStr;
 
+      // Previously worn — most recent wear strictly before today. Used by the
+      // banner's lastworn slide when we're wearing something today, so the slide
+      // shows the previous pair rather than duplicating the on-foot shoe. Falls
+      // back to null when there's no prior wear in the data.
+      const previousWornEntry = isWearingToday
+        ? allColorwayEntries
+            .filter(e => e.lastWorn && e.lastWorn < todayStr)
+            .reduce((pick, entry) => {
+              if (!pick) return entry;
+              return entry.lastWorn > pick.lastWorn ? entry : pick;
+            }, null)
+        : mostRecentEntry;
+      const previousWornShoe = previousWornEntry?.shoe || null;
+      const previousWornColorway = previousWornEntry?.colorway || null;
+      const previousWornDate = previousWornEntry?.lastWorn || null;
+
       // Hoisted tier/image info for the most-recently-worn pair — used by both the
       // banner OFD slide (computed again inline in the banner IIFE for back-compat)
       // and the OnFeetHero overlay below.
@@ -2260,6 +2363,8 @@
 
       const onHeroComplete = React.useCallback(() => {
         setHeroState("done");
+        // Reset sound flag — only the *next* replay click should re-enable it.
+        setHeroEnableSound(false);
       }, []);
 
       // Loading / error screens (public only) — must come AFTER every hook
@@ -2573,6 +2678,7 @@
               isFirstWear={isFirstWear}
               bannerRef={bannerRef}
               onComplete={onHeroComplete}
+              enableSound={heroEnableSound}
               dark={dark}
             />
           )}
@@ -2755,16 +2861,20 @@
                     bannerItems.push({ type:"gotem", label:"✦ GOT 'EM! ✦", shoe: item.shoe, colorway: item.colorway, img: item.img, subtitle:"Welcome to The Vault" });
                   });
 
-                  // 3–4. UP NEXT + LAST WORN (or single WEARING TODAY if today matches)
+                  // 3–5. UP NEXT, LAST WORN, WEARING TODAY.
+                  // When wearing today, lastworn shows the *previous* pair so
+                  // it doesn't duplicate the on-foot shoe. If there's no prior
+                  // wear in the data, the lastworn slide is skipped naturally.
+                  // Order puts wearingtoday last in this cluster so the post-
+                  // hero hold releases into upnext next, not back into lastworn.
+                  if (longestUnworn) {
+                    bannerItems.push({ type:"upnext", shoe: longestUnworn, colorway: longestUnwornColorway });
+                  }
+                  if (previousWornShoe) {
+                    bannerItems.push({ type:"lastworn", shoe: previousWornShoe, colorway: previousWornColorway });
+                  }
                   if (isWearingToday && lastWornShoe) {
                     bannerItems.push({ type:"wearingtoday", shoe: lastWornShoe, colorway: lastWornColorway });
-                  } else {
-                    if (longestUnworn) {
-                      bannerItems.push({ type:"upnext", shoe: longestUnworn, colorway: longestUnwornColorway });
-                    }
-                    if (lastWornShoe) {
-                      bannerItems.push({ type:"lastworn", shoe: lastWornShoe, colorway: lastWornColorway });
-                    }
                   }
 
                   // 5. GOT 'EM?
@@ -2825,18 +2935,25 @@
                   }
 
                   if (bannerItems.length === 0) return null;
-                  // While the OnFeetHero overlay is animating, force the banner to
-                  // show the wearingtoday slide so the hero shrinks down onto the
-                  // matching shoe. Otherwise the banner could be on, say, an
-                  // anniversary slide when the hero lands, which would be jarring.
+                  // While the OnFeetHero overlay is animating (or held briefly
+                  // after it lands), force the banner to the wearingtoday slide
+                  // so the hero shrinks down onto the matching shoe and gets a
+                  // beat to be seen before rotation resumes.
                   const wearingTodayIdx = bannerItems.findIndex(it => it.type === "wearingtoday");
-                  const safeIdx = (heroState === "active" && wearingTodayIdx >= 0)
-                    ? wearingTodayIdx
-                    : bannerIdx % bannerItems.length;
+                  const pinToWearingToday = (heroState === "active" || heroPostHold) && wearingTodayIdx >= 0;
+                  const safeIdx = pinToWearingToday ? wearingTodayIdx : bannerIdx % bannerItems.length;
                   const currentItem = bannerItems[safeIdx];
                   const isRotationSlide = currentItem.type === "upnext" || currentItem.type === "lastworn" || currentItem.type === "wearingtoday";
 
                   // ── Background per slide type ──
+                  // For `lastworn`, derive the tier from the item itself
+                  // rather than the module-level lastWornTier (which points
+                  // at the on-foot pair when wearing today, and would tint
+                  // the lastworn slide background with the wrong pair's tier).
+                  const tierForLastWornItem = (item) => {
+                    if (!item || !item.shoe || !item.colorway) return "silver";
+                    return tierOf(tierMeta, `${item.shoe.id}_${item.colorway}`);
+                  };
                   const getBannerBg = (item) => {
                     if (item.type === "upnext") {
                       return rotationTier === "diamond"
@@ -2846,9 +2963,10 @@
                         : dark ? `linear-gradient(90deg,${T.bg2},${T.bg3})` : "linear-gradient(90deg,#fff5f5,#ffe8e8)";
                     }
                     if (item.type === "lastworn" || item.type === "wearingtoday") {
-                      return lastWornTier === "diamond"
+                      const t = item.type === "lastworn" ? tierForLastWornItem(item) : lastWornTier;
+                      return t === "diamond"
                         ? dark ? "linear-gradient(90deg,#1a1a2a,#111122)" : "linear-gradient(90deg,#f0f8ff,#e8f4ff)"
-                        : lastWornTier === "platinum"
+                        : t === "platinum"
                         ? dark ? "linear-gradient(90deg,#222228,#1e1e24)" : "linear-gradient(90deg,#f5f5f8,#ebebf0)"
                         : dark ? `linear-gradient(90deg,${T.bg2},${T.bg3})` : "linear-gradient(90deg,#fff5f5,#ffe8e8)";
                     }
@@ -2856,7 +2974,10 @@
                   };
                   const getBannerBorder = (item) => {
                     if (item.type === "upnext") return rotationTier === "diamond" ? "var(--tier-diamond)" : rotationTier === "platinum" ? "var(--tier-platinum)" : "var(--vault-red)";
-                    if (item.type === "lastworn" || item.type === "wearingtoday") return lastWornTier === "diamond" ? "var(--tier-diamond)" : lastWornTier === "platinum" ? "var(--tier-platinum)" : "var(--vault-red)";
+                    if (item.type === "lastworn" || item.type === "wearingtoday") {
+                      const t = item.type === "lastworn" ? tierForLastWornItem(item) : lastWornTier;
+                      return t === "diamond" ? "var(--tier-diamond)" : t === "platinum" ? "var(--tier-platinum)" : "var(--vault-red)";
+                    }
                     if (item.type === "sale") return "#e6b800";
                     if (item.type === "gotem") return "#e6b800";
                     return T.border;
@@ -2938,35 +3059,45 @@
                           const img3 = images[`${key}_hover2`] || null;
                           // Cycle order: main, hover2, hover (1, 3, 2)
                           const cycleOrder = [img1, img3, img2].filter(Boolean);
-                          const soloSlide = bannerItems.length === 1;
                           const isDiamond = lastWornTier === "diamond";
                           const glowFilter = isLastWornPremium ? `drop-shadow(0 0 12px ${lastWornTierInfo.glowRgba})` : "none";
                           const diamondImgStyle = isDiamond ? { animation: "prismaticGlow 4s ease-in-out infinite" } : {};
                           const tileW = isMobilePublic ? 88 : 120;
                           const tileH = isMobilePublic ? 55 : 75;
+                          // Whole slide is clickable to replay the hero (except
+                          // during the active animation itself). Resetting
+                          // heroState to null re-fires the gating useEffect
+                          // which preloads images and transitions to "active".
+                          const canReplay = heroState !== "active" && cycleOrder.length > 0;
+                          // The click itself is the user gesture that unlocks
+                          // audio playback in the browser — set the sound flag
+                          // before resetting heroState so the next playback
+                          // picks it up.
+                          const onReplay = canReplay
+                            ? () => { setHeroEnableSound(true); setHeroState(null); }
+                            : undefined;
                           return (
-                            <div key={`wearingtoday-${i}`} style={{ display:"flex", alignItems:"flex-start", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none", flexWrap:"wrap" }}>
-                              {/* Diamond watermark */}
+                            <div
+                              key={`wearingtoday-${i}`}
+                              onClick={onReplay}
+                              style={{
+                                display:"flex", alignItems:"flex-start", gap:"16px",
+                                position: i === 0 ? "relative" : "absolute",
+                                top:0, left:0, right:0,
+                                padding: i === 0 ? undefined : "16px 24px",
+                                opacity: isActive ? 1 : 0,
+                                transition:"opacity 1s ease-in-out",
+                                pointerEvents: isActive ? "auto" : "none",
+                                flexWrap:"wrap",
+                                cursor: canReplay ? "pointer" : "default",
+                              }}
+                            >
                               {cycleOrder.length > 0 && (
-                                soloSlide && cycleOrder.length > 1 ? (
-                                  <div style={{ flexShrink:0, position:"relative", width: tileW, height: tileH }}>
-                                    {cycleOrder.map((src, ti) => (
-                                      <img key={ti} src={src} alt={item.colorway} style={{
-                                        width: tileW, height: tileH, objectFit:"cover", filter: glowFilter,
-                                        position: ti === 0 ? "relative" : "absolute", top:0, left:0,
-                                        opacity: (wearImgIdx % cycleOrder.length) === ti ? 1 : 0,
-                                        transition:"opacity 1s ease-in-out",
-                                        ...diamondImgStyle,
-                                      }} />
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <div style={{ display:"flex", gap:"8px", flexShrink:0 }}>
-                                    {(isMobilePublic ? cycleOrder.slice(0, 1) : cycleOrder).map((src, ti) => (
-                                      <img key={ti} src={src} alt={item.colorway} style={{ width: tileW, height: tileH, objectFit:"cover", filter: glowFilter, ...diamondImgStyle }} />
-                                    ))}
-                                  </div>
-                                )
+                                <div style={{ display:"flex", gap:"8px", flexShrink:0 }}>
+                                  {(isMobilePublic ? cycleOrder.slice(0, 1) : cycleOrder).map((src, ti) => (
+                                    <img key={ti} src={src} alt={item.colorway} style={{ width: tileW, height: tileH, objectFit:"cover", filter: glowFilter, ...diamondImgStyle }} />
+                                  ))}
+                                </div>
                               )}
                               <div style={{ minWidth:0 }}>
                                 <div style={{ fontSize:"9px", letterSpacing:"4px", color:"var(--vault-red)", marginBottom:"4px" }}>
@@ -2975,24 +3106,50 @@
                                 <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: isLastWornPremium ? lastWornTierInfo.color : T.text }}>
                                   {item.shoe.name}{item.colorway ? ` — ${item.colorway}` : ""}
                                 </div>
+                                {/* Replay hint — micro-typography sub-line matching the
+                                    ON FEET TODAY label style. Only shown when the slide
+                                    is actually clickable. */}
+                                {canReplay && (
+                                  <div style={{ fontSize:"8px", letterSpacing:"3px", color: T.text5, marginTop:"4px" }}>
+                                    CLICK TO REPLAY
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );
                         }
 
                         // ── LAST WORN slide ──
+                        // When wearing today, item.shoe/colorway is the
+                        // *previous* pair (computed via previousWornEntry) so
+                        // this slide doesn't duplicate the on-foot shoe.
+                        // Tier/image are derived inline from the item rather
+                        // than the module-level lastWorn* vars (which point
+                        // at the current on-foot pair when wearing today).
                         if (item.type === "lastworn") {
+                          const lwKey = `${item.shoe.id}_${item.colorway}`;
+                          const lwImg = images[lwKey] || null;
+                          const lwTier = tierOf(tierMeta, lwKey);
+                          const lwTierInfo = TIERS[lwTier] || TIERS.silver;
+                          const lwIsPremium = lwTier === "diamond" || lwTier === "platinum";
+                          // Date this pair was last worn — for the "Worn on X"
+                          // sub-line. Pull from wearLog so we don't rely on
+                          // module-level lastWornDate (which may be today).
+                          const lwEntries = (wearLog[item.shoe.id] || []).filter(e => e.colorway === item.colorway);
+                          const lwDate = lwEntries.length
+                            ? [...lwEntries].sort((a,b) => a.date < b.date ? 1 : -1)[0].date
+                            : null;
                           return (
                             <div key={`lastworn-${i}`} style={{ display:"flex", alignItems:"flex-start", gap:"16px", position: i === 0 ? "relative" : "absolute", top:0, left:0, right:0, padding: i === 0 ? undefined : "16px 24px", opacity: isActive ? 1 : 0, transition:"opacity 1s ease-in-out", pointerEvents: isActive ? "auto" : "none" }}>
-                              {lastWornImg && <img src={lastWornImg} alt={lastWornColorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0, filter: isLastWornPremium ? `drop-shadow(0 0 12px ${lastWornTierInfo.glowRgba})` : "none" }} />}
+                              {lwImg && <img src={lwImg} alt={item.colorway} style={{ width:"120px", height:"75px", objectFit:"cover", flexShrink:0, filter: lwIsPremium ? `drop-shadow(0 0 12px ${lwTierInfo.glowRgba})` : "none" }} />}
                               <div style={{ minWidth: isMobilePublic ? 0 : "360px", maxWidth: isMobilePublic ? undefined : "360px", textAlign:"center" }}>
                                 <div style={{ fontSize:"9px", letterSpacing:"4px", color:"var(--vault-red)", marginBottom:"4px" }}>
-                                  {isLastWornPremium ? <span><span style={{color: lastWornTierInfo.color}}>✦</span> LAST WORN <span style={{color: lastWornTierInfo.color}}>✦</span></span> : "LAST WORN"}
+                                  {lwIsPremium ? <span><span style={{color: lwTierInfo.color}}>✦</span> LAST WORN <span style={{color: lwTierInfo.color}}>✦</span></span> : "LAST WORN"}
                                 </div>
-                                <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: isLastWornPremium ? lastWornTierInfo.color : T.text }}>
-                                  {lastWornShoe.name}{lastWornColorway ? ` — ${lastWornColorway}` : ""}
+                                <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: lwIsPremium ? lwTierInfo.color : T.text }}>
+                                  {item.shoe.name}{item.colorway ? ` — ${item.colorway}` : ""}
                                 </div>
-                                <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{lastWornDate ? `Worn on ${formatDate(lastWornDate)}` : ""}</div>
+                                <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{lwDate ? `Worn on ${formatDate(lwDate)}` : ""}</div>
                                 {!isMobilePublic && recentlyWornQueue.length > 0 && (
                                   <div style={{ display:"flex", alignItems:"center", gap:"8px", marginTop:"12px", paddingTop:"8px", borderTop:`1px solid ${T.border}`, justifyContent:"center" }}>
                                     <div style={{ fontSize:"8px", letterSpacing:"3px", color: T.text5, flexShrink:0 }}>RECENT</div>
