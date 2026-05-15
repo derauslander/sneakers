@@ -76,6 +76,42 @@
       from { opacity: 0; }
       to   { opacity: 1; }
     }
+    /* Flythrough: image holds in deep Z-space for a beat, then accelerates
+       toward the camera (translateZ rising fast) until it punches past the
+       viewer. cubic-bezier on translateZ gives the Superman "hold-then-rush"
+       feel: slow start, fast finish. Blur ramps up at the tail to sell
+       motion at speed. Requires perspective on the parent container.
+       The 50→70% plateau holds the image at the camera for ~20% of duration
+       (240ms at FLY_PER_MS=1200) before the punch-through. */
+    @keyframes heroFlythrough {
+      0%   { transform: translate(-50%, -50%) translateZ(-1200px); opacity: 0; filter: blur(0px); }
+      15%  { opacity: 1; }
+      50%  { transform: translate(-50%, -50%) translateZ(-200px);  opacity: 1; filter: blur(0px); }
+      70%  { transform: translate(-50%, -50%) translateZ(-200px);  opacity: 1; filter: blur(0px); }
+      85%  { filter: blur(2px); }
+      100% { transform: translate(-50%, -55%) translateZ(800px);   opacity: 0; filter: blur(8px); }
+    }
+    /* Starfield warp: stars drift "outward" (toward the viewer and off-screen)
+       by translating their Z and fading at the tail. The container holds many
+       layered stars via box-shadow; the keyframe runs continuously so the
+       warp feels endless. */
+    @keyframes starfieldWarp {
+      0%   { transform: translateZ(-800px); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { transform: translateZ(400px);  opacity: 0; }
+    }
+    /* Intro label fades out as the first flythrough begins. */
+    @keyframes heroIntroFadeOut {
+      from { opacity: 1; }
+      to   { opacity: 0; }
+    }
+    /* Final card reveal — gentle fade-and-rise so the three-image card
+       doesn't pop in jarringly after the flythrough sequence. */
+    @keyframes heroCardReveal {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
     /* Respect reduced-motion preference */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
@@ -1309,30 +1345,73 @@
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // OnFeetHero — full-viewport "On Feet Today" overlay that animates down
-    // into the banner OFD slot on first visit each day. Tap anywhere during
-    // the hold phase to trigger the shrink immediately. prefers-reduced-motion
-    // skips the animation entirely. The component is responsible only for the
-    // visual transition; once it unmounts, the banner takes over showing the
-    // same shoe as its OFD slide. The parent is responsible for pinning the
-    // banner to the OFD slide while the hero is active so the shrink lands
-    // visually on the right slot.
+    // OnFeetHero — full-viewport "On Feet Today" overlay with a 5-stage intro:
+    //   1. intro      — "ON FEET TODAY" full-screen label
+    //   2. flythrough — each image flies toward the camera (staggered, overlapped)
+    //   3. card       — final three-image reveal with label and shoe name
+    //   4. shrink     — morphs down into the banner OFD slot
+    //   5. unmount    — parent banner takes over
+    // Tap anywhere during stages 1-3 to skip forward; on the card it skips to
+    // shrink. prefers-reduced-motion skips everything. The component is
+    // responsible only for the visual transition; once it unmounts, the banner
+    // takes over showing the same shoe as its OFD slide. The parent is
+    // responsible for pinning the banner to the OFD slide while the hero is
+    // active so the shrink lands visually on the right slot.
     // ─────────────────────────────────────────────────────────────────────────
     function OnFeetHero({ shoe, colorway, imgs, tier, tierInfo, isFirstWear, bannerRef, onComplete, dark }) {
-      const HOLD_MS = 6000;
-      const SHRINK_MS = 1000;
-      // 3 images: dwell ≈ 1800ms × 3 ≈ 5400ms, leaves a hair of buffer before
-      // the 6000ms hold ends so the last image is fully settled at shrink.
-      // 1 image: no cycle, just a static hold. 2 images: dwell ≈ 2700ms each.
-      const FADE_MS = 600;
-      const safeImgs = (imgs && imgs.length > 0) ? imgs : [null];
-      const dwellMs = safeImgs.length === 1 ? HOLD_MS : Math.floor((HOLD_MS - FADE_MS) / safeImgs.length);
+      // ── Timing constants ────────────────────────────────────────────────
+      const INTRO_MS       = 1200;   // stage 1: label-only hold
+      const FLY_PER_MS     = 1200;   // stage 2: per-image flythrough duration
+      const FLY_OVERLAP_MS = 300;    // stage 2: overlap so the next starts before prev ends
+      const CARD_MS        = 2500;   // stage 3: final card reveal hold
+      const SHRINK_MS      = 1000;   // stage 4: morph-to-banner
 
-      const [phase, setPhase] = React.useState("hold"); // "hold" → "shrink" → done
-      const [cycleIdx, setCycleIdx] = React.useState(0);
+      const safeImgs = (imgs && imgs.length > 0) ? imgs : [null];
+      const hasFlythrough = safeImgs.length >= 2 && safeImgs[0] !== null;
+      // Staggered start time for each flythrough image, in ms from flythrough start.
+      const flyStarts = safeImgs.map((_, i) => i * (FLY_PER_MS - FLY_OVERLAP_MS));
+      const flyTotalMs = hasFlythrough
+        ? flyStarts[flyStarts.length - 1] + FLY_PER_MS
+        : 0;
+
+      // phase: "intro" → "flythrough" → "card" → "shrink"
+      const [phase, setPhase] = React.useState("intro");
       const [targetRect, setTargetRect] = React.useState(null);
       const reducedMotion = React.useRef(false);
       const completedRef = useRef(false);
+
+      // ── Starfield generation ──────────────────────────────────────────
+      // Each layer is a single 1×1px div with N box-shadows scattered across
+      // a large virtual space. Three layers run the same warp keyframe at
+      // staggered delays so the warp feels continuous instead of pulsing.
+      // Memoized so the dot positions don't reshuffle on every render —
+      // that would flicker visibly during the animation.
+      const starfieldLayers = React.useMemo(() => {
+        const FIELD_W = 2400;  // virtual canvas width (px) — wider than viewport so warp doesn't reveal edges
+        const FIELD_H = 1600;  // virtual canvas height
+        const STARS_PER_LAYER = 120;
+        const NUM_LAYERS = 3;
+        const layers = [];
+        // Deterministic-ish randomness using a simple LCG so a remount
+        // doesn't reshuffle stars across the visible area. (Math.random is
+        // fine here too — useMemo means it only runs once per component
+        // instance, and a single instance lives ~8s before unmount.)
+        for (let layer = 0; layer < NUM_LAYERS; layer++) {
+          const shadows = [];
+          for (let i = 0; i < STARS_PER_LAYER; i++) {
+            const x = Math.floor(Math.random() * FIELD_W) - FIELD_W / 2;
+            const y = Math.floor(Math.random() * FIELD_H) - FIELD_H / 2;
+            // Vary brightness: most stars dim, a few brighter so the field
+            // doesn't read as uniform gray noise.
+            const bright = Math.random();
+            const alpha = bright > 0.92 ? 1 : bright > 0.75 ? 0.7 : 0.4;
+            const size = bright > 0.92 ? 2 : 1;
+            shadows.push(`${x}px ${y}px 0 ${size === 2 ? "0.5px " : ""}rgba(255,255,255,${alpha})`);
+          }
+          layers.push(shadows.join(", "));
+        }
+        return layers;
+      }, []);
 
       // Detect reduced-motion once on mount.
       React.useEffect(() => {
@@ -1357,46 +1436,41 @@
         return () => window.removeEventListener("resize", measure);
       }, [bannerRef, phase]);
 
-      // Single completion callback — guards against double-fire from both the
-      // setTimeout chain and a tap-to-shrink racing each other.
+      // Single completion callback — guards against double-fire from the
+      // setTimeout chain and a tap-to-skip racing each other.
       const complete = React.useCallback(() => {
         if (completedRef.current) return;
         completedRef.current = true;
         onComplete && onComplete();
       }, [onComplete]);
 
-      // Hold timer → schedule the shrink. If reduced-motion, complete immediately
-      // without ever mounting the visible animation.
+      // Phase scheduler. Each stage advances on a timer; reduced-motion
+      // short-circuits the whole sequence by completing immediately.
       React.useEffect(() => {
         if (reducedMotion.current) {
           complete();
           return;
         }
-        const t1 = setTimeout(() => setPhase("shrink"), HOLD_MS);
-        return () => clearTimeout(t1);
-      }, [complete]);
+        let timers = [];
+        if (phase === "intro") {
+          // If there are no flythrough images, jump straight from intro to card.
+          const next = hasFlythrough ? "flythrough" : "card";
+          timers.push(setTimeout(() => setPhase(next), INTRO_MS));
+        } else if (phase === "flythrough") {
+          timers.push(setTimeout(() => setPhase("card"), flyTotalMs));
+        } else if (phase === "card") {
+          timers.push(setTimeout(() => setPhase("shrink"), CARD_MS));
+        } else if (phase === "shrink") {
+          timers.push(setTimeout(complete, SHRINK_MS));
+        }
+        return () => timers.forEach(clearTimeout);
+      }, [phase, hasFlythrough, flyTotalMs, complete]);
 
-      // Cycle through the images during the hold phase. Stops when shrink
-      // starts so whichever image is currently up stays through the shrink.
-      React.useEffect(() => {
-        if (phase !== "hold") return;
-        if (safeImgs.length <= 1) return;
-        const interval = setInterval(() => {
-          setCycleIdx(i => Math.min(i + 1, safeImgs.length - 1));
-        }, dwellMs);
-        return () => clearInterval(interval);
-      }, [phase, safeImgs.length, dwellMs]);
-
-      // Shrink timer → unmount once the CSS transition has completed.
-      React.useEffect(() => {
-        if (phase !== "shrink") return;
-        const t = setTimeout(complete, SHRINK_MS);
-        return () => clearTimeout(t);
-      }, [phase, complete]);
-
-      // Tap-to-skip: any click during hold triggers the shrink immediately.
+      // Tap-to-skip: from intro/flythrough → card; from card → shrink. Shrink
+      // is not interruptible (the morph would look broken if cut short).
       const handleTap = () => {
-        if (phase === "hold") setPhase("shrink");
+        if (phase === "intro" || phase === "flythrough") setPhase("card");
+        else if (phase === "card") setPhase("shrink");
       };
 
       if (reducedMotion.current) return null;
@@ -1407,23 +1481,22 @@
       const glowFilter = isPremium && tierInfo ? `drop-shadow(0 0 24px ${tierInfo.glowRgba})` : "none";
       const diamondAnim = isDiamond ? "prismaticGlow 4s ease-in-out infinite" : "none";
 
-      // Build the container style. During "hold", we cover the viewport. During
-      // "shrink", we transition to the banner's bounding rect. The transition
-      // is on `clip-path` + `transform` + `opacity` — we use position: fixed
-      // with explicit top/left/width/height because animating those directly
-      // triggers layout, but for a single full-screen → bounded-rect morph
-      // that fires at most once per day, the perf cost is negligible and the
-      // code stays simple. (FLIP via transform would need a separate measure-
-      // before/after pass; not worth it here.)
+      // Container morphs from viewport-cover (stages 1-3) to banner rect (stage 4).
+      // See prior implementation for rationale on animating top/left/width/height
+      // directly vs. FLIP — same tradeoff applies here.
       const baseStyle = {
         position: "fixed",
         zIndex: 9999,
         transition: phase === "shrink"
           ? `top ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), left ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), width ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), height ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), opacity ${SHRINK_MS}ms ease-in-out`
           : "none",
-        animation: phase === "hold" ? "heroFadeIn 0.6s ease-out" : "none",
-        cursor: phase === "hold" ? "pointer" : "default",
-        background: dark ? "#0a0a0a" : "#fafafa",
+        animation: phase === "intro" ? "heroFadeIn 0.6s ease-out" : "none",
+        cursor: phase === "shrink" ? "default" : "pointer",
+        background: "#000",
+        // Perspective enables the 3D flythrough effect — translateZ on child
+        // images and starfield layers reads as depth instead of being flattened.
+        perspective: "1200px",
+        perspectiveOrigin: "50% 50%",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -1431,80 +1504,193 @@
         overflow: "hidden",
       };
 
-      // Hold phase covers the viewport; shrink phase moves to the banner rect.
-      const positionStyle = phase === "hold" || !targetRect
+      // Pre-shrink fills the viewport; shrink phase moves to the banner rect.
+      const positionStyle = phase !== "shrink" || !targetRect
         ? { top: 0, left: 0, width: "100vw", height: "100vh", opacity: 1 }
         : { top: `${targetRect.top}px`, left: `${targetRect.left}px`, width: `${targetRect.width}px`, height: `${targetRect.height}px`, opacity: 0 };
 
-      // Image sizing scales between hold (large) and shrink (small, banner-sized).
-      const imgSize = phase === "hold"
-        ? { width: "min(60vw, 480px)", height: "min(60vw, 480px)", maxHeight: "55vh" }
-        : { width: "120px", height: "75px" };
-      // Container that holds the stacked crossfading images. Stack uses
-      // position:relative so each img can position:absolute against it.
-      const imgContainerStyle = {
-        ...imgSize,
-        position: "relative",
-        transition: `width ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), height ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1)`,
-      };
-      const baseImgStyle = {
+      // ── Stage 1: intro label ──────────────────────────────────────────
+      // The label is shown full-screen during intro. When flythrough begins,
+      // it fades out (heroIntroFadeOut). On the card, a smaller version is
+      // re-rendered above the image row.
+      const introLabelStyle = {
+        fontSize: "56px",
+        letterSpacing: "16px",
+        color: "var(--vault-red)",
+        textAlign: "center",
         position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        // Fade out when flythrough starts so the first image doesn't collide
+        // with the label visually.
+        animation: phase === "flythrough" ? "heroIntroFadeOut 400ms ease-out forwards" : "none",
+        opacity: phase === "intro" ? 1 : (phase === "flythrough" ? 1 : 0),
+        pointerEvents: "none",
+      };
+
+      // ── Stage 2: flythrough images ────────────────────────────────────
+      // Each image renders fixed at center, with a staggered animationDelay
+      // so they fire in sequence with overlap. The flythrough keyframe
+      // handles scale + opacity; we only set the delay and duration here.
+      const flythroughImgStyle = (delay) => ({
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        width: "min(55vw, 460px)",
+        height: "min(55vw, 460px)",
+        maxHeight: "60vh",
+        objectFit: "contain",
+        // glowFilter is applied via the keyframe's filter property (which also
+        // animates blur). Premium glow is sacrificed during the flythrough in
+        // favor of the motion-blur effect; the final card brings glow back.
+        // Start invisible — the keyframe takes over at 0% with opacity:0 too,
+        // so this just prevents a flash before the delay elapses.
+        opacity: 0,
+        // Easing: slow start (hold in deep Z), fast finish (rush past viewer).
+        // This is the Superman feel — title sits, then snaps forward. Matches
+        // ease-in more than ease-in-out.
+        animation: `heroFlythrough ${FLY_PER_MS}ms cubic-bezier(0.5, 0, 0.9, 0.4) ${delay}ms forwards${isDiamond ? `, prismaticGlow 4s ease-in-out infinite` : ""}`,
+        pointerEvents: "none",
+        transformStyle: "preserve-3d",
+        willChange: "transform, opacity, filter",
+      });
+
+      // ── Stage 3+4: final card ─────────────────────────────────────────
+      // During card phase, all three images render side-by-side. During shrink,
+      // they collapse into the banner rect using the existing morph machinery.
+      // The card uses flex-row layout so the three images sit in a strip; on
+      // shrink the layout collapses (smaller width/height + smaller font sizes).
+      const cardImgRowStyle = {
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: phase === "shrink" ? "4px" : "16px",
+        width: phase === "shrink" ? "120px" : "min(85vw, 720px)",
+        height: phase === "shrink" ? "75px" : "min(35vw, 280px)",
+        transition: `width ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), height ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), gap ${SHRINK_MS}ms ease`,
+        // Card reveal animation only fires when entering card phase.
+        animation: phase === "card" ? "heroCardReveal 500ms ease-out" : "none",
+        opacity: phase === "intro" || phase === "flythrough" ? 0 : 1,
+      };
+      const cardImgStyle = {
+        flex: 1,
         height: "100%",
         objectFit: "contain",
         filter: glowFilter,
         animation: diamondAnim,
-        transition: `opacity ${FADE_MS}ms ease-in-out`,
+        minWidth: 0,
       };
 
-      const labelStyle = {
-        fontSize: phase === "hold" ? "14px" : "9px",
-        letterSpacing: phase === "hold" ? "8px" : "4px",
+      const cardLabelStyle = {
+        fontSize: phase === "shrink" ? "9px" : "28px",
+        letterSpacing: phase === "shrink" ? "4px" : "8px",
         color: "var(--vault-red)",
-        marginBottom: phase === "hold" ? "32px" : "8px",
+        marginBottom: phase === "shrink" ? "8px" : "32px",
         transition: `font-size ${SHRINK_MS}ms ease, letter-spacing ${SHRINK_MS}ms ease, margin-bottom ${SHRINK_MS}ms ease, opacity ${SHRINK_MS}ms ease`,
-        opacity: phase === "shrink" ? 0 : 1,
+        opacity: phase === "intro" || phase === "flythrough" ? 0 : (phase === "shrink" ? 0 : 1),
         textAlign: "center",
+        // Same staggered reveal as the image row.
+        animation: phase === "card" ? "heroCardReveal 500ms ease-out 100ms backwards" : "none",
       };
-      const nameStyle = {
-        fontSize: phase === "hold" ? "28px" : "16px",
+      const cardNameStyle = {
+        fontSize: phase === "shrink" ? "16px" : "28px",
         fontWeight: "bold",
         color: isPremium ? tierColor : (dark ? "#f0f0f0" : "#111"),
-        marginTop: phase === "hold" ? "32px" : "8px",
+        marginTop: phase === "shrink" ? "8px" : "32px",
         transition: `font-size ${SHRINK_MS}ms ease, margin-top ${SHRINK_MS}ms ease, opacity ${SHRINK_MS}ms ease`,
-        opacity: phase === "shrink" ? 0 : 1,
+        opacity: phase === "intro" || phase === "flythrough" ? 0 : (phase === "shrink" ? 0 : 1),
         textAlign: "center",
         padding: "0 24px",
+        animation: phase === "card" ? "heroCardReveal 500ms ease-out 200ms backwards" : "none",
       };
+
+      const labelContent = (() => {
+        // Label text varies on first-wear (off-ice moment) and tier (premium
+        // pairs get sparkle markers in tier color, others get a sneaker emoji).
+        const labelText = isFirstWear ? "FIRST WEAR TODAY" : "ON FEET TODAY";
+        const emoji = isFirstWear ? "🧊" : "👟";
+        return isPremium
+          ? <span><span style={{color: tierColor}}>✦</span> {labelText} <span style={{color: tierColor}}>✦</span></span>
+          : `${emoji} ${labelText}`;
+      })();
+
+      // Stage 1 label — text-only, no emoji. At 56px the sneaker glyph reads as
+      // visual clutter rather than ornament. Premium pairs still get sparkles
+      // (they're tier-colored and feel like part of the typography).
+      const introLabelContent = (() => {
+        const labelText = isFirstWear ? "FIRST WEAR TODAY" : "ON FEET TODAY";
+        return isPremium
+          ? <span><span style={{color: tierColor}}>✦</span> {labelText} <span style={{color: tierColor}}>✦</span></span>
+          : labelText;
+      })();
+
+      // Starfield layer style. Each star-layer is a tiny absolutely-positioned
+      // div whose box-shadow does the actual rendering of all dots. The layer
+      // runs the warp keyframe at a staggered delay; together they form a
+      // continuous outward flow. Fades out as the shrink starts so the dots
+      // don't survive into the banner area.
+      const STARFIELD_WARP_MS = 4000;
+      const starfieldLayerStyle = (layerIdx, shadows) => ({
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        width: "1px",
+        height: "1px",
+        borderRadius: "50%",
+        background: "transparent",
+        boxShadow: shadows,
+        // Stagger each layer by 1/3 of the warp duration so star arrivals
+        // overlap continuously rather than pulsing.
+        animation: phase === "shrink"
+          ? "none"
+          : `starfieldWarp ${STARFIELD_WARP_MS}ms linear ${-(layerIdx * STARFIELD_WARP_MS / 3)}ms infinite`,
+        opacity: phase === "shrink" ? 0 : 1,
+        transition: `opacity 400ms ease-out`,
+        pointerEvents: "none",
+        // Each layer is a separate transformed plane in the perspective container.
+        transformStyle: "preserve-3d",
+        willChange: "transform, opacity",
+      });
 
       return (
         <div style={{ ...baseStyle, ...positionStyle }} onClick={handleTap}>
-          <div style={labelStyle}>
-            {(() => {
-              // Label text varies on first-wear (off-ice moment) and tier
-              // (premium pairs get sparkle markers in tier color, others
-              // get a sneaker emoji). Stays in the same letterspaced
-              // typography either way.
-              const labelText = isFirstWear ? "FIRST WEAR TODAY" : "ON FEET TODAY";
-              const emoji = isFirstWear ? "🧊" : "👟";
-              return isPremium
-                ? <span><span style={{color: tierColor}}>✦</span> {labelText} <span style={{color: tierColor}}>✦</span></span>
-                : `${emoji} ${labelText}`;
-            })()}
-          </div>
-          <div style={imgContainerStyle}>
+          {/* Starfield: three layers of warping stars behind everything else. */}
+          {starfieldLayers.map((shadows, i) => (
+            <div key={`star-${i}`} style={starfieldLayerStyle(i, shadows)} />
+          ))}
+
+          {/* Stage 1: intro label centered in viewport */}
+          {(phase === "intro" || phase === "flythrough") && (
+            <div style={introLabelStyle}>{introLabelContent}</div>
+          )}
+
+          {/* Stage 2: flythrough images — only mounted during flythrough phase
+              so they tear down cleanly when card takes over. */}
+          {phase === "flythrough" && safeImgs.map((src, i) => src && (
+            <img
+              key={`fly-${i}`}
+              src={src}
+              alt={colorway || ""}
+              style={flythroughImgStyle(flyStarts[i])}
+            />
+          ))}
+
+          {/* Stage 3+4: card with all images side-by-side. Rendered (invisible)
+              during earlier phases so layout is settled when card fades in. */}
+          <div style={cardLabelStyle}>{labelContent}</div>
+          <div style={cardImgRowStyle}>
             {safeImgs.map((src, i) => src && (
               <img
-                key={i}
+                key={`card-${i}`}
                 src={src}
                 alt={colorway || ""}
-                style={{ ...baseImgStyle, opacity: i === cycleIdx ? 1 : 0 }}
+                style={cardImgStyle}
               />
             ))}
           </div>
-          <div style={nameStyle}>
+          <div style={cardNameStyle}>
             {shoe ? shoe.name : ""}{colorway ? ` — ${colorway}` : ""}
           </div>
         </div>
@@ -1953,13 +2139,12 @@
       const lastWornHeroTier = lastWornHeroKey ? tierOf(tierMeta, lastWornHeroKey) : "silver";
       const lastWornHeroTierInfo = TIERS[lastWornHeroTier] || TIERS.silver;
       const lastWornHeroImg = lastWornHeroKey ? images[lastWornHeroKey] || null : null;
-      // Hover/hover2 images for the hero's 3-image cycle. Order shown is
-      // [hover2, main, hover] — leading with hover2 (typically the pair angle)
-      // gives the hero a different rhythm than the banner OFD slide which
-      // leads with main. Filtered to drop nulls in the parent.
+      // Hover/hover2 images for the hero's 3-image flythrough cycle. Order is
+      // [main, hover2, hover] — flythroughs play in this sequence, then the
+      // final card shows all three together. Filtered to drop nulls in parent.
       const lastWornHeroImg2 = lastWornHeroKey ? images[`${lastWornHeroKey}_hover`] || null : null;
       const lastWornHeroImg3 = lastWornHeroKey ? images[`${lastWornHeroKey}_hover2`] || null : null;
-      const lastWornHeroImgs = [lastWornHeroImg3, lastWornHeroImg, lastWornHeroImg2].filter(Boolean);
+      const lastWornHeroImgs = [lastWornHeroImg, lastWornHeroImg3, lastWornHeroImg2].filter(Boolean);
 
       // First-wear detection — true when today's wear is the only wear log
       // entry for this colorway. Used by the hero to swap "ON FEET TODAY"

@@ -11,6 +11,7 @@ Called automatically by build.bat
 import json
 import os
 import re
+import sys
 from datetime import datetime, timezone
 
 VAULT_FILE  = "vault-data.json"
@@ -254,7 +255,7 @@ def strip_ranking_prices(rankings):
 def main():
     if not os.path.exists(VAULT_FILE):
         print(f"  ERROR: {VAULT_FILE} not found. Run a BACKUP from the admin app first.")
-        return
+        sys.exit(1)
 
     with open(VAULT_FILE, "r", encoding="utf-8") as f:
         data = json.load(f)
