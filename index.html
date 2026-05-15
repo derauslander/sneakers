@@ -1514,10 +1514,16 @@
       // it fades out (heroIntroFadeOut). On the card, a smaller version is
       // re-rendered above the image row.
       const introLabelStyle = {
-        fontSize: "56px",
-        letterSpacing: "16px",
+        // Scales fluidly between mobile (~26px at 375px wide) and desktop
+        // (56px). Tuned so "ON FEET TODAY" with premium ✦ markers fits on a
+        // 375px phone without clipping. nowrap + maxWidth prevent wrap; if
+        // the text still overflows at some edge-case width, lower 7vw further.
+        fontSize: "clamp(20px, 7vw, 56px)",
+        letterSpacing: "clamp(3px, 1.5vw, 16px)",
         color: "var(--vault-red)",
         textAlign: "center",
+        whiteSpace: "nowrap",
+        maxWidth: "95vw",
         position: "absolute",
         top: "50%",
         left: "50%",
@@ -1584,18 +1590,20 @@
       };
 
       const cardLabelStyle = {
-        fontSize: phase === "shrink" ? "9px" : "28px",
-        letterSpacing: phase === "shrink" ? "4px" : "8px",
+        fontSize: phase === "shrink" ? "9px" : "clamp(14px, 5vw, 28px)",
+        letterSpacing: phase === "shrink" ? "4px" : "clamp(3px, 1.5vw, 8px)",
         color: "var(--vault-red)",
         marginBottom: phase === "shrink" ? "8px" : "32px",
         transition: `font-size ${SHRINK_MS}ms ease, letter-spacing ${SHRINK_MS}ms ease, margin-bottom ${SHRINK_MS}ms ease, opacity ${SHRINK_MS}ms ease`,
         opacity: phase === "intro" || phase === "flythrough" ? 0 : (phase === "shrink" ? 0 : 1),
         textAlign: "center",
+        whiteSpace: "nowrap",
+        maxWidth: "95vw",
         // Same staggered reveal as the image row.
         animation: phase === "card" ? "heroCardReveal 500ms ease-out 100ms backwards" : "none",
       };
       const cardNameStyle = {
-        fontSize: phase === "shrink" ? "16px" : "28px",
+        fontSize: phase === "shrink" ? "16px" : "clamp(18px, 5.5vw, 28px)",
         fontWeight: "bold",
         color: isPremium ? tierColor : (dark ? "#f0f0f0" : "#111"),
         marginTop: phase === "shrink" ? "8px" : "32px",
