@@ -3019,7 +3019,7 @@
                                       ? <span><span style={{color: rotationTierInfo.color}}>✦</span> UP NEXT <span style={{color: rotationTierInfo.color}}>✦</span></span>
                                       : "UP NEXT FOR ROTATION"}
                                   </div>
-                                  <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: T.text }}>
+                                  <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: T.text, overflowWrap:"break-word", wordBreak:"break-word" }}>
                                     {isRotationOnIce
                                       ? <span><span style={{color:"#64c8ff"}}>❄️</span> {longestUnworn.name}{longestUnwornColorway ? ` — ${longestUnwornColorway}` : ""} <span style={{color:"#64c8ff"}}>❄️</span></span>
                                       : rotationTierInfo.color
@@ -3103,7 +3103,7 @@
                                 <div style={{ fontSize:"9px", letterSpacing:"4px", color:"var(--vault-red)", marginBottom:"4px" }}>
                                   {isLastWornPremium ? <span><span style={{color: lastWornTierInfo.color}}>✦</span> ON FEET TODAY <span style={{color: lastWornTierInfo.color}}>✦</span></span> : "👟 ON FEET TODAY"}
                                 </div>
-                                <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: isLastWornPremium ? lastWornTierInfo.color : T.text }}>
+                                <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: isLastWornPremium ? lastWornTierInfo.color : T.text, overflowWrap:"break-word", wordBreak:"break-word" }}>
                                   {item.shoe.name}{item.colorway ? ` — ${item.colorway}` : ""}
                                 </div>
                                 {/* Replay hint — micro-typography sub-line matching the
@@ -3146,7 +3146,7 @@
                                 <div style={{ fontSize:"9px", letterSpacing:"4px", color:"var(--vault-red)", marginBottom:"4px" }}>
                                   {lwIsPremium ? <span><span style={{color: lwTierInfo.color}}>✦</span> LAST WORN <span style={{color: lwTierInfo.color}}>✦</span></span> : "LAST WORN"}
                                 </div>
-                                <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: lwIsPremium ? lwTierInfo.color : T.text }}>
+                                <div style={{ fontSize: isMobilePublic ? "13px" : "16px", fontWeight:"bold", color: lwIsPremium ? lwTierInfo.color : T.text, overflowWrap:"break-word", wordBreak:"break-word" }}>
                                   {item.shoe.name}{item.colorway ? ` — ${item.colorway}` : ""}
                                 </div>
                                 <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{lwDate ? `Worn on ${formatDate(lwDate)}` : ""}</div>
@@ -3178,7 +3178,7 @@
                             {item.img && <img src={item.img} alt={item.colorway} style={{ width: isMobilePublic ? "88px" : "120px", height: isMobilePublic ? "55px" : "75px", objectFit:"cover", flexShrink:0, ...newsGlow }} />}
                             <div style={{ minWidth:0 }}>
                               <div style={{ fontSize:"9px", letterSpacing: isMobilePublic ? "3px" : "4px", color: isNewsDiamond ? "var(--tier-diamond)" : (item.type === "sale" || item.type === "gotem" || item.type === "spotlight") ? "#e6b800" : "var(--vault-red)", marginBottom:"4px" }}>{isNewsDiamond ? "💎 SNEAKER OF THE DAY 💎" : item.label}</div>
-                              <div style={{ fontSize: isMobilePublic ? "13px" : "15px", fontWeight:"bold", color: T.text }}>{item.shoe.name} — {item.colorway}</div>
+                              <div style={{ fontSize: isMobilePublic ? "13px" : "15px", fontWeight:"bold", color: T.text, overflowWrap:"break-word", wordBreak:"break-word" }}>{item.shoe.name} — {item.colorway}</div>
                               <div style={{ fontSize:"10px", color: T.text3, marginTop:"2px" }}>{item.subtitle}</div>
                               {item.type === "anniversary" && item.purchaseDate && !isMobilePublic && (
                                 <div onClick={e => { e.stopPropagation(); setTimeTravelDate(item.purchaseDate); setView("collection"); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ fontSize:"9px", letterSpacing:"2px", color:"var(--vault-red)", marginTop:"6px", cursor:"pointer", textDecoration:"underline", opacity:0.8 }}>
