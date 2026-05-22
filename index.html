@@ -3521,7 +3521,7 @@
                                   wearDates={cwWears.map(e => e.date)}
                                   tier={tierOf(tierMeta, metaKey)}
                                   
-                                  isOnIce={cwWears.length === 0 && !tierExcludedFromRotation(tierOf(tierMeta, metaKey)) && !isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate)}
+                                  isOnIce={cwWears.length === 0 && !tierExcludedFromRotation(tierOf(tierMeta, metaKey)) && colorwayOwned[metaKey] !== false && !isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate)}
                                   isNewPickup={!timeTravelDate && isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate)}
                                   shoeName={shoe.name}
                                   dark={dark}
