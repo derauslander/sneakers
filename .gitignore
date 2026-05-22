@@ -2,6 +2,10 @@ server.py
 start.bat
 sneaker-vault.html
 build.bat
-backups/
-vault-data.json
 build.py
+bake.py
+games/2048.html
+vault-data.json
+backups/
+_tmp_*
+esbuild.exe
