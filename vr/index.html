@@ -64,71 +64,92 @@ Loading…</div>
     const tierMeta      = data.tierMeta || {};
     const images        = data.images || {};
     const displayLayout = data.displayLayout || [];
+    const dreamLayout   = data.dreamLayout || [];
 
     if (displayLayout.length === 0) fail("displayLayout is empty in public-data.json");
 
-    // shortName → shoe lookup (displayLayout cells reference shoes by code/shortName)
+    // shortName → shoe lookup (layout cells reference shoes by code/shortName)
     const shoeByShortName = {};
     for (const shoe of inventory) shoeByShortName[shoe.shortName] = shoe;
 
+    // Ownership set: a colorway is "owned" if it appears as a filled cell
+    // anywhere in displayLayout. Used by the dream wall to decide which
+    // entries pulse (the unowned ones, signalling "still on the wishlist").
+    const ownedKeys = new Set();
+    for (const row of displayLayout) {
+      for (const cell of row || []) {
+        if (!cell?.code || !cell?.colorway) continue;
+        const shoe = shoeByShortName[cell.code];
+        if (shoe) ownedKeys.add(`${shoe.id}_${cell.colorway}`);
+      }
+    }
+
     // ════════════════════════════════════════════════════════════════════
-    //  WHICH CELLS GO IN THE GRID
+    //  WHICH CELLS GO IN EACH WALL
     // ════════════════════════════════════════════════════════════════════
-    // displayLayout is an 8x5 grid of cells. Each cell is either:
-    //   { code: "AJ1", colorway: "Royal Reimagined" }  — filled
-    //   { code: "", colorway: "" } or {}               — empty
-    // We flatten into a list of cell records: filled cells get their full
-    // entry data, empty cells are marked so we can render outlines for them.
+    // Each layout is an 8×5 grid where each cell is either:
+    //   { code: "AJ1", colorway: "Royal Reimagined" }   — filled
+    //   { code: "", colorway: "" } or {}                — empty
+    // buildCells() flattens a layout into a list of cell records: filled
+    // cells carry their entry data, empty cells are just position markers.
     const ROWS = displayLayout.length;
     const COLS = Math.max(...displayLayout.map((r) => r.length));
 
-    const cells = []; // [{ row, col, empty, entry? }]
-    let filledCount = 0;
-    let emptyCount = 0;
-    for (let r = 0; r < ROWS; r++) {
-      const row = displayLayout[r] || [];
-      for (let c = 0; c < COLS; c++) {
-        const raw = row[c] || {};
-        const code = raw.code;
-        const cw   = raw.colorway;
-        if (!code || !cw) {
-          cells.push({ row: r, col: c, empty: true });
-          emptyCount++;
-          continue;
+    const buildCells = (layout, label) => {
+      const out = [];
+      let filled = 0, empty = 0;
+      for (let r = 0; r < ROWS; r++) {
+        const row = layout[r] || [];
+        for (let c = 0; c < COLS; c++) {
+          const raw = row[c] || {};
+          const code = raw.code;
+          const cw   = raw.colorway;
+          if (!code || !cw) {
+            out.push({ row: r, col: c, empty: true });
+            empty++;
+            continue;
+          }
+          const shoe = shoeByShortName[code];
+          if (!shoe) {
+            log(`${label}: skipping [${r},${c}] — unknown code "${code}"`, "dim");
+            out.push({ row: r, col: c, empty: true });
+            empty++;
+            continue;
+          }
+          const key = `${shoe.id}_${cw}`;
+          const imagePath = images[key];
+          if (!imagePath) {
+            log(`${label}: skipping [${r},${c}] — no image for ${key}`, "dim");
+            out.push({ row: r, col: c, empty: true });
+            empty++;
+            continue;
+          }
+          out.push({
+            row: r, col: c, empty: false,
+            entry: {
+              key,
+              shoeId: shoe.id,
+              shoeName: shoe.name,
+              shortName: shoe.shortName,
+              colorway: cw,
+              tier: tierMeta[key] || "silver",
+              imagePath: "../" + imagePath,
+              story: colorwayMeta[key]?.story || "",
+              notes: colorwayMeta[key]?.notes || "",
+              owned: ownedKeys.has(key),
+            },
+          });
+          filled++;
         }
-        const shoe = shoeByShortName[code];
-        if (!shoe) {
-          log(`Skipping cell [${r},${c}] — unknown shoe code "${code}"`, "dim");
-          cells.push({ row: r, col: c, empty: true });
-          emptyCount++;
-          continue;
-        }
-        const key = `${shoe.id}_${cw}`;
-        const imagePath = images[key];
-        if (!imagePath) {
-          log(`Skipping cell [${r},${c}] — no image for ${key}`, "dim");
-          cells.push({ row: r, col: c, empty: true });
-          emptyCount++;
-          continue;
-        }
-        cells.push({
-          row: r, col: c, empty: false,
-          entry: {
-            key,
-            shoeId: shoe.id,
-            shoeName: shoe.name,
-            shortName: shoe.shortName,
-            colorway: cw,
-            tier: tierMeta[key] || "silver",
-            imagePath: "../" + imagePath,
-            story: colorwayMeta[key]?.story || "",
-            notes: colorwayMeta[key]?.notes || "",
-          },
-        });
-        filledCount++;
       }
-    }
-    log(`Grid: ${ROWS}×${COLS}, ${filledCount} filled, ${emptyCount} empty`, "ok");
+      log(`${label}: ${filled} filled, ${empty} empty`, "ok");
+      return out;
+    };
+
+    const displayCells = buildCells(displayLayout, "Office Display");
+    const dreamCells   = dreamLayout.length > 0
+      ? buildCells(dreamLayout, "Dream Display")
+      : [];
 
     // ════════════════════════════════════════════════════════════════════
     //  SCENE
@@ -185,7 +206,9 @@ Loading…</div>
     const loader = new THREE.TextureLoader();
     loader.setCrossOrigin("anonymous");
     let texturesLoaded = 0;
-    const texturesTotal = filledCount;
+    const texturesTotal =
+      displayCells.filter((c) => !c.empty).length +
+      dreamCells.filter((c) => !c.empty).length;
 
     const loadTextureFor = (path, plane, onSized) => {
       loader.load(
@@ -214,17 +237,15 @@ Loading…</div>
     // ════════════════════════════════════════════════════════════════════
     //  CELLS — 3D transparent shoeboxes with photos on the back wall
     // ════════════════════════════════════════════════════════════════════
-    // Each filled cell is a Group containing:
-    //   1. A clear-plastic box shell (BoxGeometry, transparent material)
-    //   2. A photo plane sized to fit, positioned just in front of the
-    //      back wall of the box so the shoe appears "inside" the box
-    // The whole Group is what gets translated/scaled/rotated during pull-
-    // forward, so the box and its photo move as one object.
-    // Empty cells get a wireframe box at the same dimensions — a visible
-    // "this slot is intentionally empty" hint that matches the box theme.
+    // Each cell — filled or empty — gets a real 3D box on the wall.
+    // Filled cells additionally contain a photo plane centred inside the
+    // box. Empty cells are visually identical empty boxes — "this shelf
+    // slot is here but has nothing in it." The whole per-cell Group is
+    // what gets translated/scaled/rotated during pull-forward, so the box
+    // and its photo move as one object.
     const allCases = [];
 
-    // Shared geometries — one BoxGeometry, one wireframe for empties.
+    // Shared geometries and materials — every box uses these.
     // Shared materials too: every filled box gets the same shell material
     // (clear plastic), every empty cell the same wireframe.
     const sharedBoxGeometry = new THREE.BoxGeometry(BOX_W, BOX_H, BOX_D);
@@ -251,88 +272,151 @@ Loading…</div>
       opacity: 0.6,
     });
 
-    const sharedWireframeGeometry = sharedEdgesGeometry; // reuse for empties
-    const sharedWireframeMaterial = new THREE.LineBasicMaterial({
-      color: 0x333333,
-      transparent: true,
-      opacity: 0.4,
-    });
+    // makeTitlePanel: large readable header floating above a wall. Same
+    // canvas-as-texture approach as the story panel — opaque dark background
+    // wasn't requested, so the title sits as bright text against the void.
+    // 2048×512 canvas → 16:4 aspect → 1.6m × 0.4m plane.
+    const makeTitlePanel = (text) => {
+      const W = 2048, H = 512;
+      const canvas = document.createElement("canvas");
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 220px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "center";
+      // Letterspaced for a "title plaque" feel — fillText doesn't natively
+      // letterspace, so emulate by drawing each character with extra width.
+      const spacing = 24; // px between letters
+      const chars = text.split("");
+      let totalW = 0;
+      for (const ch of chars) totalW += ctx.measureText(ch).width + spacing;
+      totalW -= spacing;
+      let x = (W - totalW) / 2;
+      for (const ch of chars) {
+        const charW = ctx.measureText(ch).width;
+        ctx.fillText(ch, x + charW / 2, H / 2);
+        x += charW + spacing;
+      }
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      const material = new THREE.MeshBasicMaterial({
+        map: texture, transparent: true, side: THREE.DoubleSide,
+      });
+      const panelH = 0.4;
+      const panelW = panelH * (W / H);
+      return new THREE.Mesh(new THREE.PlaneGeometry(panelW, panelH), material);
+    };
 
-    for (const cell of cells) {
-      const pos = cellPosition(cell.row, cell.col);
+    // Build a wall from a cells array. wallZ positions the wall in world
+    // space. If rotateY180 is true, the wall is flipped 180° around the
+    // vertical axis so the box fronts face the opposite direction —
+    // used for the dream wall, which sits behind the user. Note: this
+    // means column 0 of the data ends up on the user's right when they
+    // turn around to face the dream wall (a side-effect of the rotation).
+    //
+    // Each wall has its own world-space view position for pull-forward:
+    // a point 1.5m in front of the user when they're facing this wall,
+    // half a metre to the user's left so the story panel fits on the right.
+    // (For the dream wall, "user's left" is mirrored vs the display wall
+    // because the user has turned around.)
+    const buildWall = (cellArr, wallZ, rotateY180, title) => {
+      const wallGroup = new THREE.Group();
+      wallGroup.position.set(0, 0, wallZ);
+      if (rotateY180) wallGroup.rotation.y = Math.PI;
+      scene.add(wallGroup);
 
-      if (cell.empty) {
-        const wf = new THREE.LineSegments(sharedWireframeGeometry, sharedWireframeMaterial);
-        wf.position.copy(pos);
-        scene.add(wf);
-        continue;
+      // World-space view position for pulling cases off this wall.
+      // wallZ is negative for the display wall (in front of user), positive
+      // for the dream wall (behind user). Push the view position toward the
+      // user (origin) from the wall by ~1.5m.
+      const wallToUserSign = wallZ < 0 ? 1 : -1; // +Z direction toward user for display, -Z for dream
+      const viewPosWorld = new THREE.Vector3(
+        rotateY180 ? 0.5 : -0.5,   // mirror lateral offset for dream wall
+        1.6,
+        wallZ + wallToUserSign * 1.5
+      );
+
+      // Title panel — floats above the wall, faces the same direction as
+      // the box fronts. Because it lives inside wallGroup, the dream wall's
+      // 180° rotation carries it along automatically.
+      if (title) {
+        const titlePanel = makeTitlePanel(title);
+        // Top of grid is at TOP_Y; add a small gap above for the title.
+        titlePanel.position.set(0, TOP_Y + BOX_H + 0.15, 0);
+        wallGroup.add(titlePanel);
       }
 
-      // Filled cell group: contains box shell + inner photo plane.
-      const group = new THREE.Group();
-      group.position.copy(pos);
-      scene.add(group);
+      for (const cell of cellArr) {
+        const pos = cellPosition(cell.row, cell.col); // local coords, z=0
 
-      // Box shell — clear plastic. Centred on group origin.
-      const shell = new THREE.Mesh(sharedBoxGeometry, sharedShellMaterial);
-      group.add(shell);
+        // Every cell — filled or empty — gets a real box. Empty boxes have
+        // no photo inside, but the shell + edges are identical to filled
+        // ones. This makes the wall read as a complete shelf, with the
+        // gaps being "an empty shoebox," not "missing data."
+        const group = new THREE.Group();
+        group.position.copy(pos);
+        wallGroup.add(group);
 
-      // Edges overlay — visible outline of the box so it reads as a
-      // distinct object even when the shell material is mostly invisible.
-      const edges = new THREE.LineSegments(sharedEdgesGeometry, sharedEdgesMaterial);
-      group.add(edges);
+        const shell = new THREE.Mesh(sharedBoxGeometry, sharedShellMaterial);
+        group.add(shell);
 
-      // Photo plane — starts square at box-front size as placeholder, then
-      // resizes when the texture loads. Positioned just in front of the
-      // back inner wall of the box (z = -BOX_D/2 + small offset) so the
-      // photo appears "inside" the box rather than on its front face.
-      const photoGeometry = new THREE.PlaneGeometry(BOX_W * 0.9, BOX_H * 0.9);
-      const photoMaterial = new THREE.MeshBasicMaterial({
-        color: 0x222222,
-        side: THREE.DoubleSide,
-        transparent: true,
-        alphaTest: 0.01,
-      });
-      const plane = new THREE.Mesh(photoGeometry, photoMaterial);
-      // Sit photo just inside the back wall, facing the user (front of box).
-      // Tiny offset (0.001m) keeps it off the back wall to avoid z-fighting.
-      plane.position.set(0, 0, -BOX_D / 2 + 0.001);
-      group.add(plane);
+        const edges = new THREE.LineSegments(sharedEdgesGeometry, sharedEdgesMaterial);
+        group.add(edges);
 
-      const caseRef = {
-        entry: cell.entry, plane, group, shell,
-        homePosition: group.position.clone(),
-        homeRotation: group.rotation.clone(),
-        state: "home",
-        stateStart: 0,
-      };
-      // Raycaster targets the shell (the outer box) for hit detection —
-      // pointing anywhere on the box counts as selecting that case.
-      shell.userData.caseRef = caseRef;
-      allCases.push(caseRef);
-
-      // Texture load: photo fits inside the box face. Box "face" is BOX_W
-      // wide × BOX_H tall (34cm × 22cm). Fit photo with 5% margin on each
-      // side so it doesn't touch the box walls.
-      const innerW = BOX_W * 0.9;
-      const innerH = BOX_H * 0.9;
-      loadTextureFor(cell.entry.imagePath, plane, (aspect) => {
-        plane.geometry.dispose();
-        // Fit-inside logic: scale to the most-constraining dimension.
-        let w, h;
-        const innerAspect = innerW / innerH;
-        if (aspect >= innerAspect) {
-          // Photo is wider than inner space → width-limited
-          w = innerW;
-          h = innerW / aspect;
-        } else {
-          // Photo is taller than inner space → height-limited
-          h = innerH;
-          w = innerH * aspect;
+        if (cell.empty) {
+          // No photo, no caseRef — just a visible empty box. Done.
+          continue;
         }
-        plane.geometry = new THREE.PlaneGeometry(w, h);
-      });
-    }
+
+        // Filled cell: photo plane inside the box, centred (per the
+        // owner's preference) rather than against the back wall.
+        const photoGeometry = new THREE.PlaneGeometry(BOX_W * 0.9, BOX_H * 0.9);
+        const photoMaterial = new THREE.MeshBasicMaterial({
+          color: 0x222222,
+          side: THREE.DoubleSide,
+          transparent: true,
+          alphaTest: 0.01,
+        });
+        const plane = new THREE.Mesh(photoGeometry, photoMaterial);
+        plane.position.set(0, 0, 0); // centre of box
+        group.add(plane);
+
+        const caseRef = {
+          entry: cell.entry, plane, group, shell,
+          homePosition: pos.clone(),       // local to wallGroup
+          homeRotation: group.rotation.clone(),
+          viewPosWorld,                    // world-space target for this wall's pulls
+          state: "home",
+          stateStart: 0,
+          // Pulse flag: only unowned entries on the dream wall pulse.
+          // Owned entries (whether on display or dream wall) stay steady.
+          pulse: !cell.entry.owned,
+        };
+        shell.userData.caseRef = caseRef;
+        allCases.push(caseRef);
+
+        const innerW = BOX_W * 0.9;
+        const innerH = BOX_H * 0.9;
+        loadTextureFor(cell.entry.imagePath, plane, (aspect) => {
+          plane.geometry.dispose();
+          let w, h;
+          const innerAspect = innerW / innerH;
+          if (aspect >= innerAspect) {
+            w = innerW;
+            h = innerW / aspect;
+          } else {
+            h = innerH;
+            w = innerH * aspect;
+          }
+          plane.geometry = new THREE.PlaneGeometry(w, h);
+        });
+      }
+    };
+
+    buildWall(displayCells, -2.5, false, "OFFICE DISPLAY");
+    if (dreamCells.length > 0) buildWall(dreamCells, 2.5, true, "DREAM DISPLAY");
 
     // ════════════════════════════════════════════════════════════════════
     //  STORY PANEL (canvas-rendered text for the pulled-forward case)
@@ -404,14 +488,24 @@ Loading…</div>
     };
 
     let storyPanel = null;
-    const showStoryFor = (entry) => {
+    const showStoryFor = (caseRef) => {
       hideStory();
+      const entry = caseRef.entry;
       const headline = entry.shoeName;
       const subhead  = `${entry.colorway}   ${TIER_GLYPH[entry.tier] || ""}`;
       const text     = entry.story || entry.notes || "";
       storyPanel = makeTextPanel(headline, subhead, text);
-      // Right of the forward viewing position, eye height, angled toward user.
-      storyPanel.position.set(1.2, 1.6, -2.0);
+
+      // Place the panel beside the pulled-forward case (which lands at
+      // caseRef.viewPosWorld). "Beside" means offset to the user's right —
+      // mirror direction depends on which wall the user is facing. The
+      // viewPosWorld already has a 0.5m left-offset baked in; we use its
+      // sign to determine the panel's offset direction.
+      const viewP = caseRef.viewPosWorld;
+      // If viewPosWorld.x is negative (display wall), put panel at +1.2 x.
+      // If positive (dream wall), put panel at -1.2 x. Same offset magnitude.
+      const panelX = viewP.x < 0 ? 1.2 : -1.2;
+      storyPanel.position.set(panelX, 1.6, viewP.z);
       storyPanel.lookAt(0, 1.6, 0);
       scene.add(storyPanel);
     };
@@ -453,6 +547,18 @@ Loading…</div>
 
     let focusedCase = null;
 
+    // beginReturn captures the case's current position/scale before kicking
+    // off the return animation, so the lerp starts from where the case
+    // actually is — not from where it would have been at end-of-pull.
+    // Without this, interrupting a pull mid-flight (rapid clicks) causes a
+    // teleport to the forward position before the return begins.
+    const beginReturn = (c, now) => {
+      c.returnStart = c.group.position.clone();
+      c.returnStartScale = c.group.scale.x;
+      c.state = "returning";
+      c.stateStart = now;
+    };
+
     const onSelect = (event) => {
       const controller = event.target;
       tempMatrix.identity().extractRotation(controller.matrixWorld);
@@ -465,11 +571,11 @@ Loading…</div>
       // is now set on shell, not plane.
       const targets = allCases.map((c) => c.shell);
       const intersects = raycaster.intersectObjects(targets, false);
+      const now = performance.now();
 
       if (intersects.length === 0) {
         if (focusedCase) {
-          focusedCase.state = "returning";
-          focusedCase.stateStart = performance.now();
+          beginReturn(focusedCase, now);
           hideStory();
           focusedCase = null;
         }
@@ -480,22 +586,24 @@ Loading…</div>
       if (!caseRef) return;
 
       if (focusedCase === caseRef) {
-        caseRef.state = "returning";
-        caseRef.stateStart = performance.now();
+        beginReturn(caseRef, now);
         hideStory();
         focusedCase = null;
         return;
       }
 
       if (focusedCase) {
-        focusedCase.state = "returning";
-        focusedCase.stateStart = performance.now();
+        beginReturn(focusedCase, now);
       }
 
       caseRef.state = "pulling";
-      caseRef.stateStart = performance.now();
+      caseRef.stateStart = now;
+      // Per-wall world-space view target → local to this case's parent.
+      // Computed at build time per wall so display/dream pull-forward
+      // targets are each in front of the user when facing that wall.
+      caseRef.viewPositionLocal = caseRef.group.parent.worldToLocal(caseRef.viewPosWorld.clone());
       focusedCase = caseRef;
-      showStoryFor(caseRef.entry);
+      showStoryFor(caseRef);
     };
 
     for (let i = 0; i < 2; i++) {
@@ -513,9 +621,9 @@ Loading…</div>
     //  ANIMATION (pull-forward / return)
     // ════════════════════════════════════════════════════════════════════
     const PULL_DURATION_MS = 400;
-    // Forward viewing position: 2.0m in front, half a metre left of centre
-    // (story panel fits on the right), eye height.
-    const VIEW_POSITION = new THREE.Vector3(-0.5, 1.6, -2.0);
+    // Pull-forward target is computed per-wall (see buildWall) — each wall
+    // has its own world-space view position so a case is always pulled
+    // toward where the user is standing relative to that wall.
     const VIEW_SCALE = 1.5;
     const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
@@ -527,13 +635,19 @@ Loading…</div>
         const e = easeOutCubic(t);
 
         if (c.state === "pulling") {
-          c.group.position.lerpVectors(c.homePosition, VIEW_POSITION, e);
+          c.group.position.lerpVectors(c.homePosition, c.viewPositionLocal, e);
           c.group.scale.setScalar(1 + (VIEW_SCALE - 1) * e);
+          // lookAt takes a world-space target, so (0, 1.6, 0) is correct
+          // regardless of which wall the case lives on.
           c.group.lookAt(0, 1.6, 0);
           if (t >= 1) c.state = "forward";
         } else if (c.state === "returning") {
-          c.group.position.lerpVectors(VIEW_POSITION, c.homePosition, e);
-          c.group.scale.setScalar(VIEW_SCALE - (VIEW_SCALE - 1) * e);
+          // Lerp from the position recorded when "returning" began (which
+          // may be mid-pull) back to home. returnStart is set in onSelect.
+          c.group.position.lerpVectors(c.returnStart, c.homePosition, e);
+          // Same for scale — return from whatever scale the case was at.
+          const startScale = c.returnStartScale;
+          c.group.scale.setScalar(startScale + (1 - startScale) * e);
           if (t >= 1) {
             c.group.position.copy(c.homePosition);
             c.group.rotation.copy(c.homeRotation);
@@ -546,12 +660,35 @@ Loading…</div>
       }
     };
 
+    // Pulse animation: unowned dream-wall entries fade between low and
+    // full opacity on a slow cycle, signalling "still on the wishlist."
+    // Only active when the case is at rest (state="home") — during pull-
+    // forward we want full opacity so the user can see the shoe clearly.
+    const PULSE_PERIOD_MS = 3000;
+    const PULSE_MIN = 0.6;
+    const PULSE_MAX = 1.0;
+    const updatePulse = (now) => {
+      // Sin-based oscillation between MIN and MAX over PULSE_PERIOD_MS.
+      const phase = (now % PULSE_PERIOD_MS) / PULSE_PERIOD_MS;
+      const t = (Math.sin(phase * Math.PI * 2) + 1) / 2; // 0→1
+      const opacity = PULSE_MIN + (PULSE_MAX - PULSE_MIN) * t;
+      for (const c of allCases) {
+        if (!c.pulse) continue;
+        if (c.state !== "home") {
+          c.plane.material.opacity = 1.0;
+          continue;
+        }
+        c.plane.material.opacity = opacity;
+      }
+    };
+
     // ════════════════════════════════════════════════════════════════════
     //  RENDER LOOP
     // ════════════════════════════════════════════════════════════════════
     renderer.setAnimationLoop((time) => {
       const now = time || performance.now();
       updateCases(now);
+      updatePulse(now);
       renderer.render(scene, camera);
     });
 
