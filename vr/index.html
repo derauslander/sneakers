@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Vault — VR (prototype)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; background: #000; color: #fff; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    #status {
+      position: fixed; top: 16px; left: 16px; right: 16px;
+      font-size: 13px; line-height: 1.6; color: #aaa;
+      pointer-events: none; user-select: none;
+      white-space: pre-line;
+    }
+    #status .err { color: #ff6b6b; }
+    #status .ok  { color: #6bff8e; }
+    /* Three.js injects its own button styling for VRButton — we let it. */
+  </style>
+
+  <!-- Three.js via import map (modern ES module pattern, works in Quest Browser) -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three":         "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="status">The Vault — VR prototype
+Loading…</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { VRButton } from "three/addons/webxr/VRButton.js";
+
+    const statusEl = document.getElementById("status");
+    const log = (msg, cls = "") => {
+      const line = cls ? `<span class="${cls}">${msg}</span>` : msg;
+      statusEl.innerHTML += "\n" + line;
+      console.log("[VR]", msg);
+    };
+    const fail = (msg) => { log(msg, "err"); throw new Error(msg); };
+
+    // ── Pick which colorways to show ────────────────────────────────────
+    // Prototype goal: 3 known-good images. We read public-data.json (the
+    // public file, which lives at site root) and just take the first 3
+    // entries in the images map. Any 3 will do — this is a load test, not
+    // a curation decision.
+    let data;
+    try {
+      // vr/index.html sits one level below the site root, so public-data.json
+      // is up one directory. If you load this file via a path that puts it
+      // somewhere else, this fetch will 404 — open DevTools to confirm.
+      const resp = await fetch("../public-data.json", { cache: "no-store" });
+      if (!resp.ok) fail(`public-data.json fetch returned ${resp.status}`);
+      data = await resp.json();
+      log("Loaded public-data.json", "ok");
+    } catch (e) {
+      fail(`Could not load public-data.json: ${e.message}`);
+    }
+
+    const imageMap = data.images || {};
+    const allKeys  = Object.keys(imageMap);
+    if (allKeys.length < 3) fail(`Need at least 3 images; found ${allKeys.length}`);
+
+    const pickedKeys = allKeys.slice(0, 3);
+    log(`Picked: ${pickedKeys.join(" | ")}`);
+
+    // Image paths in the data are relative to the site root (e.g.
+    // "Shoes/AJ2/Black Cement/Black Cement.png"). From vr/ we go up one.
+    const imagePathFor = (key) => "../" + imageMap[key];
+
+    // ── Three.js scene setup ────────────────────────────────────────────
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+
+    // A subtle grid floor so the user has a visual reference for head-motion.
+    // 10m wide, 20 divisions — coarse, just enough to feel grounded.
+    const grid = new THREE.GridHelper(10, 20, 0x333333, 0x1a1a1a);
+    grid.position.y = 0; // floor level
+    scene.add(grid);
+
+    // Camera sits at "standing eye height" — WebXR will replace this with
+    // the actual headset pose once a session starts, but for the 2D preview
+    // we want something sensible.
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 1.6, 0); // 1.6m = average standing eye height
+
+    // Lighting: one soft ambient so the dark side of planes isn't pitch black,
+    // one directional from above-front for a hint of shape. Textures are
+    // unlit (MeshBasicMaterial) so lighting only affects the future-plane
+    // backings if we add them — for the prototype with bare planes the
+    // lights don't matter much, but I want the scaffolding right.
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    keyLight.position.set(0, 4, 2);
+    scene.add(keyLight);
+
+    // ── Place 3 textured planes in a small arc in front of camera ───────
+    // Ring math: radius 2.5m, planes centered at eye height, arc spans
+    // ~60° total so all 3 are visible without head turning. Center plane
+    // dead ahead, side planes at ±30°.
+    const RADIUS = 2.5;
+    const EYE_Y  = 1.6;
+    const ANGLES = [ -Math.PI/6, 0, Math.PI/6 ]; // -30°, 0°, +30°
+
+    // Plane size: we don't know aspect ratios until images load. Start with
+    // a square 0.6m plane (about shoebox-sized at this distance), then
+    // resize each plane to match its texture's aspect ratio once loaded.
+    // 0.6m at 2.5m distance ≈ 14° of FOV — comfortable, readable.
+    const PLANE_HEIGHT = 0.6;
+
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("anonymous"); // safe default; same-origin images ignore this
+    let loadedCount = 0;
+
+    pickedKeys.forEach((key, i) => {
+      const angle = ANGLES[i];
+      const x = Math.sin(angle) * RADIUS;
+      const z = -Math.cos(angle) * RADIUS; // negative Z = in front of camera
+
+      // Start as a square placeholder; resize when texture arrives.
+      const geometry = new THREE.PlaneGeometry(PLANE_HEIGHT, PLANE_HEIGHT);
+      const material = new THREE.MeshBasicMaterial({
+        color: 0x222222,           // dark grey placeholder until texture loads
+        side:  THREE.DoubleSide,    // visible from behind too — easier debugging
+      });
+      const plane = new THREE.Mesh(geometry, material);
+      plane.position.set(x, EYE_Y, z);
+      plane.lookAt(0, EYE_Y, 0);  // face the camera
+      scene.add(plane);
+
+      const path = imagePathFor(key);
+      loader.load(
+        path,
+        (texture) => {
+          // Resize plane to texture aspect ratio. Most sneaker photos are
+          // landscape-ish; we lock height and scale width.
+          const aspect = texture.image.width / texture.image.height;
+          plane.geometry.dispose();
+          plane.geometry = new THREE.PlaneGeometry(PLANE_HEIGHT * aspect, PLANE_HEIGHT);
+
+          material.map = texture;
+          material.color.set(0xffffff); // remove the grey tint now that texture is here
+          material.needsUpdate = true;
+
+          loadedCount++;
+          log(`Loaded ${loadedCount}/3: ${key}`, "ok");
+        },
+        undefined, // onProgress not useful here
+        (err) => {
+          log(`Failed to load ${key} (${path}): ${err?.message || err}`, "err");
+        }
+      );
+    });
+
+    // ── Renderer + WebXR ────────────────────────────────────────────────
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    // VRButton handles its own DOM placement (bottom center) and session lifecycle.
+    document.body.appendChild(VRButton.createButton(renderer));
+
+    // Handle window resize for the 2D preview before VR is entered.
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Render loop — use setAnimationLoop, not requestAnimationFrame, so
+    // WebXR can drive the loop at headset framerate when a session is active.
+    renderer.setAnimationLoop(() => {
+      renderer.render(scene, camera);
+    });
+
+    log("Scene ready. Tap the Enter VR button below to enter immersive mode.", "ok");
+  </script>
+</body>
+</html>
