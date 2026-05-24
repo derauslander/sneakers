@@ -153,12 +153,14 @@ Loading…</div>
     // ════════════════════════════════════════════════════════════════════
     //  GEOMETRY CONSTANTS
     // ════════════════════════════════════════════════════════════════════
-    // Wall: 8 rows × 5 cols, each cell 0.4m × 0.4m with 0.05m gap. Centered
+    // Wall: 8 rows × 5 cols, each cell 0.3m × 0.3m with 0.05m gap. Centered
     // horizontally at x=0, vertically positioned so the bottom row sits
-    // at y=0.4m (off the floor) and the top row at ~y=3.55m.
-    const CELL_SIZE  = 0.4;
+    // at y=0.4m (off the floor). Cells started at 0.4m — felt looming —
+    // and were brought down to 0.3m so the whole wall occupies less of
+    // the user's field of view without changing the viewing distance.
+    const CELL_SIZE  = 0.3;
     const CELL_GAP   = 0.05;
-    const CELL_PITCH = CELL_SIZE + CELL_GAP;   // 0.45m
+    const CELL_PITCH = CELL_SIZE + CELL_GAP;   // 0.35m
     const WALL_Z     = -2.5;                    // 2.5m in front of viewer
     const BOTTOM_Y   = 0.4;                     // lowest cell centre Y
     // Compute top Y: bottom + 7 row pitches (8 rows, 7 gaps)
@@ -307,7 +309,15 @@ Loading…</div>
       const canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, W, H);
+
+      // Opaque near-black background. Without this, the canvas is fully
+      // transparent except where text is drawn, and the grid wall behind
+      // the panel shows through — making the text hard to read against
+      // a backdrop of patterned shoe photos. #0a0a0a (very slightly lifted
+      // from pure black) keeps the panel readable as a distinct rectangle
+      // against the black scene void rather than disappearing into it.
+      ctx.fillStyle = "#0a0a0a";
+      ctx.fillRect(0, 0, W, H);
 
       // Headline — pure white, bold, large
       ctx.fillStyle = "#ffffff";
