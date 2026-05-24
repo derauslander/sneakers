@@ -153,26 +153,29 @@ Loading…</div>
     // ════════════════════════════════════════════════════════════════════
     //  GEOMETRY CONSTANTS
     // ════════════════════════════════════════════════════════════════════
-    // Wall: 8 rows × 5 cols, each cell 0.3m × 0.3m with 0.05m gap. Centered
-    // horizontally at x=0, vertically positioned so the bottom row sits
-    // at y=0.4m (off the floor). Cells started at 0.4m — felt looming —
-    // and were brought down to 0.3m so the whole wall occupies less of
-    // the user's field of view without changing the viewing distance.
-    const CELL_SIZE  = 0.3;
-    const CELL_GAP   = 0.05;
-    const CELL_PITCH = CELL_SIZE + CELL_GAP;   // 0.35m
-    const WALL_Z     = -2.5;                    // 2.5m in front of viewer
-    const BOTTOM_Y   = 0.4;                     // lowest cell centre Y
-    // Compute top Y: bottom + 7 row pitches (8 rows, 7 gaps)
-    const TOP_Y      = BOTTOM_Y + (ROWS - 1) * CELL_PITCH;
-    // Compute left X: 5 cols → centre at col index 2 → left at col 0
-    const LEFT_X     = -((COLS - 1) / 2) * CELL_PITCH;
+    // Wall: 8 rows × 5 cols of real-scale shoeboxes. Box dimensions:
+    //   34cm wide × 22.225cm tall × 14cm deep (side-out orientation —
+    //   the long side faces the user so the sneaker photo fits naturally).
+    // 8 3/4" tall is the real shoebox dimension provided by the owner.
+    // 1cm gaps between boxes (thin shelf-line look, not airy spacing).
+    // Bottom row sits 0.5m off the floor (knee-height shelf), top row at
+    // ~2.35m — comfortable look-up/down range at 2.5m viewing distance.
+    const BOX_W      = 0.34;
+    const BOX_H      = 0.22225;     // 8 3/4 inches exactly
+    const BOX_D      = 0.14;
+    const GAP_X      = 0.01;
+    const GAP_Y      = 0.01;
+    const PITCH_X    = BOX_W + GAP_X;
+    const PITCH_Y    = BOX_H + GAP_Y;
+    const WALL_Z     = -2.5;
+    const BOTTOM_Y   = 0.5;          // lowest row centre Y (box centre, not bottom edge)
+    const TOP_Y      = BOTTOM_Y + (ROWS - 1) * PITCH_Y;
+    const LEFT_X     = -((COLS - 1) / 2) * PITCH_X;
 
     const cellPosition = (row, col) => {
-      // displayLayout row 0 is the top shelf; +Y is up in three.js, so
-      // invert: top row gets the highest Y.
-      const x = LEFT_X + col * CELL_PITCH;
-      const y = TOP_Y - row * CELL_PITCH;
+      // displayLayout row 0 is the top shelf; +Y is up, so invert.
+      const x = LEFT_X + col * PITCH_X;
+      const y = TOP_Y - row * PITCH_Y;
       return new THREE.Vector3(x, y, WALL_Z);
     };
 
@@ -209,88 +212,123 @@ Loading…</div>
     };
 
     // ════════════════════════════════════════════════════════════════════
-    //  CELLS — filled photos and empty-slot outlines
+    //  CELLS — 3D transparent shoeboxes with photos on the back wall
     // ════════════════════════════════════════════════════════════════════
-    // Each filled cell creates a Group → Mesh structure mirroring v1 so the
-    // pull-forward animation continues to work unchanged. Empty cells get
-    // a faint LineSegments outline at the same depth — visual "this slot is
-    // intentionally empty" rather than "missing data."
+    // Each filled cell is a Group containing:
+    //   1. A clear-plastic box shell (BoxGeometry, transparent material)
+    //   2. A photo plane sized to fit, positioned just in front of the
+    //      back wall of the box so the shoe appears "inside" the box
+    // The whole Group is what gets translated/scaled/rotated during pull-
+    // forward, so the box and its photo move as one object.
+    // Empty cells get a wireframe box at the same dimensions — a visible
+    // "this slot is intentionally empty" hint that matches the box theme.
     const allCases = [];
 
-    // Outline geometry shared across all empty cells (small perf win).
-    const emptyOutlineGeometry = (() => {
-      const half = CELL_SIZE / 2;
-      const points = [
-        new THREE.Vector3(-half, -half, 0),
-        new THREE.Vector3( half, -half, 0),
-        new THREE.Vector3( half,  half, 0),
-        new THREE.Vector3(-half,  half, 0),
-        new THREE.Vector3(-half, -half, 0), // close the loop
-      ];
-      return new THREE.BufferGeometry().setFromPoints(points);
-    })();
-    const emptyOutlineMaterial = new THREE.LineBasicMaterial({
+    // Shared geometries — one BoxGeometry, one wireframe for empties.
+    // Shared materials too: every filled box gets the same shell material
+    // (clear plastic), every empty cell the same wireframe.
+    const sharedBoxGeometry = new THREE.BoxGeometry(BOX_W, BOX_H, BOX_D);
+    // Clear-plastic look: very low opacity gives the "barely there"
+    // visibility of a transparent shoebox. MeshBasicMaterial keeps it
+    // simple and fast on Quest — MeshPhysicalMaterial with transmission
+    // would be more photorealistic but heavier and prone to artifacts.
+    // The faint white tint with low opacity reads as glassy edges.
+    const sharedShellMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.1,
+      side: THREE.DoubleSide,
+      depthWrite: false,    // don't occlude the photo behind during transparent sort
+    });
+
+    // Also draw visible edges on each box so the shell reads as a real
+    // object even when its faces are nearly invisible. Edges are a separate
+    // LineSegments overlay using the same geometry's edge map.
+    const sharedEdgesGeometry = new THREE.EdgesGeometry(sharedBoxGeometry);
+    const sharedEdgesMaterial = new THREE.LineBasicMaterial({
+      color: 0x888888,
+      transparent: true,
+      opacity: 0.6,
+    });
+
+    const sharedWireframeGeometry = sharedEdgesGeometry; // reuse for empties
+    const sharedWireframeMaterial = new THREE.LineBasicMaterial({
       color: 0x333333,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.4,
     });
 
     for (const cell of cells) {
       const pos = cellPosition(cell.row, cell.col);
 
       if (cell.empty) {
-        const outline = new THREE.Line(emptyOutlineGeometry, emptyOutlineMaterial);
-        outline.position.copy(pos);
-        // Outline faces +Z (toward viewer) by default — no rotation needed
-        // since the wall is parallel to the XY plane.
-        scene.add(outline);
+        const wf = new THREE.LineSegments(sharedWireframeGeometry, sharedWireframeMaterial);
+        wf.position.copy(pos);
+        scene.add(wf);
         continue;
       }
 
-      // Filled cell: group wraps the photo plane so pull-forward animates
-      // the group transform without affecting the plane's own geometry.
+      // Filled cell group: contains box shell + inner photo plane.
       const group = new THREE.Group();
       group.position.copy(pos);
-      // No rotation needed — default plane orientation faces +Z (toward viewer).
       scene.add(group);
 
-      // Plane sized to fit the cell, scaled by aspect when texture arrives.
-      // Start as a square the size of the cell as a sensible placeholder.
-      const geometry = new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE);
-      const material = new THREE.MeshBasicMaterial({
+      // Box shell — clear plastic. Centred on group origin.
+      const shell = new THREE.Mesh(sharedBoxGeometry, sharedShellMaterial);
+      group.add(shell);
+
+      // Edges overlay — visible outline of the box so it reads as a
+      // distinct object even when the shell material is mostly invisible.
+      const edges = new THREE.LineSegments(sharedEdgesGeometry, sharedEdgesMaterial);
+      group.add(edges);
+
+      // Photo plane — starts square at box-front size as placeholder, then
+      // resizes when the texture loads. Positioned just in front of the
+      // back inner wall of the box (z = -BOX_D/2 + small offset) so the
+      // photo appears "inside" the box rather than on its front face.
+      const photoGeometry = new THREE.PlaneGeometry(BOX_W * 0.9, BOX_H * 0.9);
+      const photoMaterial = new THREE.MeshBasicMaterial({
         color: 0x222222,
         side: THREE.DoubleSide,
-        transparent: true,      // respect PNG alpha — shoes appear as silhouettes
-        alphaTest: 0.01,        // discard fully-transparent pixels for cleaner depth sorting
+        transparent: true,
+        alphaTest: 0.01,
       });
-      const plane = new THREE.Mesh(geometry, material);
+      const plane = new THREE.Mesh(photoGeometry, photoMaterial);
+      // Sit photo just inside the back wall, facing the user (front of box).
+      // Tiny offset (0.001m) keeps it off the back wall to avoid z-fighting.
+      plane.position.set(0, 0, -BOX_D / 2 + 0.001);
       group.add(plane);
 
       const caseRef = {
-        entry: cell.entry, plane, group,
+        entry: cell.entry, plane, group, shell,
         homePosition: group.position.clone(),
         homeRotation: group.rotation.clone(),
-        state: "home",   // "home" | "pulling" | "forward" | "returning"
+        state: "home",
         stateStart: 0,
       };
-      plane.userData.caseRef = caseRef;
+      // Raycaster targets the shell (the outer box) for hit detection —
+      // pointing anywhere on the box counts as selecting that case.
+      shell.userData.caseRef = caseRef;
       allCases.push(caseRef);
 
-      // Texture load: size the plane to fit *within* the cell footprint,
-      // preserving aspect. Whichever dimension is the limiting factor gets
-      // pinned to CELL_SIZE; the other shrinks proportionally. This keeps
-      // the visual grid orderly even though photos have varied aspects.
+      // Texture load: photo fits inside the box face. Box "face" is BOX_W
+      // wide × BOX_H tall (34cm × 22cm). Fit photo with 5% margin on each
+      // side so it doesn't touch the box walls.
+      const innerW = BOX_W * 0.9;
+      const innerH = BOX_H * 0.9;
       loadTextureFor(cell.entry.imagePath, plane, (aspect) => {
         plane.geometry.dispose();
+        // Fit-inside logic: scale to the most-constraining dimension.
         let w, h;
-        if (aspect >= 1) {
-          // Landscape: width is limiting → w = CELL_SIZE, h scales down
-          w = CELL_SIZE;
-          h = CELL_SIZE / aspect;
+        const innerAspect = innerW / innerH;
+        if (aspect >= innerAspect) {
+          // Photo is wider than inner space → width-limited
+          w = innerW;
+          h = innerW / aspect;
         } else {
-          // Portrait: height is limiting → h = CELL_SIZE, w scales down
-          h = CELL_SIZE;
-          w = CELL_SIZE * aspect;
+          // Photo is taller than inner space → height-limited
+          h = innerH;
+          w = innerH * aspect;
         }
         plane.geometry = new THREE.PlaneGeometry(w, h);
       });
@@ -421,8 +459,12 @@ Loading…</div>
       raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
       raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
 
-      const planes = allCases.map((c) => c.plane);
-      const intersects = raycaster.intersectObjects(planes, false);
+      // Hit-test the box shells, not the inner photo planes — the shell
+      // is the visible "object" the user is pointing at, and the photo
+      // sits inside (partially obscured by the shell). userData.caseRef
+      // is now set on shell, not plane.
+      const targets = allCases.map((c) => c.shell);
+      const intersects = raycaster.intersectObjects(targets, false);
 
       if (intersects.length === 0) {
         if (focusedCase) {
