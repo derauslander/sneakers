@@ -59,55 +59,76 @@ Loading…</div>
       fail(`Could not load public-data.json: ${e.message}`);
     }
 
-    const inventory      = data.inventory || [];
-    const colorways      = data.colorways || {};
-    const colorwayMeta   = data.colorwayMeta || {};
-    const tierMeta       = data.tierMeta || {};
-    const colorwayOwned  = data.colorwayOwned || {};
-    const graveyardMeta  = data.graveyardMeta || {};
-    const images         = data.images || {};
+    const inventory     = data.inventory || [];
+    const colorwayMeta  = data.colorwayMeta || {};
+    const tierMeta      = data.tierMeta || {};
+    const images        = data.images || {};
+    const displayLayout = data.displayLayout || [];
+
+    if (displayLayout.length === 0) fail("displayLayout is empty in public-data.json");
+
+    // shortName → shoe lookup (displayLayout cells reference shoes by code/shortName)
+    const shoeByShortName = {};
+    for (const shoe of inventory) shoeByShortName[shoe.shortName] = shoe;
 
     // ════════════════════════════════════════════════════════════════════
-    //  WHICH COLORWAYS GO IN THE RING
+    //  WHICH CELLS GO IN THE GRID
     // ════════════════════════════════════════════════════════════════════
-    // Mirrors the public site's inclusion rules:
-    //   - exclude bronze tier
-    //   - exclude explicitly not-owned (colorwayOwned[key] === false)
-    //   - exclude graveyard entries
-    //   - exclude entries without images (nothing to show)
-    // Sort: diamond → platinum → gold → silver, then by inventory.id,
-    // then alphabetically by colorway within each (tier, shoeId) bucket.
-    const TIER_ORDER = { diamond: 0, platinum: 1, gold: 2, silver: 3 };
-    const ringEntries = [];
-    for (const shoe of inventory) {
-      const cws = colorways[shoe.shortName] || [];
-      for (const cw of cws) {
+    // displayLayout is an 8x5 grid of cells. Each cell is either:
+    //   { code: "AJ1", colorway: "Royal Reimagined" }  — filled
+    //   { code: "", colorway: "" } or {}               — empty
+    // We flatten into a list of cell records: filled cells get their full
+    // entry data, empty cells are marked so we can render outlines for them.
+    const ROWS = displayLayout.length;
+    const COLS = Math.max(...displayLayout.map((r) => r.length));
+
+    const cells = []; // [{ row, col, empty, entry? }]
+    let filledCount = 0;
+    let emptyCount = 0;
+    for (let r = 0; r < ROWS; r++) {
+      const row = displayLayout[r] || [];
+      for (let c = 0; c < COLS; c++) {
+        const raw = row[c] || {};
+        const code = raw.code;
+        const cw   = raw.colorway;
+        if (!code || !cw) {
+          cells.push({ row: r, col: c, empty: true });
+          emptyCount++;
+          continue;
+        }
+        const shoe = shoeByShortName[code];
+        if (!shoe) {
+          log(`Skipping cell [${r},${c}] — unknown shoe code "${code}"`, "dim");
+          cells.push({ row: r, col: c, empty: true });
+          emptyCount++;
+          continue;
+        }
         const key = `${shoe.id}_${cw}`;
-        const tier = tierMeta[key] || "silver"; // default matches main app
-        if (tier === "bronze") continue;
-        if (colorwayOwned[key] === false) continue;
-        if (graveyardMeta[key]) continue;
-        if (!images[key]) continue;
-        ringEntries.push({
-          key, tier,
-          shoeId: shoe.id,
-          shoeName: shoe.name,
-          shortName: shoe.shortName,
-          colorway: cw,
-          imagePath: "../" + images[key],
-          story: colorwayMeta[key]?.story || "",
-          notes: colorwayMeta[key]?.notes || "",
+        const imagePath = images[key];
+        if (!imagePath) {
+          log(`Skipping cell [${r},${c}] — no image for ${key}`, "dim");
+          cells.push({ row: r, col: c, empty: true });
+          emptyCount++;
+          continue;
+        }
+        cells.push({
+          row: r, col: c, empty: false,
+          entry: {
+            key,
+            shoeId: shoe.id,
+            shoeName: shoe.name,
+            shortName: shoe.shortName,
+            colorway: cw,
+            tier: tierMeta[key] || "silver",
+            imagePath: "../" + imagePath,
+            story: colorwayMeta[key]?.story || "",
+            notes: colorwayMeta[key]?.notes || "",
+          },
         });
+        filledCount++;
       }
     }
-    ringEntries.sort((a, b) => {
-      const ta = TIER_ORDER[a.tier] ?? 99;
-      const tb = TIER_ORDER[b.tier] ?? 99;
-      if (ta !== tb) return ta - tb;
-      if (a.shoeId !== b.shoeId) return a.shoeId - b.shoeId;
-      return a.colorway.localeCompare(b.colorway);
-    });
-    log(`Ring will hold ${ringEntries.length} cases`, "ok");
+    log(`Grid: ${ROWS}×${COLS}, ${filledCount} filled, ${emptyCount} empty`, "ok");
 
     // ════════════════════════════════════════════════════════════════════
     //  SCENE
@@ -115,11 +136,12 @@ Loading…</div>
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
 
-    const grid = new THREE.GridHelper(10, 20, 0x333333, 0x1a1a1a);
-    scene.add(grid);
+    // Floor grid for spatial reference. 10m × 10m.
+    const floor = new THREE.GridHelper(10, 20, 0x333333, 0x1a1a1a);
+    scene.add(floor);
 
-    // Lights only affect lit materials (the pedestal). Photo planes use
-    // MeshBasicMaterial (unlit) so they look the same regardless of lighting.
+    // Lights — unused by the unlit photo planes, but harmless and ready
+    // if we add lit elements (display case backing, frame moldings, etc.).
     scene.add(new THREE.AmbientLight(0xffffff, 0.4));
     const keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
     keyLight.position.set(0, 4, 2);
@@ -131,13 +153,26 @@ Loading…</div>
     // ════════════════════════════════════════════════════════════════════
     //  GEOMETRY CONSTANTS
     // ════════════════════════════════════════════════════════════════════
-    const RING_RADIUS = 3.0;
-    const CASE_HEIGHT = 0.4;
-    const ROW_LOWER_Y = 1.5;
-    const ROW_UPPER_Y = 1.95;
-    const ARC_START   = -Math.PI * 3 / 4;       // -135°
-    const ARC_END     =  Math.PI * 3 / 4;       // +135°
-    const ARC_TOTAL   = ARC_END - ARC_START;    // 270°
+    // Wall: 8 rows × 5 cols, each cell 0.4m × 0.4m with 0.05m gap. Centered
+    // horizontally at x=0, vertically positioned so the bottom row sits
+    // at y=0.4m (off the floor) and the top row at ~y=3.55m.
+    const CELL_SIZE  = 0.4;
+    const CELL_GAP   = 0.05;
+    const CELL_PITCH = CELL_SIZE + CELL_GAP;   // 0.45m
+    const WALL_Z     = -2.5;                    // 2.5m in front of viewer
+    const BOTTOM_Y   = 0.4;                     // lowest cell centre Y
+    // Compute top Y: bottom + 7 row pitches (8 rows, 7 gaps)
+    const TOP_Y      = BOTTOM_Y + (ROWS - 1) * CELL_PITCH;
+    // Compute left X: 5 cols → centre at col index 2 → left at col 0
+    const LEFT_X     = -((COLS - 1) / 2) * CELL_PITCH;
+
+    const cellPosition = (row, col) => {
+      // displayLayout row 0 is the top shelf; +Y is up in three.js, so
+      // invert: top row gets the highest Y.
+      const x = LEFT_X + col * CELL_PITCH;
+      const y = TOP_Y - row * CELL_PITCH;
+      return new THREE.Vector3(x, y, WALL_Z);
+    };
 
     // ════════════════════════════════════════════════════════════════════
     //  TEXTURE LOADER
@@ -145,7 +180,7 @@ Loading…</div>
     const loader = new THREE.TextureLoader();
     loader.setCrossOrigin("anonymous");
     let texturesLoaded = 0;
-    const texturesTotal = ringEntries.length;
+    const texturesTotal = filledCount;
 
     const loadTextureFor = (path, plane, onSized) => {
       loader.load(
@@ -172,67 +207,99 @@ Loading…</div>
     };
 
     // ════════════════════════════════════════════════════════════════════
-    //  RING CASES (two rows)
+    //  CELLS — filled photos and empty-slot outlines
     // ════════════════════════════════════════════════════════════════════
-    // Lower row gets the higher-tier first half — diamonds + most platinums
-    // at chest height where they read as the focal layer. Upper row gets
-    // the remaining mid-tier entries above eye level (a slight look-up,
-    // which is comfortable).
-    const rowSplitIndex = Math.ceil(ringEntries.length / 2);
-    const lowerRow = ringEntries.slice(0, rowSplitIndex);
-    const upperRow = ringEntries.slice(rowSplitIndex);
-
+    // Each filled cell creates a Group → Mesh structure mirroring v1 so the
+    // pull-forward animation continues to work unchanged. Empty cells get
+    // a faint LineSegments outline at the same depth — visual "this slot is
+    // intentionally empty" rather than "missing data."
     const allCases = [];
 
-    const buildRow = (entries, rowY) => {
-      const n = entries.length;
-      for (let i = 0; i < n; i++) {
-        const entry = entries[i];
-        // Distribute evenly: first item at ARC_START, last at ARC_END.
-        const angle = n === 1 ? 0 : ARC_START + (i / (n - 1)) * ARC_TOTAL;
-        const x = Math.sin(angle) * RING_RADIUS;
-        const z = -Math.cos(angle) * RING_RADIUS;
+    // Outline geometry shared across all empty cells (small perf win).
+    const emptyOutlineGeometry = (() => {
+      const half = CELL_SIZE / 2;
+      const points = [
+        new THREE.Vector3(-half, -half, 0),
+        new THREE.Vector3( half, -half, 0),
+        new THREE.Vector3( half,  half, 0),
+        new THREE.Vector3(-half,  half, 0),
+        new THREE.Vector3(-half, -half, 0), // close the loop
+      ];
+      return new THREE.BufferGeometry().setFromPoints(points);
+    })();
+    const emptyOutlineMaterial = new THREE.LineBasicMaterial({
+      color: 0x333333,
+      transparent: true,
+      opacity: 0.5,
+    });
 
-        // Group wraps the plane so transforms (pull-forward) operate on
-        // the container, not the plane's own transform.
-        const group = new THREE.Group();
-        group.position.set(x, rowY, z);
-        group.lookAt(0, rowY, 0); // face centre at same height
-        scene.add(group);
+    for (const cell of cells) {
+      const pos = cellPosition(cell.row, cell.col);
 
-        const geometry = new THREE.PlaneGeometry(CASE_HEIGHT, CASE_HEIGHT);
-        const material = new THREE.MeshBasicMaterial({
-          color: 0x222222,
-          side: THREE.DoubleSide,
-        });
-        const plane = new THREE.Mesh(geometry, material);
-        group.add(plane);
-
-        const caseRef = {
-          entry, plane, group, row: rowY,
-          ringPosition: group.position.clone(),
-          ringRotation: group.rotation.clone(),
-          state: "ring",   // "ring" | "pulling" | "forward" | "returning"
-          stateStart: 0,
-        };
-        plane.userData.caseRef = caseRef;
-        allCases.push(caseRef);
-
-        loadTextureFor(entry.imagePath, plane, (aspect) => {
-          plane.geometry.dispose();
-          plane.geometry = new THREE.PlaneGeometry(CASE_HEIGHT * aspect, CASE_HEIGHT);
-        });
+      if (cell.empty) {
+        const outline = new THREE.Line(emptyOutlineGeometry, emptyOutlineMaterial);
+        outline.position.copy(pos);
+        // Outline faces +Z (toward viewer) by default — no rotation needed
+        // since the wall is parallel to the XY plane.
+        scene.add(outline);
+        continue;
       }
-    };
 
-    buildRow(lowerRow, ROW_LOWER_Y);
-    buildRow(upperRow, ROW_UPPER_Y);
+      // Filled cell: group wraps the photo plane so pull-forward animates
+      // the group transform without affecting the plane's own geometry.
+      const group = new THREE.Group();
+      group.position.copy(pos);
+      // No rotation needed — default plane orientation faces +Z (toward viewer).
+      scene.add(group);
+
+      // Plane sized to fit the cell, scaled by aspect when texture arrives.
+      // Start as a square the size of the cell as a sensible placeholder.
+      const geometry = new THREE.PlaneGeometry(CELL_SIZE, CELL_SIZE);
+      const material = new THREE.MeshBasicMaterial({
+        color: 0x222222,
+        side: THREE.DoubleSide,
+        transparent: true,      // respect PNG alpha — shoes appear as silhouettes
+        alphaTest: 0.01,        // discard fully-transparent pixels for cleaner depth sorting
+      });
+      const plane = new THREE.Mesh(geometry, material);
+      group.add(plane);
+
+      const caseRef = {
+        entry: cell.entry, plane, group,
+        homePosition: group.position.clone(),
+        homeRotation: group.rotation.clone(),
+        state: "home",   // "home" | "pulling" | "forward" | "returning"
+        stateStart: 0,
+      };
+      plane.userData.caseRef = caseRef;
+      allCases.push(caseRef);
+
+      // Texture load: size the plane to fit *within* the cell footprint,
+      // preserving aspect. Whichever dimension is the limiting factor gets
+      // pinned to CELL_SIZE; the other shrinks proportionally. This keeps
+      // the visual grid orderly even though photos have varied aspects.
+      loadTextureFor(cell.entry.imagePath, plane, (aspect) => {
+        plane.geometry.dispose();
+        let w, h;
+        if (aspect >= 1) {
+          // Landscape: width is limiting → w = CELL_SIZE, h scales down
+          w = CELL_SIZE;
+          h = CELL_SIZE / aspect;
+        } else {
+          // Portrait: height is limiting → h = CELL_SIZE, w scales down
+          h = CELL_SIZE;
+          w = CELL_SIZE * aspect;
+        }
+        plane.geometry = new THREE.PlaneGeometry(w, h);
+      });
+    }
 
     // ════════════════════════════════════════════════════════════════════
     //  STORY PANEL (canvas-rendered text for the pulled-forward case)
     // ════════════════════════════════════════════════════════════════════
-    // Rendering text into a canvas and using it as a texture avoids loading
-    // a font file. Sized to a 4:3 canvas → 4:3 plane. Word-wrap is manual.
+    // Text rendered into a 1024×768 canvas, used as a texture on a 1.2m ×
+    // 0.9m plane. Roughly double the previous font sizes; brighter colors
+    // for VR readability. Story text wraps at canvas width minus padding.
     const TIER_GLYPH = { diamond: "◆", platinum: "▲", gold: "●", silver: "■" };
 
     const makeTextPanel = (headline, subhead, story) => {
@@ -242,26 +309,29 @@ Loading…</div>
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, W, H);
 
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 48px -apple-system, BlinkMacSystemFont, sans-serif";
+      // Headline — pure white, bold, large
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 88px -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.textBaseline = "top";
-      ctx.fillText(headline, 32, 32);
+      ctx.fillText(headline, 40, 40);
 
-      ctx.fillStyle = "#aaa";
-      ctx.font = "32px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText(subhead, 32, 100);
+      // Subhead — light grey, medium
+      ctx.fillStyle = "#dddddd";
+      ctx.font = "60px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText(subhead, 40, 160);
 
-      ctx.fillStyle = "#ddd";
-      ctx.font = "italic 28px -apple-system, BlinkMacSystemFont, sans-serif";
+      // Story — near-white, italic, wrapped
+      ctx.fillStyle = "#f0f0f0";
+      ctx.font = "italic 52px -apple-system, BlinkMacSystemFont, sans-serif";
       const words = (story || "").split(/\s+/);
       let line = "";
-      let y = 180;
-      const maxWidth = W - 64;
-      const lineHeight = 42;
+      let y = 290;
+      const maxWidth = W - 80;
+      const lineHeight = 72;
       for (const word of words) {
         const test = line ? line + " " + word : word;
         if (ctx.measureText(test).width > maxWidth && line) {
-          ctx.fillText(line, 32, y);
+          ctx.fillText(line, 40, y);
           line = word;
           y += lineHeight;
           if (y > H - lineHeight) break;
@@ -269,7 +339,7 @@ Loading…</div>
           line = test;
         }
       }
-      if (line && y <= H - lineHeight) ctx.fillText(line, 32, y);
+      if (line && y <= H - lineHeight) ctx.fillText(line, 40, y);
 
       const texture = new THREE.CanvasTexture(canvas);
       texture.colorSpace = THREE.SRGBColorSpace;
@@ -277,7 +347,9 @@ Loading…</div>
       const material = new THREE.MeshBasicMaterial({
         map: texture, transparent: true, side: THREE.DoubleSide,
       });
-      const panelHeight = 0.6;
+
+      // Panel: 0.9m tall, 4:3 aspect → 1.2m wide
+      const panelHeight = 0.9;
       const panelWidth = panelHeight * (W / H);
       const geometry = new THREE.PlaneGeometry(panelWidth, panelHeight);
       return new THREE.Mesh(geometry, material);
@@ -290,9 +362,8 @@ Loading…</div>
       const subhead  = `${entry.colorway}   ${TIER_GLYPH[entry.tier] || ""}`;
       const text     = entry.story || entry.notes || "";
       storyPanel = makeTextPanel(headline, subhead, text);
-      // Right of the forward viewing position (which is now at z = -2.0),
-      // eye height, angled toward user. Slightly to the right of centre.
-      storyPanel.position.set(1.0, 1.6, -2.0);
+      // Right of the forward viewing position, eye height, angled toward user.
+      storyPanel.position.set(1.2, 1.6, -2.0);
       storyPanel.lookAt(0, 1.6, 0);
       scene.add(storyPanel);
     };
@@ -344,7 +415,6 @@ Loading…</div>
       const intersects = raycaster.intersectObjects(planes, false);
 
       if (intersects.length === 0) {
-        // Empty space — dismiss any forward case.
         if (focusedCase) {
           focusedCase.state = "returning";
           focusedCase.stateStart = performance.now();
@@ -357,7 +427,6 @@ Loading…</div>
       const caseRef = intersects[0].object.userData.caseRef;
       if (!caseRef) return;
 
-      // Clicking the already-forward case sends it back.
       if (focusedCase === caseRef) {
         caseRef.state = "returning";
         caseRef.stateStart = performance.now();
@@ -366,7 +435,6 @@ Loading…</div>
         return;
       }
 
-      // A different case is forward: return it before pulling new one.
       if (focusedCase) {
         focusedCase.state = "returning";
         focusedCase.stateStart = performance.now();
@@ -390,38 +458,35 @@ Loading…</div>
     }
 
     // ════════════════════════════════════════════════════════════════════
-    //  ANIMATION (pull-forward / return + hero rotation)
+    //  ANIMATION (pull-forward / return)
     // ════════════════════════════════════════════════════════════════════
     const PULL_DURATION_MS = 400;
-    // Forward viewing position: 2.0m in front, half a meter left of centre
-    // (so the story panel fits on the right without overlap), eye height.
-    // Earlier values (1.5m + 2.0× scale) put cases uncomfortably close —
-    // the wider colorways nearly touched the user. 2.0m + 1.5× reads as
-    // "pulled in for a closer look" without crowding personal space.
+    // Forward viewing position: 2.0m in front, half a metre left of centre
+    // (story panel fits on the right), eye height.
     const VIEW_POSITION = new THREE.Vector3(-0.5, 1.6, -2.0);
     const VIEW_SCALE = 1.5;
     const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
     const updateCases = (now) => {
       for (const c of allCases) {
-        if (c.state === "ring") continue;
+        if (c.state === "home") continue;
         const elapsed = now - c.stateStart;
         const t = Math.min(elapsed / PULL_DURATION_MS, 1);
         const e = easeOutCubic(t);
 
         if (c.state === "pulling") {
-          c.group.position.lerpVectors(c.ringPosition, VIEW_POSITION, e);
+          c.group.position.lerpVectors(c.homePosition, VIEW_POSITION, e);
           c.group.scale.setScalar(1 + (VIEW_SCALE - 1) * e);
           c.group.lookAt(0, 1.6, 0);
           if (t >= 1) c.state = "forward";
         } else if (c.state === "returning") {
-          c.group.position.lerpVectors(VIEW_POSITION, c.ringPosition, e);
+          c.group.position.lerpVectors(VIEW_POSITION, c.homePosition, e);
           c.group.scale.setScalar(VIEW_SCALE - (VIEW_SCALE - 1) * e);
           if (t >= 1) {
-            c.group.position.copy(c.ringPosition);
-            c.group.rotation.copy(c.ringRotation);
+            c.group.position.copy(c.homePosition);
+            c.group.rotation.copy(c.homeRotation);
             c.group.scale.setScalar(1);
-            c.state = "ring";
+            c.state = "home";
           } else {
             c.group.lookAt(0, 1.6, 0);
           }
@@ -432,10 +497,6 @@ Loading…</div>
     // ════════════════════════════════════════════════════════════════════
     //  RENDER LOOP
     // ════════════════════════════════════════════════════════════════════
-    // Hero pedestal is intentionally static — rotating a flat plane around
-    // Y makes it disappear at 90°/270° (edge-on), which looks broken. The
-    // hero's specialness comes from its central position and larger size,
-    // not motion.
     renderer.setAnimationLoop((time) => {
       const now = time || performance.now();
       updateCases(now);
