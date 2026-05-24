@@ -137,6 +137,13 @@ Loading…</div>
       loader.load(
         path,
         (texture) => {
+          // JPEGs and PNGs store color in sRGB; without this flag, three.js
+          // (since v0.152) treats them as linear RGB and the result looks
+          // washed out — whites turn grey, blacks turn charcoal, saturation
+          // drops. Setting colorSpace = SRGBColorSpace tells three.js to
+          // decode them correctly before sampling.
+          texture.colorSpace = THREE.SRGBColorSpace;
+
           // Resize plane to texture aspect ratio. Most sneaker photos are
           // landscape-ish; we lock height and scale width.
           const aspect = texture.image.width / texture.image.height;
@@ -161,6 +168,7 @@ Loading…</div>
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace; // textures look right
     renderer.xr.enabled = true;
     document.body.appendChild(renderer.domElement);
 
