@@ -66,7 +66,6 @@ Loading…</div>
     const colorwayOwned  = data.colorwayOwned || {};
     const graveyardMeta  = data.graveyardMeta || {};
     const images         = data.images || {};
-    const wornRanked     = data.precomputedRankings?.wornRanked || [];
 
     // ════════════════════════════════════════════════════════════════════
     //  WHICH COLORWAYS GO IN THE RING
@@ -111,23 +110,6 @@ Loading…</div>
     log(`Ring will hold ${ringEntries.length} cases`, "ok");
 
     // ════════════════════════════════════════════════════════════════════
-    //  HERO PEDESTAL — most-worn colorway
-    // ════════════════════════════════════════════════════════════════════
-    // wornRanked[0] is current most-worn. Fall back to first ring entry
-    // if precomputed data is missing/empty for any reason.
-    let heroEntry = null;
-    if (wornRanked.length > 0) {
-      const top = wornRanked[0];
-      const heroKey = `${top.shoeId}_${top.colorway}`;
-      heroEntry = ringEntries.find((e) => e.key === heroKey);
-    }
-    if (!heroEntry && ringEntries.length > 0) {
-      heroEntry = ringEntries[0];
-      log("Hero fallback: using first ring entry", "dim");
-    }
-    if (heroEntry) log(`Hero: ${heroEntry.shoeName} — ${heroEntry.colorway}`, "ok");
-
-    // ════════════════════════════════════════════════════════════════════
     //  SCENE
     // ════════════════════════════════════════════════════════════════════
     const scene = new THREE.Scene();
@@ -156,8 +138,6 @@ Loading…</div>
     const ARC_START   = -Math.PI * 3 / 4;       // -135°
     const ARC_END     =  Math.PI * 3 / 4;       // +135°
     const ARC_TOTAL   = ARC_END - ARC_START;    // 270°
-    const HERO_Y      = 1.3;
-    const HERO_HEIGHT = 0.6;
 
     // ════════════════════════════════════════════════════════════════════
     //  TEXTURE LOADER
@@ -165,7 +145,7 @@ Loading…</div>
     const loader = new THREE.TextureLoader();
     loader.setCrossOrigin("anonymous");
     let texturesLoaded = 0;
-    const texturesTotal = ringEntries.length + (heroEntry ? 1 : 0);
+    const texturesTotal = ringEntries.length;
 
     const loadTextureFor = (path, plane, onSized) => {
       loader.load(
@@ -249,33 +229,6 @@ Loading…</div>
     buildRow(upperRow, ROW_UPPER_Y);
 
     // ════════════════════════════════════════════════════════════════════
-    //  HERO PEDESTAL
-    // ════════════════════════════════════════════════════════════════════
-    let heroPlane = null;
-    if (heroEntry) {
-      const plinthGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.4, 32);
-      const plinthMaterial = new THREE.MeshStandardMaterial({
-        color: 0x1a1a1a, roughness: 0.6, metalness: 0.2,
-      });
-      const plinth = new THREE.Mesh(plinthGeometry, plinthMaterial);
-      plinth.position.set(0, 0.2, 0);
-      scene.add(plinth);
-
-      const heroGeometry = new THREE.PlaneGeometry(HERO_HEIGHT, HERO_HEIGHT);
-      const heroMaterial = new THREE.MeshBasicMaterial({
-        color: 0x222222, side: THREE.DoubleSide,
-      });
-      heroPlane = new THREE.Mesh(heroGeometry, heroMaterial);
-      heroPlane.position.set(0, HERO_Y, 0);
-      scene.add(heroPlane);
-
-      loadTextureFor(heroEntry.imagePath, heroPlane, (aspect) => {
-        heroPlane.geometry.dispose();
-        heroPlane.geometry = new THREE.PlaneGeometry(HERO_HEIGHT * aspect, HERO_HEIGHT);
-      });
-    }
-
-    // ════════════════════════════════════════════════════════════════════
     //  STORY PANEL (canvas-rendered text for the pulled-forward case)
     // ════════════════════════════════════════════════════════════════════
     // Rendering text into a canvas and using it as a texture avoids loading
@@ -337,8 +290,9 @@ Loading…</div>
       const subhead  = `${entry.colorway}   ${TIER_GLYPH[entry.tier] || ""}`;
       const text     = entry.story || entry.notes || "";
       storyPanel = makeTextPanel(headline, subhead, text);
-      // Right of the forward viewing position, eye height, angled toward user.
-      storyPanel.position.set(1.0, 1.6, -1.5);
+      // Right of the forward viewing position (which is now at z = -2.0),
+      // eye height, angled toward user. Slightly to the right of centre.
+      storyPanel.position.set(1.0, 1.6, -2.0);
       storyPanel.lookAt(0, 1.6, 0);
       scene.add(storyPanel);
     };
@@ -439,8 +393,13 @@ Loading…</div>
     //  ANIMATION (pull-forward / return + hero rotation)
     // ════════════════════════════════════════════════════════════════════
     const PULL_DURATION_MS = 400;
-    const VIEW_POSITION = new THREE.Vector3(-0.5, 1.6, -1.5);
-    const VIEW_SCALE = 2.0;
+    // Forward viewing position: 2.0m in front, half a meter left of centre
+    // (so the story panel fits on the right without overlap), eye height.
+    // Earlier values (1.5m + 2.0× scale) put cases uncomfortably close —
+    // the wider colorways nearly touched the user. 2.0m + 1.5× reads as
+    // "pulled in for a closer look" without crowding personal space.
+    const VIEW_POSITION = new THREE.Vector3(-0.5, 1.6, -2.0);
+    const VIEW_SCALE = 1.5;
     const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
     const updateCases = (now) => {
