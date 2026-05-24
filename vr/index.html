@@ -188,16 +188,19 @@ Loading…</div>
     const GAP_Y      = 0.01;
     const PITCH_X    = BOX_W + GAP_X;
     const PITCH_Y    = BOX_H + GAP_Y;
-    const WALL_Z     = -2.5;
+    const WALL_Z     = 2.5;          // distance from viewer to each wall (display at -WALL_Z, dream at +WALL_Z)
     const BOTTOM_Y   = 0.5;          // lowest row centre Y (box centre, not bottom edge)
     const TOP_Y      = BOTTOM_Y + (ROWS - 1) * PITCH_Y;
     const LEFT_X     = -((COLS - 1) / 2) * PITCH_X;
 
     const cellPosition = (row, col) => {
+      // Returns local coordinates inside a wallGroup, which carries the
+      // WALL_Z offset itself. z=0 here means "on the wall plane." Adding
+      // WALL_Z here too would push boxes to twice the intended distance.
       // displayLayout row 0 is the top shelf; +Y is up, so invert.
       const x = LEFT_X + col * PITCH_X;
       const y = TOP_Y - row * PITCH_Y;
-      return new THREE.Vector3(x, y, WALL_Z);
+      return new THREE.Vector3(x, y, 0);
     };
 
     // ════════════════════════════════════════════════════════════════════
@@ -415,8 +418,8 @@ Loading…</div>
       }
     };
 
-    buildWall(displayCells, -2.5, false, "OFFICE DISPLAY");
-    if (dreamCells.length > 0) buildWall(dreamCells, 2.5, true, "DREAM DISPLAY");
+    buildWall(displayCells, -WALL_Z, false, "OFFICE DISPLAY");
+    if (dreamCells.length > 0) buildWall(dreamCells, WALL_Z, true, "DREAM DISPLAY");
 
     // ════════════════════════════════════════════════════════════════════
     //  STORY PANEL (canvas-rendered text for the pulled-forward case)
@@ -432,14 +435,11 @@ Loading…</div>
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext("2d");
 
-      // Opaque near-black background. Without this, the canvas is fully
-      // transparent except where text is drawn, and the grid wall behind
-      // the panel shows through — making the text hard to read against
-      // a backdrop of patterned shoe photos. #0a0a0a (very slightly lifted
-      // from pure black) keeps the panel readable as a distinct rectangle
-      // against the black scene void rather than disappearing into it.
-      ctx.fillStyle = "#0a0a0a";
-      ctx.fillRect(0, 0, W, H);
+      // Transparent background — text floats on the dark scene void.
+      // (An opaque dark fill was tried earlier; felt too heavy. With the
+      // panel now positioned beside the pulled-forward case rather than
+      // overlapping the wall, what's behind it is mostly empty space.)
+      ctx.clearRect(0, 0, W, H);
 
       // Headline — pure white, bold, large
       ctx.fillStyle = "#ffffff";
