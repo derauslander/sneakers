@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>The Vault — VR (prototype)</title>
+  <title>The Vault — VR</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; background: #000; color: #fff; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
@@ -11,14 +11,13 @@
       position: fixed; top: 16px; left: 16px; right: 16px;
       font-size: 13px; line-height: 1.6; color: #aaa;
       pointer-events: none; user-select: none;
-      white-space: pre-line;
+      white-space: pre-line; max-height: 50vh; overflow: hidden;
     }
     #status .err { color: #ff6b6b; }
     #status .ok  { color: #6bff8e; }
-    /* Three.js injects its own button styling for VRButton — we let it. */
+    #status .dim { color: #666; }
   </style>
 
-  <!-- Three.js via import map (modern ES module pattern, works in Quest Browser) -->
   <script type="importmap">
     {
       "imports": {
@@ -29,13 +28,16 @@
   </script>
 </head>
 <body>
-  <div id="status">The Vault — VR prototype
+  <div id="status">The Vault — VR
 Loading…</div>
 
   <script type="module">
     import * as THREE from "three";
     import { VRButton } from "three/addons/webxr/VRButton.js";
 
+    // ════════════════════════════════════════════════════════════════════
+    //  SETUP & STATUS LOGGING
+    // ════════════════════════════════════════════════════════════════════
     const statusEl = document.getElementById("status");
     const log = (msg, cls = "") => {
       const line = cls ? `<span class="${cls}">${msg}</span>` : msg;
@@ -44,16 +46,11 @@ Loading…</div>
     };
     const fail = (msg) => { log(msg, "err"); throw new Error(msg); };
 
-    // ── Pick which colorways to show ────────────────────────────────────
-    // Prototype goal: 3 known-good images. We read public-data.json (the
-    // public file, which lives at site root) and just take the first 3
-    // entries in the images map. Any 3 will do — this is a load test, not
-    // a curation decision.
+    // ════════════════════════════════════════════════════════════════════
+    //  DATA LOAD
+    // ════════════════════════════════════════════════════════════════════
     let data;
     try {
-      // vr/index.html sits one level below the site root, so public-data.json
-      // is up one directory. If you load this file via a path that puts it
-      // somewhere else, this fetch will 404 — open DevTools to confirm.
       const resp = await fetch("../public-data.json", { cache: "no-store" });
       if (!resp.ok) fail(`public-data.json fetch returned ${resp.status}`);
       data = await resp.json();
@@ -62,133 +59,431 @@ Loading…</div>
       fail(`Could not load public-data.json: ${e.message}`);
     }
 
-    const imageMap = data.images || {};
-    const allKeys  = Object.keys(imageMap);
-    if (allKeys.length < 3) fail(`Need at least 3 images; found ${allKeys.length}`);
+    const inventory      = data.inventory || [];
+    const colorways      = data.colorways || {};
+    const colorwayMeta   = data.colorwayMeta || {};
+    const tierMeta       = data.tierMeta || {};
+    const colorwayOwned  = data.colorwayOwned || {};
+    const graveyardMeta  = data.graveyardMeta || {};
+    const images         = data.images || {};
+    const wornRanked     = data.precomputedRankings?.wornRanked || [];
 
-    const pickedKeys = allKeys.slice(0, 3);
-    log(`Picked: ${pickedKeys.join(" | ")}`);
+    // ════════════════════════════════════════════════════════════════════
+    //  WHICH COLORWAYS GO IN THE RING
+    // ════════════════════════════════════════════════════════════════════
+    // Mirrors the public site's inclusion rules:
+    //   - exclude bronze tier
+    //   - exclude explicitly not-owned (colorwayOwned[key] === false)
+    //   - exclude graveyard entries
+    //   - exclude entries without images (nothing to show)
+    // Sort: diamond → platinum → gold → silver, then by inventory.id,
+    // then alphabetically by colorway within each (tier, shoeId) bucket.
+    const TIER_ORDER = { diamond: 0, platinum: 1, gold: 2, silver: 3 };
+    const ringEntries = [];
+    for (const shoe of inventory) {
+      const cws = colorways[shoe.shortName] || [];
+      for (const cw of cws) {
+        const key = `${shoe.id}_${cw}`;
+        const tier = tierMeta[key] || "silver"; // default matches main app
+        if (tier === "bronze") continue;
+        if (colorwayOwned[key] === false) continue;
+        if (graveyardMeta[key]) continue;
+        if (!images[key]) continue;
+        ringEntries.push({
+          key, tier,
+          shoeId: shoe.id,
+          shoeName: shoe.name,
+          shortName: shoe.shortName,
+          colorway: cw,
+          imagePath: "../" + images[key],
+          story: colorwayMeta[key]?.story || "",
+          notes: colorwayMeta[key]?.notes || "",
+        });
+      }
+    }
+    ringEntries.sort((a, b) => {
+      const ta = TIER_ORDER[a.tier] ?? 99;
+      const tb = TIER_ORDER[b.tier] ?? 99;
+      if (ta !== tb) return ta - tb;
+      if (a.shoeId !== b.shoeId) return a.shoeId - b.shoeId;
+      return a.colorway.localeCompare(b.colorway);
+    });
+    log(`Ring will hold ${ringEntries.length} cases`, "ok");
 
-    // Image paths in the data are relative to the site root (e.g.
-    // "Shoes/AJ2/Black Cement/Black Cement.png"). From vr/ we go up one.
-    const imagePathFor = (key) => "../" + imageMap[key];
+    // ════════════════════════════════════════════════════════════════════
+    //  HERO PEDESTAL — most-worn colorway
+    // ════════════════════════════════════════════════════════════════════
+    // wornRanked[0] is current most-worn. Fall back to first ring entry
+    // if precomputed data is missing/empty for any reason.
+    let heroEntry = null;
+    if (wornRanked.length > 0) {
+      const top = wornRanked[0];
+      const heroKey = `${top.shoeId}_${top.colorway}`;
+      heroEntry = ringEntries.find((e) => e.key === heroKey);
+    }
+    if (!heroEntry && ringEntries.length > 0) {
+      heroEntry = ringEntries[0];
+      log("Hero fallback: using first ring entry", "dim");
+    }
+    if (heroEntry) log(`Hero: ${heroEntry.shoeName} — ${heroEntry.colorway}`, "ok");
 
-    // ── Three.js scene setup ────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════════════
+    //  SCENE
+    // ════════════════════════════════════════════════════════════════════
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
 
-    // A subtle grid floor so the user has a visual reference for head-motion.
-    // 10m wide, 20 divisions — coarse, just enough to feel grounded.
     const grid = new THREE.GridHelper(10, 20, 0x333333, 0x1a1a1a);
-    grid.position.y = 0; // floor level
     scene.add(grid);
 
-    // Camera sits at "standing eye height" — WebXR will replace this with
-    // the actual headset pose once a session starts, but for the 2D preview
-    // we want something sensible.
-    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 1.6, 0); // 1.6m = average standing eye height
-
-    // Lighting: one soft ambient so the dark side of planes isn't pitch black,
-    // one directional from above-front for a hint of shape. Textures are
-    // unlit (MeshBasicMaterial) so lighting only affects the future-plane
-    // backings if we add them — for the prototype with bare planes the
-    // lights don't matter much, but I want the scaffolding right.
+    // Lights only affect lit materials (the pedestal). Photo planes use
+    // MeshBasicMaterial (unlit) so they look the same regardless of lighting.
     scene.add(new THREE.AmbientLight(0xffffff, 0.4));
     const keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
     keyLight.position.set(0, 4, 2);
     scene.add(keyLight);
 
-    // ── Place 3 textured planes in a small arc in front of camera ───────
-    // Ring math: radius 2.5m, planes centered at eye height, arc spans
-    // ~60° total so all 3 are visible without head turning. Center plane
-    // dead ahead, side planes at ±30°.
-    const RADIUS = 2.5;
-    const EYE_Y  = 1.6;
-    const ANGLES = [ -Math.PI/6, 0, Math.PI/6 ]; // -30°, 0°, +30°
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 100);
+    camera.position.set(0, 1.6, 0); // standing eye height
 
-    // Plane size: we don't know aspect ratios until images load. Start with
-    // a square 0.6m plane (about shoebox-sized at this distance), then
-    // resize each plane to match its texture's aspect ratio once loaded.
-    // 0.6m at 2.5m distance ≈ 14° of FOV — comfortable, readable.
-    const PLANE_HEIGHT = 0.6;
+    // ════════════════════════════════════════════════════════════════════
+    //  GEOMETRY CONSTANTS
+    // ════════════════════════════════════════════════════════════════════
+    const RING_RADIUS = 3.0;
+    const CASE_HEIGHT = 0.4;
+    const ROW_LOWER_Y = 1.5;
+    const ROW_UPPER_Y = 1.95;
+    const ARC_START   = -Math.PI * 3 / 4;       // -135°
+    const ARC_END     =  Math.PI * 3 / 4;       // +135°
+    const ARC_TOTAL   = ARC_END - ARC_START;    // 270°
+    const HERO_Y      = 1.3;
+    const HERO_HEIGHT = 0.6;
 
+    // ════════════════════════════════════════════════════════════════════
+    //  TEXTURE LOADER
+    // ════════════════════════════════════════════════════════════════════
     const loader = new THREE.TextureLoader();
-    loader.setCrossOrigin("anonymous"); // safe default; same-origin images ignore this
-    let loadedCount = 0;
+    loader.setCrossOrigin("anonymous");
+    let texturesLoaded = 0;
+    const texturesTotal = ringEntries.length + (heroEntry ? 1 : 0);
 
-    pickedKeys.forEach((key, i) => {
-      const angle = ANGLES[i];
-      const x = Math.sin(angle) * RADIUS;
-      const z = -Math.cos(angle) * RADIUS; // negative Z = in front of camera
-
-      // Start as a square placeholder; resize when texture arrives.
-      const geometry = new THREE.PlaneGeometry(PLANE_HEIGHT, PLANE_HEIGHT);
-      const material = new THREE.MeshBasicMaterial({
-        color: 0x222222,           // dark grey placeholder until texture loads
-        side:  THREE.DoubleSide,    // visible from behind too — easier debugging
-      });
-      const plane = new THREE.Mesh(geometry, material);
-      plane.position.set(x, EYE_Y, z);
-      plane.lookAt(0, EYE_Y, 0);  // face the camera
-      scene.add(plane);
-
-      const path = imagePathFor(key);
+    const loadTextureFor = (path, plane, onSized) => {
       loader.load(
         path,
         (texture) => {
-          // JPEGs and PNGs store color in sRGB; without this flag, three.js
-          // (since v0.152) treats them as linear RGB and the result looks
-          // washed out — whites turn grey, blacks turn charcoal, saturation
-          // drops. Setting colorSpace = SRGBColorSpace tells three.js to
-          // decode them correctly before sampling.
           texture.colorSpace = THREE.SRGBColorSpace;
-
-          // Resize plane to texture aspect ratio. Most sneaker photos are
-          // landscape-ish; we lock height and scale width.
+          texture.anisotropy = 8;
+          plane.material.map = texture;
+          plane.material.color.set(0xffffff);
+          plane.material.needsUpdate = true;
           const aspect = texture.image.width / texture.image.height;
-          plane.geometry.dispose();
-          plane.geometry = new THREE.PlaneGeometry(PLANE_HEIGHT * aspect, PLANE_HEIGHT);
-
-          material.map = texture;
-          material.color.set(0xffffff); // remove the grey tint now that texture is here
-          material.needsUpdate = true;
-
-          loadedCount++;
-          log(`Loaded ${loadedCount}/3: ${key}`, "ok");
+          if (onSized) onSized(aspect);
+          texturesLoaded++;
+          if (texturesLoaded === texturesTotal) {
+            log(`All ${texturesTotal} textures loaded`, "ok");
+          }
         },
-        undefined, // onProgress not useful here
+        undefined,
         (err) => {
-          log(`Failed to load ${key} (${path}): ${err?.message || err}`, "err");
+          log(`Failed to load ${path}: ${err?.message || err}`, "err");
+          texturesLoaded++;
         }
       );
-    });
+    };
 
-    // ── Renderer + WebXR ────────────────────────────────────────────────
+    // ════════════════════════════════════════════════════════════════════
+    //  RING CASES (two rows)
+    // ════════════════════════════════════════════════════════════════════
+    // Lower row gets the higher-tier first half — diamonds + most platinums
+    // at chest height where they read as the focal layer. Upper row gets
+    // the remaining mid-tier entries above eye level (a slight look-up,
+    // which is comfortable).
+    const rowSplitIndex = Math.ceil(ringEntries.length / 2);
+    const lowerRow = ringEntries.slice(0, rowSplitIndex);
+    const upperRow = ringEntries.slice(rowSplitIndex);
+
+    const allCases = [];
+
+    const buildRow = (entries, rowY) => {
+      const n = entries.length;
+      for (let i = 0; i < n; i++) {
+        const entry = entries[i];
+        // Distribute evenly: first item at ARC_START, last at ARC_END.
+        const angle = n === 1 ? 0 : ARC_START + (i / (n - 1)) * ARC_TOTAL;
+        const x = Math.sin(angle) * RING_RADIUS;
+        const z = -Math.cos(angle) * RING_RADIUS;
+
+        // Group wraps the plane so transforms (pull-forward) operate on
+        // the container, not the plane's own transform.
+        const group = new THREE.Group();
+        group.position.set(x, rowY, z);
+        group.lookAt(0, rowY, 0); // face centre at same height
+        scene.add(group);
+
+        const geometry = new THREE.PlaneGeometry(CASE_HEIGHT, CASE_HEIGHT);
+        const material = new THREE.MeshBasicMaterial({
+          color: 0x222222,
+          side: THREE.DoubleSide,
+        });
+        const plane = new THREE.Mesh(geometry, material);
+        group.add(plane);
+
+        const caseRef = {
+          entry, plane, group, row: rowY,
+          ringPosition: group.position.clone(),
+          ringRotation: group.rotation.clone(),
+          state: "ring",   // "ring" | "pulling" | "forward" | "returning"
+          stateStart: 0,
+        };
+        plane.userData.caseRef = caseRef;
+        allCases.push(caseRef);
+
+        loadTextureFor(entry.imagePath, plane, (aspect) => {
+          plane.geometry.dispose();
+          plane.geometry = new THREE.PlaneGeometry(CASE_HEIGHT * aspect, CASE_HEIGHT);
+        });
+      }
+    };
+
+    buildRow(lowerRow, ROW_LOWER_Y);
+    buildRow(upperRow, ROW_UPPER_Y);
+
+    // ════════════════════════════════════════════════════════════════════
+    //  HERO PEDESTAL
+    // ════════════════════════════════════════════════════════════════════
+    let heroPlane = null;
+    if (heroEntry) {
+      const plinthGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.4, 32);
+      const plinthMaterial = new THREE.MeshStandardMaterial({
+        color: 0x1a1a1a, roughness: 0.6, metalness: 0.2,
+      });
+      const plinth = new THREE.Mesh(plinthGeometry, plinthMaterial);
+      plinth.position.set(0, 0.2, 0);
+      scene.add(plinth);
+
+      const heroGeometry = new THREE.PlaneGeometry(HERO_HEIGHT, HERO_HEIGHT);
+      const heroMaterial = new THREE.MeshBasicMaterial({
+        color: 0x222222, side: THREE.DoubleSide,
+      });
+      heroPlane = new THREE.Mesh(heroGeometry, heroMaterial);
+      heroPlane.position.set(0, HERO_Y, 0);
+      scene.add(heroPlane);
+
+      loadTextureFor(heroEntry.imagePath, heroPlane, (aspect) => {
+        heroPlane.geometry.dispose();
+        heroPlane.geometry = new THREE.PlaneGeometry(HERO_HEIGHT * aspect, HERO_HEIGHT);
+      });
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  STORY PANEL (canvas-rendered text for the pulled-forward case)
+    // ════════════════════════════════════════════════════════════════════
+    // Rendering text into a canvas and using it as a texture avoids loading
+    // a font file. Sized to a 4:3 canvas → 4:3 plane. Word-wrap is manual.
+    const TIER_GLYPH = { diamond: "◆", platinum: "▲", gold: "●", silver: "■" };
+
+    const makeTextPanel = (headline, subhead, story) => {
+      const W = 1024, H = 768;
+      const canvas = document.createElement("canvas");
+      canvas.width = W; canvas.height = H;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, W, H);
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 48px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textBaseline = "top";
+      ctx.fillText(headline, 32, 32);
+
+      ctx.fillStyle = "#aaa";
+      ctx.font = "32px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText(subhead, 32, 100);
+
+      ctx.fillStyle = "#ddd";
+      ctx.font = "italic 28px -apple-system, BlinkMacSystemFont, sans-serif";
+      const words = (story || "").split(/\s+/);
+      let line = "";
+      let y = 180;
+      const maxWidth = W - 64;
+      const lineHeight = 42;
+      for (const word of words) {
+        const test = line ? line + " " + word : word;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          ctx.fillText(line, 32, y);
+          line = word;
+          y += lineHeight;
+          if (y > H - lineHeight) break;
+        } else {
+          line = test;
+        }
+      }
+      if (line && y <= H - lineHeight) ctx.fillText(line, 32, y);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+
+      const material = new THREE.MeshBasicMaterial({
+        map: texture, transparent: true, side: THREE.DoubleSide,
+      });
+      const panelHeight = 0.6;
+      const panelWidth = panelHeight * (W / H);
+      const geometry = new THREE.PlaneGeometry(panelWidth, panelHeight);
+      return new THREE.Mesh(geometry, material);
+    };
+
+    let storyPanel = null;
+    const showStoryFor = (entry) => {
+      hideStory();
+      const headline = entry.shoeName;
+      const subhead  = `${entry.colorway}   ${TIER_GLYPH[entry.tier] || ""}`;
+      const text     = entry.story || entry.notes || "";
+      storyPanel = makeTextPanel(headline, subhead, text);
+      // Right of the forward viewing position, eye height, angled toward user.
+      storyPanel.position.set(1.0, 1.6, -1.5);
+      storyPanel.lookAt(0, 1.6, 0);
+      scene.add(storyPanel);
+    };
+    const hideStory = () => {
+      if (!storyPanel) return;
+      scene.remove(storyPanel);
+      storyPanel.material.map.dispose();
+      storyPanel.material.dispose();
+      storyPanel.geometry.dispose();
+      storyPanel = null;
+    };
+
+    // ════════════════════════════════════════════════════════════════════
+    //  RENDERER + WEBXR
+    // ════════════════════════════════════════════════════════════════════
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.outputColorSpace = THREE.SRGBColorSpace; // textures look right
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.xr.enabled = true;
     document.body.appendChild(renderer.domElement);
-
-    // VRButton handles its own DOM placement (bottom center) and session lifecycle.
     document.body.appendChild(VRButton.createButton(renderer));
 
-    // Handle window resize for the 2D preview before VR is entered.
     window.addEventListener("resize", () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // Render loop — use setAnimationLoop, not requestAnimationFrame, so
-    // WebXR can drive the loop at headset framerate when a session is active.
-    renderer.setAnimationLoop(() => {
+    // ════════════════════════════════════════════════════════════════════
+    //  CONTROLLERS — raycaster + trigger select
+    // ════════════════════════════════════════════════════════════════════
+    const raycaster = new THREE.Raycaster();
+    const tempMatrix = new THREE.Matrix4();
+    const pointerGeometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 0, -5),
+    ]);
+
+    let focusedCase = null;
+
+    const onSelect = (event) => {
+      const controller = event.target;
+      tempMatrix.identity().extractRotation(controller.matrixWorld);
+      raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+      raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+
+      const planes = allCases.map((c) => c.plane);
+      const intersects = raycaster.intersectObjects(planes, false);
+
+      if (intersects.length === 0) {
+        // Empty space — dismiss any forward case.
+        if (focusedCase) {
+          focusedCase.state = "returning";
+          focusedCase.stateStart = performance.now();
+          hideStory();
+          focusedCase = null;
+        }
+        return;
+      }
+
+      const caseRef = intersects[0].object.userData.caseRef;
+      if (!caseRef) return;
+
+      // Clicking the already-forward case sends it back.
+      if (focusedCase === caseRef) {
+        caseRef.state = "returning";
+        caseRef.stateStart = performance.now();
+        hideStory();
+        focusedCase = null;
+        return;
+      }
+
+      // A different case is forward: return it before pulling new one.
+      if (focusedCase) {
+        focusedCase.state = "returning";
+        focusedCase.stateStart = performance.now();
+      }
+
+      caseRef.state = "pulling";
+      caseRef.stateStart = performance.now();
+      focusedCase = caseRef;
+      showStoryFor(caseRef.entry);
+    };
+
+    for (let i = 0; i < 2; i++) {
+      const controller = renderer.xr.getController(i);
+      controller.addEventListener("select", onSelect);
+      const pointer = new THREE.Line(
+        pointerGeometry,
+        new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.5, transparent: true })
+      );
+      controller.add(pointer);
+      scene.add(controller);
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  ANIMATION (pull-forward / return + hero rotation)
+    // ════════════════════════════════════════════════════════════════════
+    const PULL_DURATION_MS = 400;
+    const VIEW_POSITION = new THREE.Vector3(-0.5, 1.6, -1.5);
+    const VIEW_SCALE = 2.0;
+    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+    const updateCases = (now) => {
+      for (const c of allCases) {
+        if (c.state === "ring") continue;
+        const elapsed = now - c.stateStart;
+        const t = Math.min(elapsed / PULL_DURATION_MS, 1);
+        const e = easeOutCubic(t);
+
+        if (c.state === "pulling") {
+          c.group.position.lerpVectors(c.ringPosition, VIEW_POSITION, e);
+          c.group.scale.setScalar(1 + (VIEW_SCALE - 1) * e);
+          c.group.lookAt(0, 1.6, 0);
+          if (t >= 1) c.state = "forward";
+        } else if (c.state === "returning") {
+          c.group.position.lerpVectors(VIEW_POSITION, c.ringPosition, e);
+          c.group.scale.setScalar(VIEW_SCALE - (VIEW_SCALE - 1) * e);
+          if (t >= 1) {
+            c.group.position.copy(c.ringPosition);
+            c.group.rotation.copy(c.ringRotation);
+            c.group.scale.setScalar(1);
+            c.state = "ring";
+          } else {
+            c.group.lookAt(0, 1.6, 0);
+          }
+        }
+      }
+    };
+
+    // ════════════════════════════════════════════════════════════════════
+    //  RENDER LOOP
+    // ════════════════════════════════════════════════════════════════════
+    // Hero pedestal is intentionally static — rotating a flat plane around
+    // Y makes it disappear at 90°/270° (edge-on), which looks broken. The
+    // hero's specialness comes from its central position and larger size,
+    // not motion.
+    renderer.setAnimationLoop((time) => {
+      const now = time || performance.now();
+      updateCases(now);
       renderer.render(scene, camera);
     });
 
-    log("Scene ready. Tap the Enter VR button below to enter immersive mode.", "ok");
+    log("Scene ready. Tap Enter VR to begin.", "ok");
   </script>
 </body>
 </html>
