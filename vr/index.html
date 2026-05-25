@@ -59,12 +59,15 @@ Loading…</div>
       fail(`Could not load public-data.json: ${e.message}`);
     }
 
-    const inventory     = data.inventory || [];
-    const colorwayMeta  = data.colorwayMeta || {};
-    const tierMeta      = data.tierMeta || {};
-    const images        = data.images || {};
-    const displayLayout = data.displayLayout || [];
-    const dreamLayout   = data.dreamLayout || [];
+    const inventory      = data.inventory || [];
+    const colorwayMeta   = data.colorwayMeta || {};
+    const tierMeta       = data.tierMeta || {};
+    const images         = data.images || {};
+    const displayLayout  = data.displayLayout || [];
+    const dreamLayout    = data.dreamLayout || [];
+    const wearLog        = data.wearLog || {};
+    const colorwayOwned  = data.colorwayOwned || {};
+    const graveyardMeta  = data.graveyardMeta || {};
 
     if (displayLayout.length === 0) fail("displayLayout is empty in public-data.json");
 
@@ -83,6 +86,92 @@ Loading…</div>
         if (shoe) ownedKeys.add(`${shoe.id}_${cell.colorway}`);
       }
     }
+
+    // ════════════════════════════════════════════════════════════════════
+    //  SKY BANNERS — "LAST WORN" + "UP NEXT"
+    // ════════════════════════════════════════════════════════════════════
+    // Two floating cards high overhead, only visible when the user looks
+    // up. Computed from the wear log:
+    //   LAST WORN — most recent entry across the whole wear log
+    //   UP NEXT   — owned colorway with the oldest last-worn date
+    //               (i.e. "you haven't worn this in the longest")
+    //
+    // Same exclusion rules as the rest of the room: bronze tier and
+    // explicitly not-owned colorways are skipped from UP NEXT candidacy.
+    // Graveyard entries are also skipped.
+    //
+    // The "last worn" calculation doesn't apply exclusions — if you most
+    // recently wore a bronze-tier colorway, that's still the most recent.
+
+    // Build (key → mostRecentDate) for every colorway that's been worn.
+    const lastWornByKey = {};
+    for (const shoeId of Object.keys(wearLog)) {
+      for (const entry of wearLog[shoeId] || []) {
+        const key = `${shoeId}_${entry.colorway}`;
+        if (!lastWornByKey[key] || entry.date > lastWornByKey[key]) {
+          lastWornByKey[key] = entry.date;
+        }
+      }
+    }
+
+    // shoeId → shoe lookup (we already have shoeByShortName; this is by id)
+    const shoeById = {};
+    for (const shoe of inventory) shoeById[shoe.id] = shoe;
+
+    // Helper: build a sky-banner entry from a key string ("3_Black Cement").
+    const buildSkyEntry = (key, label, dateStr) => {
+      const [shoeIdStr, ...cwParts] = key.split("_");
+      const shoeId = parseInt(shoeIdStr, 10);
+      const colorway = cwParts.join("_");
+      const shoe = shoeById[shoeId];
+      if (!shoe) return null;
+      const imagePath = images[key];
+      if (!imagePath) return null;
+      return {
+        key, label, dateStr,
+        shoeName: shoe.name,
+        colorway,
+        imagePath: "../" + imagePath,
+      };
+    };
+
+    // LAST WORN: most recent wear, no exclusions.
+    let lastWornEntry = null;
+    {
+      let bestKey = null;
+      let bestDate = "";
+      for (const [key, date] of Object.entries(lastWornByKey)) {
+        if (date > bestDate) {
+          bestDate = date;
+          bestKey = key;
+        }
+      }
+      if (bestKey) {
+        lastWornEntry = buildSkyEntry(bestKey, "LAST WORN", bestDate);
+      }
+    }
+
+    // UP NEXT: oldest last-worn date among owned non-bronze non-graveyard.
+    let upNextEntry = null;
+    {
+      let bestKey = null;
+      let bestDate = "9999-99-99";
+      for (const [key, date] of Object.entries(lastWornByKey)) {
+        if (colorwayOwned[key] === false) continue;
+        if (graveyardMeta[key]) continue;
+        if (tierMeta[key] === "bronze") continue;
+        if (date < bestDate) {
+          bestDate = date;
+          bestKey = key;
+        }
+      }
+      if (bestKey) {
+        upNextEntry = buildSkyEntry(bestKey, "UP NEXT", bestDate);
+      }
+    }
+
+    if (lastWornEntry) log(`Last worn: ${lastWornEntry.shoeName} — ${lastWornEntry.colorway}`, "ok");
+    if (upNextEntry)   log(`Up next:   ${upNextEntry.shoeName} — ${upNextEntry.colorway}`, "ok");
 
     // ════════════════════════════════════════════════════════════════════
     //  WHICH CELLS GO IN EACH WALL
@@ -211,7 +300,9 @@ Loading…</div>
     let texturesLoaded = 0;
     const texturesTotal =
       displayCells.filter((c) => !c.empty).length +
-      dreamCells.filter((c) => !c.empty).length;
+      dreamCells.filter((c) => !c.empty).length +
+      (lastWornEntry ? 1 : 0) +
+      (upNextEntry ? 1 : 0);
 
     const loadTextureFor = (path, plane, onSized) => {
       loader.load(
@@ -420,6 +511,110 @@ Loading…</div>
 
     buildWall(displayCells, -WALL_Z, false, "OFFICE DISPLAY");
     if (dreamCells.length > 0) buildWall(dreamCells, WALL_Z, true, "DREAM DISPLAY");
+
+    // ════════════════════════════════════════════════════════════════════
+    //  SKY BANNERS — floating cards high overhead
+    // ════════════════════════════════════════════════════════════════════
+    // Each sky banner is a Group containing a photo plane on top and a
+    // text caption plane below. The whole group tilts down to face the
+    // user at eye level (origin, y=1.6) so the photo and text are
+    // readable when looking up. Two banners — last worn and up next —
+    // side by side, centered horizontally.
+    //
+    // They sit at y=6m: high enough to feel like sky, low enough that
+    // the look-up isn't a strain. The user has to deliberately tilt
+    // their head up to see them, which is the desired effect — they're
+    // ambient info, not in-your-face.
+
+    const buildSkyBanner = (entry, x, y, z) => {
+      if (!entry) return;
+      const group = new THREE.Group();
+      group.position.set(x, y, z);
+      // Tilt to face the user — look at user's eye position at origin.
+      group.lookAt(0, 1.6, 0);
+      scene.add(group);
+
+      // Photo plane: 1.5m wide × ~1m tall, placeholder until texture loads.
+      const PHOTO_W = 1.5, PHOTO_H = 1.0;
+      const photoGeom = new THREE.PlaneGeometry(PHOTO_W, PHOTO_H);
+      const photoMat = new THREE.MeshBasicMaterial({
+        color: 0x222222,
+        side: THREE.DoubleSide,
+        transparent: true,
+        alphaTest: 0.01,
+      });
+      const photoPlane = new THREE.Mesh(photoGeom, photoMat);
+      photoPlane.position.set(0, 0.25, 0); // slightly above group center
+      group.add(photoPlane);
+
+      // Load the texture; resize plane to preserve aspect (fit-inside the
+      // PHOTO_W × PHOTO_H box).
+      loadTextureFor(entry.imagePath, photoPlane, (aspect) => {
+        photoPlane.geometry.dispose();
+        let w, h;
+        const innerAspect = PHOTO_W / PHOTO_H;
+        if (aspect >= innerAspect) {
+          w = PHOTO_W;
+          h = PHOTO_W / aspect;
+        } else {
+          h = PHOTO_H;
+          w = PHOTO_H * aspect;
+        }
+        photoPlane.geometry = new THREE.PlaneGeometry(w, h);
+      });
+
+      // Caption: canvas-text with the label (LAST WORN / UP NEXT), shoe
+      // name + colorway, and the date. Three lines, large bright text.
+      const CAP_W = 2048, CAP_H = 768;
+      const canvas = document.createElement("canvas");
+      canvas.width = CAP_W; canvas.height = CAP_H;
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, CAP_W, CAP_H);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+
+      // Label — small, dim, top-most caption line ("LAST WORN" / "UP NEXT")
+      ctx.fillStyle = "#999999";
+      ctx.font = "bold 80px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText(entry.label, CAP_W / 2, 30);
+
+      // Headline — shoe name, big and bright
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 160px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText(entry.shoeName, CAP_W / 2, 160);
+
+      // Colorway — slightly smaller, slightly less bright
+      ctx.fillStyle = "#dddddd";
+      ctx.font = "120px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText(entry.colorway, CAP_W / 2, 360);
+
+      // Date — small, muted, footer line
+      ctx.fillStyle = "#888888";
+      ctx.font = "italic 80px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText(entry.dateStr, CAP_W / 2, 550);
+
+      const captionTexture = new THREE.CanvasTexture(canvas);
+      captionTexture.colorSpace = THREE.SRGBColorSpace;
+      const captionMat = new THREE.MeshBasicMaterial({
+        map: captionTexture, transparent: true, side: THREE.DoubleSide,
+      });
+      const CAPTION_H = 0.5;
+      const CAPTION_W = CAPTION_H * (CAP_W / CAP_H);
+      const captionPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(CAPTION_W, CAPTION_H),
+        captionMat
+      );
+      // Below the photo, with a small gap.
+      captionPlane.position.set(0, -0.55, 0);
+      group.add(captionPlane);
+    };
+
+    // Sky banner positions: 6m up, centered between the walls (z=0),
+    // 1.5m to each side of center. lookAt() handles the tilt down at user.
+    const SKY_Y = 6.0;
+    const SKY_Z = 0;
+    buildSkyBanner(lastWornEntry, -1.5, SKY_Y, SKY_Z);
+    buildSkyBanner(upNextEntry,    1.5, SKY_Y, SKY_Z);
 
     // ════════════════════════════════════════════════════════════════════
     //  STORY PANEL (canvas-rendered text for the pulled-forward case)
