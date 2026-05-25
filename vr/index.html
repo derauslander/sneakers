@@ -534,8 +534,10 @@ Loading…</div>
       group.lookAt(0, 1.6, 0);
       scene.add(group);
 
-      // Photo plane: 1.5m wide × ~1m tall, placeholder until texture loads.
-      const PHOTO_W = 1.5, PHOTO_H = 1.0;
+      // Photo plane: bigger than the close-up version since these sit
+      // well in the distance. 2.4m wide × 1.6m tall placeholder; will
+      // resize to texture aspect on load.
+      const PHOTO_W = 2.4, PHOTO_H = 1.6;
       const photoGeom = new THREE.PlaneGeometry(PHOTO_W, PHOTO_H);
       const photoMat = new THREE.MeshBasicMaterial({
         color: 0x222222,
@@ -544,7 +546,7 @@ Loading…</div>
         alphaTest: 0.01,
       });
       const photoPlane = new THREE.Mesh(photoGeom, photoMat);
-      photoPlane.position.set(0, 0.25, 0); // slightly above group center
+      photoPlane.position.set(0, 0.45, 0); // above caption with breathing room
       group.add(photoPlane);
 
       // Load the texture; resize plane to preserve aspect (fit-inside the
@@ -573,23 +575,23 @@ Loading…</div>
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
 
-      // Label — small, dim, top-most caption line ("LAST WORN" / "UP NEXT")
-      ctx.fillStyle = "#999999";
+      // Label — top-most caption line ("LAST WORN" / "UP NEXT")
+      ctx.fillStyle = "#cccccc";
       ctx.font = "bold 80px -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.fillText(entry.label, CAP_W / 2, 30);
 
-      // Headline — shoe name, big and bright
+      // Headline — shoe name, brightest line
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 160px -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.fillText(entry.shoeName, CAP_W / 2, 160);
 
-      // Colorway — slightly smaller, slightly less bright
-      ctx.fillStyle = "#dddddd";
+      // Colorway
+      ctx.fillStyle = "#f5f5f5";
       ctx.font = "120px -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.fillText(entry.colorway, CAP_W / 2, 360);
 
-      // Date — small, muted, footer line
-      ctx.fillStyle = "#888888";
+      // Date — footer line, slightly dimmer than the rest for hierarchy
+      ctx.fillStyle = "#cccccc";
       ctx.font = "italic 80px -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.fillText(entry.dateStr, CAP_W / 2, 550);
 
@@ -598,23 +600,26 @@ Loading…</div>
       const captionMat = new THREE.MeshBasicMaterial({
         map: captionTexture, transparent: true, side: THREE.DoubleSide,
       });
-      const CAPTION_H = 0.5;
+      const CAPTION_H = 0.8;
       const CAPTION_W = CAPTION_H * (CAP_W / CAP_H);
       const captionPlane = new THREE.Mesh(
         new THREE.PlaneGeometry(CAPTION_W, CAPTION_H),
         captionMat
       );
-      // Below the photo, with a small gap.
-      captionPlane.position.set(0, -0.55, 0);
+      // Below the photo, with breathing room.
+      captionPlane.position.set(0, -0.95, 0);
       group.add(captionPlane);
     };
 
-    // Sky banner positions: 6m up, centered between the walls (z=0),
-    // 1.5m to each side of center. lookAt() handles the tilt down at user.
+    // Sky banner positions: way out past the office wall (z=-9, well
+    // beyond the wall at z=-2.5), 6m up so they read as "in the sky," and
+    // 5m apart so the parallax at distance still feels like two distinct
+    // cards rather than a single block. lookAt() tilts them down to face
+    // the user at origin.
     const SKY_Y = 6.0;
-    const SKY_Z = 0;
-    buildSkyBanner(lastWornEntry, -1.5, SKY_Y, SKY_Z);
-    buildSkyBanner(upNextEntry,    1.5, SKY_Y, SKY_Z);
+    const SKY_Z = -9.0;
+    buildSkyBanner(lastWornEntry, -2.5, SKY_Y, SKY_Z);
+    buildSkyBanner(upNextEntry,    2.5, SKY_Y, SKY_Z);
 
     // ════════════════════════════════════════════════════════════════════
     //  STORY PANEL (canvas-rendered text for the pulled-forward case)
