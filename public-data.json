@@ -752,7 +752,6 @@
     "12_Black Flint_onfoot": "Shoes/AJ13/Black Flint/Black Flint_onfoot.png",
     "11_Flu Game_onfoot": "Shoes/AJ12/Flu Game/Flu Game_onfoot.png",
     "10_Steel_onfoot": "Shoes/AJ10/Steel/Steel_onfoot.png",
-    "9_Olive_onfoot": "Shoes/AJ9/Olive/Olive_onfoot.png",
     "8_Playoffs_onfoot": "Shoes/AJ8/Playoffs/Playoffs_onfoot.png",
     "6_Reverse Infrared_onfoot": "Shoes/AJ6/Reverse Infrared/Reverse Infrared_onfoot.png",
     "6_Infrared_onfoot": "Shoes/AJ6/Infrared/Infrared_onfoot.png",
@@ -769,7 +768,11 @@
     "4_Military Blue_onfoot": "Shoes/AJ4/Military Blue/Military Blue_onfoot.png",
     "4_What the 4_onfoot": "Shoes/AJ4/What the 4/What the 4_onfoot.png",
     "4_A Ma Maniere_onfoot": "Shoes/AJ4/A Ma Maniere/A Ma Maniere_onfoot.png",
-    "4_A Ma Maniere WYWS_onfoot": "Shoes/AJ4/A Ma Maniere WYWS/A Ma Maniere WYWS_onfoot.png"
+    "4_A Ma Maniere WYWS_onfoot": "Shoes/AJ4/A Ma Maniere WYWS/A Ma Maniere WYWS_onfoot.png",
+    "9_Olive_onfoot": "Shoes/AJ9/Olive/Olive_onfoot.png",
+    "1773621809428_Black Metallic": "Shoes/NB FF/Black Metallic/Black Metallic.png",
+    "1773621809428_Black Metallic_hover": "Shoes/NB FF/Black Metallic/Black Metallic_hover.png",
+    "1773621809428_Black Metallic_hover2": "Shoes/NB FF/Black Metallic/Black Metallic_hover2.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -1319,6 +1322,18 @@
       "story": "",
       "saleDate": "",
       "saleTime": ""
+    },
+    "1773621809428_Black Metallic": {
+      "purchaseDate": "2026-05-21",
+      "retailer": "Amazon",
+      "size": "13",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "10",
+      "releaseYear": "2026"
     }
   },
   "tierMeta": {
@@ -1368,7 +1383,8 @@
     "1775259901810_Dark Grape": "gold",
     "19_Voltage Purple": "platinum",
     "18_Concord": "gold",
-    "16_White Infrared": "gold"
+    "16_White Infrared": "gold",
+    "1773621809428_Black Metallic": "bronze"
   },
   "glowMeta": {
     "6_Reverse Infrared": true,
@@ -1472,7 +1488,8 @@
       "Purple"
     ],
     "NB FF": [
-      "Sea Salt"
+      "Sea Salt",
+      "Black Metallic"
     ],
     "ACF": [
       "Billy Hoyle"
@@ -2306,5 +2323,5 @@
       }
     ]
   },
-  "builtAt": "2026-05-22T19:20:15.519237Z"
+  "builtAt": "2026-05-25T22:56:36.324889Z"
 }
