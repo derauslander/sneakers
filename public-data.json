@@ -121,16 +121,16 @@
       "category": "Nike"
     },
     {
-      "name": "NB 1080 V14",
-      "shortName": "NB FF",
-      "category": "New Balance",
-      "id": 1773621809428
-    },
-    {
       "name": "Air Command Force",
       "shortName": "ACF",
       "category": "Nike",
       "id": 1774096319133
+    },
+    {
+      "name": "NB 1080 V14",
+      "shortName": "NB FF",
+      "category": "New Balance",
+      "id": 1773621809428
     },
     {
       "name": "Air Tech Challenge 4",
@@ -1304,14 +1304,16 @@
       "saleTime": ""
     },
     "1774096319133_Billy Hoyle": {
-      "purchaseDate": "",
-      "retailer": "",
-      "size": "",
+      "purchaseDate": "2026-05-25",
+      "retailer": "EBAY",
+      "size": "13",
       "notes": "",
       "ogYear": "",
       "story": "",
       "saleDate": "",
-      "saleTime": ""
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2014"
     },
     "16_White Infrared": {
       "purchaseDate": "",
@@ -1544,7 +1546,7 @@
     "19_Volt": false,
     "19_Voltage Purple": false,
     "1773621809428_Sea Salt": true,
-    "1774096319133_Billy Hoyle": false,
+    "1774096319133_Billy Hoyle": true,
     "1775259901810_Dark Grape": false
   },
   "wishlistOrder": [
@@ -2002,6 +2004,12 @@
         "colorway": "Black Cement"
       },
       {
+        "shoeId": 1774096319133,
+        "shoeName": "Air Command Force",
+        "shortName": "ACF",
+        "colorway": "Billy Hoyle"
+      },
+      {
         "shoeId": 6,
         "shoeName": "Air Jordan 6",
         "shortName": "AJ6",
@@ -2048,12 +2056,6 @@
         "shoeName": "Air Force Max CB",
         "shortName": "AFMCB",
         "colorway": "Purple"
-      },
-      {
-        "shoeId": 3,
-        "shoeName": "Air Jordan 3",
-        "shortName": "AJ3",
-        "colorway": "A Ma Maniere"
       }
     ],
     "valueRanked": [
@@ -2323,5 +2325,5 @@
       }
     ]
   },
-  "builtAt": "2026-05-25T22:56:36.324889Z"
+  "builtAt": "2026-05-25T22:58:34.046222Z"
 }
