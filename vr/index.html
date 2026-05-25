@@ -118,6 +118,16 @@ Loading…</div>
     const shoeById = {};
     for (const shoe of inventory) shoeById[shoe.id] = shoe;
 
+    // Helper: format an ISO date string ("YYYY-MM-DD") as MM/DD/YYYY for
+    // sky banner display. We parse manually rather than using Date because
+    // the date string carries no timezone — treating it as a local Date
+    // could shift it by a day in some timezones.
+    const formatMMDDYYYY = (iso) => {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
+      if (!m) return iso || "";
+      return `${m[2]}/${m[3]}/${m[1]}`;
+    };
+
     // Helper: build a sky-banner entry from a key string ("3_Black Cement").
     const buildSkyEntry = (key, label, dateStr) => {
       const [shoeIdStr, ...cwParts] = key.split("_");
@@ -128,7 +138,8 @@ Loading…</div>
       const imagePath = images[key];
       if (!imagePath) return null;
       return {
-        key, label, dateStr,
+        key, label,
+        dateStr: formatMMDDYYYY(dateStr),
         shoeName: shoe.name,
         colorway,
         imagePath: "../" + imagePath,
@@ -611,13 +622,12 @@ Loading…</div>
       group.add(captionPlane);
     };
 
-    // Sky banner positions: way out past the office wall (z=-9, well
-    // beyond the wall at z=-2.5), 6m up so they read as "in the sky," and
-    // 5m apart so the parallax at distance still feels like two distinct
-    // cards rather than a single block. lookAt() tilts them down to face
-    // the user at origin.
-    const SKY_Y = 6.0;
-    const SKY_Z = -9.0;
+    // Sky banner positions: way out past the office wall (z=-13, well
+    // beyond the wall at z=-2.5), 8m up so they sit clearly "in the sky,"
+    // and 5m apart so the parallax at distance still feels like two
+    // distinct cards. lookAt() tilts them down to face the user at origin.
+    const SKY_Y = 8.0;
+    const SKY_Z = -13.0;
     buildSkyBanner(lastWornEntry, -2.5, SKY_Y, SKY_Z);
     buildSkyBanner(upNextEntry,    2.5, SKY_Y, SKY_Z);
 
