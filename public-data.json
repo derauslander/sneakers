@@ -1564,8 +1564,8 @@
         "colorway": "Royal Reimagined"
       },
       {
-        "code": "ATC2",
-        "colorway": "Stone Blue"
+        "code": "ACF",
+        "colorway": "Billy Hoyle"
       },
       {
         "code": "AJ40",
@@ -1726,8 +1726,8 @@
         "colorway": "Pixel Court"
       },
       {
-        "code": "",
-        "colorway": ""
+        "code": "ATC2",
+        "colorway": "Stone Blue"
       },
       {
         "code": "",
@@ -1886,8 +1886,8 @@
         "colorway": "Volt"
       },
       {
-        "code": "",
-        "colorway": ""
+        "code": "SC2",
+        "colorway": "White Infrared"
       }
     ],
     [
@@ -2325,5 +2325,5 @@
       }
     ]
   },
-  "builtAt": "2026-05-25T22:58:34.046222Z"
+  "builtAt": "2026-05-25T23:00:40.699218Z"
 }
