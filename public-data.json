@@ -103,6 +103,12 @@
       "category": "Nike"
     },
     {
+      "name": "Air Command Force",
+      "shortName": "ACF",
+      "category": "Nike",
+      "id": 1774096319133
+    },
+    {
       "id": 17,
       "name": "Air Max 86",
       "shortName": "AM86",
@@ -119,12 +125,6 @@
       "name": "Air Tech Challenge 3",
       "shortName": "ATC3",
       "category": "Nike"
-    },
-    {
-      "name": "Air Command Force",
-      "shortName": "ACF",
-      "category": "Nike",
-      "id": 1774096319133
     },
     {
       "name": "NB 1080 V14",
@@ -464,6 +464,10 @@
       {
         "colorway": "Flu Game",
         "date": "2025-07-25"
+      },
+      {
+        "date": "2026-05-29",
+        "colorway": "Flu Game"
       }
     ],
     "12": [
@@ -588,6 +592,10 @@
       {
         "date": "2026-03-15",
         "colorway": "Sea Salt"
+      },
+      {
+        "date": "2026-05-26",
+        "colorway": "Black Metallic"
       }
     ]
   },
@@ -1401,7 +1409,8 @@
     "11_Flu Game": true,
     "21_Purple": true,
     "8_Playoffs": true,
-    "9_Olive": true
+    "9_Olive": true,
+    "1773621809428_Black Metallic": true
   },
   "graveyardMeta": {},
   "colorways": {
@@ -1547,7 +1556,8 @@
     "19_Voltage Purple": false,
     "1773621809428_Sea Salt": true,
     "1774096319133_Billy Hoyle": true,
-    "1775259901810_Dark Grape": false
+    "1775259901810_Dark Grape": false,
+    "1773621809428_Black Metallic": true
   },
   "wishlistOrder": [
     "18",
@@ -2325,5 +2335,5 @@
       }
     ]
   },
-  "builtAt": "2026-05-25T23:00:40.699218Z"
+  "builtAt": "2026-05-29T10:26:19.330687Z"
 }

@@ -250,6 +250,11 @@
     const price = parseFloat(String(raw).replace(/[^0-9.]/g, ""));
     return isNaN(price) || price <= 0 ? null : price;
   };
+  const daysBetween = (fromIso, toIso) => {
+    const from = (/* @__PURE__ */ new Date(fromIso + "T00:00:00Z")).getTime();
+    const to = (/* @__PURE__ */ new Date(toIso + "T00:00:00Z")).getTime();
+    return Math.round((to - from) / 864e5);
+  };
   const isAnniversaryToday = (purchaseDate) => {
     if (!purchaseDate) return false;
     const todayStr = localDateStr();
@@ -1725,7 +1730,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
           const wears = (wearLog[shoe.id] || []).filter((e) => e.colorway === cw);
           if (wears.length === 0) return;
           const firstWorn = [...wears].sort((a, b) => a.date < b.date ? -1 : 1)[0].date;
-          const daysOnIce = Math.round((/* @__PURE__ */ new Date(firstWorn + "T00:00:00") - /* @__PURE__ */ new Date(meta.purchaseDate + "T00:00:00")) / 864e5);
+          const daysOnIce = daysBetween(meta.purchaseDate, firstWorn);
           if (daysOnIce < 0) return;
           iceEntries.push({ shoe, colorway: cw, daysOnIce, purchaseDate: meta.purchaseDate, firstWorn });
         });
@@ -1742,7 +1747,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
           for (let i = 1; i < sorted.length; i++) {
             const from = sorted[i - 1].date;
             const to = sorted[i].date;
-            const days = Math.round((/* @__PURE__ */ new Date(to + "T00:00:00") - /* @__PURE__ */ new Date(from + "T00:00:00")) / 864e5);
+            const days = daysBetween(from, to);
             if (days > 0) gapEntries.push({ shoe, colorway: cw, days, from, to, entryKey: `${shoe.id}_${cw}_${from}` });
           }
         });
@@ -1941,6 +1946,17 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
     };
     const handleSaveColorways = (shortName) => {
       setColorways((cws) => ({ ...cws, [shortName]: editColorways }));
+      const shoe = inventory.find((s) => s.shortName === shortName);
+      if (shoe) {
+        setColorwayOwned((o) => {
+          const n = { ...o };
+          for (const cw of editColorways) {
+            const key = `${shoe.id}_${cw}`;
+            if (!(key in n)) n[key] = true;
+          }
+          return n;
+        });
+      }
     };
     const handleImageUpload = (shoeId, colorway, file, kind = "main") => {
       const key = `${shoeId}_${colorway}`;
@@ -1977,7 +1993,16 @@ Make sure server.py is running, then try again.`);
         setInventory((inv) => inv.map((s) => s.id === editId ? { ...s, ...newShoe } : s));
         setEditId(null);
       } else {
-        setInventory((inv) => [...inv, { ...newShoe, id: Date.now() }]);
+        const newId = Date.now();
+        setInventory((inv) => [...inv, { ...newShoe, id: newId }]);
+        setColorwayOwned((o) => {
+          const n = { ...o };
+          for (const cw of editColorways) {
+            const key = `${newId}_${cw}`;
+            if (!(key in n)) n[key] = true;
+          }
+          return n;
+        });
       }
       handleSaveColorways(newShoe.shortName);
       setNewShoe({ name: "", shortName: "", category: "Jordan" });
@@ -2252,7 +2277,7 @@ Make sure server.py is running, then try again.`);
       allPD.sort();
       const first = allPD[0];
       if (!first) return "";
-      const days = Math.round((/* @__PURE__ */ new Date(timeTravelDate + "T00:00:00") - /* @__PURE__ */ new Date(first + "T00:00:00")) / 864e5);
+      const days = daysBetween(first, timeTravelDate);
       const pairsAtDate = inventory.reduce((n, shoe) => {
         return n + (colorways[shoe.shortName] || []).filter((cw) => {
           const key = `${shoe.id}_${cw}`;
@@ -3326,7 +3351,7 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
           const meta = colorwayMeta[key] || {};
           const pd = meta.purchaseDate;
           if (pd && !pd.startsWith(yearStr)) {
-            const daysOnIce = Math.round((/* @__PURE__ */ new Date(firstDate + "T00:00:00") - /* @__PURE__ */ new Date(pd + "T00:00:00")) / 864e5);
+            const daysOnIce = daysBetween(pd, firstDate);
             iceBreakers.push({ shoe, colorway: cw, key, purchaseDate: pd, firstWorn: firstDate, daysOnIce, img: images[key] || null });
           }
         });
