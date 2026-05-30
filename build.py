@@ -140,7 +140,13 @@ def compute_rankings(data):
                 "shoeId": shoe_id, "shoeName": shoe["name"],
                 "shortName": shoe["shortName"], "colorway": cw,
                 "price": price, "wears": wears,
-                "costPerWear": round(price / wears, 4)
+                # Unrounded — this is a SORT KEY, not a display value (it's
+                # stripped by strip_ranking_prices before the public file is
+                # written). Sorting on a rounded value let two near-equal
+                # cost-per-wear entries tie here and fall to the wears
+                # tiebreaker, while the JS in sneaker-vault.html sorts on the
+                # raw float. Keeping this raw puts the two in lockstep.
+                "costPerWear": price / wears
             })
 
     value_ranked = sorted(

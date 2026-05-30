@@ -224,6 +224,14 @@ Loading…</div>
             empty++;
             continue;
           }
+          // Image 2 (_hover) is shown when a case is pulled forward; image 3
+          // (_hover2) is the resting image on the wall. Fall back down the
+          // chain (img3→img2→base, img2→base) so a missing variant can never
+          // leave a case without a texture.
+          const rawHover  = images[`${key}_hover`];
+          const rawHover2 = images[`${key}_hover2`];
+          const hoverPath  = "../" + (rawHover  || imagePath);
+          const hover2Path = "../" + (rawHover2 || rawHover || imagePath);
           out.push({
             row: r, col: c, empty: false,
             entry: {
@@ -234,6 +242,8 @@ Loading…</div>
               colorway: cw,
               tier: tierMeta[key] || "silver",
               imagePath: "../" + imagePath,
+              hoverPath,
+              hover2Path,
               story: colorwayMeta[key]?.story || "",
               notes: colorwayMeta[key]?.notes || "",
               owned: ownedKeys.has(key),
@@ -284,6 +294,8 @@ Loading…</div>
     const BOX_W      = 0.34;
     const BOX_H      = 0.22225;     // 8 3/4 inches exactly
     const BOX_D      = 0.14;
+    const INNER_W    = BOX_W * 0.9; // photo plane fits inside the box face
+    const INNER_H    = BOX_H * 0.9;
     const GAP_X      = 0.01;
     const GAP_Y      = 0.01;
     const PITCH_X    = BOX_W + GAP_X;
@@ -337,6 +349,18 @@ Loading…</div>
           texturesLoaded++;
         }
       );
+    };
+
+    // Resize a photo plane to fit (w × h) while preserving the texture's
+    // aspect ratio (letterbox fit). Shared by the initial load and by the
+    // image swap on pull-forward so sizing has one source of truth.
+    const fitPlaneToBox = (plane, aspect, w, h) => {
+      plane.geometry.dispose();
+      const boxAspect = w / h;
+      let pw, ph;
+      if (aspect >= boxAspect) { pw = w; ph = w / aspect; }
+      else                     { ph = h; pw = h * aspect; }
+      plane.geometry = new THREE.PlaneGeometry(pw, ph);
     };
 
     // ════════════════════════════════════════════════════════════════════
@@ -498,24 +522,24 @@ Loading…</div>
           // Pulse flag: only unowned entries on the dream wall pulse.
           // Owned entries (whether on display or dream wall) stay steady.
           pulse: !cell.entry.owned,
+          // Image swap (option A): rest = image 3 on the wall, pop = image 2
+          // when pulled forward. Textures cache on first use; see swapCaseImage.
+          restPath: cell.entry.hover2Path,
+          popPath:  cell.entry.hoverPath,
+          restTexture: null, restAspect: null,
+          popTexture: null,  popAspect: null,
+          showing: "rest",
         };
         shell.userData.caseRef = caseRef;
         allCases.push(caseRef);
 
-        const innerW = BOX_W * 0.9;
-        const innerH = BOX_H * 0.9;
-        loadTextureFor(cell.entry.imagePath, plane, (aspect) => {
-          plane.geometry.dispose();
-          let w, h;
-          const innerAspect = innerW / innerH;
-          if (aspect >= innerAspect) {
-            w = innerW;
-            h = innerW / aspect;
-          } else {
-            h = innerH;
-            w = innerH * aspect;
-          }
-          plane.geometry = new THREE.PlaneGeometry(w, h);
+        // Resting image on the wall is image 3 (_hover2). Cache its texture +
+        // aspect on the case so returning from the popped image 2 is instant
+        // (no reload).
+        loadTextureFor(cell.entry.hover2Path, plane, (aspect) => {
+          fitPlaneToBox(plane, aspect, INNER_W, INNER_H);
+          caseRef.restTexture = plane.material.map;
+          caseRef.restAspect  = aspect;
         });
       }
     };
@@ -769,6 +793,36 @@ Loading…</div>
       c.stateStart = now;
     };
 
+    // Swap a case between its resting image (image 3, on the wall) and its
+    // popped image (image 2, shown pulled forward). The resting texture is
+    // cached at build; image 2 is lazy-loaded on first pull (deliberately not
+    // counted in the initial "all textures loaded" tally). The showing-guard
+    // stops a slow load from applying after the user has moved on.
+    const swapCaseImage = (caseRef, which) => {
+      caseRef.showing = which;
+      const apply = (texture, aspect) => {
+        if (caseRef.showing !== which) return;
+        caseRef.plane.material.map = texture;
+        caseRef.plane.material.color.set(0xffffff);
+        caseRef.plane.material.needsUpdate = true;
+        fitPlaneToBox(caseRef.plane, aspect, INNER_W, INNER_H);
+      };
+      const cached = which === "rest" ? caseRef.restTexture : caseRef.popTexture;
+      if (cached) {
+        apply(cached, which === "rest" ? caseRef.restAspect : caseRef.popAspect);
+        return;
+      }
+      const path = which === "rest" ? caseRef.restPath : caseRef.popPath;
+      loader.load(path, (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = 8;
+        const aspect = texture.image.width / texture.image.height;
+        if (which === "rest") { caseRef.restTexture = texture; caseRef.restAspect = aspect; }
+        else                  { caseRef.popTexture  = texture; caseRef.popAspect  = aspect; }
+        apply(texture, aspect);
+      }, undefined, (err) => log(`Failed to load ${path}: ${err?.message || err}`, "err"));
+    };
+
     const onSelect = (event) => {
       const controller = event.target;
       tempMatrix.identity().extractRotation(controller.matrixWorld);
@@ -786,6 +840,7 @@ Loading…</div>
       if (intersects.length === 0) {
         if (focusedCase) {
           beginReturn(focusedCase, now);
+          swapCaseImage(focusedCase, "rest");
           hideStory();
           focusedCase = null;
         }
@@ -797,6 +852,7 @@ Loading…</div>
 
       if (focusedCase === caseRef) {
         beginReturn(caseRef, now);
+        swapCaseImage(caseRef, "rest");
         hideStory();
         focusedCase = null;
         return;
@@ -804,6 +860,7 @@ Loading…</div>
 
       if (focusedCase) {
         beginReturn(focusedCase, now);
+        swapCaseImage(focusedCase, "rest");
       }
 
       caseRef.state = "pulling";
@@ -813,6 +870,7 @@ Loading…</div>
       // targets are each in front of the user when facing that wall.
       caseRef.viewPositionLocal = caseRef.group.parent.worldToLocal(caseRef.viewPosWorld.clone());
       focusedCase = caseRef;
+      swapCaseImage(caseRef, "pop");
       showStoryFor(caseRef);
     };
 

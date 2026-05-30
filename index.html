@@ -1989,6 +1989,12 @@ Make sure server.py is running, then try again.`);
     };
     const handleAdd = () => {
       if (!newShoe.name || !newShoe.shortName) return;
+      const collision = inventory.some((s) => s.shortName === newShoe.shortName && s.id !== editId);
+      if (collision) {
+        setImportMsg({ type: "error", text: `Short name "${newShoe.shortName}" is already used by another shoe.` });
+        setTimeout(() => setImportMsg(null), 4e3);
+        return;
+      }
       if (editId !== null) {
         setInventory((inv) => inv.map((s) => s.id === editId ? { ...s, ...newShoe } : s));
         setEditId(null);
