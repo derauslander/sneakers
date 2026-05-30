@@ -658,12 +658,37 @@ Loading…</div>
     // their head up to see them, which is the desired effect — they're
     // ambient info, not in-your-face.
 
-    const buildSkyBanner = (entry, x, y, z) => {
+    const buildSkyBanner = (entry, x, y, z, flat, scaleFactor) => {
       if (!entry) return;
       const group = new THREE.Group();
       group.position.set(x, y, z);
-      // Tilt to face the user — look at user's eye position at origin.
-      group.lookAt(0, 1.6, 0);
+      if (flat) {
+        // Lay flat on the floor like a rug, scaled down from the distance-
+        // sized sky version. A dark bordered mat backs the photo + caption so
+        // the info reads as a grounded card and stays legible on the floor.
+        group.rotation.x = -Math.PI / 2;
+        if (scaleFactor) group.scale.setScalar(scaleFactor);
+        const BACK_W = 2.6, BACK_H = 2.7;
+        const backGeom = new THREE.PlaneGeometry(BACK_W, BACK_H);
+        const back = new THREE.Mesh(
+          backGeom,
+          new THREE.MeshBasicMaterial({
+            color: 0x0a0a0a, transparent: true, opacity: 0.6,
+            side: THREE.DoubleSide, depthWrite: false,
+          })
+        );
+        back.position.set(0, -0.25, -0.01);   // centred on content, just under it
+        group.add(back);
+        const backEdges = new THREE.LineSegments(
+          new THREE.EdgesGeometry(backGeom),
+          new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.5 })
+        );
+        backEdges.position.copy(back.position);
+        group.add(backEdges);
+      } else {
+        // Tilt to face the user — look at user's eye position at origin.
+        group.lookAt(0, 1.6, 0);
+      }
       scene.add(group);
 
       // Photo plane: bigger than the close-up version since these sit
@@ -743,14 +768,15 @@ Loading…</div>
       group.add(captionPlane);
     };
 
-    // Sky banner positions: way out past the office wall (z=-13, well
-    // beyond the wall at z=-2.5), 8m up so they sit clearly "in the sky,"
-    // and 5m apart so the parallax at distance still feels like two
-    // distinct cards. lookAt() tilts them down to face the user at origin.
-    const SKY_Y = 8.0;
-    const SKY_Z = -13.0;
-    buildSkyBanner(lastWornEntry, -2.5, SKY_Y, SKY_Z);
-    buildSkyBanner(upNextEntry,    2.5, SKY_Y, SKY_Z);
+    // LAST WORN / UP NEXT as flat floor mats in front of the user — in the
+    // natural downward gaze and clear of the pedestal (front-left), instead of
+    // high overhead behind the office wall where they were hard to see. Laid
+    // flat (rotation.x = −90°) and scaled down from the distance-sized version.
+    const FLOOR_Y     = 0.02;     // just above the grid floor (avoid z-fighting)
+    const FLOOR_SCALE = 0.45;
+    const FLOOR_Z     = -1.65;    // forward of the user, short of the wall
+    buildSkyBanner(lastWornEntry, -0.2, FLOOR_Y, FLOOR_Z, true, FLOOR_SCALE);
+    buildSkyBanner(upNextEntry,    1.1, FLOOR_Y, FLOOR_Z, true, FLOOR_SCALE);
 
     // ════════════════════════════════════════════════════════════════════
     //  STORY PANEL (canvas-rendered text for the pulled-forward case)
