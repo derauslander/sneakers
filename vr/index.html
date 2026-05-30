@@ -305,6 +305,18 @@ Loading…</div>
     const TOP_Y      = BOTTOM_Y + (ROWS - 1) * PITCH_Y;
     const LEFT_X     = -((COLS - 1) / 2) * PITCH_X;
 
+    // Pedestal (office wall only, for now): a stage to the user's left where
+    // a clicked shoe flies out of its case. The user stands at origin facing
+    // the office wall (−Z), so −X is to their left and the pedestal sits
+    // between them and the wall.
+    const PED_X       = -1.25;       // left of centre
+    const PED_Z       = -1.4;        // in front of the wall, toward the user
+    const PED_COL_H   = 1.05;        // column height (floor up)
+    const PED_TOP_Y   = 1.28;        // shoe centre height when on the pedestal
+    const PED_FIT_W   = 0.55;        // hero shoe fit box on the pedestal
+    const PED_FIT_H   = 0.45;
+    const STAGE_START_SCALE = 0.5;   // stage shoe starts ~cell-sized at the source
+
     const cellPosition = (row, col) => {
       // Returns local coordinates inside a wallGroup, which carries the
       // WALL_Z offset itself. z=0 here means "on the wall plane." Adding
@@ -450,7 +462,7 @@ Loading…</div>
     // half a metre to the user's left so the story panel fits on the right.
     // (For the dream wall, "user's left" is mirrored vs the display wall
     // because the user has turned around.)
-    const buildWall = (cellArr, wallZ, rotateY180, title) => {
+    const buildWall = (cellArr, wallZ, rotateY180, title, usePedestal) => {
       const wallGroup = new THREE.Group();
       wallGroup.position.set(0, 0, wallZ);
       if (rotateY180) wallGroup.rotation.y = Math.PI;
@@ -529,6 +541,9 @@ Loading…</div>
           restTexture: null, restAspect: null,
           popTexture: null,  popAspect: null,
           showing: "rest",
+          // Office-wall cases send their shoe to the pedestal on click instead
+          // of pulling the whole case forward (dream wall still pulls).
+          usePedestal: !!usePedestal,
         };
         shell.userData.caseRef = caseRef;
         allCases.push(caseRef);
@@ -544,8 +559,59 @@ Loading…</div>
       }
     };
 
-    buildWall(displayCells, -WALL_Z, false, "OFFICE DISPLAY");
-    if (dreamCells.length > 0) buildWall(dreamCells, WALL_Z, true, "DREAM DISPLAY");
+    buildWall(displayCells, -WALL_Z, false, "OFFICE DISPLAY", true);
+    if (dreamCells.length > 0) buildWall(dreamCells, WALL_Z, true, "DREAM DISPLAY", false);
+
+    // ════════════════════════════════════════════════════════════════════
+    //  PEDESTAL + STAGE SHOE (office wall)
+    // ════════════════════════════════════════════════════════════════════
+    // A column the user's clicked shoe flies onto. Kept understated (same
+    // wireframe-edge vocabulary as the boxes) so the shoe is the focus.
+    const pedestalGroup = new THREE.Group();
+    pedestalGroup.position.set(PED_X, 0, PED_Z);
+    {
+      const colGeom = new THREE.CylinderGeometry(0.16, 0.20, PED_COL_H, 32);
+      const colMat  = new THREE.MeshBasicMaterial({
+        color: 0x111111, transparent: true, opacity: 0.55,
+      });
+      const column = new THREE.Mesh(colGeom, colMat);
+      column.position.y = PED_COL_H / 2;
+      pedestalGroup.add(column);
+      const colEdges = new THREE.LineSegments(
+        new THREE.EdgesGeometry(colGeom),
+        new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.5 })
+      );
+      colEdges.position.y = PED_COL_H / 2;
+      pedestalGroup.add(colEdges);
+      // Thin top cap so the silhouette reads as a plinth.
+      const capGeom = new THREE.CylinderGeometry(0.24, 0.24, 0.04, 32);
+      const cap = new THREE.Mesh(capGeom, colMat);
+      cap.position.y = PED_COL_H + 0.02;
+      pedestalGroup.add(cap);
+    }
+    scene.add(pedestalGroup);
+
+    // One reusable mesh for the flying / staged shoe. Retextured and resized
+    // per click; hidden when idle. Same cutout material as the cell photos.
+    const stageShoe = new THREE.Mesh(
+      new THREE.PlaneGeometry(PED_FIT_W, PED_FIT_H),
+      new THREE.MeshBasicMaterial({
+        color: 0xffffff, side: THREE.DoubleSide, transparent: true, alphaTest: 0.01,
+      })
+    );
+    stageShoe.visible = false;
+    scene.add(stageShoe);
+
+    // Stage state machine, independent of the dream wall's pull-forward.
+    //   phase "out"  — travelling from the cell to the pedestal
+    //   phase "settled" — resting on the pedestal
+    //   phase "back" — travelling back to the cell
+    const PED_TOP = new THREE.Vector3(PED_X, PED_TOP_Y, PED_Z);
+    const stage = {
+      active: false, caseRef: null, phase: "idle",
+      t0: 0, fromPos: new THREE.Vector3(), fromScale: STAGE_START_SCALE,
+      sourceWorld: new THREE.Vector3(),   // cell world pos, target for the trip back
+    };
 
     // ════════════════════════════════════════════════════════════════════
     //  SKY BANNERS — floating cards high overhead
@@ -730,6 +796,15 @@ Loading…</div>
       const text     = entry.story || entry.notes || "";
       storyPanel = makeTextPanel(headline, subhead, text);
 
+      // Office cases stage on the pedestal — put the panel beside it (toward
+      // room centre) rather than beside the (unmoved) case.
+      if (caseRef.usePedestal) {
+        storyPanel.position.set(PED_X + 1.4, 1.6, PED_Z);
+        storyPanel.lookAt(0, 1.6, 0);
+        scene.add(storyPanel);
+        return;
+      }
+
       // Place the panel beside the pulled-forward case (which lands at
       // caseRef.viewPosWorld). "Beside" means offset to the user's right —
       // mirror direction depends on which wall the user is facing. The
@@ -823,6 +898,101 @@ Loading…</div>
       }, undefined, (err) => log(`Failed to load ${path}: ${err?.message || err}`, "err"));
     };
 
+    // ── Pedestal staging (office wall) ──────────────────────────────────
+    // Ensure image 2 is loaded for a case, then run cb(texture, aspect).
+    // Caches on the caseRef (same field swapCaseImage uses, though a given
+    // case is only ever office or dream, never both).
+    const ensurePopTexture = (caseRef, cb) => {
+      if (caseRef.popTexture) { cb(caseRef.popTexture, caseRef.popAspect); return; }
+      loader.load(caseRef.popPath, (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = 8;
+        caseRef.popTexture = texture;
+        caseRef.popAspect  = texture.image.width / texture.image.height;
+        cb(texture, caseRef.popAspect);
+      }, undefined, (err) => log(`Failed to load ${caseRef.popPath}: ${err?.message || err}`, "err"));
+    };
+
+    const tmpWorld = new THREE.Vector3();
+
+    // Put a staged case back instantly (no animation): re-show its image-3
+    // plane, hide the stage shoe. Used when one click supersedes another.
+    const restoreStageInstant = () => {
+      if (!stage.active) return;
+      if (stage.caseRef) stage.caseRef.plane.visible = true;
+      stageShoe.visible = false;
+      stage.active = false;
+      stage.caseRef = null;
+      stage.phase = "idle";
+    };
+
+    // Fly a clicked office case's shoe (image 2) out to the pedestal.
+    const launchToPedestal = (caseRef, now) => {
+      restoreStageInstant();                  // clear any shoe already out
+      // Source = the cell's world position (the photo plane sits at the cell
+      // group's origin, so the group's world position is the cell centre).
+      caseRef.group.getWorldPosition(tmpWorld);
+      const source = tmpWorld.clone();
+      stage.active = true;
+      stage.caseRef = caseRef;
+      stage.phase = "out";
+      stage.t0 = now;
+      stage.sourceWorld.copy(source);
+      stage.fromPos.copy(source);
+      stage.fromScale = STAGE_START_SCALE;
+      // Texture + size the stage shoe, then reveal it and hide the cell's
+      // image-3 plane. Doing the hide at texture-ready (not on click) avoids a
+      // brief empty beat the first time a case is opened.
+      ensurePopTexture(caseRef, (texture, aspect) => {
+        if (!stage.active || stage.caseRef !== caseRef || stage.phase !== "out") return; // superseded/dismissed
+        stageShoe.material.map = texture;
+        stageShoe.material.color.set(0xffffff);
+        stageShoe.material.needsUpdate = true;
+        fitPlaneToBox(stageShoe, aspect, PED_FIT_W, PED_FIT_H);
+        stageShoe.position.copy(source);
+        stageShoe.scale.setScalar(STAGE_START_SCALE);
+        stageShoe.lookAt(0, 1.6, 0);
+        stageShoe.visible = true;
+        caseRef.plane.visible = false;
+        stage.t0 = performance.now();          // start travel from actual reveal
+      });
+      showStoryFor(caseRef);
+    };
+
+    // Send the staged shoe back to its cell.
+    const dismissPedestal = (now) => {
+      if (!stage.active) return;
+      stage.phase = "back";
+      stage.t0 = now;
+      stage.fromPos.copy(stageShoe.position);
+      stage.fromScale = stageShoe.scale.x;
+      hideStory();
+    };
+
+    // Per-frame travel for the stage shoe. Reuses the pull-forward easing.
+    const updateStage = (now) => {
+      if (!stage.active || stage.phase === "settled" || stage.phase === "idle") return;
+      const t = Math.min((now - stage.t0) / PULL_DURATION_MS, 1);
+      const e = easeOutCubic(t);
+      if (stage.phase === "out") {
+        stageShoe.position.lerpVectors(stage.fromPos, PED_TOP, e);
+        stageShoe.scale.setScalar(stage.fromScale + (1 - stage.fromScale) * e);
+        stageShoe.lookAt(0, 1.6, 0);
+        if (t >= 1) stage.phase = "settled";
+      } else if (stage.phase === "back") {
+        stageShoe.position.lerpVectors(stage.fromPos, stage.sourceWorld, e);
+        stageShoe.scale.setScalar(stage.fromScale + (STAGE_START_SCALE - stage.fromScale) * e);
+        stageShoe.lookAt(0, 1.6, 0);
+        if (t >= 1) {
+          stageShoe.visible = false;
+          if (stage.caseRef) stage.caseRef.plane.visible = true;
+          stage.active = false;
+          stage.caseRef = null;
+          stage.phase = "idle";
+        }
+      }
+    };
+
     const onSelect = (event) => {
       const controller = event.target;
       tempMatrix.identity().extractRotation(controller.matrixWorld);
@@ -837,19 +1007,35 @@ Loading…</div>
       const intersects = raycaster.intersectObjects(targets, false);
       const now = performance.now();
 
-      if (intersects.length === 0) {
+      // Clear an active dream-wall pull (return the case + restore image 3).
+      const clearDreamFocus = () => {
         if (focusedCase) {
           beginReturn(focusedCase, now);
           swapCaseImage(focusedCase, "rest");
-          hideStory();
           focusedCase = null;
         }
+      };
+
+      if (intersects.length === 0) {
+        // Empty space — dismiss whatever is active (at most one of these).
+        if (stage.active) dismissPedestal(now);
+        if (focusedCase) { clearDreamFocus(); hideStory(); }
         return;
       }
 
       const caseRef = intersects[0].object.userData.caseRef;
       if (!caseRef) return;
 
+      if (caseRef.usePedestal) {
+        // Office wall → pedestal.
+        if (stage.active && stage.caseRef === caseRef) { dismissPedestal(now); return; } // toggle off
+        clearDreamFocus();                 // a dream pull, if any, returns
+        launchToPedestal(caseRef, now);    // supersedes any other staged shoe
+        return;
+      }
+
+      // Dream wall → pull-forward (unchanged behaviour).
+      if (stage.active) dismissPedestal(now);   // a staged office shoe goes home
       if (focusedCase === caseRef) {
         beginReturn(caseRef, now);
         swapCaseImage(caseRef, "rest");
@@ -857,7 +1043,6 @@ Loading…</div>
         focusedCase = null;
         return;
       }
-
       if (focusedCase) {
         beginReturn(focusedCase, now);
         swapCaseImage(focusedCase, "rest");
@@ -957,6 +1142,7 @@ Loading…</div>
       const now = time || performance.now();
       updateCases(now);
       updatePulse(now);
+      updateStage(now);
       renderer.render(scene, camera);
     });
 
