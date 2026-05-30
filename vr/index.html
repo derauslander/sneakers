@@ -730,48 +730,52 @@ Loading…</div>
     const TIER_GLYPH = { diamond: "◆", platinum: "▲", gold: "●", silver: "■" };
 
     const makeTextPanel = (headline, subhead, story) => {
-      const W = 1024, H = 768;
+      const W = 1024;
+      const MPP = 0.9 / 768;          // metres per pixel — keeps the prior text scale
+      const padX = 40;
+      const storyTop = 290, lineHeight = 72, bottomPad = 40;
+      const maxWidth = W - 2 * padX;
+
+      // Pre-wrap the story into lines so the canvas can be sized to fit ALL of
+      // it — no truncation. (The old version drew into a fixed 768px canvas and
+      // hard-stopped once it ran out of vertical room.)
+      const scratch = document.createElement("canvas").getContext("2d");
+      scratch.font = "italic 52px -apple-system, BlinkMacSystemFont, sans-serif";
+      const lines = [];
+      if (story) {
+        let line = "";
+        for (const word of story.split(/\s+/)) {
+          const test = line ? line + " " + word : word;
+          if (scratch.measureText(test).width > maxWidth && line) { lines.push(line); line = word; }
+          else { line = test; }
+        }
+        if (line) lines.push(line);
+      }
+
+      const contentBottom = lines.length ? storyTop + lines.length * lineHeight : 230;
+      const H = Math.max(300, Math.ceil(contentBottom + bottomPad));
+
       const canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext("2d");
-
-      // Transparent background — text floats on the dark scene void.
-      // (An opaque dark fill was tried earlier; felt too heavy. With the
-      // panel now positioned beside the pulled-forward case rather than
-      // overlapping the wall, what's behind it is mostly empty space.)
       ctx.clearRect(0, 0, W, H);
 
       // Headline — pure white, bold, large
       ctx.fillStyle = "#ffffff";
       ctx.font = "bold 88px -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.textBaseline = "top";
-      ctx.fillText(headline, 40, 40);
+      ctx.fillText(headline, padX, 40);
 
       // Subhead — light grey, medium
       ctx.fillStyle = "#dddddd";
       ctx.font = "60px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText(subhead, 40, 160);
+      ctx.fillText(subhead, padX, 160);
 
-      // Story — near-white, italic, wrapped
+      // Story — near-white, italic, all wrapped lines
       ctx.fillStyle = "#f0f0f0";
       ctx.font = "italic 52px -apple-system, BlinkMacSystemFont, sans-serif";
-      const words = (story || "").split(/\s+/);
-      let line = "";
-      let y = 290;
-      const maxWidth = W - 80;
-      const lineHeight = 72;
-      for (const word of words) {
-        const test = line ? line + " " + word : word;
-        if (ctx.measureText(test).width > maxWidth && line) {
-          ctx.fillText(line, 40, y);
-          line = word;
-          y += lineHeight;
-          if (y > H - lineHeight) break;
-        } else {
-          line = test;
-        }
-      }
-      if (line && y <= H - lineHeight) ctx.fillText(line, 40, y);
+      let y = storyTop;
+      for (const ln of lines) { ctx.fillText(ln, padX, y); y += lineHeight; }
 
       const texture = new THREE.CanvasTexture(canvas);
       texture.colorSpace = THREE.SRGBColorSpace;
@@ -780,10 +784,10 @@ Loading…</div>
         map: texture, transparent: true, side: THREE.DoubleSide,
       });
 
-      // Panel: 0.9m tall, 4:3 aspect → 1.2m wide
-      const panelHeight = 0.9;
-      const panelWidth = panelHeight * (W / H);
-      const geometry = new THREE.PlaneGeometry(panelWidth, panelHeight);
+      // Plane sized to the canvas at a constant px→metre scale, so the text
+      // stays the same world size and the panel just grows taller for longer
+      // stories. Width is fixed (1.2m); height tracks H.
+      const geometry = new THREE.PlaneGeometry(W * MPP, H * MPP);
       return new THREE.Mesh(geometry, material);
     };
 
@@ -796,10 +800,14 @@ Loading…</div>
       const text     = entry.story || entry.notes || "";
       storyPanel = makeTextPanel(headline, subhead, text);
 
-      // Office cases stage on the pedestal — put the panel beside it (toward
-      // room centre) rather than beside the (unmoved) case.
+      // Office cases stage on the pedestal — float the panel directly above
+      // the shoe, anchored by its bottom edge so longer stories grow upward
+      // and never crowd the shoe.
       if (caseRef.usePedestal) {
-        storyPanel.position.set(PED_X + 1.4, 1.6, PED_Z);
+        const panelH  = storyPanel.geometry.parameters.height;
+        const shoeTop = PED_TOP_Y + PED_FIT_H / 2;   // safe upper bound for the hero shoe
+        const bottomY = shoeTop + 0.12;              // small gap above the shoe
+        storyPanel.position.set(PED_X, bottomY + panelH / 2, PED_Z);
         storyPanel.lookAt(0, 1.6, 0);
         scene.add(storyPanel);
         return;
