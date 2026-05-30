@@ -312,7 +312,9 @@ Loading…</div>
     const PED_X       = -1.25;       // left of centre
     const PED_Z       = -1.4;        // in front of the wall, toward the user
     const PED_COL_H   = 1.05;        // column height (floor up)
-    const PED_TOP_Y   = 1.28;        // shoe centre height when on the pedestal
+    const PED_CAP_TOP = PED_COL_H + 0.04;  // top surface of the cap (shoes sit here)
+    const PED_TOP_Y   = 1.28;        // (legacy reference; rest height now sits on the cap)
+    const PED_SIT_SINK = 0.02;       // tuck the shoe's base slightly into the cap so it reads as resting
     const PED_FIT_W   = 0.55;        // hero shoe fit box on the pedestal
     const PED_FIT_H   = 0.45;
     const STAGE_START_SCALE = 0.5;   // stage shoe starts ~cell-sized at the source
@@ -602,15 +604,44 @@ Loading…</div>
     stageShoe.visible = false;
     scene.add(stageShoe);
 
+    // Contact shadow — a soft dark ellipse on the cap, under the staged shoe.
+    // This is the strongest "it's resting on the surface" cue. One reusable
+    // mesh, lying flat, scaled to the shoe's width and faded in/out with the
+    // travel. Built from a radial-gradient canvas so the edge is soft.
+    const shadowCanvas = document.createElement("canvas");
+    shadowCanvas.width = shadowCanvas.height = 128;
+    {
+      const sctx = shadowCanvas.getContext("2d");
+      const g = sctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+      g.addColorStop(0,   "rgba(0,0,0,0.55)");
+      g.addColorStop(0.6, "rgba(0,0,0,0.30)");
+      g.addColorStop(1,   "rgba(0,0,0,0)");
+      sctx.fillStyle = g;
+      sctx.fillRect(0, 0, 128, 128);
+    }
+    const shadowTex = new THREE.CanvasTexture(shadowCanvas);
+    shadowTex.colorSpace = THREE.SRGBColorSpace;
+    const contactShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({
+        map: shadowTex, transparent: true, depthWrite: false, opacity: 0,
+      })
+    );
+    contactShadow.rotation.x = -Math.PI / 2;            // lie flat, facing up
+    contactShadow.position.set(PED_X, PED_CAP_TOP + 0.003, PED_Z);
+    contactShadow.visible = false;
+    scene.add(contactShadow);
+
     // Stage state machine, independent of the dream wall's pull-forward.
     //   phase "out"  — travelling from the cell to the pedestal
     //   phase "settled" — resting on the pedestal
     //   phase "back" — travelling back to the cell
-    const PED_TOP = new THREE.Vector3(PED_X, PED_TOP_Y, PED_Z);
     const stage = {
       active: false, caseRef: null, phase: "idle",
       t0: 0, fromPos: new THREE.Vector3(), fromScale: STAGE_START_SCALE,
       sourceWorld: new THREE.Vector3(),   // cell world pos, target for the trip back
+      restPos: new THREE.Vector3(),       // resting pos on the cap (bottom-anchored, per shoe)
+      shadowW: 0.4,                       // shadow width, set from the fitted shoe width
     };
 
     // ════════════════════════════════════════════════════════════════════
@@ -923,12 +954,17 @@ Loading…</div>
 
     const tmpWorld = new THREE.Vector3();
 
+    // Face the user but stay vertical: aim at a point at the mesh's own height
+    // so there's no backward pitch (which read as a floating/leaning photo).
+    const faceUserUpright = (mesh) => mesh.lookAt(0, mesh.position.y, 0);
+
     // Put a staged case back instantly (no animation): re-show its image-3
     // plane, hide the stage shoe. Used when one click supersedes another.
     const restoreStageInstant = () => {
       if (!stage.active) return;
       if (stage.caseRef) stage.caseRef.plane.visible = true;
       stageShoe.visible = false;
+      contactShadow.visible = false;
       stage.active = false;
       stage.caseRef = null;
       stage.phase = "idle";
@@ -957,9 +993,16 @@ Loading…</div>
         stageShoe.material.color.set(0xffffff);
         stageShoe.material.needsUpdate = true;
         fitPlaneToBox(stageShoe, aspect, PED_FIT_W, PED_FIT_H);
+        // Sit the shoe's base on the cap: anchor by the bottom edge (at full
+        // scale) so wide and tall shoes share a ground line, tucked slightly
+        // into the cap. Resting pos is per-shoe; the travel lerps toward it.
+        const ph = stageShoe.geometry.parameters.height;
+        const pw = stageShoe.geometry.parameters.width;
+        stage.restPos.set(PED_X, PED_CAP_TOP + ph / 2 - PED_SIT_SINK, PED_Z);
+        stage.shadowW = pw;
         stageShoe.position.copy(source);
         stageShoe.scale.setScalar(STAGE_START_SCALE);
-        stageShoe.lookAt(0, 1.6, 0);
+        faceUserUpright(stageShoe);             // stand upright, yaw to face the user
         stageShoe.visible = true;
         caseRef.plane.visible = false;
         stage.t0 = performance.now();          // start travel from actual reveal
@@ -979,20 +1022,31 @@ Loading…</div>
 
     // Per-frame travel for the stage shoe. Reuses the pull-forward easing.
     const updateStage = (now) => {
-      if (!stage.active || stage.phase === "settled" || stage.phase === "idle") return;
+      if (!stage.active || stage.phase === "idle") return;
+      const sw = stage.shadowW;
+      contactShadow.scale.set(sw * 1.25, sw * 0.5, 1);   // elliptical, shoe-width
+      if (stage.phase === "settled") {
+        contactShadow.visible = true;
+        contactShadow.material.opacity = 1;
+        return;
+      }
       const t = Math.min((now - stage.t0) / PULL_DURATION_MS, 1);
       const e = easeOutCubic(t);
       if (stage.phase === "out") {
-        stageShoe.position.lerpVectors(stage.fromPos, PED_TOP, e);
+        stageShoe.position.lerpVectors(stage.fromPos, stage.restPos, e);
         stageShoe.scale.setScalar(stage.fromScale + (1 - stage.fromScale) * e);
-        stageShoe.lookAt(0, 1.6, 0);
+        faceUserUpright(stageShoe);
+        contactShadow.visible = stageShoe.visible;       // only once the shoe is revealed
+        contactShadow.material.opacity = stageShoe.visible ? e : 0;
         if (t >= 1) stage.phase = "settled";
       } else if (stage.phase === "back") {
         stageShoe.position.lerpVectors(stage.fromPos, stage.sourceWorld, e);
         stageShoe.scale.setScalar(stage.fromScale + (STAGE_START_SCALE - stage.fromScale) * e);
-        stageShoe.lookAt(0, 1.6, 0);
+        faceUserUpright(stageShoe);
+        contactShadow.material.opacity = 1 - e;          // fade out as it leaves
         if (t >= 1) {
           stageShoe.visible = false;
+          contactShadow.visible = false;
           if (stage.caseRef) stage.caseRef.plane.visible = true;
           stage.active = false;
           stage.caseRef = null;
