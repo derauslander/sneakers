@@ -504,6 +504,10 @@
       {
         "date": "2024-11-15",
         "colorway": "Flint Grey"
+      },
+      {
+        "date": "2026-06-05",
+        "colorway": "Flint Grey"
       }
     ],
     "14": [
@@ -1974,6 +1978,14 @@
         "lastWorn": "2025-11-28"
       },
       {
+        "shoeId": 13,
+        "shoeName": "Air Jordan 14",
+        "shortName": "AJ14",
+        "colorway": "Flint Grey",
+        "count": 4,
+        "lastWorn": "2026-06-05"
+      },
+      {
         "shoeId": 6,
         "shoeName": "Air Jordan 6",
         "shortName": "AJ6",
@@ -1996,14 +2008,6 @@
         "colorway": "A Ma Maniere",
         "count": 4,
         "lastWorn": "2025-11-27"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Military Blue",
-        "count": 4,
-        "lastWorn": "2025-10-03"
       }
     ],
     "priceRanked": [
@@ -2112,6 +2116,13 @@
         "wears": 4
       },
       {
+        "shoeId": 13,
+        "shoeName": "Air Jordan 14",
+        "shortName": "AJ14",
+        "colorway": "Flint Grey",
+        "wears": 4
+      },
+      {
         "shoeId": 4,
         "shoeName": "Air Jordan 4",
         "shortName": "AJ4",
@@ -2124,13 +2135,6 @@
         "shortName": "AJ5",
         "colorway": "A Ma Maniere Dawn",
         "wears": 4
-      },
-      {
-        "shoeId": 13,
-        "shoeName": "Air Jordan 14",
-        "shortName": "AJ14",
-        "colorway": "Flint Grey",
-        "wears": 3
       },
       {
         "shoeId": 4,
@@ -2335,5 +2339,5 @@
       }
     ]
   },
-  "builtAt": "2026-05-30T11:55:48.578447Z"
+  "builtAt": "2026-06-05T11:41:29.559407Z"
 }

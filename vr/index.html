@@ -34,6 +34,14 @@ Loading…</div>
   <script type="module">
     import * as THREE from "three";
     import { VRButton } from "three/addons/webxr/VRButton.js";
+    import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
+
+    // ════════════════════════════════════════════════════════════════════
+    //  TEST MODE — ?test in the URL enables desktop preview with
+    //  WASD + mouse look (FPS-style) and click-to-interact, skipping
+    //  WebXR entirely. Same scene, same interactions.
+    // ════════════════════════════════════════════════════════════════════
+    const TEST_MODE = new URLSearchParams(window.location.search).has("test");
 
     // ════════════════════════════════════════════════════════════════════
     //  SETUP & STATUS LOGGING
@@ -313,7 +321,6 @@ Loading…</div>
     const PED_Z       = -1.4;        // in front of the wall, toward the user
     const PED_COL_H   = 1.05;        // column height (floor up)
     const PED_CAP_TOP = PED_COL_H + 0.04;  // top surface of the cap (shoes sit here)
-    const PED_TOP_Y   = 1.28;        // (legacy reference; rest height now sits on the cap)
     const PED_SIT_SINK = 0.02;       // tuck the shoe's base slightly into the cap so it reads as resting
     const PED_FIT_W   = 0.55;        // hero shoe fit box on the pedestal
     const PED_FIT_H   = 0.45;
@@ -859,10 +866,11 @@ Loading…</div>
 
       // Office cases stage on the pedestal — float the panel directly above
       // the shoe, anchored by its bottom edge so longer stories grow upward
-      // and never crowd the shoe.
+      // and never crowd the shoe. Uses the actual rest position and shoe
+      // height computed in ensurePopTexture (which runs before this call).
       if (caseRef.usePedestal) {
         const panelH  = storyPanel.geometry.parameters.height;
-        const shoeTop = PED_TOP_Y + PED_FIT_H / 2;   // safe upper bound for the hero shoe
+        const shoeTop = stage.restPos.y + stageShoe.geometry.parameters.height / 2;
         const bottomY = shoeTop + 0.12;              // small gap above the shoe
         storyPanel.position.set(PED_X, bottomY + panelH / 2, PED_Z);
         storyPanel.lookAt(0, 1.6, 0);
@@ -899,9 +907,75 @@ Loading…</div>
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.xr.enabled = true;
+    if (!TEST_MODE) renderer.xr.enabled = true;
     document.body.appendChild(renderer.domElement);
-    document.body.appendChild(VRButton.createButton(renderer));
+    if (!TEST_MODE) document.body.appendChild(VRButton.createButton(renderer));
+
+    // ── Test-mode FPS controls ──────────────────────────────────────────
+    let fpsControls = null;
+    const fpsKeys = {};
+    const FPS_SPEED = 2.5;           // metres per second
+    const fpsDir = new THREE.Vector3();
+    const fpsSide = new THREE.Vector3();
+
+    if (TEST_MODE) {
+      fpsControls = new PointerLockControls(camera, renderer.domElement);
+
+      // Crosshair — thin + centred on screen, only visible when locked.
+      const crosshair = document.createElement("div");
+      crosshair.id = "crosshair";
+      Object.assign(crosshair.style, {
+        position: "fixed", top: "50%", left: "50%",
+        width: "20px", height: "20px",
+        marginTop: "-10px", marginLeft: "-10px",
+        pointerEvents: "none", display: "none", zIndex: "100",
+      });
+      crosshair.innerHTML = `
+        <div style="position:absolute;width:2px;height:20px;left:9px;top:0;background:rgba(255,255,255,0.5)"></div>
+        <div style="position:absolute;width:20px;height:2px;left:0;top:9px;background:rgba(255,255,255,0.5)"></div>`;
+      document.body.appendChild(crosshair);
+
+      // Banner with instructions (fades out after lock).
+      const banner = document.createElement("div");
+      Object.assign(banner.style, {
+        position: "fixed", bottom: "24px", left: "50%", transform: "translateX(-50%)",
+        padding: "10px 20px", background: "rgba(0,0,0,0.7)", border: "1px solid #444",
+        color: "#ccc", fontSize: "13px", fontFamily: "-apple-system, sans-serif",
+        letterSpacing: "1px", zIndex: "100", whiteSpace: "nowrap",
+      });
+      banner.textContent = "TEST MODE — Click to start · WASD move · Mouse look · Click to interact · ESC release";
+      document.body.appendChild(banner);
+
+      fpsControls.addEventListener("lock", () => { crosshair.style.display = "block"; banner.style.display = "none"; });
+      fpsControls.addEventListener("unlock", () => { crosshair.style.display = "none"; banner.style.display = "block"; });
+
+      document.addEventListener("keydown", (e) => { fpsKeys[e.code] = true; });
+      document.addEventListener("keyup",   (e) => { fpsKeys[e.code] = false; });
+
+      log("Test mode enabled — click the canvas to start", "ok");
+    }
+
+    // Per-frame WASD movement (test mode only). Projects the camera's
+    // forward vector onto XZ so WASD never causes vertical drift.
+    let lastFpsTime = performance.now();
+    const updateFpsMovement = (now) => {
+      if (!fpsControls || !fpsControls.isLocked) return;
+      const dt = Math.min((now - lastFpsTime) / 1000, 0.1); // cap to avoid jumps
+      lastFpsTime = now;
+      camera.getWorldDirection(fpsDir);
+      fpsDir.y = 0; fpsDir.normalize();
+      fpsSide.crossVectors(camera.up, fpsDir).normalize();
+      let dx = 0, dz = 0;
+      if (fpsKeys["KeyW"]) { dx += fpsDir.x; dz += fpsDir.z; }
+      if (fpsKeys["KeyS"]) { dx -= fpsDir.x; dz -= fpsDir.z; }
+      if (fpsKeys["KeyA"]) { dx += fpsSide.x; dz += fpsSide.z; }
+      if (fpsKeys["KeyD"]) { dx -= fpsSide.x; dz -= fpsSide.z; }
+      if (dx || dz) {
+        const len = Math.sqrt(dx * dx + dz * dz);
+        camera.position.x += (dx / len) * FPS_SPEED * dt;
+        camera.position.z += (dz / len) * FPS_SPEED * dt;
+      }
+    };
 
     window.addEventListener("resize", () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -1032,8 +1106,8 @@ Loading…</div>
         stageShoe.visible = true;
         caseRef.plane.visible = false;
         stage.t0 = performance.now();          // start travel from actual reveal
+        showStoryFor(caseRef);                 // after restPos is set so the panel anchors to the real shoe top
       });
-      showStoryFor(caseRef);
     };
 
     // Send the staged shoe back to its cell.
@@ -1086,7 +1160,13 @@ Loading…</div>
       tempMatrix.identity().extractRotation(controller.matrixWorld);
       raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
       raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+      handleRayHit();
+    };
 
+    // Shared hit-test + interaction logic. The raycaster must already be
+    // aimed before calling this (by onSelect for VR, by the test-mode
+    // click handler for desktop).
+    const handleRayHit = () => {
       // Hit-test the box shells, not the inner photo planes — the shell
       // is the visible "object" the user is pointing at, and the photo
       // sits inside (partially obscured by the shell). userData.caseRef
@@ -1147,15 +1227,26 @@ Loading…</div>
       showStoryFor(caseRef);
     };
 
-    for (let i = 0; i < 2; i++) {
-      const controller = renderer.xr.getController(i);
-      controller.addEventListener("select", onSelect);
-      const pointer = new THREE.Line(
-        pointerGeometry,
-        new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.5, transparent: true })
-      );
-      controller.add(pointer);
-      scene.add(controller);
+    if (TEST_MODE) {
+      // Test mode: click to lock pointer (FPS-style), then subsequent
+      // clicks raycast from screen centre (crosshair) for interaction.
+      document.addEventListener("click", () => {
+        if (!fpsControls.isLocked) { fpsControls.lock(); return; }
+        raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+        handleRayHit();
+      });
+    } else {
+      // VR mode: controllers + laser pointers.
+      for (let i = 0; i < 2; i++) {
+        const controller = renderer.xr.getController(i);
+        controller.addEventListener("select", onSelect);
+        const pointer = new THREE.Line(
+          pointerGeometry,
+          new THREE.LineBasicMaterial({ color: 0xffffff, opacity: 0.5, transparent: true })
+        );
+        controller.add(pointer);
+        scene.add(controller);
+      }
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -1228,13 +1319,16 @@ Loading…</div>
     // ════════════════════════════════════════════════════════════════════
     renderer.setAnimationLoop((time) => {
       const now = time || performance.now();
+      if (TEST_MODE) updateFpsMovement(now);
       updateCases(now);
       updatePulse(now);
       updateStage(now);
       renderer.render(scene, camera);
     });
 
-    log("Scene ready. Tap Enter VR to begin.", "ok");
+    log(TEST_MODE
+      ? "Scene ready. Click the canvas to start."
+      : "Scene ready. Tap Enter VR to begin.", "ok");
   </script>
 </body>
 </html>
