@@ -57,14 +57,14 @@ def compute_rankings(data):
     colorway_owned = data.get("colorwayOwned", {})
     colorways     = data.get("colorways", {})
 
-    BRONZE_EXCLUDED = "bronze"
+    EXCLUDED_TIERS = {"iron"}
 
     def tier_of(key):
         return tier_meta.get(key, "silver")
 
     def excluded(key):
-        """Bronze tiers and unowned colorways are excluded from all rankings."""
-        if tier_of(key) == BRONZE_EXCLUDED:
+        """Iron tier and unowned colorways are excluded from all rankings."""
+        if tier_of(key) in EXCLUDED_TIERS:
             return True
         if colorway_owned.get(key) is False:
             return True

@@ -104,12 +104,12 @@ Loading…</div>
     //   UP NEXT   — owned colorway with the oldest last-worn date
     //               (i.e. "you haven't worn this in the longest")
     //
-    // Same exclusion rules as the rest of the room: bronze tier and
+    // Same exclusion rules as the rest of the room: iron tier and
     // explicitly not-owned colorways are skipped from UP NEXT candidacy.
     // Graveyard entries are also skipped.
     //
     // The "last worn" calculation doesn't apply exclusions — if you most
-    // recently wore a bronze-tier colorway, that's still the most recent.
+    // recently wore an iron-tier colorway, that's still the most recent.
 
     // Build (key → mostRecentDate) for every colorway that's been worn.
     const lastWornByKey = {};
@@ -170,7 +170,7 @@ Loading…</div>
       }
     }
 
-    // UP NEXT: oldest last-worn date among owned non-bronze non-graveyard.
+    // UP NEXT: oldest last-worn date among owned non-iron non-graveyard.
     let upNextEntry = null;
     {
       let bestKey = null;
@@ -178,7 +178,7 @@ Loading…</div>
       for (const [key, date] of Object.entries(lastWornByKey)) {
         if (colorwayOwned[key] === false) continue;
         if (graveyardMeta[key]) continue;
-        if (tierMeta[key] === "bronze") continue;
+        if (tierMeta[key] === "iron") continue;
         if (date < bestDate) {
           bestDate = date;
           bestKey = key;

@@ -274,14 +274,15 @@
     diamond: { label: "\u2726 DIAMOND \u2726", color: "var(--tier-diamond)", glowRgba: "rgba(184,240,255,0.8)", ripLabel: "\u2726 R.I.P. \u2726" },
     platinum: { label: "\u2726 PLATINUM \u2726", color: "var(--tier-platinum)", glowRgba: "rgba(192,192,192,0.7)", ripLabel: "\u2726 R.I.P. \u2726" },
     gold: { label: "\u2726 GOLD \u2726", color: "var(--tier-gold)", glowRgba: null, ripLabel: "\u2726 R.I.P. \u2726" },
-    silver: { label: "\u2B25 BUYER'S REMORSE \u2B25", color: "#aaaaaa", glowRgba: null, ripLabel: "\u2B25 R.I.P. \u2B25" },
-    bronze: { label: "\u{1F480} BEATER \u{1F480}", color: "#CD7F32", glowRgba: "rgba(180,80,20,0.8)", ripLabel: "\u{1F480} R.I.P. \u{1F480}" }
+    silver: { label: "\u2B25 SILVER \u2B25", color: "#aaaaaa", glowRgba: "rgba(192,192,192,0.6)", ripLabel: "\u2B25 R.I.P. \u2B25" },
+    bronze: { label: "\u2B25 BUYER'S REMORSE \u2B25", color: "#CD7F32", glowRgba: null, ripLabel: "\u2B25 R.I.P. \u2B25" },
+    iron: { label: "\u{1F480} BEATER \u{1F480}", color: "#71797E", glowRgba: "rgba(180,80,20,0.8)", ripLabel: "\u{1F480} R.I.P. \u{1F480}" }
   };
-  const TIER_OPTIONS = ["diamond", "platinum", "gold", "silver", "bronze"];
+  const TIER_OPTIONS = ["diamond", "platinum", "gold", "silver", "bronze", "iron"];
   const tierOf = (tierMeta, key) => tierMeta[key] || "silver";
-  const tierHasCrossfade = (tier) => tier === "diamond" || tier === "platinum" || tier === "gold";
-  const tierExcludedFromRotation = (tier) => tier === "bronze";
-  const tierAnniversaryColor = (tier) => tier === "diamond" ? "var(--tier-diamond)" : tier === "platinum" ? "var(--tier-platinum)" : tier === "gold" ? "var(--tier-gold)" : tier === "bronze" ? "#CD7F32" : "#aaa";
+  const tierHasCrossfade = (tier) => tier === "diamond" || tier === "platinum" || tier === "gold" || tier === "silver";
+  const tierExcludedFromRotation = (tier) => tier === "iron";
+  const tierAnniversaryColor = (tier) => tier === "diamond" ? "var(--tier-diamond)" : tier === "platinum" ? "var(--tier-platinum)" : tier === "gold" ? "var(--tier-gold)" : tier === "bronze" ? "#CD7F32" : tier === "iron" ? "#71797E" : "#aaa";
   const _preloadedAudio = { glow: null, break: null, whoosh: null };
   setTimeout(() => {
     _preloadedAudio.glow = new Audio("assets/glow.mp3");
@@ -297,7 +298,7 @@
       (colorways[shoe.shortName] || []).forEach((cw) => {
         const key = `${shoe.id}_${cw}`;
         if (grailMeta[key]) tierMeta[key] = "diamond";
-        else if (beaterMeta[key]) tierMeta[key] = "bronze";
+        else if (beaterMeta[key]) tierMeta[key] = "iron";
         else tierMeta[key] = "silver";
       });
     });
@@ -752,7 +753,7 @@
     const [ghosted, setGhosted] = useState(false);
     const crossfadeRef = useRef(null);
     const ghostRef = useRef(null);
-    const entryTier = entry.tier || (entry.isGrail ? "diamond" : entry.isBeater ? "bronze" : "silver");
+    const entryTier = entry.tier || (entry.isGrail ? "diamond" : entry.isBeater ? "iron" : "silver");
     const tierInfo = TIERS[entryTier] || TIERS.silver;
     const hasCrossfade = tierHasCrossfade(entryTier);
     const glowColor = tierInfo.glowRgba || "rgba(150,150,150,0.6)";
@@ -1163,11 +1164,14 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       setEditingMeta(null);
     }, style: { background: "transparent", border: "1px solid #888", color: "#888", padding: "6px 14px", cursor: "pointer", fontSize: "10px", letterSpacing: "2px", fontFamily: "'Aptos','Segoe UI',sans-serif", whiteSpace: "nowrap" } }, "\u{1FAA6} RETIRE")));
   }
-  function OnFeetHero({ shoe, colorway, imgs, tier, tierInfo, isFirstWear, bannerRef, onComplete, enableSound, dark }) {
+  function OnFeetHero({ shoe, colorway, imgs, tier, tierInfo, isFirstWear, story, bannerRef, onComplete, enableSound, dark }) {
+    const isDiamond = tier === "diamond";
+    const isPremium = tier === "diamond" || tier === "platinum" || tier === "gold";
+    const hasDiamondStory = isDiamond && !!story && story.length > 0;
     const INTRO_MS = 1200;
     const FLY_PER_MS = 1200;
     const FLY_OVERLAP_MS = 300;
-    const CARD_MS = 2500;
+    const CARD_MS = isDiamond ? 4e3 : 2500;
     const SHRINK_MS = 1e3;
     const safeImgs = imgs && imgs.length > 0 ? imgs : [null];
     const hasFlythrough = safeImgs.length >= 2 && safeImgs[0] !== null;
@@ -1256,6 +1260,30 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       };
     }, [phase, enableSound, hasFlythrough]);
     React.useEffect(() => {
+      if (phase !== "card") return;
+      if (!enableSound) return;
+      if (!isDiamond) return;
+      if (!_preloadedAudio.glow) return;
+      let audio = null;
+      try {
+        audio = _preloadedAudio.glow.cloneNode();
+        audio.volume = 0.35;
+        const p = audio.play();
+        if (p && typeof p.catch === "function") p.catch(() => {
+        });
+      } catch (e) {
+      }
+      return () => {
+        if (audio) {
+          try {
+            audio.pause();
+            audio.currentTime = 0;
+          } catch (e) {
+          }
+        }
+      };
+    }, [phase, enableSound, isDiamond]);
+    React.useEffect(() => {
       if (reducedMotion.current) {
         complete();
         return;
@@ -1278,10 +1306,8 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       else if (phase === "card") setPhase("shrink");
     };
     if (reducedMotion.current) return null;
-    const isDiamond = tier === "diamond";
-    const isPremium = tier === "diamond" || tier === "platinum";
     const tierColor = tierInfo ? tierInfo.color : "var(--vault-red)";
-    const glowFilter = isPremium && tierInfo ? `drop-shadow(0 0 24px ${tierInfo.glowRgba})` : "none";
+    const glowFilter = isPremium && tierInfo && tierInfo.glowRgba ? `drop-shadow(0 0 24px ${tierInfo.glowRgba})` : "none";
     const diamondAnim = isDiamond ? "prismaticGlow 4s ease-in-out infinite" : "none";
     const baseStyle = {
       position: "fixed",
@@ -1389,6 +1415,31 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       padding: "0 24px",
       animation: phase === "card" ? "heroCardReveal 500ms ease-out 200ms backwards" : "none"
     };
+    const tierBadgeStyle = {
+      fontSize: phase === "shrink" ? "8px" : "clamp(10px, 2.5vw, 13px)",
+      letterSpacing: phase === "shrink" ? "3px" : "clamp(3px, 1vw, 6px)",
+      color: tierColor,
+      marginTop: phase === "shrink" ? "4px" : "18px",
+      transition: `font-size ${SHRINK_MS}ms ease, letter-spacing ${SHRINK_MS}ms ease, margin-top ${SHRINK_MS}ms ease, opacity ${SHRINK_MS}ms ease`,
+      opacity: phase === "intro" || phase === "flythrough" ? 0 : phase === "shrink" ? 0 : 1,
+      textAlign: "center",
+      whiteSpace: "nowrap",
+      maxWidth: "95vw",
+      animation: phase === "card" ? "heroCardReveal 500ms ease-out 350ms backwards" : "none"
+    };
+    const storyStyle = {
+      fontSize: phase === "shrink" ? "0px" : "clamp(13px, 2.2vw, 16px)",
+      lineHeight: 1.5,
+      color: dark ? "#dddddd" : "#222222",
+      marginTop: phase === "shrink" ? "0px" : "20px",
+      maxWidth: "min(85vw, 600px)",
+      textAlign: "center",
+      padding: "0 16px",
+      fontStyle: "italic",
+      opacity: phase === "intro" || phase === "flythrough" ? 0 : phase === "shrink" ? 0 : 1,
+      transition: `font-size ${SHRINK_MS}ms ease, margin-top ${SHRINK_MS}ms ease, opacity ${SHRINK_MS}ms ease`,
+      animation: phase === "card" ? "heroCardReveal 800ms ease-out 600ms backwards" : "none"
+    };
     const labelContent = (() => {
       const labelText = isFirstWear ? "FIRST WEAR TODAY" : "ON FEET TODAY";
       const emoji = isFirstWear ? "\u{1F9CA}" : "\u{1F45F}";
@@ -1434,7 +1485,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
         alt: colorway || "",
         style: cardImgStyle
       }
-    ))), /* @__PURE__ */ React.createElement("div", { style: cardNameStyle }, shoe ? shoe.name : "", colorway ? ` \u2014 ${colorway}` : ""));
+    ))), /* @__PURE__ */ React.createElement("div", { style: cardNameStyle }, shoe ? shoe.name : "", colorway ? ` \u2014 ${colorway}` : ""), isPremium && tierInfo && /* @__PURE__ */ React.createElement("div", { style: tierBadgeStyle }, tierInfo.label), hasDiamondStory && /* @__PURE__ */ React.createElement("div", { style: storyStyle }, story));
   }
   function App() {
     const isMobile = useIsMobile();
@@ -2234,6 +2285,7 @@ Make sure server.py is running, then try again.`);
         tier: lastWornHeroTier,
         tierInfo: lastWornHeroTierInfo,
         isFirstWear,
+        story: lastWornHeroKey && colorwayMeta[lastWornHeroKey] ? colorwayMeta[lastWornHeroKey].story || "" : "",
         bannerRef,
         onComplete: onHeroComplete,
         enableSound: heroEnableSound,
@@ -2733,6 +2785,7 @@ Make sure server.py is running, then try again.`);
         if (collectionFilter === "gold") return t === "gold";
         if (collectionFilter === "silver") return t === "silver";
         if (collectionFilter === "bronze") return t === "bronze";
+        if (collectionFilter === "iron") return t === "iron";
         if (collectionFilter === "og") {
           const meta = colorwayMeta[key] || {};
           return !!meta.ogYear;
@@ -2744,13 +2797,14 @@ Make sure server.py is running, then try again.`);
         }
         return true;
       };
-      const filters = [["all", "ALL"], ["diamond", "DIAMOND"], ["platinum", "PLATINUM"], ["gold", "GOLD"], ["silver", "SILVER"], ["bronze", "BRONZE"], ["og", "OG"], ["onice", "ON ICE"]];
+      const filters = [["all", "ALL"], ["diamond", "DIAMOND"], ["platinum", "PLATINUM"], ["gold", "GOLD"], ["silver", "SILVER"], ["bronze", "BRONZE"], ["iron", "IRON"], ["og", "OG"], ["onice", "ON ICE"]];
       const tierDescriptions = {
         diamond: "The sneakers that 10-year-old me dreamed about",
         platinum: "Original colorways of my favorite sneakers",
         gold: "Sneakers I'm glad are in my collection",
-        silver: "Maybe I shouldn't have bought these",
-        bronze: "Beaters",
+        silver: "On the thinnest of ice",
+        bronze: "Maybe I shouldn't have bought these",
+        iron: "Beaters",
         og: "Owned the original release",
         onice: "Shoes that haven't been worn yet"
       };
@@ -3416,10 +3470,11 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
       { tier: "diamond", label: TIERS.diamond.label, color: dark ? "var(--tier-diamond)" : "var(--tier-diamond-dark)", desc: "The sneakers that 10-year-old me dreamed about" },
       { tier: "platinum", label: TIERS.platinum.label, color: "var(--tier-platinum)", desc: "Original colorways of my favorite sneakers" },
       { tier: "gold", label: TIERS.gold.label, color: "var(--tier-gold)", desc: "Sneakers I'm glad are in my collection" },
-      { tier: "silver", label: "\u2B25 SILVER \u2B25", color: T.text4, desc: "Maybe I shouldn't have bought these" },
-      { tier: "bronze", label: TIERS.bronze.label, color: "#CD7F32", desc: "Beaters" }
+      { tier: "silver", label: TIERS.silver.label, color: TIERS.silver.color, desc: "On the thinnest of ice" },
+      { tier: "bronze", label: "\u2B25 BRONZE \u2B25", color: "#CD7F32", desc: "Maybe I shouldn't have bought these" },
+      { tier: "iron", label: "\u2B25 IRON \u2B25", color: TIERS.iron.color, desc: "Beaters" }
     ].map((t) => /* @__PURE__ */ React.createElement("div", { key: t.tier, style: { display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "12px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "10px", letterSpacing: "3px", color: t.color, whiteSpace: "nowrap", minWidth: "120px" } }, t.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "14px", color: T.text3, fontStyle: "italic" } }, t.desc))), (() => {
-      const TIER_ORDER = { diamond: 0, platinum: 1, gold: 2, silver: 3, bronze: 4 };
+      const TIER_ORDER = { diamond: 0, platinum: 1, gold: 2, silver: 3, bronze: 4, iron: 5 };
       const storyEntries = [];
       inventory.forEach((shoe) => {
         (colorways[shoe.shortName] || []).forEach((cw) => {
@@ -3484,9 +3539,10 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
       const golds = entries.filter(([, e]) => getTier(e) === "gold");
       const silvers = entries.filter(([, e]) => getTier(e) === "silver");
       const bronzes = entries.filter(([, e]) => getTier(e) === "bronze");
+      const irons = entries.filter(([, e]) => getTier(e) === "iron");
       const SectionHeader = ({ label, color }) => /* @__PURE__ */ React.createElement("div", { style: { fontSize: "10px", letterSpacing: "4px", color, marginBottom: "16px", marginTop: "8px" } }, label);
       const renderSection = (items, label, color) => items.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: "32px" } }, /* @__PURE__ */ React.createElement(SectionHeader, { label, color }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: "12px" } }, items.map(([k, e]) => /* @__PURE__ */ React.createElement(GraveyardCard, { key: k, entryKey: k, entry: e, T, CT, dark, setColorways, setGraveyardMeta, setColorwayOwned, setTierMeta, isMobilePublic }))));
-      return /* @__PURE__ */ React.createElement("div", null, entries.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "4px", color: T.text5 } }, "\u{1FAA6} THE GRAVEYARD IS EMPTY") : /* @__PURE__ */ React.createElement(React.Fragment, null, renderSection(diamonds, "\u2726 RETIRED DIAMOND \u2726", "var(--tier-diamond)"), renderSection(platinums, "\u2726 RETIRED PLATINUM \u2726", "var(--tier-platinum)"), renderSection(golds, "\u2726 RETIRED GOLD \u2726", "var(--tier-gold)"), renderSection(silvers, "\u2B25 RETIRED SILVER \u2B25", T.text4), renderSection(bronzes, "\u{1F480} RETIRED BRONZE \u{1F480}", "#CD7F32")));
+      return /* @__PURE__ */ React.createElement("div", null, entries.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "4px", color: T.text5 } }, "\u{1FAA6} THE GRAVEYARD IS EMPTY") : /* @__PURE__ */ React.createElement(React.Fragment, null, renderSection(diamonds, "\u2726 RETIRED DIAMOND \u2726", "var(--tier-diamond)"), renderSection(platinums, "\u2726 RETIRED PLATINUM \u2726", "var(--tier-platinum)"), renderSection(golds, "\u2726 RETIRED GOLD \u2726", "var(--tier-gold)"), renderSection(silvers, "\u2B25 RETIRED SILVER \u2B25", T.text4), renderSection(bronzes, "\u2B25 RETIRED BRONZE \u2B25", "#CD7F32"), renderSection(irons, "\u{1F480} RETIRED IRON \u{1F480}", "#71797E")));
     })(), storySlideshow && ReactDOM.createPortal(
       (() => {
         const { index, entries } = storySlideshow;
@@ -3577,7 +3633,7 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
         const shoe = inventory.find((s) => s.id === shoeId);
         const metaKey = `${shoeId}_${colorway}`;
         const currentTier = tierOf(tierMeta, metaKey);
-        const tierOptions = ["diamond", "platinum", "gold", "silver", "bronze"];
+        const tierOptions = ["diamond", "platinum", "gold", "silver", "bronze", "iron"];
         const menuItems = [
           { label: "LOG WEAR", icon: "\u{1F45F}", action: () => {
             setLoggingId(shoeId);
@@ -3627,7 +3683,7 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
                 cursor: "pointer",
                 fontFamily: "'Aptos','Segoe UI',sans-serif",
                 textTransform: "uppercase"
-              } }, t === "diamond" ? "\u{1F48E}" : t === "platinum" ? "PT" : t === "gold" ? "AU" : t === "silver" ? "AG" : "\u{1F480}");
+              } }, t === "diamond" ? "\u{1F48E}" : t === "platinum" ? "PT" : t === "gold" ? "AU" : t === "silver" ? "AG" : t === "bronze" ? "\u2B25" : "FE");
             })));
           }
           return /* @__PURE__ */ React.createElement(
