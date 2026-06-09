@@ -344,13 +344,10 @@ Loading…</div>
       g.arc(cx, baseY + keyH, keyW * 0.55, 0, Math.PI * 2);
       g.stroke();
 
-      // hoop + backboard + restricted-area arc near the baseline
+      // restricted-area arc near the baseline. (The rim dot and backboard line
+      // are gone now that the 3D hoop supplies those; the arc stays as a floor
+      // marking under the basket.)
       const hoopY = baseY + courtW * 0.055;
-      g.beginPath(); g.arc(cx, hoopY, C * 0.012, 0, Math.PI * 2); g.stroke();        // rim
-      g.beginPath();                                                                 // backboard
-      g.moveTo(cx - keyW * 0.28, baseY + courtW * 0.03);
-      g.lineTo(cx + keyW * 0.28, baseY + courtW * 0.03);
-      g.stroke();
       g.beginPath(); g.arc(cx, hoopY, C * 0.045, 0, Math.PI); g.stroke();            // restricted area
 
       // three-point line: two corner straights + connecting arc
@@ -411,7 +408,7 @@ Loading…</div>
     const PITCH_Y    = BOX_H + GAP_Y;
     const CASE_Z     = -4.8;         // both cases sit on the −Z baseline (basket end)
     const CASE_X     = 2.5;          // lateral offset: office at −CASE_X, dream at +CASE_X, hoop centred between
-    const BOTTOM_Y   = 0.5;          // lowest row centre Y (box centre, not bottom edge)
+    const BOTTOM_Y   = BOX_H / 2;    // lowest row rests on the floor (centre = half-height up)
     const TOP_Y      = BOTTOM_Y + (ROWS - 1) * PITCH_Y;
     const LEFT_X     = -((COLS - 1) / 2) * PITCH_X;
 
@@ -650,8 +647,8 @@ Loading…</div>
           restTexture: null, restAspect: null,
           popTexture: null,  popAspect: null,
           showing: "rest",
-          // Office-wall cases send their shoe to the pedestal on click instead
-          // of pulling the whole case forward (dream wall still pulls).
+          // Cases send their shoe to the pedestal on click — both walls now,
+          // dream included, rather than pulling the whole case forward.
           usePedestal: !!usePedestal,
         };
         shell.userData.caseRef = caseRef;
@@ -672,7 +669,7 @@ Loading…</div>
     // left, dream to the right, both facing the user. (Previously the dream
     // wall sat behind the user at +Z, rotated 180°.)
     buildWall(displayCells, CASE_Z, false, "OFFICE DISPLAY", true,  -CASE_X);
-    if (dreamCells.length > 0) buildWall(dreamCells, CASE_Z, false, "DREAM DISPLAY", false, CASE_X);
+    if (dreamCells.length > 0) buildWall(dreamCells, CASE_Z, false, "DREAM DISPLAY", true, CASE_X);
 
     // ════════════════════════════════════════════════════════════════════
     //  HOOP — regulation dimensions, centred on the baseline
@@ -859,27 +856,10 @@ Loading…</div>
       group.position.set(x, y, z);
       if (flat) {
         // Lay flat on the floor like a rug, scaled down from the distance-
-        // sized sky version. A dark bordered mat backs the photo + caption so
-        // the info reads as a grounded card and stays legible on the floor.
+        // sized version. No backing card — the photo and the outlined caption
+        // sit directly on the hardwood.
         group.rotation.x = -Math.PI / 2;
         if (scaleFactor) group.scale.setScalar(scaleFactor);
-        const BACK_W = 2.6, BACK_H = 2.7;
-        const backGeom = new THREE.PlaneGeometry(BACK_W, BACK_H);
-        const back = new THREE.Mesh(
-          backGeom,
-          new THREE.MeshBasicMaterial({
-            color: 0x0a0a0a, transparent: true, opacity: 0.6,
-            side: THREE.DoubleSide, depthWrite: false,
-          })
-        );
-        back.position.set(0, -0.25, -0.01);   // centred on content, just under it
-        group.add(back);
-        const backEdges = new THREE.LineSegments(
-          new THREE.EdgesGeometry(backGeom),
-          new THREE.LineBasicMaterial({ color: 0x888888, transparent: true, opacity: 0.5 })
-        );
-        backEdges.position.copy(back.position);
-        group.add(backEdges);
       } else {
         // Tilt to face the user — look at user's eye position at origin.
         group.lookAt(0, 1.6, 0);
@@ -926,26 +906,23 @@ Loading…</div>
       ctx.clearRect(0, 0, CAP_W, CAP_H);
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
+      ctx.lineJoin = "round";
 
-      // Label — top-most caption line ("LAST WORN" / "UP NEXT")
-      ctx.fillStyle = "#cccccc";
-      ctx.font = "bold 80px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText(entry.label, CAP_W / 2, 30);
+      // Each line gets a dark outline so the bright text stays legible on the
+      // hardwood now that there's no backing card behind it.
+      const capLine = (txt, font, fill, y, stroke) => {
+        ctx.font = font;
+        ctx.lineWidth = stroke;
+        ctx.strokeStyle = "rgba(0,0,0,0.85)";
+        ctx.strokeText(txt, CAP_W / 2, y);
+        ctx.fillStyle = fill;
+        ctx.fillText(txt, CAP_W / 2, y);
+      };
 
-      // Headline — shoe name, brightest line
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 160px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText(entry.shoeName, CAP_W / 2, 160);
-
-      // Colorway
-      ctx.fillStyle = "#f5f5f5";
-      ctx.font = "120px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText(entry.colorway, CAP_W / 2, 360);
-
-      // Date — footer line, slightly dimmer than the rest for hierarchy
-      ctx.fillStyle = "#cccccc";
-      ctx.font = "italic 80px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText(entry.dateStr, CAP_W / 2, 550);
+      capLine(entry.label,    "bold 80px -apple-system, BlinkMacSystemFont, sans-serif",  "#e8e8e8", 30,  10); // LAST WORN / UP NEXT
+      capLine(entry.shoeName, "bold 160px -apple-system, BlinkMacSystemFont, sans-serif", "#ffffff", 160, 16); // headline
+      capLine(entry.colorway, "120px -apple-system, BlinkMacSystemFont, sans-serif",      "#f5f5f5", 360, 12); // colorway
+      capLine(entry.dateStr,  "italic 80px -apple-system, BlinkMacSystemFont, sans-serif", "#e0e0e0", 550, 10); // date
 
       const captionTexture = new THREE.CanvasTexture(canvas);
       captionTexture.colorSpace = THREE.SRGBColorSpace;
@@ -963,15 +940,15 @@ Loading…</div>
       group.add(captionPlane);
     };
 
-    // LAST WORN / UP NEXT as flat floor mats in front of the user — in the
-    // natural downward gaze and clear of the pedestal (front-left), instead of
-    // high overhead behind the office wall where they were hard to see. Laid
-    // flat (rotation.x = −90°) and scaled down from the distance-sized version.
-    const FLOOR_Y     = 0.02;     // just above the grid floor (avoid z-fighting)
+    // LAST WORN / UP NEXT as flat floor mats flanking the lane down toward the
+    // baseline — one to each side of the painted key, laid flat (rotation.x =
+    // −90°) and scaled down. No backing card; they read directly on the wood.
+    const FLOOR_Y     = 0.02;     // just above the floor
     const FLOOR_SCALE = 0.45;
-    const FLOOR_Z     = -1.65;    // forward of the user, short of the wall
-    buildSkyBanner(lastWornEntry, -0.2, FLOOR_Y, FLOOR_Z, true, FLOOR_SCALE);
-    buildSkyBanner(upNextEntry,    1.1, FLOOR_Y, FLOOR_Z, true, FLOOR_SCALE);
+    const FLOOR_Z     = -3.8;     // down toward the baseline end of the lane
+    const FLANK_X     = 2.2;      // just outside the lane, left (last worn) and right (up next)
+    buildSkyBanner(lastWornEntry, -FLANK_X, FLOOR_Y, FLOOR_Z, true, FLOOR_SCALE);
+    buildSkyBanner(upNextEntry,    FLANK_X, FLOOR_Y, FLOOR_Z, true, FLOOR_SCALE);
 
     // ════════════════════════════════════════════════════════════════════
     //  STORY PANEL (canvas-rendered text for the pulled-forward case)
