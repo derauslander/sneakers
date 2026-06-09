@@ -1602,6 +1602,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
     const [editingMeta, setEditingMeta] = useState(null);
     const [metaForm, setMetaForm] = useState({ purchaseDate: "", purchasePrice: "", retailer: "", size: "", notes: "", ogYear: "", story: "", saleDate: "", saleTime: "", comfortRating: "", releaseYear: "" });
     const [bannerIdx, setBannerIdx] = useState(0);
+    const [bannerPaused, setBannerPaused] = useState(false);
     const [collectionFilter, setCollectionFilter] = useState("all");
     const [top10Filter, setTop10Filter] = useState("worn");
     const [timeTravelDate, setTimeTravelDate] = useState(null);
@@ -1615,9 +1616,10 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
     useEffect(() => {
       if (heroState === "active") return;
       if (heroPostHold) return;
+      if (bannerPaused) return;
       const interval = setInterval(() => setBannerIdx((i) => i + 1), 6e3);
       return () => clearInterval(interval);
-    }, [heroState, heroPostHold]);
+    }, [heroState, heroPostHold, bannerPaused]);
     const heroPostHoldPrevRef = useRef(null);
     useEffect(() => {
       const HERO_POST_HOLD_MS = 4e3;
@@ -2564,7 +2566,17 @@ Make sure server.py is running, then try again.`);
           setView("collection");
           window.scrollTo({ top: 0, behavior: "smooth" });
         }, style: { fontSize: "9px", letterSpacing: "2px", color: "var(--vault-red)", marginTop: "6px", cursor: "pointer", textDecoration: "underline", opacity: 0.8 } }, "See the vault on this day \u2192")));
-      })), bannerItems.length > 1 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", gap: "6px", marginTop: "10px" } }, bannerItems.map((_, i) => /* @__PURE__ */ React.createElement("div", { key: i, onClick: () => setBannerIdx(i), style: { width: "8px", height: "8px", borderRadius: "50%", background: i === safeIdx ? "var(--vault-red)" : dark ? "#444" : "#ccc", cursor: "pointer", transition: "background 0.3s" } }))));
+      })), bannerItems.length > 1 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", marginTop: "10px" } }, bannerItems.map((_, i) => /* @__PURE__ */ React.createElement("div", { key: i, onClick: () => setBannerIdx(i), style: { width: "8px", height: "8px", borderRadius: "50%", background: i === safeIdx ? "var(--vault-red)" : dark ? "#444" : "#ccc", cursor: "pointer", transition: "background 0.3s" } })), /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          onClick: () => setBannerPaused((p) => !p),
+          role: "button",
+          "aria-label": bannerPaused ? "Resume banner rotation" : "Pause banner rotation",
+          title: bannerPaused ? "Resume" : "Pause",
+          style: { display: "flex", alignItems: "center", justifyContent: "center", width: "16px", height: "16px", marginLeft: "4px", fontSize: "10px", lineHeight: 1, color: bannerPaused ? "var(--vault-red)" : dark ? "#888" : "#aaa", cursor: "pointer", userSelect: "none", transition: "color 0.3s" }
+        },
+        bannerPaused ? "\u25B6" : "\u23F8"
+      )));
     })(), !timeTravelDate && loggingId && (() => {
       const shoe = inventory.find((s) => s.id === loggingId);
       const shoeColorways = (colorways[shoe == null ? void 0 : shoe.shortName] || []).filter((cw) => shoe && isColorwayOwned(shoe.id, cw));

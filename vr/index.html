@@ -170,12 +170,17 @@ Loading…</div>
       }
     }
 
-    // UP NEXT: oldest last-worn date among owned non-iron non-graveyard.
+    // UP NEXT: oldest last-worn date among owned non-iron non-graveyard
+    // colorways that are actually on the display wall. The ownedKeys guard
+    // keeps UP NEXT from pointing at a shoe with nothing to look at — a worn,
+    // owned, non-iron colorway that just isn't placed in displayLayout would
+    // otherwise be eligible here but invisible everywhere in the scene.
     let upNextEntry = null;
     {
       let bestKey = null;
       let bestDate = "9999-99-99";
       for (const [key, date] of Object.entries(lastWornByKey)) {
+        if (!ownedKeys.has(key)) continue;
         if (colorwayOwned[key] === false) continue;
         if (graveyardMeta[key]) continue;
         if (tierMeta[key] === "iron") continue;
@@ -275,12 +280,108 @@ Loading…</div>
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
 
-    // Floor grid for spatial reference. 10m × 10m.
-    const floor = new THREE.GridHelper(10, 20, 0x333333, 0x1a1a1a);
+    // ════════════════════════════════════════════════════════════════════
+    //  FLOOR — stylized half-court hardwood
+    // ════════════════════════════════════════════════════════════════════
+    // Procedural CanvasTexture (same approach as the title/story panels):
+    // light-maple planks running down-court, white half-court markings, and a
+    // faint vault-red wash in the key. It's one non-repeating texture mapped
+    // 1:1 onto the floor plane, so the markings stay a single crisp set rather
+    // than tiling. The plane lies in the old grid's footprint and picks up the
+    // ambient + directional lights below for a soft polished-gym sheen.
+    // Canvas top maps to −Z (the display-wall side) after the −90° X rotation,
+    // so the basket end sits under the display wall and the half-court line
+    // lands near the dream wall behind the user.
+    const FLOOR_SIZE = 12; // metres square; extends a few metres past both walls
+    const makeCourtTexture = () => {
+      const C  = 2048;
+      const cv = document.createElement("canvas");
+      cv.width = cv.height = C;
+      const g = cv.getContext("2d");
+
+      // — Hardwood planks: vertical bands (run down-court along Z) —
+      const plankW = C / 78;
+      for (let x = 0; x < C; x += plankW) {
+        const v  = 0.92 + Math.random() * 0.16;            // per-plank lightness
+        const rr = Math.round(196 * v), gg = Math.round(150 * v), bb = Math.round(96 * v);
+        g.fillStyle = `rgb(${rr},${gg},${bb})`;
+        g.fillRect(x, 0, plankW + 1, C);
+        g.fillStyle = "rgba(90,55,25,0.35)";               // seam between planks
+        g.fillRect(x, 0, 1.5, C);
+        g.strokeStyle = "rgba(110,70,35,0.10)";            // faint grain streaks
+        g.lineWidth = 1;
+        for (let s = 0; s < 3; s++) {
+          const gx = x + 3 + Math.random() * (plankW - 6);
+          g.beginPath();
+          g.moveTo(gx, 0);
+          g.bezierCurveTo(gx + 6, C * 0.33, gx - 6, C * 0.66, gx, C);
+          g.stroke();
+        }
+      }
+
+      // — Court markings (white) —
+      const M      = C * 0.10;            // bare floor margin around the court
+      const left   = M, right = C - M;
+      const courtW = right - left;
+      const baseY  = M;                   // baseline (top / −Z side)
+      const halfY  = C - M;               // half-court line (bottom / +Z side)
+      const cx     = C / 2;
+      g.strokeStyle = "#f2efe9";
+      g.lineWidth   = C * 0.006;
+      g.lineCap     = "round";
+
+      // court rectangle = sidelines + baseline + half-court line
+      g.strokeRect(left, baseY, courtW, halfY - baseY);
+
+      // the key / paint, with a faint vault-red wash
+      const keyW = courtW * 0.30, keyH = (halfY - baseY) * 0.42, keyX = cx - keyW / 2;
+      g.fillStyle = "rgba(230,57,70,0.18)";
+      g.fillRect(keyX, baseY, keyW, keyH);
+      g.strokeRect(keyX, baseY, keyW, keyH);
+
+      // free-throw circle at the FT line
+      g.beginPath();
+      g.arc(cx, baseY + keyH, keyW * 0.55, 0, Math.PI * 2);
+      g.stroke();
+
+      // hoop + backboard + restricted-area arc near the baseline
+      const hoopY = baseY + courtW * 0.055;
+      g.beginPath(); g.arc(cx, hoopY, C * 0.012, 0, Math.PI * 2); g.stroke();        // rim
+      g.beginPath();                                                                 // backboard
+      g.moveTo(cx - keyW * 0.28, baseY + courtW * 0.03);
+      g.lineTo(cx + keyW * 0.28, baseY + courtW * 0.03);
+      g.stroke();
+      g.beginPath(); g.arc(cx, hoopY, C * 0.045, 0, Math.PI); g.stroke();            // restricted area
+
+      // three-point line: two corner straights + connecting arc
+      const tpInset = courtW * 0.06;
+      const tpX1 = left + tpInset, tpX2 = right - tpInset;
+      const tpY  = baseY + courtW * 0.18;
+      g.beginPath();
+      g.moveTo(tpX1, baseY); g.lineTo(tpX1, tpY);
+      g.moveTo(tpX2, baseY); g.lineTo(tpX2, tpY);
+      g.stroke();
+      g.beginPath(); g.arc(cx, tpY, (tpX2 - tpX1) / 2, 0, Math.PI); g.stroke();      // arc toward half-court
+
+      // centre circle — only the half that falls inside a half court
+      g.beginPath(); g.arc(cx, halfY, courtW * 0.12, Math.PI, Math.PI * 2); g.stroke();
+
+      const tex = new THREE.CanvasTexture(cv);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = 8; // crisp lines at glancing angles; driver clamps to its max
+      return tex;
+    };
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(FLOOR_SIZE, FLOOR_SIZE),
+      new THREE.MeshStandardMaterial({ map: makeCourtTexture(), roughness: 0.5, metalness: 0.0 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.002; // a hair below 0 to avoid z-fighting with anything resting on the floor
     scene.add(floor);
 
-    // Lights — unused by the unlit photo planes, but harmless and ready
-    // if we add lit elements (display case backing, frame moldings, etc.).
+    // Lights — drive the polished sheen on the court floor, and ready for any
+    // other lit elements we add later (display case backing, frame moldings).
     scene.add(new THREE.AmbientLight(0xffffff, 0.4));
     const keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
     keyLight.position.set(0, 4, 2);
