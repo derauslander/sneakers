@@ -409,17 +409,16 @@ Loading…</div>
     const GAP_Y      = 0.01;
     const PITCH_X    = BOX_W + GAP_X;
     const PITCH_Y    = BOX_H + GAP_Y;
-    const WALL_Z     = 2.5;          // distance from viewer to each wall (display at -WALL_Z, dream at +WALL_Z)
+    const CASE_Z     = -4.8;         // both cases sit on the −Z baseline (basket end)
+    const CASE_X     = 2.5;          // lateral offset: office at −CASE_X, dream at +CASE_X, hoop centred between
     const BOTTOM_Y   = 0.5;          // lowest row centre Y (box centre, not bottom edge)
     const TOP_Y      = BOTTOM_Y + (ROWS - 1) * PITCH_Y;
     const LEFT_X     = -((COLS - 1) / 2) * PITCH_X;
 
-    // Pedestal (office wall only, for now): a stage to the user's left where
-    // a clicked shoe flies out of its case. The user stands at origin facing
-    // the office wall (−Z), so −X is to their left and the pedestal sits
-    // between them and the wall.
-    const PED_X       = -1.25;       // left of centre
-    const PED_Z       = -1.4;        // in front of the wall, toward the user
+    // Pedestal: a stage centred under the hoop on the baseline, where a clicked
+    // office-wall shoe flies out of its case to be shown beneath the basket.
+    const PED_X       = 0;           // centred under the rim
+    const PED_Z       = -4.5;        // on the baseline, directly beneath the hoop
     const PED_COL_H   = 1.05;        // column height (floor up)
     const PED_CAP_TOP = PED_COL_H + 0.04;  // top surface of the cap (shoes sit here)
     const PED_SIT_SINK = 0.02;       // tuck the shoe's base slightly into the cap so it reads as resting
@@ -429,8 +428,8 @@ Loading…</div>
 
     const cellPosition = (row, col) => {
       // Returns local coordinates inside a wallGroup, which carries the
-      // WALL_Z offset itself. z=0 here means "on the wall plane." Adding
-      // WALL_Z here too would push boxes to twice the intended distance.
+      // wall's CASE_Z (and lateral xOffset) itself. z=0 here means "on the
+      // wall plane"; adding the offset here too would double the distance.
       // displayLayout row 0 is the top shelf; +Y is up, so invert.
       const x = LEFT_X + col * PITCH_X;
       const y = TOP_Y - row * PITCH_Y;
@@ -572,21 +571,21 @@ Loading…</div>
     // half a metre to the user's left so the story panel fits on the right.
     // (For the dream wall, "user's left" is mirrored vs the display wall
     // because the user has turned around.)
-    const buildWall = (cellArr, wallZ, rotateY180, title, usePedestal) => {
+    const buildWall = (cellArr, wallZ, rotateY180, title, usePedestal, xOffset = 0) => {
       const wallGroup = new THREE.Group();
-      wallGroup.position.set(0, 0, wallZ);
+      wallGroup.position.set(xOffset, 0, wallZ);
       if (rotateY180) wallGroup.rotation.y = Math.PI;
       scene.add(wallGroup);
 
-      // World-space view position for pulling cases off this wall.
-      // wallZ is negative for the display wall (in front of user), positive
-      // for the dream wall (behind user). Push the view position toward the
-      // user (origin) from the wall by ~1.5m.
-      const wallToUserSign = wallZ < 0 ? 1 : -1; // +Z direction toward user for display, -Z for dream
+      // World-space view position for pulling cases off this wall. Both walls
+      // now stand on the −Z baseline (office left, dream right) facing the
+      // user, so a pulled case lifts toward the user (+Z) and drifts halfway
+      // in toward centre from the wall's lateral offset.
+      const wallToUserSign = wallZ < 0 ? 1 : -1;
       const viewPosWorld = new THREE.Vector3(
-        rotateY180 ? 0.5 : -0.5,   // mirror lateral offset for dream wall
+        xOffset * 0.5,
         1.6,
-        wallZ + wallToUserSign * 1.5
+        wallZ + wallToUserSign * 1.6
       );
 
       // Title panel — floats above the wall, faces the same direction as
@@ -669,8 +668,96 @@ Loading…</div>
       }
     };
 
-    buildWall(displayCells, -WALL_Z, false, "OFFICE DISPLAY", true);
-    if (dreamCells.length > 0) buildWall(dreamCells, WALL_Z, true, "DREAM DISPLAY", false);
+    // Both cases now stand on the −Z baseline flanking the hoop: office to the
+    // left, dream to the right, both facing the user. (Previously the dream
+    // wall sat behind the user at +Z, rotated 180°.)
+    buildWall(displayCells, CASE_Z, false, "OFFICE DISPLAY", true,  -CASE_X);
+    if (dreamCells.length > 0) buildWall(dreamCells, CASE_Z, false, "DREAM DISPLAY", false, CASE_X);
+
+    // ════════════════════════════════════════════════════════════════════
+    //  HOOP — regulation dimensions, centred on the baseline
+    // ════════════════════════════════════════════════════════════════════
+    // Rim top at 3.05 m (10 ft), 0.46 m rim diameter, 1.83 × 1.07 m backboard
+    // with the bottom edge at 2.90 m, mounted on a pole standing just behind
+    // the baseline. The pedestal sits directly beneath, so a hero shoe is
+    // displayed under the basket. Lit by the same ambient + directional rig
+    // as the floor.
+    {
+      const RIM_Y       = 3.05;
+      const RIM_R       = 0.2286;                 // 18" rim diameter
+      const BOARD_W     = 1.83, BOARD_H = 1.07, BOARD_T = 0.04;
+      const BOARD_Z     = -4.70;                  // just inside the baseline
+      const BOARD_Y     = 2.90 + BOARD_H / 2;     // bottom edge at 2.90 m
+      const BOARD_FACE  = BOARD_Z + BOARD_T / 2;  // court-facing side (+Z)
+      const RIM_Z       = BOARD_FACE + RIM_R + 0.05;
+      const ORANGE      = 0xe8662a;
+      const METAL       = 0x555555;
+
+      // Backboard — frosted-glass panel with a bright edge frame.
+      const board = new THREE.Mesh(
+        new THREE.BoxGeometry(BOARD_W, BOARD_H, BOARD_T),
+        new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.16, roughness: 0.1, metalness: 0.0 })
+      );
+      board.position.set(0, BOARD_Y, BOARD_Z);
+      scene.add(board);
+      const boardFrame = new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.BoxGeometry(BOARD_W, BOARD_H, BOARD_T)),
+        new THREE.LineBasicMaterial({ color: 0xf2efe9 })
+      );
+      boardFrame.position.copy(board.position);
+      scene.add(boardFrame);
+
+      // Shooter's square (24 × 18"), bottom edge at rim height, on the face.
+      const sqW = 0.59, sqH = 0.45;
+      const sqPts = [[-sqW/2,-sqH/2],[sqW/2,-sqH/2],[sqW/2,sqH/2],[-sqW/2,sqH/2],[-sqW/2,-sqH/2]]
+        .map(([x,y]) => new THREE.Vector3(x, y, 0));
+      const square = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(sqPts),
+        new THREE.LineBasicMaterial({ color: ORANGE })
+      );
+      square.position.set(0, RIM_Y + sqH / 2, BOARD_FACE + 0.006);
+      scene.add(square);
+
+      // Rim — horizontal torus, with a short bracket back to the board.
+      const rim = new THREE.Mesh(
+        new THREE.TorusGeometry(RIM_R, 0.018, 12, 32),
+        new THREE.MeshStandardMaterial({ color: ORANGE, roughness: 0.4, metalness: 0.2 })
+      );
+      rim.rotation.x = Math.PI / 2;
+      rim.position.set(0, RIM_Y, RIM_Z);
+      scene.add(rim);
+      const bracket = new THREE.Mesh(
+        new THREE.BoxGeometry(0.10, 0.025, (RIM_Z - RIM_R) - BOARD_FACE),
+        new THREE.MeshStandardMaterial({ color: ORANGE, roughness: 0.4, metalness: 0.2 })
+      );
+      bracket.position.set(0, RIM_Y, (BOARD_FACE + (RIM_Z - RIM_R)) / 2);
+      scene.add(bracket);
+
+      // Net — stylized tapered open cylinder, semi-transparent white.
+      const net = new THREE.Mesh(
+        new THREE.CylinderGeometry(RIM_R * 0.95, RIM_R * 0.45, 0.45, 16, 1, true),
+        new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, side: THREE.DoubleSide, roughness: 1.0 })
+      );
+      net.position.set(0, RIM_Y - 0.225, RIM_Z);
+      scene.add(net);
+
+      // Pole + arm — the standard, set behind the baseline on the wood margin.
+      const POLE_Z   = -5.15;
+      const poleTopY = BOARD_Y + BOARD_H / 2;     // up to the top of the board
+      const pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.06, 0.06, poleTopY, 24),
+        new THREE.MeshStandardMaterial({ color: METAL, roughness: 0.6, metalness: 0.1 })
+      );
+      pole.position.set(0, poleTopY / 2, POLE_Z);
+      scene.add(pole);
+      const armLen = (BOARD_Z - BOARD_T / 2) - POLE_Z;
+      const arm = new THREE.Mesh(
+        new THREE.BoxGeometry(0.08, 0.08, armLen),
+        new THREE.MeshStandardMaterial({ color: METAL, roughness: 0.6, metalness: 0.1 })
+      );
+      arm.position.set(0, poleTopY - 0.10, POLE_Z + armLen / 2);
+      scene.add(arm);
+    }
 
     // ════════════════════════════════════════════════════════════════════
     //  PEDESTAL + STAGE SHOE (office wall)
