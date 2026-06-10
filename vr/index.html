@@ -946,7 +946,7 @@ Loading…</div>
     const FLOOR_Y     = 0.02;     // just above the floor
     const FLOOR_SCALE = 0.45;
     const FLOOR_Z     = -3.8;     // down toward the baseline end of the lane
-    const FLANK_X     = 2.2;      // just outside the lane, left (last worn) and right (up next)
+    const FLANK_X     = CASE_X;   // centred on each case: last worn (left) / up next (right)
     buildSkyBanner(lastWornEntry, -FLANK_X, FLOOR_Y, FLOOR_Z, true, FLOOR_SCALE);
     buildSkyBanner(upNextEntry,    FLANK_X, FLOOR_Y, FLOOR_Z, true, FLOOR_SCALE);
 
