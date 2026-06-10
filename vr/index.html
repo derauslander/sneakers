@@ -519,22 +519,34 @@ Loading…</div>
       opacity: 0.6,
     });
 
-    // makeTitlePanel: large readable header laid flat on the floor in front of
-    // a case. Canvas-as-texture, transparent background, black text — reads
-    // well on the light maple from across the court.
-    // 2048×512 canvas → 16:4 aspect → 1.6m × 0.4m plane (scaled up when placed).
+    // makeTitlePanel: a placard that floats above a case — a dark rounded
+    // plaque with a vault-red border and white lettering, so the OFFICE /
+    // DREAM labels read clearly against the off-white walls from across court.
+    // 2048×512 canvas → 2.0m × 0.5m plane.
     const makeTitlePanel = (text) => {
       const W = 2048, H = 512;
       const canvas = document.createElement("canvas");
       canvas.width = W; canvas.height = H;
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = "#111111";
-      ctx.font = "bold 220px -apple-system, BlinkMacSystemFont, sans-serif";
+
+      // rounded plaque: dark fill + vault-red border, inset from the edges
+      const m = 28, rad = 56;
+      ctx.beginPath();
+      ctx.moveTo(m + rad, m);
+      ctx.arcTo(W - m, m, W - m, H - m, rad);
+      ctx.arcTo(W - m, H - m, m, H - m, rad);
+      ctx.arcTo(m, H - m, m, m, rad);
+      ctx.arcTo(m, m, W - m, m, rad);
+      ctx.closePath();
+      ctx.fillStyle = "#0f0f0f"; ctx.fill();
+      ctx.lineWidth = 16; ctx.strokeStyle = "#e63946"; ctx.stroke();
+
+      // white letterspaced lettering
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 200px -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.textBaseline = "middle";
       ctx.textAlign = "center";
-      // Letterspaced for a "title plaque" feel — fillText doesn't natively
-      // letterspace, so emulate by drawing each character with extra width.
       const spacing = 24; // px between letters
       const chars = text.split("");
       let totalW = 0;
@@ -546,12 +558,13 @@ Loading…</div>
         ctx.fillText(ch, x + charW / 2, H / 2);
         x += charW + spacing;
       }
+
       const texture = new THREE.CanvasTexture(canvas);
       texture.colorSpace = THREE.SRGBColorSpace;
       const material = new THREE.MeshBasicMaterial({
         map: texture, transparent: true, side: THREE.DoubleSide,
       });
-      const panelH = 0.4;
+      const panelH = 0.5;
       const panelW = panelH * (W / H);
       return new THREE.Mesh(new THREE.PlaneGeometry(panelW, panelH), material);
     };
@@ -590,11 +603,8 @@ Loading…</div>
       // 180° rotation carries it along automatically.
       if (title) {
         const titlePanel = makeTitlePanel(title);
-        // Lay the label flat on the floor in front of the case (toward the
-        // court) so it reads from the user's side looking down-court.
-        titlePanel.rotation.x = -Math.PI / 2;
-        titlePanel.scale.setScalar(1.6);          // larger for floor reading at distance
-        titlePanel.position.set(0, 0.012, 0.8);   // just above the floor, in front of the case
+        // Plaque floats just above the top of the grid, facing the user.
+        titlePanel.position.set(0, TOP_Y + BOX_H + 0.4, 0);
         wallGroup.add(titlePanel);
       }
 
@@ -1072,7 +1082,7 @@ Loading…</div>
     const FLOOR_Y     = 0.02;     // just above the floor
     const FLOOR_SCALE = 0.45;
     const FLOOR_Z     = -5.5;     // down toward the baseline end of the lane
-    const FLANK_X     = CASE_X;   // centred on each case: last worn (left) / up next (right)
+    const FLANK_X     = 3.9;      // set outboard of the lane so the mats clear the key (independent of CASE_X now)
     buildSkyBanner(lastWornEntry, -FLANK_X, FLOOR_Y, FLOOR_Z, true, FLOOR_SCALE);
     buildSkyBanner(upNextEntry,    FLANK_X, FLOOR_Y, FLOOR_Z, true, FLOOR_SCALE);
 
