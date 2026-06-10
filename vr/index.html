@@ -407,7 +407,7 @@ Loading…</div>
     const PITCH_X    = BOX_W + GAP_X;
     const PITCH_Y    = BOX_H + GAP_Y;
     const CASE_Z     = -7.0;         // both cases sit on the −Z baseline (basket end)
-    const CASE_X     = 4.5;          // lateral offset: office at −CASE_X, dream at +CASE_X, hoop centred between
+    const CASE_X     = 3.4;          // lateral offset: office at −CASE_X, dream at +CASE_X, hoop centred between
     const BOTTOM_Y   = BOX_H / 2;    // lowest row rests on the floor (centre = half-height up)
     const TOP_Y      = BOTTOM_Y + (ROWS - 1) * PITCH_Y;
     const LEFT_X     = -((COLS - 1) / 2) * PITCH_X;
@@ -415,7 +415,7 @@ Loading…</div>
     // Pedestal: a stage centred under the hoop on the baseline, where a clicked
     // office-wall shoe flies out of its case to be shown beneath the basket.
     const PED_X       = 0;           // centred under the rim
-    const PED_Z       = -5.4;        // directly beneath the rim (NBA basket overhangs the baseline)
+    const PED_Z       = -7.0;        // back on the baseline, under the backboard
     const PED_COL_H   = 1.05;        // column height (floor up)
     const PED_CAP_TOP = PED_COL_H + 0.04;  // top surface of the cap (shoes sit here)
     const PED_SIT_SINK = 0.02;       // tuck the shoe's base slightly into the cap so it reads as resting
@@ -519,10 +519,10 @@ Loading…</div>
       opacity: 0.6,
     });
 
-    // makeTitlePanel: large readable header floating above a wall. Same
-    // canvas-as-texture approach as the story panel — transparent background,
-    // black text so the label reads against the off-white gym walls.
-    // 2048×512 canvas → 16:4 aspect → 1.6m × 0.4m plane.
+    // makeTitlePanel: large readable header laid flat on the floor in front of
+    // a case. Canvas-as-texture, transparent background, black text — reads
+    // well on the light maple from across the court.
+    // 2048×512 canvas → 16:4 aspect → 1.6m × 0.4m plane (scaled up when placed).
     const makeTitlePanel = (text) => {
       const W = 2048, H = 512;
       const canvas = document.createElement("canvas");
@@ -590,8 +590,11 @@ Loading…</div>
       // 180° rotation carries it along automatically.
       if (title) {
         const titlePanel = makeTitlePanel(title);
-        // Top of grid is at TOP_Y; add a small gap above for the title.
-        titlePanel.position.set(0, TOP_Y + BOX_H + 0.15, 0);
+        // Lay the label flat on the floor in front of the case (toward the
+        // court) so it reads from the user's side looking down-court.
+        titlePanel.rotation.x = -Math.PI / 2;
+        titlePanel.scale.setScalar(1.6);          // larger for floor reading at distance
+        titlePanel.position.set(0, 0.012, 0.8);   // just above the floor, in front of the case
         wallGroup.add(titlePanel);
       }
 
