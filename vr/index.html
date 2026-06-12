@@ -784,21 +784,36 @@ Loading…</div>
       const ROOM_H = 7.0;    // ceiling height (gym-scale)
       const HALF   = ROOM / 2;
 
-      // — Shared wall texture (same on all four walls) —
-      const makeWallTexture = () => {
-        const W = 1200, H = 500;       // 2.4 : 1, matches a 12 × 5 m wall
+      // — Wall textures: cinderblock + red stripe + black pad. The glass-brick
+      //   band is drawn only on the two sideline (±X) walls, like the real gym;
+      //   the baseline and mid-court (±Z) walls stay plain. —
+      const makeWallTexture = (withBand) => {
+        const W = 1200, H = 500;       // 2.4 : 1, matches an 18 × 7 m wall
         const cv = document.createElement("canvas");
         cv.width = W; cv.height = H;
         const g = cv.getContext("2d");
         g.fillStyle = "#f2f2f2"; g.fillRect(0, 0, W, H);              // off-white cinderblock
         g.strokeStyle = "rgba(0,0,0,0.04)"; g.lineWidth = 1;          // faint block courses
         for (let y = 0; y < H * 0.64; y += 18) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
-        // clerestory window band near the top
-        const bandY = H * 0.06, bandH = H * 0.12;
-        g.fillStyle = "#b7c2ca"; g.fillRect(W * 0.05 - 4, bandY - 4, W * 0.90 + 8, bandH + 8);
-        g.fillStyle = "#eaf3fa";
-        const panes = 16, padX = W * 0.05, totalW = W * 0.90, step = totalW / panes;
-        for (let i = 0; i < panes; i++) g.fillRect(padX + i * step + step * 0.07, bandY, step * 0.86, bandH);
+
+        if (withBand) {
+          // glass-block band near the top — a grid of frosted blocks set in grout
+          const bandY = H * 0.05, bandH = H * 0.13, x0 = W * 0.05, bandW = W * 0.90;
+          g.fillStyle = "#9fb0b8"; g.fillRect(x0 - 4, bandY - 4, bandW + 8, bandH + 8); // grout frame
+          const rows = 3, blockH = bandH / rows;
+          const cols = Math.max(1, Math.round(bandW / blockH));
+          const blockW = bandW / cols, gap = Math.max(2, blockH * 0.14);
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              const bx = x0 + c * blockW + gap / 2, by = bandY + r * blockH + gap / 2;
+              const bw = blockW - gap, bh = blockH - gap;
+              g.fillStyle = "#e6f1f8"; g.fillRect(bx, by, bw, bh);                // frosted glass
+              g.fillStyle = "rgba(255,255,255,0.30)";                            // corner glint
+              g.beginPath(); g.moveTo(bx, by); g.lineTo(bx + bw * 0.55, by); g.lineTo(bx, by + bh * 0.55); g.closePath(); g.fill();
+            }
+          }
+        }
+
         // vault-red accent stripe just above the pad
         const padTop = H * 0.65;
         g.fillStyle = "#e63946"; g.fillRect(0, padTop - H * 0.025, W, H * 0.025);
@@ -811,20 +826,38 @@ Loading…</div>
         tex.colorSpace = THREE.SRGBColorSpace;
         return tex;
       };
-      const wallMat = new THREE.MeshBasicMaterial({ map: makeWallTexture(), side: THREE.DoubleSide });
+      const wallMatBand  = new THREE.MeshBasicMaterial({ map: makeWallTexture(true),  side: THREE.DoubleSide });
+      const wallMatPlain = new THREE.MeshBasicMaterial({ map: makeWallTexture(false), side: THREE.DoubleSide });
       const midY = ROOM_H / 2;
-      const addWall = (x, y, z, rotY) => {
-        const m = new THREE.Mesh(new THREE.PlaneGeometry(ROOM, ROOM_H), wallMat);
+      const addWall = (mat, x, y, z, rotY) => {
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(ROOM, ROOM_H), mat);
         m.position.set(x, y, z); m.rotation.y = rotY; scene.add(m);
       };
-      addWall(0, midY, -HALF, 0);            // back  (−Z, behind hoop) faces +Z
-      addWall(0, midY,  HALF, Math.PI);      // front (+Z, behind user) faces −Z
-      addWall(-HALF, midY, 0,  Math.PI / 2); // left  (−X)
-      addWall( HALF, midY, 0, -Math.PI / 2); // right (+X)
+      addWall(wallMatPlain, 0, midY, -HALF, 0);            // back  (−Z, behind hoop) — plain
+      addWall(wallMatPlain, 0, midY,  HALF, Math.PI);      // front (+Z, behind user) — plain
+      addWall(wallMatBand, -HALF, midY, 0,  Math.PI / 2);  // left sideline (−X) — glass brick
+      addWall(wallMatBand,  HALF, midY, 0, -Math.PI / 2);  // right sideline (+X) — glass brick
 
+      // — Ceiling — drop-grid acoustic tiles (~2 ft), tiled via texture repeat —
+      const makeCeilingTexture = () => {
+        const S = 128;
+        const cv = document.createElement("canvas"); cv.width = cv.height = S;
+        const g = cv.getContext("2d");
+        g.fillStyle = "#e9e9e9"; g.fillRect(0, 0, S, S);             // tile face
+        g.fillStyle = "rgba(0,0,0,0.03)";                            // faint acoustic speckle
+        for (let i = 0; i < 110; i++) g.fillRect(Math.random() * S, Math.random() * S, 1, 1);
+        g.fillStyle = "#c4c4c4";                                     // grid rails on two edges
+        g.fillRect(0, 0, S, 3); g.fillRect(0, 0, 3, S);
+        const tex = new THREE.CanvasTexture(cv);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        const tiles = Math.round(ROOM / 0.61);                       // ~2 ft tiles
+        tex.repeat.set(tiles, tiles);
+        return tex;
+      };
       const ceiling = new THREE.Mesh(
         new THREE.PlaneGeometry(ROOM, ROOM),
-        new THREE.MeshBasicMaterial({ color: 0xececec, side: THREE.DoubleSide })
+        new THREE.MeshBasicMaterial({ map: makeCeilingTexture(), side: THREE.DoubleSide })
       );
       ceiling.position.set(0, ROOM_H, 0);
       ceiling.rotation.x = Math.PI / 2;
