@@ -147,7 +147,7 @@ Loading…</div>
       if (!imagePath) return null;
       return {
         key, label,
-        dateStr: formatMMDDYYYY(dateStr),
+        dateStr: dateStr ? formatMMDDYYYY(dateStr) : "Never worn",
         shoeName: shoe.name,
         colorway,
         imagePath: "../" + imagePath,
@@ -170,27 +170,38 @@ Loading…</div>
       }
     }
 
-    // UP NEXT: oldest last-worn date among owned non-iron non-graveyard
-    // colorways that are actually on the display wall. The ownedKeys guard
-    // keeps UP NEXT from pointing at a shoe with nothing to look at — a worn,
-    // owned, non-iron colorway that just isn't placed in displayLayout would
-    // otherwise be eligible here but invisible everywhere in the scene.
+    // UP NEXT: mirror the main site's "longest unworn" rotation pick. Walk
+    // every owned, non-iron, non-new-pickup colorway (new pickup = bought in
+    // the last 7 days). A never-worn pair outranks any worn one; otherwise the
+    // oldest last-worn date wins, first-encountered breaking ties. Same logic
+    // as the non-VR site — so on-ice (never-worn) shoes are now eligible and,
+    // in fact, top priority. (Requires an image, since the banner shows a photo.)
     let upNextEntry = null;
     {
-      let bestKey = null;
-      let bestDate = "9999-99-99";
-      for (const [key, date] of Object.entries(lastWornByKey)) {
-        if (!ownedKeys.has(key)) continue;
-        if (colorwayOwned[key] === false) continue;
-        if (graveyardMeta[key]) continue;
-        if (tierMeta[key] === "iron") continue;
-        if (date < bestDate) {
-          bestDate = date;
-          bestKey = key;
+      const allColorways = data.colorways || {};
+      const todayMid = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); })();
+      const isNewPickup = (pd) => {
+        if (!pd) return false;
+        const diff = todayMid - new Date(pd + "T00:00:00").getTime();
+        return diff >= 0 && diff <= 7 * 86400000;
+      };
+      let pickKey = null, pickDate = null, havePick = false;
+      for (const shoe of inventory) {
+        for (const cw of (allColorways[shoe.shortName] || [])) {
+          const key = `${shoe.id}_${cw}`;
+          if (colorwayOwned[key] === false) continue;                       // owned only
+          if (tierMeta[key] === "iron") continue;                           // iron excluded from rotation
+          if (isNewPickup(colorwayMeta[key]?.purchaseDate)) continue;       // brand-new pickup excluded
+          if (!images[key]) continue;                                       // need a photo for the banner
+          const lastWorn = lastWornByKey[key] || null;                      // null = never worn
+          if (!havePick) { pickKey = key; pickDate = lastWorn; havePick = true; continue; }
+          if (pickDate === null) continue;                                  // current pick never-worn → keep
+          if (lastWorn === null) { pickKey = key; pickDate = null; continue; } // entry never-worn → take it
+          if (lastWorn < pickDate) { pickKey = key; pickDate = lastWorn; }      // both worn → older wins
         }
       }
-      if (bestKey) {
-        upNextEntry = buildSkyEntry(bestKey, "UP NEXT", bestDate);
+      if (pickKey) {
+        upNextEntry = buildSkyEntry(pickKey, "UP NEXT", pickDate);
       }
     }
 
