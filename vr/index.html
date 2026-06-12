@@ -1008,116 +1008,116 @@ Loading…</div>
     // ════════════════════════════════════════════════════════════════════
     //  SKY BANNERS — floating cards high overhead
     // ════════════════════════════════════════════════════════════════════
-    // Each sky banner is a Group containing a photo plane on top and a
-    // text caption plane below. The whole group tilts down to face the
-    // user at eye level (origin, y=1.6) so the photo and text are
-    // readable when looking up. Two banners — last worn and up next —
-    // side by side, centered horizontally.
-    //
-    // They sit at y=6m: high enough to feel like sky, low enough that
-    // the look-up isn't a strain. The user has to deliberately tilt
-    // their head up to see them, which is the desired effect — they're
-    // ambient info, not in-your-face.
+    //  CHAMPIONSHIP BANNERS — "LAST WORN" + "UP NEXT"
+    // ════════════════════════════════════════════════════════════════════
+    // Vertical felt banners hung on the back wall flanking the wordmark, in the
+    // style of a gym's championship banners: deep-red felt, a gold border, a
+    // wooden top rod with end knobs, and a swallowtail bottom. Each carries its
+    // title, a photo of the shoe, the name + colorway, and the date — live from
+    // the wear log. The felt body (everything but the photo) is one canvas with
+    // transparency outside the banner silhouette; the shoe photo is layered as
+    // its own plane so it can load async and keep its aspect.
 
-    const buildSkyBanner = (entry, x, y, z, flat, scaleFactor) => {
+    const buildBanner = (entry, x, yCenter, z) => {
       if (!entry) return;
       const group = new THREE.Group();
-      group.position.set(x, y, z);
-      if (flat) {
-        // Lay flat on the floor like a rug, scaled down from the distance-
-        // sized version. No backing card — the photo and the outlined caption
-        // sit directly on the hardwood.
-        group.rotation.x = -Math.PI / 2;
-        if (scaleFactor) group.scale.setScalar(scaleFactor);
-      } else {
-        // Tilt to face the user — look at user's eye position at origin.
-        group.lookAt(0, 1.6, 0);
-      }
+      group.position.set(x, yCenter, z);
       scene.add(group);
 
-      // Photo plane: bigger than the close-up version since these sit
-      // well in the distance. 2.4m wide × 1.6m tall placeholder; will
-      // resize to texture aspect on load.
-      const PHOTO_W = 2.4, PHOTO_H = 1.6;
-      const photoGeom = new THREE.PlaneGeometry(PHOTO_W, PHOTO_H);
-      const photoMat = new THREE.MeshBasicMaterial({
-        color: 0x222222,
-        side: THREE.DoubleSide,
-        transparent: true,
-        alphaTest: 0.01,
-      });
-      const photoPlane = new THREE.Mesh(photoGeom, photoMat);
-      photoPlane.position.set(0, 0.45, 0); // above caption with breathing room
-      group.add(photoPlane);
+      const BW = 1.32, BH = 2.4;          // banner plane size (metres)
 
-      // Load the texture; resize plane to preserve aspect (fit-inside the
-      // PHOTO_W × PHOTO_H box).
-      loadTextureFor(entry.imagePath, photoPlane, (aspect) => {
-        photoPlane.geometry.dispose();
-        let w, h;
-        const innerAspect = PHOTO_W / PHOTO_H;
-        if (aspect >= innerAspect) {
-          w = PHOTO_W;
-          h = PHOTO_W / aspect;
-        } else {
-          h = PHOTO_H;
-          w = PHOTO_H * aspect;
-        }
-        photoPlane.geometry = new THREE.PlaneGeometry(w, h);
-      });
+      // — Felt body drawn on a canvas (transparent outside the swallowtail) —
+      const W = 768, H = 1400;
+      const cv = document.createElement("canvas");
+      cv.width = W; cv.height = H;
+      const g = cv.getContext("2d");
+      g.clearRect(0, 0, W, H);
 
-      // Caption: canvas-text with the label (LAST WORN / UP NEXT), shoe
-      // name + colorway, and the date. Three lines, large bright text.
-      const CAP_W = 2048, CAP_H = 768;
-      const canvas = document.createElement("canvas");
-      canvas.width = CAP_W; canvas.height = CAP_H;
-      const ctx = canvas.getContext("2d");
-      ctx.clearRect(0, 0, CAP_W, CAP_H);
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      ctx.lineJoin = "round";
-
-      // Each line gets a dark outline so the bright text stays legible on the
-      // hardwood now that there's no backing card behind it.
-      const capLine = (txt, font, fill, y, stroke) => {
-        ctx.font = font;
-        ctx.lineWidth = stroke;
-        ctx.strokeStyle = "rgba(0,0,0,0.85)";
-        ctx.strokeText(txt, CAP_W / 2, y);
-        ctx.fillStyle = fill;
-        ctx.fillText(txt, CAP_W / 2, y);
+      const notch = H * 0.12;             // depth of the swallowtail V
+      const outline = (i) => {
+        g.beginPath();
+        g.moveTo(i, i);
+        g.lineTo(W - i, i);
+        g.lineTo(W - i, H - i);
+        g.lineTo(W / 2, H - notch + i * 1.5);
+        g.lineTo(i, H - i);
+        g.closePath();
       };
 
-      capLine(entry.label,    "bold 80px -apple-system, BlinkMacSystemFont, sans-serif",  "#e8e8e8", 30,  10); // LAST WORN / UP NEXT
-      capLine(entry.shoeName, "bold 160px -apple-system, BlinkMacSystemFont, sans-serif", "#ffffff", 160, 16); // headline
-      capLine(entry.colorway, "120px -apple-system, BlinkMacSystemFont, sans-serif",      "#f5f5f5", 360, 12); // colorway
-      capLine(entry.dateStr,  "italic 80px -apple-system, BlinkMacSystemFont, sans-serif", "#e0e0e0", 550, 10); // date
+      outline(0);
+      g.fillStyle = "#a4121f"; g.fill();                       // deep vault-red felt
+      g.save(); outline(0); g.clip();                          // felt shading + threads
+      const grad = g.createLinearGradient(0, 0, W, 0);
+      grad.addColorStop(0,   "rgba(0,0,0,0.18)");
+      grad.addColorStop(0.5, "rgba(255,255,255,0.06)");
+      grad.addColorStop(1,   "rgba(0,0,0,0.18)");
+      g.fillStyle = grad; g.fillRect(0, 0, W, H);
+      g.fillStyle = "rgba(0,0,0,0.05)";
+      for (let i = 0; i < 380; i++) g.fillRect(Math.random() * W, Math.random() * H, 1, 6);
+      g.restore();
 
-      const captionTexture = new THREE.CanvasTexture(canvas);
-      captionTexture.colorSpace = THREE.SRGBColorSpace;
-      const captionMat = new THREE.MeshBasicMaterial({
-        map: captionTexture, transparent: true, side: THREE.DoubleSide,
-      });
-      const CAPTION_H = 0.8;
-      const CAPTION_W = CAPTION_H * (CAP_W / CAP_H);
-      const captionPlane = new THREE.Mesh(
-        new THREE.PlaneGeometry(CAPTION_W, CAPTION_H),
-        captionMat
+      outline(26);                                             // gold border
+      g.lineJoin = "round"; g.lineWidth = 14; g.strokeStyle = "#d9b44a"; g.stroke();
+
+      const line = (txt, font, fill, yy, sw) => {
+        g.font = font; g.textAlign = "center"; g.textBaseline = "middle";
+        g.lineJoin = "round"; g.lineWidth = sw;
+        g.strokeStyle = "rgba(0,0,0,0.5)"; g.strokeText(txt, W / 2, yy);
+        g.fillStyle = fill; g.fillText(txt, W / 2, yy);
+      };
+      const titleSpaced = entry.label.split("").join("\u2009"); // thin-spaced title
+      line(titleSpaced,    "bold 92px -apple-system, BlinkMacSystemFont, sans-serif",  "#FFD700", H * 0.075, 6);
+      line(entry.shoeName, "bold 70px -apple-system, BlinkMacSystemFont, sans-serif",  "#ffffff", H * 0.595, 6);
+      line(entry.colorway, "52px -apple-system, BlinkMacSystemFont, sans-serif",       "#f0e6c8", H * 0.660, 5);
+      line(entry.dateStr,  "italic 50px -apple-system, BlinkMacSystemFont, sans-serif","#e9dcc0", H * 0.735, 5);
+
+      const tex = new THREE.CanvasTexture(cv);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const felt = new THREE.Mesh(
+        new THREE.PlaneGeometry(BW, BH),
+        new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.02, side: THREE.DoubleSide })
       );
-      // Below the photo, with breathing room.
-      captionPlane.position.set(0, -0.95, 0);
-      group.add(captionPlane);
+      group.add(felt);
+
+      // — Shoe photo, layered over the upper-middle of the felt —
+      const BOX_W = 1.0, BOX_H = 0.92;
+      const photo = new THREE.Mesh(
+        new THREE.PlaneGeometry(BOX_W, BOX_H),
+        new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, alphaTest: 0.01, side: THREE.DoubleSide })
+      );
+      photo.position.set(0, BH * 0.16, 0.02);                 // slightly proud of the felt
+      group.add(photo);
+      loadTextureFor(entry.imagePath, photo, (aspect) => {
+        photo.geometry.dispose();
+        let w, h; const inner = BOX_W / BOX_H;
+        if (aspect >= inner) { w = BOX_W; h = BOX_W / aspect; }
+        else                 { h = BOX_H; w = BOX_H * aspect; }
+        photo.geometry = new THREE.PlaneGeometry(w, h);
+      });
+
+      // — Wooden top rod with end knobs —
+      const rod = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.035, 0.035, BW + 0.18, 16),
+        new THREE.MeshStandardMaterial({ color: 0x6b4a2a, roughness: 0.7 })
+      );
+      rod.rotation.z = Math.PI / 2;
+      rod.position.set(0, BH / 2 + 0.02, 0.03);
+      group.add(rod);
+      const knobGeo = new THREE.SphereGeometry(0.055, 16, 12);
+      const knobMat = new THREE.MeshStandardMaterial({ color: 0x5a3d22, roughness: 0.6 });
+      for (const sx of [-1, 1]) {
+        const k = new THREE.Mesh(knobGeo, knobMat);
+        k.position.set(sx * (BW / 2 + 0.09), BH / 2 + 0.02, 0.03);
+        group.add(k);
+      }
     };
 
-    // LAST WORN / UP NEXT as flat floor mats flanking the lane down toward the
-    // baseline — one to each side of the painted key, laid flat (rotation.x =
-    // −90°) and scaled down. No backing card; they read directly on the wood.
-    const FLOOR_Y     = 0.02;     // just above the floor
-    const FLOOR_SCALE = 0.45;
-    const FLOOR_Z     = -5.5;     // down toward the baseline end of the lane
-    const FLANK_X     = 3.9;      // set outboard of the lane so the mats clear the key (independent of CASE_X now)
-    buildSkyBanner(lastWornEntry, -FLANK_X, FLOOR_Y, FLOOR_Z, true, FLOOR_SCALE);
-    buildSkyBanner(upNextEntry,    FLANK_X, FLOOR_Y, FLOOR_Z, true, FLOOR_SCALE);
+    // Hang the two banners on the back wall, flanking the wordmark up high.
+    // User faces −Z, so their left is −X (LAST WORN) and right is +X (UP NEXT),
+    // matching where the floor mats used to sit.
+    const BANNER_X = 6.0, BANNER_Y = 5.0, BANNER_Z = -8.9;
+    buildBanner(lastWornEntry, -BANNER_X, BANNER_Y, BANNER_Z); // LAST WORN — left of wordmark
+    buildBanner(upNextEntry,    BANNER_X, BANNER_Y, BANNER_Z); // UP NEXT  — right of wordmark
 
     // ════════════════════════════════════════════════════════════════════
     //  STORY PANEL (canvas-rendered text for the pulled-forward case)
