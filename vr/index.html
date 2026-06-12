@@ -792,7 +792,7 @@ Loading…</div>
         const cv = document.createElement("canvas");
         cv.width = W; cv.height = H;
         const g = cv.getContext("2d");
-        g.fillStyle = "#f2f2f2"; g.fillRect(0, 0, W, H);              // off-white cinderblock
+        g.fillStyle = "#e9e5db"; g.fillRect(0, 0, W, H);              // warm off-white cinderblock
         g.strokeStyle = "rgba(0,0,0,0.04)"; g.lineWidth = 1;          // faint block courses
         for (let y = 0; y < H * 0.64; y += 18) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
 
