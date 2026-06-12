@@ -244,6 +244,10 @@
       {
         "date": "2024-01-03",
         "colorway": "White Cement Reimagined"
+      },
+      {
+        "date": "2026-06-12",
+        "colorway": "Rare Air"
       }
     ],
     "4": [
@@ -2339,5 +2343,5 @@
       }
     ]
   },
-  "builtAt": "2026-06-09T23:17:11.160083Z"
+  "builtAt": "2026-06-12T10:20:05.384384Z"
 }
