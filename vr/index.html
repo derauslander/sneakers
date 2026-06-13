@@ -251,7 +251,7 @@ Loading…</div>
       // — Court markings (white), NBA dimensions in metres —
       const SIDE = 7.62, BASE_Z = -7.0, HALF_Z = 7.33, LANE_HALF = 2.44,
             FT_Z = -1.21, CIRC_R = 1.83, BASKET_Z = -5.40,
-            TP_R = 7.24, TP_X = 6.71, TP_END_Z = -2.68, REST_R = 1.22;
+            TP_R = 7.24, TP_X = 6.71, TP_END_Z = -2.68;
       g.strokeStyle = "#f2efe9";
       g.lineWidth   = px(0.06);
       g.lineCap     = "round";
@@ -267,9 +267,6 @@ Loading…</div>
 
       // free-throw circle
       g.beginPath(); g.arc(fx(0), fy(FT_Z), px(CIRC_R), 0, Math.PI * 2); g.stroke();
-
-      // restricted-area arc under the basket (bulges toward the court)
-      g.beginPath(); g.arc(fx(0), fy(BASKET_Z), px(REST_R), 0, Math.PI); g.stroke();
 
       // three-point line: corner straights + arc centred on the basket
       g.beginPath();
@@ -1260,6 +1257,12 @@ Loading…</div>
     });
 
     // ════════════════════════════════════════════════════════════════════
+    //  ON FEET TODAY — shared state (display + animation built later)
+    // ════════════════════════════════════════════════════════════════════
+    let ofdDisplay = null, ofdClickTarget = null;
+    const ofd = { phase: "idle", trigger: () => {}, update: () => {} };
+
+    // ════════════════════════════════════════════════════════════════════
     //  CONTROLLERS — raycaster + trigger select
     // ════════════════════════════════════════════════════════════════════
     const raycaster = new THREE.Raycaster();
@@ -1449,13 +1452,26 @@ Loading…</div>
     // aimed before calling this (by onSelect for VR, by the test-mode
     // click handler for desktop).
     const handleRayHit = () => {
+      const now = performance.now();
+
+      // During OFD animation, block all interactions.
+      if (ofd.phase !== "idle" && ofd.phase !== "done") return;
+
+      // Check OFD display first.
+      if (ofdClickTarget && ofd.phase === "idle") {
+        const ofdHits = raycaster.intersectObject(ofdClickTarget, false);
+        if (ofdHits.length > 0) {
+          ofd.trigger(now);
+          return;
+        }
+      }
+
       // Hit-test the box shells, not the inner photo planes — the shell
       // is the visible "object" the user is pointing at, and the photo
       // sits inside (partially obscured by the shell). userData.caseRef
       // is now set on shell, not plane.
       const targets = allCases.map((c) => c.shell);
       const intersects = raycaster.intersectObjects(targets, false);
-      const now = performance.now();
 
       // Clear an active dream-wall pull (return the case + restore image 3).
       const clearDreamFocus = () => {
@@ -1679,6 +1695,395 @@ Loading…</div>
     };
 
     // ════════════════════════════════════════════════════════════════════
+    //  ON FEET TODAY — display in the key + starfield animation
+    // ════════════════════════════════════════════════════════════════════
+    // A panel in the painted lane shows today's shoe. Clicking it triggers
+    // a starfield + flythrough intro (same image order as the main site:
+    // main → hover2 → hover). After the sequence the display clears out.
+    {
+      const precomp = data.precomputedLastWorn;
+      const imgPaths = [];
+      if (precomp) {
+        for (const sfx of ["", "_hover2", "_hover"]) {
+          const p = images[precomp.key + sfx];
+          if (p) imgPaths.push("../" + p);
+        }
+      }
+
+      if (precomp && imgPaths.length > 0) {
+
+        // ── Display panel in the key ────────────────────────────────────
+        const OFD_Y = 1.25, OFD_Z = -3.5;
+        ofdDisplay = new THREE.Group();
+        ofdDisplay.position.set(0, OFD_Y, OFD_Z);
+        scene.add(ofdDisplay);
+
+        // Dark plaque backing (canvas) with title, shoe name, and prompt
+        const CW = 768, CH = 1100, margin = 16, rad = 28;
+        const cv = document.createElement("canvas");
+        cv.width = CW; cv.height = CH;
+        const g = cv.getContext("2d");
+        g.clearRect(0, 0, CW, CH);
+
+        // Rounded rect
+        g.beginPath();
+        g.moveTo(margin + rad, margin);
+        g.arcTo(CW - margin, margin, CW - margin, CH - margin, rad);
+        g.arcTo(CW - margin, CH - margin, margin, CH - margin, rad);
+        g.arcTo(margin, CH - margin, margin, margin, rad);
+        g.arcTo(margin, margin, CW - margin, margin, rad);
+        g.closePath();
+        g.fillStyle = "rgba(10,10,10,0.92)"; g.fill();
+        g.lineWidth = 6; g.strokeStyle = "#e63946"; g.stroke();
+
+        g.textAlign = "center"; g.textBaseline = "middle";
+
+        // "ON FEET TODAY" — vault-red, letterspaced
+        g.fillStyle = "#e63946";
+        g.font = "bold 60px -apple-system, BlinkMacSystemFont, sans-serif";
+        const titleChars = "ON FEET TODAY".split("");
+        const sp = 10;
+        let tw = 0;
+        for (const ch of titleChars) tw += g.measureText(ch).width + sp;
+        tw -= sp;
+        let tx = (CW - tw) / 2;
+        for (const ch of titleChars) {
+          const cw = g.measureText(ch).width;
+          g.fillText(ch, tx + cw / 2, 78);
+          tx += cw + sp;
+        }
+
+        // Accent line
+        g.strokeStyle = "rgba(230,57,70,0.4)"; g.lineWidth = 2;
+        g.beginPath(); g.moveTo(60, 125); g.lineTo(CW - 60, 125); g.stroke();
+
+        // Shoe name
+        g.fillStyle = "#ffffff";
+        g.font = "bold 54px -apple-system, BlinkMacSystemFont, sans-serif";
+        g.fillText(precomp.shoeName, CW / 2, 860);
+
+        // Colorway
+        g.fillStyle = "#f0e6c8";
+        g.font = "46px -apple-system, BlinkMacSystemFont, sans-serif";
+        g.fillText(precomp.colorway, CW / 2, 930);
+
+        // Prompt
+        g.fillStyle = "rgba(255,255,255,0.30)";
+        g.font = "italic 34px -apple-system, BlinkMacSystemFont, sans-serif";
+        g.fillText("select to launch", CW / 2, 1035);
+
+        const backingTex = new THREE.CanvasTexture(cv);
+        backingTex.colorSpace = THREE.SRGBColorSpace;
+        const pw = 0.85, ph = pw * (CH / CW);
+        const backing = new THREE.Mesh(
+          new THREE.PlaneGeometry(pw, ph),
+          new THREE.MeshBasicMaterial({ map: backingTex, transparent: true, side: THREE.DoubleSide })
+        );
+        ofdDisplay.add(backing);
+        ofdClickTarget = backing;
+
+        // Shoe photo overlaid on the backing
+        const photo = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.48, 0.48),
+          new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, alphaTest: 0.01, side: THREE.DoubleSide })
+        );
+        photo.position.set(0, 0.06, 0.005);
+        ofdDisplay.add(photo);
+
+        loader.load(imgPaths[0], (texture) => {
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.anisotropy = 8;
+          photo.material.map = texture;
+          photo.material.color.set(0xffffff);
+          photo.material.needsUpdate = true;
+          const aspect = texture.image.width / texture.image.height;
+          const fitW = 0.48, fitH = 0.46;
+          const aw = aspect >= fitW / fitH ? fitW : fitH * aspect;
+          const ah = aspect >= fitW / fitH ? fitW / aspect : fitH;
+          photo.geometry.dispose();
+          photo.geometry = new THREE.PlaneGeometry(aw, ah);
+        });
+
+        // Pulsing glow ring — a slightly larger rect behind the backing
+        const glowMat = new THREE.MeshBasicMaterial({
+          color: 0xe63946, transparent: true, opacity: 0.0, side: THREE.DoubleSide,
+        });
+        const glow = new THREE.Mesh(new THREE.PlaneGeometry(pw + 0.06, ph + 0.06), glowMat);
+        glow.position.z = -0.005;
+        ofdDisplay.add(glow);
+
+        // ── Animation infrastructure ────────────────────────────────────
+
+        // Fade sphere (hides the room during the sequence)
+        const fadeSphere = new THREE.Mesh(
+          new THREE.SphereGeometry(45, 16, 12),
+          new THREE.MeshBasicMaterial({
+            color: 0x000000, side: THREE.BackSide,
+            transparent: true, opacity: 0, depthWrite: false,
+          })
+        );
+        fadeSphere.renderOrder = 998;
+        camera.add(fadeSphere);
+
+        // Starfield particles (camera-local so they always stream from ahead)
+        const STAR_COUNT = 400, WARP_SPEED = 22;
+        const starGeo = new THREE.BufferGeometry();
+        const starPos = new Float32Array(STAR_COUNT * 3);
+        for (let i = 0; i < STAR_COUNT; i++) {
+          starPos[i * 3]     = (Math.random() - 0.5) * 24;
+          starPos[i * 3 + 1] = (Math.random() - 0.5) * 24;
+          starPos[i * 3 + 2] = -(Math.random() * 35 + 5);
+        }
+        starGeo.setAttribute("position", new THREE.BufferAttribute(starPos, 3));
+        const starField = new THREE.Points(starGeo, new THREE.PointsMaterial({
+          color: 0xffffff, size: 0.06, sizeAttenuation: true,
+          transparent: true, depthWrite: false,
+        }));
+        starField.visible = false;
+        starField.renderOrder = 999;
+        camera.add(starField);
+
+        const warpStars = (dt) => {
+          const pos = starGeo.attributes.position.array;
+          for (let i = 0; i < STAR_COUNT; i++) {
+            pos[i * 3 + 2] += WARP_SPEED * dt;
+            if (pos[i * 3 + 2] > 5) {
+              pos[i * 3 + 2] -= 40;
+              pos[i * 3]     = (Math.random() - 0.5) * 24;
+              pos[i * 3 + 1] = (Math.random() - 0.5) * 24;
+            }
+          }
+          starGeo.attributes.position.needsUpdate = true;
+        };
+
+        // Helper: canvas text → plane mesh
+        const makeLabel = (text, fontSize, color, letterSpace) => {
+          const LW = 1400, LH = 200;
+          const lc = document.createElement("canvas");
+          lc.width = LW; lc.height = LH;
+          const lg = lc.getContext("2d");
+          lg.clearRect(0, 0, LW, LH);
+          lg.textAlign = "center"; lg.textBaseline = "middle";
+          lg.fillStyle = color;
+          lg.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+          if (letterSpace) {
+            const chars = text.split("");
+            let tw2 = 0;
+            for (const c of chars) tw2 += lg.measureText(c).width + letterSpace;
+            tw2 -= letterSpace;
+            let lx = (LW - tw2) / 2;
+            for (const c of chars) {
+              const cw2 = lg.measureText(c).width;
+              lg.fillText(c, lx + cw2 / 2, LH / 2);
+              lx += cw2 + letterSpace;
+            }
+          } else {
+            lg.fillText(text, LW / 2, LH / 2);
+          }
+          const tex = new THREE.CanvasTexture(lc);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          const h = 0.35, w = h * (LW / LH);
+          return new THREE.Mesh(
+            new THREE.PlaneGeometry(w, h),
+            new THREE.MeshBasicMaterial({
+              map: tex, transparent: true, side: THREE.DoubleSide,
+              depthWrite: false, depthTest: false,
+            })
+          );
+        };
+
+        // Intro label — "ON FEET TODAY" centred in view during starfield
+        const introLabel = makeLabel("ON FEET TODAY", 120, "#ffffff", 16);
+        introLabel.position.set(0, 0, -3);
+        introLabel.visible = false;
+        introLabel.renderOrder = 1001;
+        camera.add(introLabel);
+
+        // Flythrough planes (one per image, camera-local)
+        const flyGroup = new THREE.Group();
+        flyGroup.visible = false;
+        camera.add(flyGroup);
+
+        const FLY_W = 1.2, FLY_H = 1.0;
+        const flyPlanes = [];
+        for (let i = 0; i < imgPaths.length; i++) {
+          const mat = new THREE.MeshBasicMaterial({
+            color: 0xffffff, transparent: true, opacity: 0,
+            side: THREE.DoubleSide, depthWrite: false, depthTest: false,
+          });
+          const p = new THREE.Mesh(new THREE.PlaneGeometry(FLY_W, FLY_H), mat);
+          p.visible = false;
+          p.renderOrder = 1000 + i;
+          flyGroup.add(p);
+          flyPlanes.push(p);
+        }
+
+        // Card group — three images + labels, shown after flythrough
+        const cardGroup = new THREE.Group();
+        cardGroup.visible = false;
+        cardGroup.position.set(0, 0, -2.5);
+        camera.add(cardGroup);
+
+        const cardTitle = makeLabel("ON FEET TODAY", 90, "#e63946", 12);
+        cardTitle.position.set(0, 0.7, 0);
+        cardTitle.renderOrder = 1010;
+        cardGroup.add(cardTitle);
+
+        const cardName = makeLabel(
+          `${precomp.shoeName}  \u2014  ${precomp.colorway}`, 72, "#ffffff", 0
+        );
+        cardName.position.set(0, -0.65, 0);
+        cardName.renderOrder = 1010;
+        cardGroup.add(cardName);
+
+        const CARD_SPACING = 0.75;
+        const cardPlanes = [];
+        for (let i = 0; i < imgPaths.length; i++) {
+          const mat = new THREE.MeshBasicMaterial({
+            color: 0xffffff, transparent: true, alphaTest: 0.01,
+            side: THREE.DoubleSide, depthWrite: false, depthTest: false,
+          });
+          const p = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.55), mat);
+          p.position.set((i - (imgPaths.length - 1) / 2) * CARD_SPACING, -0.03, 0);
+          p.visible = false;
+          p.renderOrder = 1010;
+          cardGroup.add(p);
+          cardPlanes.push(p);
+        }
+
+        // Load textures (shared by flythrough + card planes)
+        imgPaths.forEach((path, i) => {
+          loader.load(path, (texture) => {
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.anisotropy = 8;
+            const aspect = texture.image.width / texture.image.height;
+            if (flyPlanes[i]) {
+              flyPlanes[i].material.map = texture;
+              flyPlanes[i].material.needsUpdate = true;
+              const fw = aspect >= 1 ? FLY_W : FLY_H * aspect;
+              const fh = aspect >= 1 ? FLY_W / aspect : FLY_H;
+              flyPlanes[i].geometry.dispose();
+              flyPlanes[i].geometry = new THREE.PlaneGeometry(fw, fh);
+            }
+            if (cardPlanes[i]) {
+              cardPlanes[i].material.map = texture;
+              cardPlanes[i].material.needsUpdate = true;
+              cardPlanes[i].visible = true;
+              const cs = 0.55;
+              const cw2 = aspect >= 1 ? cs : cs * aspect;
+              const ch2 = aspect >= 1 ? cs / aspect : cs;
+              cardPlanes[i].geometry.dispose();
+              cardPlanes[i].geometry = new THREE.PlaneGeometry(cw2, ch2);
+            }
+          });
+        });
+
+        // ── Timing constants ────────────────────────────────────────────
+        const OFD_FADEOUT_MS = 600;
+        const OFD_INTRO_MS  = 1200;
+        const OFD_FLY_MS    = 1200;
+        const OFD_OVERLAP   = 300;
+        const OFD_FLY_TOTAL = imgPaths.length > 1
+          ? (imgPaths.length - 1) * (OFD_FLY_MS - OFD_OVERLAP) + OFD_FLY_MS
+          : OFD_FLY_MS;
+        const OFD_CARD_MS   = 2500;
+        const OFD_FADEIN_MS = 600;
+
+        const ease = (t) => 1 - Math.pow(1 - t, 3);
+
+        // ── Trigger ─────────────────────────────────────────────────────
+        ofd.trigger = (now) => {
+          ofd.phase = "fadeout";
+          ofd.t0 = now;
+          ofdDisplay.visible = false;
+          restoreStageInstant();
+          hideStory();
+        };
+
+        // ── Per-frame update ────────────────────────────────────────────
+        ofd.update = (now, dt) => {
+          // Pulse the glow ring while idle
+          if (ofd.phase === "idle" && ofdDisplay) {
+            glowMat.opacity = 0.25 + 0.2 * Math.sin(now * 0.003);
+          }
+
+          if (ofd.phase === "idle" || ofd.phase === "done") return;
+          const elapsed = now - ofd.t0;
+
+          if (ofd.phase === "fadeout") {
+            const t = Math.min(elapsed / OFD_FADEOUT_MS, 1);
+            fadeSphere.material.opacity = ease(t);
+            if (t >= 1) {
+              starField.visible = true;
+              introLabel.visible = true;
+              ofd.phase = "intro";
+              ofd.t0 = now;
+            }
+
+          } else if (ofd.phase === "intro") {
+            warpStars(dt);
+            if (elapsed >= OFD_INTRO_MS) {
+              flyGroup.visible = true;
+              ofd.phase = "fly";
+              ofd.t0 = now;
+            }
+
+          } else if (ofd.phase === "fly") {
+            warpStars(dt);
+            for (let i = 0; i < flyPlanes.length; i++) {
+              const start = i * (OFD_FLY_MS - OFD_OVERLAP);
+              const localT = (elapsed - start) / OFD_FLY_MS;
+              if (localT < 0) { flyPlanes[i].visible = false; continue; }
+              if (localT > 1) { flyPlanes[i].visible = false; continue; }
+              flyPlanes[i].visible = true;
+              const e = ease(localT);
+              flyPlanes[i].position.set(0, 0, -18 + 20 * e);
+              flyPlanes[i].scale.setScalar(0.3 + 1.7 * e);
+              flyPlanes[i].material.opacity =
+                localT < 0.12 ? localT / 0.12 :
+                localT > 0.75 ? Math.max(0, (1 - localT) / 0.25) : 1;
+            }
+            if (elapsed >= OFD_FLY_TOTAL) {
+              flyGroup.visible = false;
+              introLabel.visible = false;
+              starField.visible = false;
+              cardGroup.visible = true;
+              ofd.phase = "card";
+              ofd.t0 = now;
+            }
+
+          } else if (ofd.phase === "card") {
+            // Fade card in during first 300ms
+            const cardFade = Math.min(elapsed / 300, 1);
+            cardTitle.material.opacity = cardFade;
+            cardName.material.opacity = cardFade;
+            for (const cp of cardPlanes) cp.material.opacity = cardFade;
+            if (elapsed >= OFD_CARD_MS) {
+              cardGroup.visible = false;
+              ofd.phase = "fadein";
+              ofd.t0 = now;
+            }
+
+          } else if (ofd.phase === "fadein") {
+            const t = Math.min(elapsed / OFD_FADEIN_MS, 1);
+            fadeSphere.material.opacity = 1 - ease(t);
+            if (t >= 1) {
+              fadeSphere.material.opacity = 0;
+              ofd.phase = "done";
+              if (ofdDisplay) {
+                scene.remove(ofdDisplay);
+                ofdDisplay = null;
+                ofdClickTarget = null;
+              }
+            }
+          }
+        };
+
+        log("On Feet Today: " + precomp.shoeName + " — " + precomp.colorway, "ok");
+      }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
     //  RENDER LOOP
     // ════════════════════════════════════════════════════════════════════
     let _lastFrameT = performance.now();
@@ -1692,7 +2097,9 @@ Loading…</div>
       updateCases(now);
       updatePulse(now);
       updateStage(now);
+      ofd.update(now, dt);
       if (storyPanel) faceUserUpright(storyPanel);
+      if (ofdDisplay) faceUserUpright(ofdDisplay);
       renderer.render(scene, camera);
     });
 
