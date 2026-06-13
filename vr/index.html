@@ -1094,7 +1094,7 @@ Loading…</div>
       const BOX_W = 1.0, BOX_H = 0.92;
       const photo = new THREE.Mesh(
         new THREE.PlaneGeometry(BOX_W, BOX_H),
-        new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, alphaTest: 0.01, side: THREE.DoubleSide })
+        new THREE.MeshBasicMaterial({ color: 0x111111, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide })
       );
       photo.position.set(0, BH * 0.16, 0.02);                 // slightly proud of the felt
       group.add(photo);
