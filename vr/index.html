@@ -16,6 +16,13 @@
     #status .err { color: #ff6b6b; }
     #status .ok  { color: #6bff8e; }
     #status .dim { color: #666; }
+    #back-link {
+      position: fixed; bottom: 16px; left: 20px;
+      font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+      color: rgba(255,255,255,0.35); text-decoration: none;
+      transition: opacity 0.3s; z-index: 10;
+    }
+    #back-link:hover { opacity: 0.8; }
   </style>
 
   <script type="importmap">
@@ -30,6 +37,7 @@
 <body>
   <div id="status">The Vault — VR
 Loading…</div>
+  <a id="back-link" href="../">Back to The Vault</a>
 
   <script type="module">
     import * as THREE from "three";
