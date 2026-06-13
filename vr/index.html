@@ -1458,7 +1458,7 @@ Loading…</div>
       if (ofd.phase !== "idle" && ofd.phase !== "done") return;
 
       // Check OFD display first.
-      if (ofdClickTarget && ofd.phase === "idle") {
+      if (ofdClickTarget && (ofd.phase === "idle" || ofd.phase === "done")) {
         const ofdHits = raycaster.intersectObject(ofdClickTarget, false);
         if (ofdHits.length > 0) {
           ofd.trigger(now);
@@ -1713,7 +1713,7 @@ Loading…</div>
       if (precomp && imgPaths.length > 0) {
 
         // ── Display panel in the key ────────────────────────────────────
-        const OFD_Y = 0.01, OFD_Z = -3.5;
+        const OFD_Y = 0.01, OFD_Z = -4.5;
         ofdDisplay = new THREE.Group();
         ofdDisplay.position.set(0, OFD_Y, OFD_Z);
         ofdDisplay.rotation.x = -Math.PI / 2;           // flat on floor, face up
@@ -1775,7 +1775,7 @@ Loading…</div>
 
         const backingTex = new THREE.CanvasTexture(cv);
         backingTex.colorSpace = THREE.SRGBColorSpace;
-        const pw = 0.85, ph = pw * (CH / CW);
+        const pw = 1.3, ph = pw * (CH / CW);
         const backing = new THREE.Mesh(
           new THREE.PlaneGeometry(pw, ph),
           new THREE.MeshBasicMaterial({ map: backingTex, transparent: true, side: THREE.DoubleSide })
@@ -1785,10 +1785,10 @@ Loading…</div>
 
         // Shoe photo overlaid on the backing
         const photo = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.48, 0.48),
+          new THREE.PlaneGeometry(0.73, 0.73),
           new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, alphaTest: 0.01, side: THREE.DoubleSide })
         );
-        photo.position.set(0, 0.06, 0.005);
+        photo.position.set(0, 0.09, 0.005);
         ofdDisplay.add(photo);
 
         loader.load(imgPaths[0], (texture) => {
@@ -1798,20 +1798,12 @@ Loading…</div>
           photo.material.color.set(0xffffff);
           photo.material.needsUpdate = true;
           const aspect = texture.image.width / texture.image.height;
-          const fitW = 0.48, fitH = 0.46;
+          const fitW = 0.73, fitH = 0.70;
           const aw = aspect >= fitW / fitH ? fitW : fitH * aspect;
           const ah = aspect >= fitW / fitH ? fitW / aspect : fitH;
           photo.geometry.dispose();
           photo.geometry = new THREE.PlaneGeometry(aw, ah);
         });
-
-        // Pulsing glow ring — a slightly larger rect behind the backing
-        const glowMat = new THREE.MeshBasicMaterial({
-          color: 0xe63946, transparent: true, opacity: 0.0, side: THREE.DoubleSide,
-        });
-        const glow = new THREE.Mesh(new THREE.PlaneGeometry(pw + 0.06, ph + 0.06), glowMat);
-        glow.position.z = -0.005;
-        ofdDisplay.add(glow);
 
         // ── Animation infrastructure ────────────────────────────────────
 
@@ -2018,11 +2010,6 @@ Loading…</div>
 
         // ── Per-frame update ────────────────────────────────────────────
         ofd.update = (now, dt) => {
-          // Pulse the glow ring while idle
-          if ((ofd.phase === "idle" || ofd.phase === "done") && ofdDisplay) {
-            glowMat.opacity = 0.25 + 0.2 * Math.sin(now * 0.003);
-          }
-
           if (ofd.phase === "idle" || ofd.phase === "done") return;
           const elapsed = now - ofd.t0;
 
@@ -2065,13 +2052,13 @@ Loading…</div>
             if (elapsed >= OFD_FLY_TOTAL) {
               flyGroup.visible = false;
               introLabel.visible = false;
-              starField.visible = false;
               cardGroup.visible = true;
               ofd.phase = "card";
               ofd.t0 = now;
             }
 
           } else if (ofd.phase === "card") {
+            warpStars(dt);
             // Fade card in during first 300ms
             const cardFade = Math.min(elapsed / 300, 1);
             cardTitle.material.opacity = cardFade;
@@ -2079,6 +2066,7 @@ Loading…</div>
             for (const cp of cardPlanes) cp.material.opacity = cardFade;
             if (elapsed >= OFD_CARD_MS) {
               cardGroup.visible = false;
+              starField.visible = false;
               ofd.phase = "fadein";
               ofd.t0 = now;
             }
