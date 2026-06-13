@@ -1713,9 +1713,10 @@ Loading…</div>
       if (precomp && imgPaths.length > 0) {
 
         // ── Display panel in the key ────────────────────────────────────
-        const OFD_Y = 1.25, OFD_Z = -3.5;
+        const OFD_Y = 0.01, OFD_Z = -3.5;
         ofdDisplay = new THREE.Group();
         ofdDisplay.position.set(0, OFD_Y, OFD_Z);
+        ofdDisplay.rotation.set(-Math.PI / 2, Math.PI, 0);  // flat on floor, text reads from +Z
         scene.add(ofdDisplay);
 
         // Dark plaque backing (canvas) with title, shoe name, and prompt
@@ -1981,7 +1982,7 @@ Loading…</div>
         // ── Timing constants ────────────────────────────────────────────
         const OFD_FADEOUT_MS = 600;
         const OFD_INTRO_MS  = 1200;
-        const OFD_FLY_MS    = 1200;
+        const OFD_FLY_MS    = 1800;
         const OFD_OVERLAP   = 300;
         const OFD_FLY_TOTAL = imgPaths.length > 1
           ? (imgPaths.length - 1) * (OFD_FLY_MS - OFD_OVERLAP) + OFD_FLY_MS
@@ -2003,7 +2004,7 @@ Loading…</div>
         // ── Per-frame update ────────────────────────────────────────────
         ofd.update = (now, dt) => {
           // Pulse the glow ring while idle
-          if (ofd.phase === "idle" && ofdDisplay) {
+          if ((ofd.phase === "idle" || ofd.phase === "done") && ofdDisplay) {
             glowMat.opacity = 0.25 + 0.2 * Math.sin(now * 0.003);
           }
 
@@ -2014,6 +2015,9 @@ Loading…</div>
             const t = Math.min(elapsed / OFD_FADEOUT_MS, 1);
             fadeSphere.material.opacity = ease(t);
             if (t >= 1) {
+              // Solid (non-transparent) so VR compositing can't bleed through
+              fadeSphere.material.transparent = false;
+              fadeSphere.material.needsUpdate = true;
               starField.visible = true;
               introLabel.visible = true;
               ofd.phase = "intro";
@@ -2065,16 +2069,16 @@ Loading…</div>
             }
 
           } else if (ofd.phase === "fadein") {
+            if (!fadeSphere.material.transparent) {
+              fadeSphere.material.transparent = true;
+              fadeSphere.material.needsUpdate = true;
+            }
             const t = Math.min(elapsed / OFD_FADEIN_MS, 1);
             fadeSphere.material.opacity = 1 - ease(t);
             if (t >= 1) {
               fadeSphere.material.opacity = 0;
               ofd.phase = "done";
-              if (ofdDisplay) {
-                scene.remove(ofdDisplay);
-                ofdDisplay = null;
-                ofdClickTarget = null;
-              }
+              if (ofdDisplay) ofdDisplay.visible = true;
             }
           }
         };
@@ -2099,7 +2103,6 @@ Loading…</div>
       updateStage(now);
       ofd.update(now, dt);
       if (storyPanel) faceUserUpright(storyPanel);
-      if (ofdDisplay) faceUserUpright(ofdDisplay);
       renderer.render(scene, camera);
     });
 
