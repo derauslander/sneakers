@@ -2343,5 +2343,21 @@
       }
     ]
   },
-  "builtAt": "2026-06-12T10:20:05.384384Z"
+  "precomputedLastWorn": {
+    "key": "3_Rare Air",
+    "shoeId": 3,
+    "shoeName": "Air Jordan 3",
+    "shortName": "AJ3",
+    "colorway": "Rare Air",
+    "date": "2026-06-12"
+  },
+  "precomputedUpNext": {
+    "key": "1774096319133_Billy Hoyle",
+    "shoeId": 1774096319133,
+    "shoeName": "Air Command Force",
+    "shortName": "ACF",
+    "colorway": "Billy Hoyle",
+    "date": null
+  },
+  "builtAt": "2026-06-13T12:34:13.540683Z"
 }

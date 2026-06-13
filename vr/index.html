@@ -1058,15 +1058,14 @@ Loading…</div>
     const makeTextPanel = (headline, subhead, story) => {
       const W = 1024;
       const MPP = 0.9 / 768;          // metres per pixel — keeps the prior text scale
-      const padX = 40;
-      const storyTop = 290, lineHeight = 72, bottomPad = 40;
+      const padX = 60;
+      const headY = 90, subY = 195, storyTop = 310;
+      const lineHeight = 68, bottomPad = 60;
       const maxWidth = W - 2 * padX;
 
-      // Pre-wrap the story into lines so the canvas can be sized to fit ALL of
-      // it — no truncation. (The old version drew into a fixed 768px canvas and
-      // hard-stopped once it ran out of vertical room.)
+      // Pre-wrap the story into lines so the canvas can be sized to fit.
       const scratch = document.createElement("canvas").getContext("2d");
-      scratch.font = "italic 52px -apple-system, BlinkMacSystemFont, sans-serif";
+      scratch.font = "italic 48px -apple-system, BlinkMacSystemFont, sans-serif";
       const lines = [];
       if (story) {
         let line = "";
@@ -1078,7 +1077,7 @@ Loading…</div>
         if (line) lines.push(line);
       }
 
-      const contentBottom = lines.length ? storyTop + lines.length * lineHeight : 230;
+      const contentBottom = lines.length ? storyTop + lines.length * lineHeight : subY + 80;
       const H = Math.max(300, Math.ceil(contentBottom + bottomPad));
 
       const canvas = document.createElement("canvas");
@@ -1086,22 +1085,40 @@ Loading…</div>
       const ctx = canvas.getContext("2d");
       ctx.clearRect(0, 0, W, H);
 
-      // Headline — pure white, bold, large
+      // Dark rounded-rect plaque with vault-red border
+      const m = 16, rad = 32;
+      ctx.beginPath();
+      ctx.moveTo(m + rad, m);
+      ctx.arcTo(W - m, m, W - m, H - m, rad);
+      ctx.arcTo(W - m, H - m, m, H - m, rad);
+      ctx.arcTo(m, H - m, m, m, rad);
+      ctx.arcTo(m, m, W - m, m, rad);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(10, 10, 10, 0.88)"; ctx.fill();
+      ctx.lineWidth = 8; ctx.strokeStyle = "#e63946"; ctx.stroke();
+
+      // Headline — centred, white, bold
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
       ctx.fillStyle = "#ffffff";
-      ctx.font = "bold 88px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.textBaseline = "top";
-      ctx.fillText(headline, padX, 40);
+      ctx.font = "bold 82px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText(headline, W / 2, headY);
 
-      // Subhead — light grey, medium
-      ctx.fillStyle = "#dddddd";
-      ctx.font = "60px -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText(subhead, padX, 160);
+      // Thin accent line under the headline
+      ctx.strokeStyle = "rgba(230, 57, 70, 0.5)";
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(padX + 40, headY + 52); ctx.lineTo(W - padX - 40, headY + 52); ctx.stroke();
 
-      // Story — near-white, italic, all wrapped lines
-      ctx.fillStyle = "#f0f0f0";
-      ctx.font = "italic 52px -apple-system, BlinkMacSystemFont, sans-serif";
+      // Subhead — centred, warm cream
+      ctx.fillStyle = "#f0e6c8";
+      ctx.font = "56px -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText(subhead, W / 2, subY);
+
+      // Story — centred, near-white, italic
+      ctx.fillStyle = "#e0e0e0";
+      ctx.font = "italic 48px -apple-system, BlinkMacSystemFont, sans-serif";
       let y = storyTop;
-      for (const ln of lines) { ctx.fillText(ln, padX, y); y += lineHeight; }
+      for (const ln of lines) { ctx.fillText(ln, W / 2, y); y += lineHeight; }
 
       const texture = new THREE.CanvasTexture(canvas);
       texture.colorSpace = THREE.SRGBColorSpace;
@@ -1110,9 +1127,6 @@ Loading…</div>
         map: texture, transparent: true, side: THREE.DoubleSide,
       });
 
-      // Plane sized to the canvas at a constant px→metre scale, so the text
-      // stays the same world size and the panel just grows taller for longer
-      // stories. Width is fixed (1.2m); height tracks H.
       const geometry = new THREE.PlaneGeometry(W * MPP, H * MPP);
       return new THREE.Mesh(geometry, material);
     };
@@ -1393,6 +1407,7 @@ Loading…</div>
       const sw = stage.shadowW;
       contactShadow.scale.set(sw * 1.25, sw * 0.5, 1);   // elliptical, shoe-width
       if (stage.phase === "settled") {
+        faceUserUpright(stageShoe);
         contactShadow.visible = true;
         contactShadow.material.opacity = 1;
         return;
