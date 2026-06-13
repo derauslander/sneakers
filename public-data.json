@@ -168,6 +168,10 @@
       {
         "date": "2024-11-27",
         "colorway": "Royal Reimagined"
+      },
+      {
+        "date": "2026-06-13",
+        "colorway": "Royal Reimagined"
       }
     ],
     "2": [
@@ -1942,6 +1946,14 @@
         "lastWorn": "2025-10-17"
       },
       {
+        "shoeId": 1,
+        "shoeName": "Air Jordan 1",
+        "shortName": "AJ1",
+        "colorway": "Royal Reimagined",
+        "count": 5,
+        "lastWorn": "2026-06-13"
+      },
+      {
         "shoeId": 12,
         "shoeName": "Air Jordan 13",
         "shortName": "AJ13",
@@ -2004,14 +2016,6 @@
         "colorway": "A Ma Maniere Dawn",
         "count": 4,
         "lastWorn": "2026-01-23"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "A Ma Maniere",
-        "count": 4,
-        "lastWorn": "2025-11-27"
       }
     ],
     "priceRanked": [
@@ -2099,6 +2103,13 @@
         "wears": 6
       },
       {
+        "shoeId": 1,
+        "shoeName": "Air Jordan 1",
+        "shortName": "AJ1",
+        "colorway": "Royal Reimagined",
+        "wears": 5
+      },
+      {
         "shoeId": 12,
         "shoeName": "Air Jordan 13",
         "shortName": "AJ13",
@@ -2110,13 +2121,6 @@
         "shoeName": "Air Jordan 2",
         "shortName": "AJ2",
         "colorway": "Black Cement",
-        "wears": 4
-      },
-      {
-        "shoeId": 1,
-        "shoeName": "Air Jordan 1",
-        "shortName": "AJ1",
-        "colorway": "Royal Reimagined",
         "wears": 4
       },
       {
@@ -2344,12 +2348,12 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "3_Rare Air",
-    "shoeId": 3,
-    "shoeName": "Air Jordan 3",
-    "shortName": "AJ3",
-    "colorway": "Rare Air",
-    "date": "2026-06-12"
+    "key": "1_Royal Reimagined",
+    "shoeId": 1,
+    "shoeName": "Air Jordan 1",
+    "shortName": "AJ1",
+    "colorway": "Royal Reimagined",
+    "date": "2026-06-13"
   },
   "precomputedUpNext": {
     "key": "1774096319133_Billy Hoyle",
@@ -2359,5 +2363,5 @@
     "colorway": "Billy Hoyle",
     "date": null
   },
-  "builtAt": "2026-06-13T12:34:13.540683Z"
+  "builtAt": "2026-06-13T17:08:26.551593Z"
 }
