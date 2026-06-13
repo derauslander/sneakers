@@ -1716,7 +1716,7 @@ Loading…</div>
         const OFD_Y = 0.01, OFD_Z = -3.5;
         ofdDisplay = new THREE.Group();
         ofdDisplay.position.set(0, OFD_Y, OFD_Z);
-        ofdDisplay.rotation.set(-Math.PI / 2, Math.PI, 0);  // flat on floor, text reads from +Z
+        ofdDisplay.rotation.x = -Math.PI / 2;           // flat on floor, face up
         scene.add(ofdDisplay);
 
         // Dark plaque backing (canvas) with title, shoe name, and prompt
@@ -1825,6 +1825,21 @@ Loading…</div>
         );
         fadeSphere.renderOrder = 998;
         camera.add(fadeSphere);
+
+        // Hide/show all room content (everything except the player group,
+        // which carries the camera and all OFD animation elements).
+        let _hiddenRoom = [];
+        const hideRoom = () => {
+          _hiddenRoom = [];
+          for (const obj of scene.children) {
+            if (obj === player) continue;
+            if (obj.visible) { _hiddenRoom.push(obj); obj.visible = false; }
+          }
+        };
+        const showRoom = () => {
+          for (const obj of _hiddenRoom) obj.visible = true;
+          _hiddenRoom = [];
+        };
 
         // Starfield particles (camera-local so they always stream from ahead)
         const STAR_COUNT = 400, WARP_SPEED = 22;
@@ -2015,7 +2030,7 @@ Loading…</div>
             const t = Math.min(elapsed / OFD_FADEOUT_MS, 1);
             fadeSphere.material.opacity = ease(t);
             if (t >= 1) {
-              // Solid (non-transparent) so VR compositing can't bleed through
+              hideRoom();
               fadeSphere.material.transparent = false;
               fadeSphere.material.needsUpdate = true;
               starField.visible = true;
@@ -2070,6 +2085,7 @@ Loading…</div>
 
           } else if (ofd.phase === "fadein") {
             if (!fadeSphere.material.transparent) {
+              showRoom();
               fadeSphere.material.transparent = true;
               fadeSphere.material.needsUpdate = true;
             }
