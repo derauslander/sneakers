@@ -1148,7 +1148,7 @@ Loading…</div>
         const panelH  = storyPanel.geometry.parameters.height;
         const shoeTop = stage.restPos.y + stageShoe.geometry.parameters.height / 2;
         const bottomY = shoeTop + 0.12;              // small gap above the shoe
-        storyPanel.position.set(PED_X, bottomY + panelH / 2, PED_Z);
+        storyPanel.position.set(PED_X, bottomY + panelH / 2, PED_Z + 0.45);
         faceUserUpright(storyPanel);
         scene.add(storyPanel);
         return;
@@ -1659,6 +1659,26 @@ Loading…</div>
     };
 
     // ════════════════════════════════════════════════════════════════════
+    //  ROOM BOUNDS — keep the user inside the gym walls
+    // ════════════════════════════════════════════════════════════════════
+    const ROOM_BOUND = 8.7;              // walls at ±9, 0.3m buffer so you don't clip
+    const _clampHead = new THREE.Vector3();
+    const clampToRoom = () => {
+      camera.getWorldPosition(_clampHead);
+      let dx = 0, dz = 0;
+      if (_clampHead.x >  ROOM_BOUND) dx =  ROOM_BOUND - _clampHead.x;
+      if (_clampHead.x < -ROOM_BOUND) dx = -ROOM_BOUND - _clampHead.x;
+      if (_clampHead.z >  ROOM_BOUND) dz =  ROOM_BOUND - _clampHead.z;
+      if (_clampHead.z < -ROOM_BOUND) dz = -ROOM_BOUND - _clampHead.z;
+      if (dx || dz) {
+        // In VR, offset the player group; in test mode camera.position
+        // is local to the player group, so shifting player works either way.
+        player.position.x += dx;
+        player.position.z += dz;
+      }
+    };
+
+    // ════════════════════════════════════════════════════════════════════
     //  RENDER LOOP
     // ════════════════════════════════════════════════════════════════════
     let _lastFrameT = performance.now();
@@ -1668,6 +1688,7 @@ Loading…</div>
       _lastFrameT = now;
       if (TEST_MODE) updateFpsMovement(now);
       else updateLocomotion(dt);
+      clampToRoom();
       updateCases(now);
       updatePulse(now);
       updateStage(now);
