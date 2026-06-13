@@ -73,9 +73,7 @@ Loading…</div>
     const images         = data.images || {};
     const displayLayout  = data.displayLayout || [];
     const dreamLayout    = data.dreamLayout || [];
-    const wearLog        = data.wearLog || {};
     const colorwayOwned  = data.colorwayOwned || {};
-    const graveyardMeta  = data.graveyardMeta || {};
 
     if (displayLayout.length === 0) fail("displayLayout is empty in public-data.json");
 
@@ -96,114 +94,33 @@ Loading…</div>
     }
 
     // ════════════════════════════════════════════════════════════════════
-    //  SKY BANNERS — "LAST WORN" + "UP NEXT"
+    //  BANNER DATA — "LAST WORN" + "UP NEXT" (precomputed by build.py)
     // ════════════════════════════════════════════════════════════════════
-    // Two floating cards high overhead, only visible when the user looks
-    // up. Computed from the wear log:
-    //   LAST WORN — most recent entry across the whole wear log
-    //   UP NEXT   — owned colorway with the oldest last-worn date
-    //               (i.e. "you haven't worn this in the longest")
-    //
-    // Same exclusion rules as the rest of the room: iron tier and
-    // explicitly not-owned colorways are skipped from UP NEXT candidacy.
-    // Graveyard entries are also skipped.
-    //
-    // The "last worn" calculation doesn't apply exclusions — if you most
-    // recently wore an iron-tier colorway, that's still the most recent.
+    // build.py computes these once using the same logic as the main site
+    // and writes them into public-data.json. The VR scene just reads the
+    // result and wires it into the championship banners.
 
-    // Build (key → mostRecentDate) for every colorway that's been worn.
-    const lastWornByKey = {};
-    for (const shoeId of Object.keys(wearLog)) {
-      for (const entry of wearLog[shoeId] || []) {
-        const key = `${shoeId}_${entry.colorway}`;
-        if (!lastWornByKey[key] || entry.date > lastWornByKey[key]) {
-          lastWornByKey[key] = entry.date;
-        }
-      }
-    }
-
-    // shoeId → shoe lookup (we already have shoeByShortName; this is by id)
-    const shoeById = {};
-    for (const shoe of inventory) shoeById[shoe.id] = shoe;
-
-    // Helper: format an ISO date string ("YYYY-MM-DD") as MM/DD/YYYY for
-    // sky banner display. We parse manually rather than using Date because
-    // the date string carries no timezone — treating it as a local Date
-    // could shift it by a day in some timezones.
     const formatMMDDYYYY = (iso) => {
       const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
       if (!m) return iso || "";
       return `${m[2]}/${m[3]}/${m[1]}`;
     };
 
-    // Helper: build a sky-banner entry from a key string ("3_Black Cement").
-    const buildSkyEntry = (key, label, dateStr) => {
-      const [shoeIdStr, ...cwParts] = key.split("_");
-      const shoeId = parseInt(shoeIdStr, 10);
-      const colorway = cwParts.join("_");
-      const shoe = shoeById[shoeId];
-      if (!shoe) return null;
-      const imagePath = images[key];
+    const bannerEntry = (precomp, label) => {
+      if (!precomp) return null;
+      const imagePath = images[precomp.key];
       if (!imagePath) return null;
       return {
-        key, label,
-        dateStr: dateStr ? formatMMDDYYYY(dateStr) : "Never worn",
-        shoeName: shoe.name,
-        colorway,
+        key: precomp.key, label,
+        dateStr: precomp.date ? formatMMDDYYYY(precomp.date) : "Never worn",
+        shoeName: precomp.shoeName,
+        colorway: precomp.colorway,
         imagePath: "../" + imagePath,
       };
     };
 
-    // LAST WORN: most recent wear, no exclusions.
-    let lastWornEntry = null;
-    {
-      let bestKey = null;
-      let bestDate = "";
-      for (const [key, date] of Object.entries(lastWornByKey)) {
-        if (date > bestDate) {
-          bestDate = date;
-          bestKey = key;
-        }
-      }
-      if (bestKey) {
-        lastWornEntry = buildSkyEntry(bestKey, "LAST WORN", bestDate);
-      }
-    }
-
-    // UP NEXT: mirror the main site's "longest unworn" rotation pick. Walk
-    // every owned, non-iron, non-new-pickup colorway (new pickup = bought in
-    // the last 7 days). A never-worn pair outranks any worn one; otherwise the
-    // oldest last-worn date wins, first-encountered breaking ties. Same logic
-    // as the non-VR site — so on-ice (never-worn) shoes are now eligible and,
-    // in fact, top priority. (Requires an image, since the banner shows a photo.)
-    let upNextEntry = null;
-    {
-      const allColorways = data.colorways || {};
-      const todayMid = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); })();
-      const isNewPickup = (pd) => {
-        if (!pd) return false;
-        const diff = todayMid - new Date(pd + "T00:00:00").getTime();
-        return diff >= 0 && diff <= 7 * 86400000;
-      };
-      let pickKey = null, pickDate = null, havePick = false;
-      for (const shoe of inventory) {
-        for (const cw of (allColorways[shoe.shortName] || [])) {
-          const key = `${shoe.id}_${cw}`;
-          if (colorwayOwned[key] === false) continue;                       // owned only
-          if (tierMeta[key] === "iron") continue;                           // iron excluded from rotation
-          if (isNewPickup(colorwayMeta[key]?.purchaseDate)) continue;       // brand-new pickup excluded
-          if (!images[key]) continue;                                       // need a photo for the banner
-          const lastWorn = lastWornByKey[key] || null;                      // null = never worn
-          if (!havePick) { pickKey = key; pickDate = lastWorn; havePick = true; continue; }
-          if (pickDate === null) continue;                                  // current pick never-worn → keep
-          if (lastWorn === null) { pickKey = key; pickDate = null; continue; } // entry never-worn → take it
-          if (lastWorn < pickDate) { pickKey = key; pickDate = lastWorn; }      // both worn → older wins
-        }
-      }
-      if (pickKey) {
-        upNextEntry = buildSkyEntry(pickKey, "UP NEXT", pickDate);
-      }
-    }
+    const lastWornEntry = bannerEntry(data.precomputedLastWorn, "LAST WORN");
+    const upNextEntry   = bannerEntry(data.precomputedUpNext,   "UP NEXT");
 
     if (lastWornEntry) log(`Last worn: ${lastWornEntry.shoeName} — ${lastWornEntry.colorway}`, "ok");
     if (upNextEntry)   log(`Up next:   ${upNextEntry.shoeName} — ${upNextEntry.colorway}`, "ok");
@@ -1218,7 +1135,7 @@ Loading…</div>
         const shoeTop = stage.restPos.y + stageShoe.geometry.parameters.height / 2;
         const bottomY = shoeTop + 0.12;              // small gap above the shoe
         storyPanel.position.set(PED_X, bottomY + panelH / 2, PED_Z);
-        storyPanel.lookAt(0, 1.6, 0);
+        faceUserUpright(storyPanel);
         scene.add(storyPanel);
         return;
       }
@@ -1233,7 +1150,7 @@ Loading…</div>
       // If positive (dream wall), put panel at -1.2 x. Same offset magnitude.
       const panelX = viewP.x < 0 ? 1.2 : -1.2;
       storyPanel.position.set(panelX, 1.6, viewP.z);
-      storyPanel.lookAt(0, 1.6, 0);
+      faceUserUpright(storyPanel);
       scene.add(storyPanel);
     };
     const hideStory = () => {
@@ -1399,9 +1316,14 @@ Loading…</div>
 
     const tmpWorld = new THREE.Vector3();
 
-    // Face the user but stay vertical: aim at a point at the mesh's own height
-    // so there's no backward pitch (which read as a floating/leaning photo).
-    const faceUserUpright = (mesh) => mesh.lookAt(0, mesh.position.y, 0);
+    // Face the user but stay vertical: aim at the camera's XZ at the mesh's
+    // own height so there's no backward pitch. Uses the camera's live world
+    // position so the shoe and story panel track the user under locomotion.
+    const _faceTarget = new THREE.Vector3();
+    const faceUserUpright = (mesh) => {
+      camera.getWorldPosition(_faceTarget);
+      mesh.lookAt(_faceTarget.x, mesh.position.y, _faceTarget.z);
+    };
 
     // Put a staged case back instantly (no animation): re-show its image-3
     // plane, hide the stage shoe. Used when one click supersedes another.
@@ -1734,6 +1656,7 @@ Loading…</div>
       updateCases(now);
       updatePulse(now);
       updateStage(now);
+      if (storyPanel) faceUserUpright(storyPanel);
       renderer.render(scene, camera);
     });
 

@@ -17,6 +17,9 @@ from datetime import datetime, timezone
 VAULT_FILE  = "vault-data.json"
 PUBLIC_FILE = "public-data.json"
 
+# Tiers excluded from rotation, rankings, and UP NEXT candidacy.
+EXCLUDED_TIERS = {"iron"}
+
 def parse_price(raw):
     """Strip non-numeric chars and parse as float. Returns None if invalid."""
     if not raw:
@@ -56,8 +59,6 @@ def compute_rankings(data):
     tier_meta     = data.get("tierMeta", {})
     colorway_owned = data.get("colorwayOwned", {})
     colorways     = data.get("colorways", {})
-
-    EXCLUDED_TIERS = {"iron"}
 
     def tier_of(key):
         return tier_meta.get(key, "silver")
@@ -258,6 +259,117 @@ def strip_ranking_prices(rankings):
             stripped[key].append(clean)
     return stripped
 
+    return stripped
+
+def compute_last_worn_up_next(data):
+    """Compute LAST WORN and UP NEXT for the public site and VR.
+
+    LAST WORN — most recent wear across the entire log, no exclusions.
+    UP NEXT   — owned, non-iron, non-new-pickup colorway with the oldest
+                last-worn date. A never-worn pair outranks any worn one;
+                first-encountered breaks ties. Same logic the admin site
+                uses at runtime.
+
+    Returns (last_worn_dict_or_None, up_next_dict_or_None).
+    """
+    inventory      = data.get("inventory", [])
+    wear_log       = data.get("wearLog", {})
+    colorway_meta  = data.get("colorwayMeta", {})
+    tier_meta      = data.get("tierMeta", {})
+    colorway_owned = data.get("colorwayOwned", {})
+    colorways      = data.get("colorways", {})
+
+    shoe_by_id = {s["id"]: s for s in inventory}
+
+    # Build (key → most-recent date) for every colorway that's been worn.
+    last_worn_by_key = {}
+    for shoe_id_str, entries in wear_log.items():
+        for entry in entries:
+            key = f"{shoe_id_str}_{entry['colorway']}"
+            if key not in last_worn_by_key or entry["date"] > last_worn_by_key[key]:
+                last_worn_by_key[key] = entry["date"]
+
+    # ── LAST WORN ───────────────────────────────────────────────────────
+    last_worn = None
+    best_date = ""
+    best_key  = None
+    for key, date in last_worn_by_key.items():
+        if date > best_date:
+            best_date = date
+            best_key  = key
+
+    if best_key:
+        shoe_id_str, cw = best_key.split("_", 1)
+        shoe = shoe_by_id.get(int(shoe_id_str))
+        if shoe:
+            last_worn = {
+                "key": best_key,
+                "shoeId": int(shoe_id_str),
+                "shoeName": shoe["name"],
+                "shortName": shoe["shortName"],
+                "colorway": cw,
+                "date": best_date,
+            }
+
+    # ── UP NEXT ─────────────────────────────────────────────────────────
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    def is_new_pickup(purchase_date):
+        if not purchase_date:
+            return False
+        try:
+            return 0 <= days_between(purchase_date, today) <= 7
+        except ValueError:
+            return False
+
+    pick_key  = None
+    pick_date = None          # None = never worn (wins over any date)
+    have_pick = False
+
+    for shoe in inventory:
+        for cw in colorways.get(shoe["shortName"], []):
+            key = f"{shoe['id']}_{cw}"
+            if colorway_owned.get(key) is False:
+                continue
+            if tier_meta.get(key, "silver") in EXCLUDED_TIERS:
+                continue
+            if is_new_pickup(colorway_meta.get(key, {}).get("purchaseDate")):
+                continue
+
+            last_date = last_worn_by_key.get(key)   # None if never worn
+
+            if not have_pick:
+                pick_key  = key
+                pick_date = last_date
+                have_pick = True
+                continue
+
+            if pick_date is None:                    # current pick never-worn → keep
+                continue
+            if last_date is None:                    # entry never-worn → take it
+                pick_key  = key
+                pick_date = None
+                continue
+            if last_date < pick_date:                # both worn → older wins
+                pick_key  = key
+                pick_date = last_date
+
+    up_next = None
+    if pick_key:
+        shoe_id_str, cw = pick_key.split("_", 1)
+        shoe = shoe_by_id.get(int(shoe_id_str))
+        if shoe:
+            up_next = {
+                "key": pick_key,
+                "shoeId": int(shoe_id_str),
+                "shoeName": shoe["name"],
+                "shortName": shoe["shortName"],
+                "colorway": cw,
+                "date": pick_date,      # None if never worn
+            }
+
+    return last_worn, up_next
+
 def main():
     if not os.path.exists(VAULT_FILE):
         print(f"  ERROR: {VAULT_FILE} not found. Run a BACKUP from the admin app first.")
@@ -277,10 +389,23 @@ def main():
                         ("Longest Gap", "gapRanked")]:
         print(f"    {label}: {len(rankings[key])} entries")
 
+    print(f"  Computing Last Worn / Up Next...")
+    last_worn, up_next = compute_last_worn_up_next(data)
+    if last_worn:
+        print(f"    Last Worn: {last_worn['shoeName']} — {last_worn['colorway']} ({last_worn['date']})")
+    else:
+        print(f"    Last Worn: (none)")
+    if up_next:
+        print(f"    Up Next:   {up_next['shoeName']} — {up_next['colorway']} ({up_next['date'] or 'never worn'})")
+    else:
+        print(f"    Up Next:   (none)")
+
     # Build public data — full data minus purchasePrice, plus pre-computed rankings
     public_data = dict(data)
     public_data["colorwayMeta"] = strip_prices(data.get("colorwayMeta", {}))
     public_data["precomputedRankings"] = strip_ranking_prices(rankings)
+    public_data["precomputedLastWorn"] = last_worn
+    public_data["precomputedUpNext"]   = up_next
     public_data["builtAt"] = datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z")
 
     # Remove exportedAt if present (replace with builtAt)
