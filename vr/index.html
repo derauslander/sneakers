@@ -1726,35 +1726,50 @@ Loading…</div>
 
         // ── OFD audio ─────────────────────────────────────────────────
         // WebXR requires audio routed through AudioContext to reach
-        // the headset speakers. We load the mp3 into a buffer and
-        // play it via a gain node for volume/fade control.
+        // the headset speakers. We load the mp3s into buffers and
+        // play them via gain nodes for volume/fade control.
         let ofdAudioCtx = null;
         let ofdAudioBuffer = null;
+        let ofdWhooshBuffer = null;
         let ofdGain = null;
-        let ofdSource = null;        // current playing source node
+        let ofdWhooshGain = null;
+        let ofdSource = null;        // current playing music source
         let ofdAudioFading = false;
         const OFD_VOLUME = 0.8;
+        const OFD_WHOOSH_VOLUME = 0.9;
 
-        // Preload the audio buffer
-        fetch("../assets/ofd-theme.mp3")
-          .then(r => r.arrayBuffer())
-          .then(buf => {
+        // Preload audio buffers
+        const initAudioCtx = () => {
+          if (!ofdAudioCtx) {
             ofdAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
             ofdGain = ofdAudioCtx.createGain();
             ofdGain.connect(ofdAudioCtx.destination);
-            return ofdAudioCtx.decodeAudioData(buf);
-          })
+            ofdWhooshGain = ofdAudioCtx.createGain();
+            ofdWhooshGain.connect(ofdAudioCtx.destination);
+          }
+        };
+
+        fetch("../assets/ofd-theme.mp3")
+          .then(r => r.arrayBuffer())
+          .then(buf => { initAudioCtx(); return ofdAudioCtx.decodeAudioData(buf); })
           .then(decoded => {
             ofdAudioBuffer = decoded;
-            log("OFD audio loaded (" + decoded.duration.toFixed(1) + "s)", "ok");
+            log("OFD music loaded (" + decoded.duration.toFixed(1) + "s)", "ok");
           })
-          .catch(e => log("OFD audio failed to load: " + e.message, "dim"));
+          .catch(e => log("OFD music failed to load: " + e.message, "dim"));
+
+        fetch("../assets/whoosh.mp3")
+          .then(r => r.arrayBuffer())
+          .then(buf => { initAudioCtx(); return ofdAudioCtx.decodeAudioData(buf); })
+          .then(decoded => {
+            ofdWhooshBuffer = decoded;
+            log("OFD whoosh loaded (" + decoded.duration.toFixed(1) + "s)", "ok");
+          })
+          .catch(e => log("OFD whoosh failed to load: " + e.message, "dim"));
 
         const ofdAudioPlay = () => {
           if (!ofdAudioCtx || !ofdAudioBuffer) return;
-          // Resume context (may be suspended until user gesture)
           if (ofdAudioCtx.state === "suspended") ofdAudioCtx.resume();
-          // Stop any previous playback
           if (ofdSource) { try { ofdSource.stop(); } catch (_) {} }
           ofdSource = ofdAudioCtx.createBufferSource();
           ofdSource.buffer = ofdAudioBuffer;
@@ -1762,6 +1777,16 @@ Loading…</div>
           ofdGain.gain.setValueAtTime(OFD_VOLUME, ofdAudioCtx.currentTime);
           ofdAudioFading = false;
           ofdSource.start(0);
+        };
+
+        const ofdWhooshPlay = () => {
+          if (!ofdAudioCtx || !ofdWhooshBuffer) return;
+          if (ofdAudioCtx.state === "suspended") ofdAudioCtx.resume();
+          const src = ofdAudioCtx.createBufferSource();
+          src.buffer = ofdWhooshBuffer;
+          src.connect(ofdWhooshGain);
+          ofdWhooshGain.gain.setValueAtTime(OFD_WHOOSH_VOLUME, ofdAudioCtx.currentTime);
+          src.start(0);
         };
 
         const ofdAudioStop = () => {
@@ -2006,29 +2031,30 @@ Loading…</div>
         // Card group — three images + labels, shown after flythrough
         const cardGroup = new THREE.Group();
         cardGroup.visible = false;
-        cardGroup.position.set(0, 0, -2.5);
+        cardGroup.position.set(0, 0, -3.5);
         camera.add(cardGroup);
 
         const cardTitle = makeLabel("ON FEET TODAY", 90, "#e63946", 12);
-        cardTitle.position.set(0, 0.7, 0);
+        cardTitle.position.set(0, 1.1, 0);
         cardTitle.renderOrder = 1010;
         cardGroup.add(cardTitle);
 
         const cardName = makeLabel(
           `${precomp.shoeName}  \u2014  ${precomp.colorway}`, 72, "#ffffff", 0
         );
-        cardName.position.set(0, -0.65, 0);
+        cardName.position.set(0, -1.0, 0);
         cardName.renderOrder = 1010;
         cardGroup.add(cardName);
 
-        const CARD_SPACING = 0.75;
+        const CARD_SIZE = 1.2;       // match FLY_W — same visual size as hold
+        const CARD_SPACING = 1.35;
         const cardPlanes = [];
         for (let i = 0; i < imgPaths.length; i++) {
           const mat = new THREE.MeshBasicMaterial({
             color: 0xffffff, transparent: true, alphaTest: 0.01,
             side: THREE.DoubleSide, depthWrite: false, depthTest: false,
           });
-          const p = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.55), mat);
+          const p = new THREE.Mesh(new THREE.PlaneGeometry(CARD_SIZE, CARD_SIZE), mat);
           p.position.set((i - (imgPaths.length - 1) / 2) * CARD_SPACING, -0.03, 0);
           p.visible = false;
           p.renderOrder = 1010;
@@ -2037,7 +2063,7 @@ Loading…</div>
         }
 
         const cardExit = makeLabel("select to exit", 48, "rgba(255,255,255,0.35)", 0);
-        cardExit.position.set(0, -0.95, 0);
+        cardExit.position.set(0, -1.4, 0);
         cardExit.renderOrder = 1010;
         cardGroup.add(cardExit);
 
@@ -2059,9 +2085,8 @@ Loading…</div>
               cardPlanes[i].material.map = texture;
               cardPlanes[i].material.needsUpdate = true;
               cardPlanes[i].visible = true;
-              const cs = 0.55;
-              const cw2 = aspect >= 1 ? cs : cs * aspect;
-              const ch2 = aspect >= 1 ? cs / aspect : cs;
+              const cw2 = aspect >= 1 ? CARD_SIZE : CARD_SIZE * aspect;
+              const ch2 = aspect >= 1 ? CARD_SIZE / aspect : CARD_SIZE;
               cardPlanes[i].geometry.dispose();
               cardPlanes[i].geometry = new THREE.PlaneGeometry(cw2, ch2);
             }
@@ -2069,17 +2094,20 @@ Loading…</div>
         });
 
         // ── Timing constants ────────────────────────────────────────────
+        // Target: card phase begins at ~20s into the music.
+        // fadeout(600) + intro(6600) + fly(12800) = 20000ms
         const OFD_FADEOUT_MS = 600;
-        const OFD_INTRO_MS  = 2200;   // text: 600 drift + 600 hold + 1000 rush
-        const OFD_TEXT_DRIFT = 600;    // slow approach from distance
-        const OFD_TEXT_HOLD  = 600;    // pause at hero position
-        const OFD_TEXT_RUSH  = 1000;   // accelerate through camera
-        const OFD_FLY_MS    = 2800;   // per shoe: 400 appear + 800 drift + 600 hold + 1000 rush
-        const OFD_SHOE_APPEAR = 400;  // fade in from distance
-        const OFD_SHOE_DRIFT  = 800;  // slow drift toward camera
-        const OFD_SHOE_HOLD   = 600;  // pause at hero position
-        const OFD_SHOE_RUSH   = 1000; // accelerate past camera
-        const OFD_OVERLAP   = 500;
+        const OFD_INTRO_MS  = 6600;   // total intro phase
+        const OFD_STAR_ONLY = 2600;   // starfield alone before text appears
+        const OFD_TEXT_DRIFT = 1200;   // text approaches from distance
+        const OFD_TEXT_HOLD  = 1200;   // pause at hero position
+        const OFD_TEXT_RUSH  = 1600;   // accelerate through camera
+        const OFD_FLY_MS    = 4800;   // per shoe total
+        const OFD_SHOE_APPEAR = 500;  // fade in from distance
+        const OFD_SHOE_DRIFT  = 1500; // slow drift toward camera
+        const OFD_SHOE_HOLD   = 1200; // pause at hero position
+        const OFD_SHOE_RUSH   = 1600; // accelerate past camera
+        const OFD_OVERLAP   = 800;
         const OFD_FLY_TOTAL = imgPaths.length > 1
           ? (imgPaths.length - 1) * (OFD_FLY_MS - OFD_OVERLAP) + OFD_FLY_MS
           : OFD_FLY_MS;
@@ -2087,6 +2115,10 @@ Loading…</div>
 
         const ease = (t) => 1 - Math.pow(1 - t, 3);
         const easeIn = (t) => t * t * t;  // accelerate for the rush phase
+
+        // Track which whooshes have fired so they don't repeat
+        let ofdTextWhooshed = false;
+        const ofdShoeWhooshed = new Array(imgPaths.length).fill(false);
 
         // ── Trigger ─────────────────────────────────────────────────────
         ofd.trigger = (now) => {
@@ -2097,6 +2129,8 @@ Loading…</div>
           hideStory();
           // Start the music — user gesture (click) satisfies autoplay policy
           ofdAudioPlay();
+          ofdTextWhooshed = false;
+          ofdShoeWhooshed.fill(false);
         };
 
         // ── Exit card (user clicks during card phase) ───────────────────
@@ -2130,35 +2164,44 @@ Loading…</div>
 
           } else if (ofd.phase === "intro") {
             warpStars(dt);
-            // Superman-style text: drift in → hold → rush through camera
-            // Ghost trail spacing and opacity scale with current speed
-            let textZ, textOpacity = 1, speed = 0;
-            if (elapsed < OFD_TEXT_DRIFT) {
-              // Drift: text approaches from far
-              const t = elapsed / OFD_TEXT_DRIFT;
-              textZ = -18 + 15 * ease(t);       // -18 → -3
-              speed = 0.3;
-            } else if (elapsed < OFD_TEXT_DRIFT + OFD_TEXT_HOLD) {
-              // Hold: text pauses at hero position
-              textZ = -3;
-              speed = 0.05;
+            // Starfield-only window before text appears
+            const textElapsed = elapsed - OFD_STAR_ONLY;
+            if (textElapsed < 0) {
+              // Pure starfield — text not visible yet
+              introLabel.material.opacity = 0;
+              for (const g of ghosts) g.material.opacity = 0;
             } else {
-              // Rush: text accelerates through camera
-              const rushT = (elapsed - OFD_TEXT_DRIFT - OFD_TEXT_HOLD) / OFD_TEXT_RUSH;
-              const rushE = easeIn(Math.min(rushT, 1));
-              textZ = -3 + 15 * rushE;            // -3 → +12 (past camera)
-              textOpacity = Math.max(0, 1 - rushT * 1.5);
-              speed = 0.3 + 2.5 * rushE;
-            }
-            introLabel.position.set(0, 0, textZ);
-            introLabel.material.opacity = textOpacity;
+              // Superman-style text: drift in → hold → rush through camera
+              // Ghost trail spacing and opacity scale with current speed
+              let textZ, textOpacity = 1, speed = 0;
+              if (textElapsed < OFD_TEXT_DRIFT) {
+                // Drift: text approaches from far
+                const t = textElapsed / OFD_TEXT_DRIFT;
+                textZ = -18 + 15 * ease(t);       // -18 → -3
+                speed = 0.3;
+              } else if (textElapsed < OFD_TEXT_DRIFT + OFD_TEXT_HOLD) {
+                // Hold: text pauses at hero position
+                textZ = -3;
+                speed = 0.05;
+              } else {
+                // Rush: text accelerates through camera
+                if (!ofdTextWhooshed) { ofdWhooshPlay(); ofdTextWhooshed = true; }
+                const rushT = (textElapsed - OFD_TEXT_DRIFT - OFD_TEXT_HOLD) / OFD_TEXT_RUSH;
+                const rushE = easeIn(Math.min(rushT, 1));
+                textZ = -3 + 15 * rushE;            // -3 → +12 (past camera)
+                textOpacity = Math.max(0, 1 - rushT * 1.5);
+                speed = 0.3 + 2.5 * rushE;
+              }
+              introLabel.position.set(0, 0, textZ);
+              introLabel.material.opacity = textOpacity;
 
-            // Ghost trails: spaced behind the main label, more spread at higher speed
-            const ghostSpacing = 0.15 + 0.6 * speed;
-            for (let gi = 0; gi < GHOST_COUNT; gi++) {
-              const depth = (gi + 1) * ghostSpacing;
-              ghosts[gi].position.set(0, 0, textZ - depth);
-              ghosts[gi].material.opacity = textOpacity * (0.45 - gi * (0.38 / GHOST_COUNT)) * Math.min(speed * 2, 1);
+              // Ghost trails: spaced behind the main label, more spread at higher speed
+              const ghostSpacing = 0.15 + 0.6 * speed;
+              for (let gi = 0; gi < GHOST_COUNT; gi++) {
+                const depth = (gi + 1) * ghostSpacing;
+                ghosts[gi].position.set(0, 0, textZ - depth);
+                ghosts[gi].material.opacity = textOpacity * (0.45 - gi * (0.38 / GHOST_COUNT)) * Math.min(speed * 2, 1);
+              }
             }
 
             if (elapsed >= OFD_INTRO_MS) {
@@ -2197,6 +2240,7 @@ Loading…</div>
                 shoeOpacity = 1;
               } else {
                 // Rush: accelerate through and past the camera
+                if (!ofdShoeWhooshed[i]) { ofdWhooshPlay(); ofdShoeWhooshed[i] = true; }
                 const t = (localElapsed - OFD_SHOE_APPEAR - OFD_SHOE_DRIFT - OFD_SHOE_HOLD) / OFD_SHOE_RUSH;
                 const rushE = easeIn(Math.min(t, 1));
                 shoeZ = -3 + 15 * rushE;
