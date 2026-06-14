@@ -254,10 +254,6 @@
       {
         "date": "2026-06-12",
         "colorway": "Rare Air"
-      },
-      {
-        "date": "2026-06-14",
-        "colorway": "White Cement Reimagined"
       }
     ],
     "4": [
@@ -1968,8 +1964,8 @@
         "shoeName": "Air Jordan 3",
         "shortName": "AJ3",
         "colorway": "White Cement Reimagined",
-        "count": 7,
-        "lastWorn": "2026-06-14"
+        "count": 6,
+        "lastWorn": "2025-10-17"
       },
       {
         "shoeId": 12,
@@ -2115,18 +2111,18 @@
         "wears": 5
       },
       {
-        "shoeId": 3,
-        "shoeName": "Air Jordan 3",
-        "shortName": "AJ3",
-        "colorway": "White Cement Reimagined",
-        "wears": 7
-      },
-      {
         "shoeId": 17,
         "shoeName": "Air Max 86",
         "shortName": "AM86",
         "colorway": "Air Max Day (Royal Volt)",
         "wears": 5
+      },
+      {
+        "shoeId": 3,
+        "shoeName": "Air Jordan 3",
+        "shortName": "AJ3",
+        "colorway": "White Cement Reimagined",
+        "wears": 6
       },
       {
         "shoeId": 12,
@@ -2374,12 +2370,12 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "3_White Cement Reimagined",
+    "key": "3_Rare Air",
     "shoeId": 3,
     "shoeName": "Air Jordan 3",
     "shortName": "AJ3",
-    "colorway": "White Cement Reimagined",
-    "date": "2026-06-14"
+    "colorway": "Rare Air",
+    "date": "2026-06-12"
   },
   "precomputedUpNext": {
     "key": "1774096319133_Billy Hoyle",
@@ -2389,5 +2385,5 @@
     "colorway": "Billy Hoyle",
     "date": null
   },
-  "builtAt": "2026-06-14T16:15:26.069238Z"
+  "builtAt": "2026-06-14T19:34:34.227452Z"
 }

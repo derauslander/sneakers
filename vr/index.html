@@ -2114,6 +2114,11 @@ Loading…</div>
         cardName.renderOrder = 1010;
         cardGroup.add(cardName);
 
+        const cardDate = makeLabel(formatMMDDYYYY(precomp.date), 52, "rgba(240,230,200,0.6)", 6);
+        cardDate.position.set(0, -1.25, 0);
+        cardDate.renderOrder = 1010;
+        cardGroup.add(cardDate);
+
         const CARD_SIZE = 1.2;       // match FLY_W — same visual size as hold
         const CARD_SPACING = 1.35;
         const cardPlanes = [];
@@ -2131,7 +2136,7 @@ Loading…</div>
         }
 
         const cardExit = makeLabel("select to exit", 48, "rgba(255,255,255,0.35)", 0);
-        cardExit.position.set(0, -1.4, 0);
+        cardExit.position.set(0, -1.55, 0);
         cardExit.renderOrder = 1010;
         cardGroup.add(cardExit);
 
@@ -2339,6 +2344,7 @@ Loading…</div>
             const cardFade = Math.min(elapsed / 300, 1);
             cardTitle.material.opacity = cardFade;
             cardName.material.opacity = cardFade;
+            cardDate.material.opacity = cardFade;
             cardExit.material.opacity = Math.min(Math.max((elapsed - 600) / 400, 0), 1);
             for (const cp of cardPlanes) cp.material.opacity = cardFade;
             // Auto-exit when the music ends (36.923s total, card starts at 21s)
