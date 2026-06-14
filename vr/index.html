@@ -1711,15 +1711,18 @@ Loading…</div>
     // main → hover2 → hover). After the sequence the display clears out.
     {
       const precomp = data.precomputedLastWorn;
+      // Only show On Feet Today if the last-worn date is actually today.
+      const todayISO = new Date().toISOString().slice(0, 10);
+      const isToday = precomp && precomp.date === todayISO;
       const imgPaths = [];
-      if (precomp) {
+      if (isToday) {
         for (const sfx of ["", "_hover2", "_hover"]) {
           const p = images[precomp.key + sfx];
           if (p) imgPaths.push("../" + p);
         }
       }
 
-      if (precomp && imgPaths.length > 0) {
+      if (isToday && imgPaths.length > 0) {
 
         // ── Display panel in the key ────────────────────────────────────
         const OFD_Y = 0.01, OFD_Z = -4.5;
@@ -2111,6 +2114,8 @@ Loading…</div>
         };
 
         log("On Feet Today: " + precomp.shoeName + " — " + precomp.colorway, "ok");
+      } else if (precomp) {
+        log("On Feet Today: skipped (last worn " + precomp.date + ", today " + todayISO + ")", "dim");
       }
     }
 

@@ -259,8 +259,6 @@ def strip_ranking_prices(rankings):
             stripped[key].append(clean)
     return stripped
 
-    return stripped
-
 def compute_last_worn_up_next(data):
     """Compute LAST WORN and UP NEXT for the public site and VR.
 
