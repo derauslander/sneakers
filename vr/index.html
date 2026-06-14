@@ -1724,6 +1724,12 @@ Loading…</div>
 
       if (isToday && imgPaths.length > 0) {
 
+        // ── OFD audio ─────────────────────────────────────────────────
+        const ofdAudio = new Audio("../assets/ofd-theme.mp3");
+        ofdAudio.preload = "auto";
+        ofdAudio.volume = 0.8;
+        let ofdAudioFading = false;
+
         // ── Display panel in the key ────────────────────────────────────
         const OFD_Y = 0.01, OFD_Z = -4.5;
         ofdDisplay = new THREE.Group();
@@ -2044,6 +2050,11 @@ Loading…</div>
           ofdDisplay.visible = false;
           restoreStageInstant();
           hideStory();
+          // Start the music — user gesture (click) satisfies autoplay policy
+          ofdAudio.currentTime = 0;
+          ofdAudio.volume = 0.8;
+          ofdAudioFading = false;
+          ofdAudio.play().catch(() => {});
         };
 
         // ── Exit card (user clicks during card phase) ───────────────────
@@ -2052,6 +2063,8 @@ Loading…</div>
           starField.visible = false;
           ofd.phase = "fadein";
           ofd.t0 = now;
+          // Begin audio fade-out over the room fadein duration
+          ofdAudioFading = true;
         };
 
         // ── Per-frame update ────────────────────────────────────────────
@@ -2177,10 +2190,17 @@ Loading…</div>
             }
             const t = Math.min(elapsed / OFD_FADEIN_MS, 1);
             fadeSphere.material.opacity = 1 - ease(t);
+            // Fade audio out in sync with the room fading back in
+            if (ofdAudioFading) {
+              ofdAudio.volume = Math.max(0, 0.8 * (1 - ease(t)));
+            }
             if (t >= 1) {
               fadeSphere.material.opacity = 0;
               ofd.phase = "done";
               if (ofdDisplay) ofdDisplay.visible = true;
+              ofdAudio.pause();
+              ofdAudio.currentTime = 0;
+              ofdAudioFading = false;
             }
           }
         };
