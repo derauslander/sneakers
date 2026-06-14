@@ -1912,12 +1912,26 @@ Loading…</div>
           );
         };
 
-        // Intro label — "ON FEET TODAY" centred in view during starfield
+        // Intro label — "ON FEET TODAY" Superman-style fly-at-camera with ghost trails
+        const introGroup = new THREE.Group();
+        introGroup.visible = false;
+        introGroup.renderOrder = 1001;
+        camera.add(introGroup);
+
         const introLabel = makeLabel("ON FEET TODAY", 120, "#ffffff", 16);
-        introLabel.position.set(0, 0, -3);
-        introLabel.visible = false;
-        introLabel.renderOrder = 1001;
-        camera.add(introLabel);
+        introLabel.renderOrder = 1002;
+        introGroup.add(introLabel);
+
+        // Ghost trail copies behind the main text
+        const GHOST_COUNT = 7;
+        const ghosts = [];
+        for (let i = 0; i < GHOST_COUNT; i++) {
+          const g = makeLabel("ON FEET TODAY", 120, "#ffffff", 16);
+          g.renderOrder = 1001;
+          g.material.opacity = 0;
+          introGroup.add(g);
+          ghosts.push(g);
+        }
 
         // Flythrough planes (one per image, camera-local)
         const flyGroup = new THREE.Group();
@@ -2005,15 +2019,23 @@ Loading…</div>
 
         // ── Timing constants ────────────────────────────────────────────
         const OFD_FADEOUT_MS = 600;
-        const OFD_INTRO_MS  = 1200;
-        const OFD_FLY_MS    = 1800;
-        const OFD_OVERLAP   = 300;
+        const OFD_INTRO_MS  = 2200;   // text: 600 drift + 600 hold + 1000 rush
+        const OFD_TEXT_DRIFT = 600;    // slow approach from distance
+        const OFD_TEXT_HOLD  = 600;    // pause at hero position
+        const OFD_TEXT_RUSH  = 1000;   // accelerate through camera
+        const OFD_FLY_MS    = 2800;   // per shoe: 400 appear + 800 drift + 600 hold + 1000 rush
+        const OFD_SHOE_APPEAR = 400;  // fade in from distance
+        const OFD_SHOE_DRIFT  = 800;  // slow drift toward camera
+        const OFD_SHOE_HOLD   = 600;  // pause at hero position
+        const OFD_SHOE_RUSH   = 1000; // accelerate past camera
+        const OFD_OVERLAP   = 500;
         const OFD_FLY_TOTAL = imgPaths.length > 1
           ? (imgPaths.length - 1) * (OFD_FLY_MS - OFD_OVERLAP) + OFD_FLY_MS
           : OFD_FLY_MS;
         const OFD_FADEIN_MS = 600;
 
         const ease = (t) => 1 - Math.pow(1 - t, 3);
+        const easeIn = (t) => t * t * t;  // accelerate for the rush phase
 
         // ── Trigger ─────────────────────────────────────────────────────
         ofd.trigger = (now) => {
@@ -2045,14 +2067,46 @@ Loading…</div>
               fadeSphere.material.transparent = false;
               fadeSphere.material.needsUpdate = true;
               starField.visible = true;
-              introLabel.visible = true;
+              introGroup.visible = true;
               ofd.phase = "intro";
               ofd.t0 = now;
             }
 
           } else if (ofd.phase === "intro") {
             warpStars(dt);
+            // Superman-style text: drift in → hold → rush through camera
+            // Ghost trail spacing and opacity scale with current speed
+            let textZ, textOpacity = 1, speed = 0;
+            if (elapsed < OFD_TEXT_DRIFT) {
+              // Drift: text approaches from far
+              const t = elapsed / OFD_TEXT_DRIFT;
+              textZ = -18 + 15 * ease(t);       // -18 → -3
+              speed = 0.3;
+            } else if (elapsed < OFD_TEXT_DRIFT + OFD_TEXT_HOLD) {
+              // Hold: text pauses at hero position
+              textZ = -3;
+              speed = 0.05;
+            } else {
+              // Rush: text accelerates through camera
+              const rushT = (elapsed - OFD_TEXT_DRIFT - OFD_TEXT_HOLD) / OFD_TEXT_RUSH;
+              const rushE = easeIn(Math.min(rushT, 1));
+              textZ = -3 + 15 * rushE;            // -3 → +12 (past camera)
+              textOpacity = Math.max(0, 1 - rushT * 1.5);
+              speed = 0.3 + 2.5 * rushE;
+            }
+            introLabel.position.set(0, 0, textZ);
+            introLabel.material.opacity = textOpacity;
+
+            // Ghost trails: spaced behind the main label, more spread at higher speed
+            const ghostSpacing = 0.15 + 0.6 * speed;
+            for (let gi = 0; gi < GHOST_COUNT; gi++) {
+              const depth = (gi + 1) * ghostSpacing;
+              ghosts[gi].position.set(0, 0, textZ - depth);
+              ghosts[gi].material.opacity = textOpacity * (0.45 - gi * (0.38 / GHOST_COUNT)) * Math.min(speed * 2, 1);
+            }
+
             if (elapsed >= OFD_INTRO_MS) {
+              introGroup.visible = false;
               flyGroup.visible = true;
               ofd.phase = "fly";
               ofd.t0 = now;
@@ -2060,28 +2114,46 @@ Loading…</div>
 
           } else if (ofd.phase === "fly") {
             warpStars(dt);
-            // Dissolve the intro label over the first 500ms of flythrough
-            if (elapsed < 500) {
-              introLabel.material.opacity = 1 - elapsed / 500;
-            } else if (introLabel.visible) {
-              introLabel.visible = false;
-            }
             for (let i = 0; i < flyPlanes.length; i++) {
               const start = i * (OFD_FLY_MS - OFD_OVERLAP);
-              const localT = (elapsed - start) / OFD_FLY_MS;
-              if (localT < 0) { flyPlanes[i].visible = false; continue; }
-              if (localT > 1) { flyPlanes[i].visible = false; continue; }
+              const localElapsed = elapsed - start;
+              if (localElapsed < 0) { flyPlanes[i].visible = false; continue; }
+              if (localElapsed > OFD_FLY_MS) { flyPlanes[i].visible = false; continue; }
               flyPlanes[i].visible = true;
-              const e = ease(localT);
-              flyPlanes[i].position.set(0, 0, -18 + 20 * e);
-              flyPlanes[i].scale.setScalar(0.3 + 1.7 * e);
-              flyPlanes[i].material.opacity =
-                localT < 0.12 ? localT / 0.12 :
-                localT > 0.75 ? Math.max(0, (1 - localT) / 0.25) : 1;
+
+              let shoeZ, shoeScale, shoeOpacity;
+              if (localElapsed < OFD_SHOE_APPEAR) {
+                // Appear: fade in from deep
+                const t = localElapsed / OFD_SHOE_APPEAR;
+                shoeZ = -18 + 4 * ease(t);
+                shoeScale = 0.3 + 0.3 * t;
+                shoeOpacity = ease(t);
+              } else if (localElapsed < OFD_SHOE_APPEAR + OFD_SHOE_DRIFT) {
+                // Drift: slow approach toward hero position
+                const t = (localElapsed - OFD_SHOE_APPEAR) / OFD_SHOE_DRIFT;
+                shoeZ = -14 + 11 * ease(t);       // -14 → -3
+                shoeScale = 0.6 + 0.8 * ease(t);
+                shoeOpacity = 1;
+              } else if (localElapsed < OFD_SHOE_APPEAR + OFD_SHOE_DRIFT + OFD_SHOE_HOLD) {
+                // Hold: hero moment, shoe pauses center stage
+                shoeZ = -3;
+                shoeScale = 1.4;
+                shoeOpacity = 1;
+              } else {
+                // Rush: accelerate through and past the camera
+                const t = (localElapsed - OFD_SHOE_APPEAR - OFD_SHOE_DRIFT - OFD_SHOE_HOLD) / OFD_SHOE_RUSH;
+                const rushE = easeIn(Math.min(t, 1));
+                shoeZ = -3 + 15 * rushE;
+                shoeScale = 1.4 + 1.6 * rushE;
+                shoeOpacity = Math.max(0, 1 - t * 1.5);
+              }
+              flyPlanes[i].position.set(0, 0, shoeZ);
+              flyPlanes[i].scale.setScalar(shoeScale);
+              flyPlanes[i].material.opacity = shoeOpacity;
             }
             if (elapsed >= OFD_FLY_TOTAL) {
               flyGroup.visible = false;
-              introLabel.visible = false;
+              introGroup.visible = false;
               cardGroup.visible = true;
               ofd.phase = "card";
               ofd.t0 = now;
