@@ -2094,11 +2094,11 @@ Loading…</div>
         });
 
         // ── Timing constants ────────────────────────────────────────────
-        // Target: card phase begins at ~20s into the music.
-        // fadeout(600) + intro(6600) + fly(12800) = 20000ms
+        // Target: card phase begins at ~21s into the music.
+        // fadeout(600) + intro(7600) + fly(12800) = 21000ms
         const OFD_FADEOUT_MS = 600;
-        const OFD_INTRO_MS  = 6600;   // total intro phase
-        const OFD_STAR_ONLY = 2600;   // starfield alone before text appears
+        const OFD_INTRO_MS  = 7600;   // total intro phase
+        const OFD_STAR_ONLY = 3600;   // starfield alone before text appears
         const OFD_TEXT_DRIFT = 1200;   // text approaches from distance
         const OFD_TEXT_HOLD  = 1200;   // pause at hero position
         const OFD_TEXT_RUSH  = 1600;   // accelerate through camera
@@ -2119,6 +2119,7 @@ Loading…</div>
         // Track which whooshes have fired so they don't repeat
         let ofdTextWhooshed = false;
         const ofdShoeWhooshed = new Array(imgPaths.length).fill(false);
+        const OFD_WHOOSH_DELAY = 200; // ms into rush before whoosh fires
 
         // ── Trigger ─────────────────────────────────────────────────────
         ofd.trigger = (now) => {
@@ -2185,8 +2186,10 @@ Loading…</div>
                 speed = 0.05;
               } else {
                 // Rush: text accelerates through camera
-                if (!ofdTextWhooshed) { ofdWhooshPlay(); ofdTextWhooshed = true; }
                 const rushT = (textElapsed - OFD_TEXT_DRIFT - OFD_TEXT_HOLD) / OFD_TEXT_RUSH;
+                if (!ofdTextWhooshed && (textElapsed - OFD_TEXT_DRIFT - OFD_TEXT_HOLD) >= OFD_WHOOSH_DELAY) {
+                  ofdWhooshPlay(); ofdTextWhooshed = true;
+                }
                 const rushE = easeIn(Math.min(rushT, 1));
                 textZ = -3 + 15 * rushE;            // -3 → +12 (past camera)
                 textOpacity = Math.max(0, 1 - rushT * 1.5);
@@ -2240,8 +2243,11 @@ Loading…</div>
                 shoeOpacity = 1;
               } else {
                 // Rush: accelerate through and past the camera
-                if (!ofdShoeWhooshed[i]) { ofdWhooshPlay(); ofdShoeWhooshed[i] = true; }
-                const t = (localElapsed - OFD_SHOE_APPEAR - OFD_SHOE_DRIFT - OFD_SHOE_HOLD) / OFD_SHOE_RUSH;
+                const rushInto = localElapsed - OFD_SHOE_APPEAR - OFD_SHOE_DRIFT - OFD_SHOE_HOLD;
+                if (!ofdShoeWhooshed[i] && rushInto >= OFD_WHOOSH_DELAY) {
+                  ofdWhooshPlay(); ofdShoeWhooshed[i] = true;
+                }
+                const t = rushInto / OFD_SHOE_RUSH;
                 const rushE = easeIn(Math.min(t, 1));
                 shoeZ = -3 + 15 * rushE;
                 shoeScale = 1.4 + 1.6 * rushE;
