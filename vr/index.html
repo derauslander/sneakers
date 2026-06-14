@@ -1725,10 +1725,55 @@ Loading…</div>
       if (isToday && imgPaths.length > 0) {
 
         // ── OFD audio ─────────────────────────────────────────────────
-        const ofdAudio = new Audio("../assets/ofd-theme.mp3");
-        ofdAudio.preload = "auto";
-        ofdAudio.volume = 0.8;
+        // WebXR requires audio routed through AudioContext to reach
+        // the headset speakers. We load the mp3 into a buffer and
+        // play it via a gain node for volume/fade control.
+        let ofdAudioCtx = null;
+        let ofdAudioBuffer = null;
+        let ofdGain = null;
+        let ofdSource = null;        // current playing source node
         let ofdAudioFading = false;
+        const OFD_VOLUME = 0.8;
+
+        // Preload the audio buffer
+        fetch("../assets/ofd-theme.mp3")
+          .then(r => r.arrayBuffer())
+          .then(buf => {
+            ofdAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            ofdGain = ofdAudioCtx.createGain();
+            ofdGain.connect(ofdAudioCtx.destination);
+            return ofdAudioCtx.decodeAudioData(buf);
+          })
+          .then(decoded => {
+            ofdAudioBuffer = decoded;
+            log("OFD audio loaded (" + decoded.duration.toFixed(1) + "s)", "ok");
+          })
+          .catch(e => log("OFD audio failed to load: " + e.message, "dim"));
+
+        const ofdAudioPlay = () => {
+          if (!ofdAudioCtx || !ofdAudioBuffer) return;
+          // Resume context (may be suspended until user gesture)
+          if (ofdAudioCtx.state === "suspended") ofdAudioCtx.resume();
+          // Stop any previous playback
+          if (ofdSource) { try { ofdSource.stop(); } catch (_) {} }
+          ofdSource = ofdAudioCtx.createBufferSource();
+          ofdSource.buffer = ofdAudioBuffer;
+          ofdSource.connect(ofdGain);
+          ofdGain.gain.setValueAtTime(OFD_VOLUME, ofdAudioCtx.currentTime);
+          ofdAudioFading = false;
+          ofdSource.start(0);
+        };
+
+        const ofdAudioStop = () => {
+          if (ofdSource) { try { ofdSource.stop(); } catch (_) {} ofdSource = null; }
+          ofdAudioFading = false;
+        };
+
+        const ofdAudioSetVolume = (v) => {
+          if (ofdGain && ofdAudioCtx) {
+            ofdGain.gain.setValueAtTime(Math.max(0, v), ofdAudioCtx.currentTime);
+          }
+        };
 
         // ── Display panel in the key ────────────────────────────────────
         const OFD_Y = 0.01, OFD_Z = -4.5;
@@ -2051,10 +2096,7 @@ Loading…</div>
           restoreStageInstant();
           hideStory();
           // Start the music — user gesture (click) satisfies autoplay policy
-          ofdAudio.currentTime = 0;
-          ofdAudio.volume = 0.8;
-          ofdAudioFading = false;
-          ofdAudio.play().catch(() => {});
+          ofdAudioPlay();
         };
 
         // ── Exit card (user clicks during card phase) ───────────────────
@@ -2065,6 +2107,7 @@ Loading…</div>
           ofd.t0 = now;
           // Begin audio fade-out over the room fadein duration
           ofdAudioFading = true;
+          ofdAudioSetVolume(OFD_VOLUME);
         };
 
         // ── Per-frame update ────────────────────────────────────────────
@@ -2192,15 +2235,13 @@ Loading…</div>
             fadeSphere.material.opacity = 1 - ease(t);
             // Fade audio out in sync with the room fading back in
             if (ofdAudioFading) {
-              ofdAudio.volume = Math.max(0, 0.8 * (1 - ease(t)));
+              ofdAudioSetVolume(OFD_VOLUME * (1 - ease(t)));
             }
             if (t >= 1) {
               fadeSphere.material.opacity = 0;
               ofd.phase = "done";
               if (ofdDisplay) ofdDisplay.visible = true;
-              ofdAudio.pause();
-              ofdAudio.currentTime = 0;
-              ofdAudioFading = false;
+              ofdAudioStop();
             }
           }
         };
