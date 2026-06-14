@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>The Vault — VR</title>
   <style>
+    @font-face {
+      font-family: "Granby Elephant";
+      src: url("../assets/font.otf") format("opentype");
+      font-weight: normal;
+      font-style: normal;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { width: 100%; height: 100%; background: #000; color: #fff; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     #status {
@@ -1989,8 +1995,8 @@ Loading…</div>
         };
 
         // Helper: Superman credits–style outlined stencil text → plane mesh
-        // Tall, narrow, no fill — just crisp outline strokes with a soft
-        // glow halo behind them for that cinematic credit-crawl look.
+        // Uses Granby Elephant (the original Superman '78 font) rendered as
+        // outlines only with a soft glow halo for the cinematic credit look.
         const makeStencilLabel = (text, fontSize, color, letterSpace) => {
           const LW = 1400, LH = 250;
           const lc = document.createElement("canvas");
@@ -1998,27 +2004,20 @@ Loading…</div>
           const lg = lc.getContext("2d");
           lg.clearRect(0, 0, LW, LH);
           lg.textAlign = "center"; lg.textBaseline = "middle";
-          // Tall narrow condensed look via horizontal scaling
-          lg.save();
-          const squeeze = 0.75;
-          lg.translate(LW / 2, 0);
-          lg.scale(squeeze, 1);
-          lg.translate(-LW / 2, 0);
-          lg.font = `bold ${fontSize}px "Arial Narrow", "Helvetica Neue", Arial, sans-serif`;
+          lg.font = `${fontSize}px "Granby Elephant", "Arial Narrow", "Helvetica Neue", Arial, sans-serif`;
 
           // Draw helper — letterspaced or centred
           const drawText = (fn) => {
             if (letterSpace) {
               const chars = text.split("");
-              const adjustedSpace = letterSpace / squeeze;
               let tw2 = 0;
-              for (const c of chars) tw2 += lg.measureText(c).width + adjustedSpace;
-              tw2 -= adjustedSpace;
+              for (const c of chars) tw2 += lg.measureText(c).width + letterSpace;
+              tw2 -= letterSpace;
               let lx = (LW - tw2) / 2;
               for (const c of chars) {
                 const cw2 = lg.measureText(c).width;
                 fn(c, lx + cw2 / 2, LH / 2);
-                lx += cw2 + adjustedSpace;
+                lx += cw2 + letterSpace;
               }
             } else {
               fn(text, LW / 2, LH / 2);
@@ -2039,8 +2038,6 @@ Loading…</div>
           lg.lineWidth = 2;
           drawText((t, x, y) => lg.strokeText(t, x, y));
 
-          lg.restore();
-
           const tex = new THREE.CanvasTexture(lc);
           tex.colorSpace = THREE.SRGBColorSpace;
           const h = 0.45, w = h * (LW / LH);
@@ -2052,6 +2049,9 @@ Loading…</div>
             })
           );
         };
+
+        // Ensure Granby Elephant is loaded before rendering stencil labels
+        await document.fonts.load('100px "Granby Elephant"').catch(() => {});
 
         // Intro label — "ON FEET TODAY" Superman-style fly-at-camera with ghost trails
         const introGroup = new THREE.Group();
