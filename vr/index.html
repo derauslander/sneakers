@@ -1988,13 +1988,78 @@ Loading…</div>
           );
         };
 
+        // Helper: Superman credits–style outlined stencil text → plane mesh
+        // Tall, narrow, no fill — just crisp outline strokes with a soft
+        // glow halo behind them for that cinematic credit-crawl look.
+        const makeStencilLabel = (text, fontSize, color, letterSpace) => {
+          const LW = 1400, LH = 250;
+          const lc = document.createElement("canvas");
+          lc.width = LW; lc.height = LH;
+          const lg = lc.getContext("2d");
+          lg.clearRect(0, 0, LW, LH);
+          lg.textAlign = "center"; lg.textBaseline = "middle";
+          // Tall narrow condensed look via horizontal scaling
+          lg.save();
+          const squeeze = 0.75;
+          lg.translate(LW / 2, 0);
+          lg.scale(squeeze, 1);
+          lg.translate(-LW / 2, 0);
+          lg.font = `bold ${fontSize}px "Arial Narrow", "Helvetica Neue", Arial, sans-serif`;
+
+          // Draw helper — letterspaced or centred
+          const drawText = (fn) => {
+            if (letterSpace) {
+              const chars = text.split("");
+              const adjustedSpace = letterSpace / squeeze;
+              let tw2 = 0;
+              for (const c of chars) tw2 += lg.measureText(c).width + adjustedSpace;
+              tw2 -= adjustedSpace;
+              let lx = (LW - tw2) / 2;
+              for (const c of chars) {
+                const cw2 = lg.measureText(c).width;
+                fn(c, lx + cw2 / 2, LH / 2);
+                lx += cw2 + adjustedSpace;
+              }
+            } else {
+              fn(text, LW / 2, LH / 2);
+            }
+          };
+
+          // Pass 1: soft glow halo
+          lg.shadowColor = color;
+          lg.shadowBlur = 30;
+          lg.strokeStyle = color;
+          lg.lineWidth = 4;
+          drawText((t, x, y) => lg.strokeText(t, x, y));
+
+          // Pass 2: crisp outline (no shadow)
+          lg.shadowColor = "transparent";
+          lg.shadowBlur = 0;
+          lg.strokeStyle = color;
+          lg.lineWidth = 2;
+          drawText((t, x, y) => lg.strokeText(t, x, y));
+
+          lg.restore();
+
+          const tex = new THREE.CanvasTexture(lc);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          const h = 0.45, w = h * (LW / LH);
+          return new THREE.Mesh(
+            new THREE.PlaneGeometry(w, h),
+            new THREE.MeshBasicMaterial({
+              map: tex, transparent: true, side: THREE.DoubleSide,
+              depthWrite: false, depthTest: false,
+            })
+          );
+        };
+
         // Intro label — "ON FEET TODAY" Superman-style fly-at-camera with ghost trails
         const introGroup = new THREE.Group();
         introGroup.visible = false;
         introGroup.renderOrder = 1001;
         camera.add(introGroup);
 
-        const introLabel = makeLabel("ON FEET TODAY", 120, "#ffffff", 16);
+        const introLabel = makeStencilLabel("ON FEET TODAY", 130, "#ffffff", 18);
         introLabel.renderOrder = 1002;
         introGroup.add(introLabel);
 
@@ -2002,7 +2067,7 @@ Loading…</div>
         const GHOST_COUNT = 7;
         const ghosts = [];
         for (let i = 0; i < GHOST_COUNT; i++) {
-          const g = makeLabel("ON FEET TODAY", 120, "#ffffff", 16);
+          const g = makeStencilLabel("ON FEET TODAY", 130, "#ffffff", 18);
           g.renderOrder = 1001;
           g.material.opacity = 0;
           introGroup.add(g);
@@ -2034,7 +2099,7 @@ Loading…</div>
         cardGroup.position.set(0, 0, -3.5);
         camera.add(cardGroup);
 
-        const cardTitle = makeLabel("ON FEET TODAY", 90, "#e63946", 12);
+        const cardTitle = makeStencilLabel("ON FEET TODAY", 100, "#e63946", 14);
         cardTitle.position.set(0, 1.1, 0);
         cardTitle.renderOrder = 1010;
         cardGroup.add(cardTitle);
@@ -2273,7 +2338,11 @@ Loading…</div>
             cardName.material.opacity = cardFade;
             cardExit.material.opacity = Math.min(Math.max((elapsed - 600) / 400, 0), 1);
             for (const cp of cardPlanes) cp.material.opacity = cardFade;
-            // Card persists until the user selects to exit
+            // Auto-exit when the music ends (36.923s total, card starts at 21s)
+            const OFD_CARD_DURATION = 15923;
+            if (elapsed >= OFD_CARD_DURATION) {
+              ofd.exitCard(now);
+            }
 
           } else if (ofd.phase === "fadein") {
             if (!fadeSphere.material.transparent) {
