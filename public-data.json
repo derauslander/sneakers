@@ -410,6 +410,10 @@
       {
         "date": "2026-05-01",
         "colorway": "Black Metallic Reimagined"
+      },
+      {
+        "date": "2026-06-15",
+        "colorway": "Grape"
       }
     ],
     "6": [
@@ -2167,11 +2171,11 @@
         "wears": 4
       },
       {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Fire Red",
-        "wears": 5
+        "shoeId": 5,
+        "shoeName": "Air Jordan 5",
+        "shortName": "AJ5",
+        "colorway": "Grape",
+        "wears": 3
       }
     ],
     "iceRanked": [
@@ -2370,12 +2374,12 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "3_Rare Air",
-    "shoeId": 3,
-    "shoeName": "Air Jordan 3",
-    "shortName": "AJ3",
-    "colorway": "Rare Air",
-    "date": "2026-06-12"
+    "key": "5_Grape",
+    "shoeId": 5,
+    "shoeName": "Air Jordan 5",
+    "shortName": "AJ5",
+    "colorway": "Grape",
+    "date": "2026-06-15"
   },
   "precomputedUpNext": {
     "key": "1774096319133_Billy Hoyle",
@@ -2385,5 +2389,5 @@
     "colorway": "Billy Hoyle",
     "date": null
   },
-  "builtAt": "2026-06-15T00:00:58.901104Z"
+  "builtAt": "2026-06-15T23:33:23.489916Z"
 }
