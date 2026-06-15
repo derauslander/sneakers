@@ -20,6 +20,12 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    @font-face {
+      font-family: "Granby Elephant";
+      src: url("assets/font.otf") format("opentype");
+      font-weight: normal;
+      font-style: normal;
+    }
     :root {
       --vault-red: #e63946;
       --vault-red-dark: #a52833;
@@ -83,12 +89,23 @@
        The 50→70% plateau holds the image at the camera for ~20% of duration
        (240ms at FLY_PER_MS=1200) before the punch-through. */
     @keyframes heroFlythrough {
+      /* Appear + drift: fade in while approaching hero position */
       0%   { transform: translate(-50%, -50%) translateZ(-1200px); opacity: 0; filter: blur(0px); }
-      15%  { opacity: 1; }
+      10%  { opacity: 1; }
       50%  { transform: translate(-50%, -50%) translateZ(-200px);  opacity: 1; filter: blur(0px); }
-      70%  { transform: translate(-50%, -50%) translateZ(-200px);  opacity: 1; filter: blur(0px); }
-      85%  { filter: blur(2px); }
+      /* Hold: pause at hero position */
+      90%  { transform: translate(-50%, -50%) translateZ(-200px);  opacity: 1; filter: blur(0px); }
+      /* Rush: fast punch through camera (~480ms) */
+      95%  { filter: blur(3px); }
       100% { transform: translate(-50%, -55%) translateZ(800px);   opacity: 0; filter: blur(8px); }
+    }
+    /* Intro text flies at camera Superman-style: drift in → hold → rush through */
+    @keyframes heroIntroDrift {
+      0%   { transform: translate(-50%, -50%) translateZ(-1200px) scale(0.5); opacity: 0; }
+      10%  { opacity: 1; }
+      40%  { transform: translate(-50%, -50%) translateZ(-100px) scale(1); opacity: 1; }
+      90%  { transform: translate(-50%, -50%) translateZ(-100px) scale(1); opacity: 1; }
+      100% { transform: translate(-50%, -50%) translateZ(800px) scale(2.5); opacity: 0; }
     }
     /* Starfield warp: stars drift "outward" (toward the viewer and off-screen)
        by translating their Z and fading at the tail. The container holds many
@@ -100,7 +117,7 @@
       90%  { opacity: 1; }
       100% { transform: translateZ(400px);  opacity: 0; }
     }
-    /* Intro label fades out as the first flythrough begins. */
+    /* Intro label fades out — used as a fallback; main animation is heroIntroDrift. */
     @keyframes heroIntroFadeOut {
       from { opacity: 1; }
       to   { opacity: 0; }
@@ -1168,16 +1185,17 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
     const isDiamond = tier === "diamond";
     const isPremium = tier === "diamond" || tier === "platinum" || tier === "gold";
     const hasDiamondStory = isDiamond && !!story && story.length > 0;
-    const INTRO_MS = 1200;
-    const FLY_PER_MS = 1200;
-    const FLY_OVERLAP_MS = 300;
-    const CARD_MS = isDiamond ? 4e3 : 2500;
+    const STAR_ONLY_MS = 3600;
+    const INTRO_MS = 4e3;
+    const FLY_PER_MS = 4800;
+    const FLY_OVERLAP_MS = 800;
+    const CARD_MS = enableSound ? 15923 : 2500;
     const SHRINK_MS = 1e3;
     const safeImgs = imgs && imgs.length > 0 ? imgs : [null];
     const hasFlythrough = safeImgs.length >= 2 && safeImgs[0] !== null;
     const flyStarts = safeImgs.map((_, i) => i * (FLY_PER_MS - FLY_OVERLAP_MS));
     const flyTotalMs = hasFlythrough ? flyStarts[flyStarts.length - 1] + FLY_PER_MS : 0;
-    const [phase, setPhase] = React.useState("intro");
+    const [phase, setPhase] = React.useState(enableSound ? "starfield" : "intro");
     const [targetRect, setTargetRect] = React.useState(null);
     const reducedMotion = React.useRef(false);
     const completedRef = useRef(false);
@@ -1224,17 +1242,86 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       completedRef.current = true;
       onComplete && onComplete();
     }, [onComplete]);
+    const ofdMusicRef = React.useRef(null);
+    React.useEffect(() => {
+      if (phase !== "starfield") return;
+      if (!enableSound) return;
+      let audio = null;
+      try {
+        audio = new Audio("assets/ofd-theme.mp3");
+        audio.volume = 0.8;
+        ofdMusicRef.current = audio;
+        const p = audio.play();
+        if (p && typeof p.catch === "function") p.catch(() => {
+        });
+      } catch (e) {
+      }
+      return () => {
+      };
+    }, [enableSound]);
+    React.useEffect(() => {
+      if (phase !== "shrink") return;
+      const audio = ofdMusicRef.current;
+      if (!audio) return;
+      const fadeStart = audio.volume;
+      const fadeSteps = 20;
+      const fadeInterval = SHRINK_MS / fadeSteps;
+      let step = 0;
+      const timer = setInterval(() => {
+        step++;
+        audio.volume = Math.max(0, fadeStart * (1 - step / fadeSteps));
+        if (step >= fadeSteps) {
+          clearInterval(timer);
+          audio.pause();
+        }
+      }, fadeInterval);
+      return () => {
+        clearInterval(timer);
+        try {
+          audio.pause();
+        } catch (e) {
+        }
+      };
+    }, [phase]);
+    React.useEffect(() => {
+      return () => {
+        if (ofdMusicRef.current) {
+          try {
+            ofdMusicRef.current.pause();
+            ofdMusicRef.current.currentTime = 0;
+          } catch (e) {
+          }
+        }
+      };
+    }, []);
+    const WHOOSH_VOLUME = 0.35;
+    const WHOOSH_DELAY = 200;
+    React.useEffect(() => {
+      if (phase !== "intro") return;
+      if (!enableSound) return;
+      const rushStart = INTRO_MS * 0.9;
+      const t = setTimeout(() => {
+        try {
+          const audio = new Audio("assets/whoosh.mp3");
+          audio.volume = WHOOSH_VOLUME;
+          const p = audio.play();
+          if (p && typeof p.catch === "function") p.catch(() => {
+          });
+        } catch (e) {
+        }
+      }, rushStart + WHOOSH_DELAY);
+      return () => clearTimeout(t);
+    }, [phase, enableSound]);
     React.useEffect(() => {
       if (phase !== "flythrough") return;
       if (!enableSound) return;
       if (!hasFlythrough) return;
       const audioInstances = [];
       const timers = [];
-      const WHOOSH_VOLUME = 0.35;
-      const WHOOSH_LEAD_MS = -350;
+      const rushOffset = FLY_PER_MS * 0.9;
       safeImgs.forEach((src, i) => {
         if (!src) return;
-        const startAt = Math.max(0, flyStarts[i] - WHOOSH_LEAD_MS);
+        const startAt = flyStarts[i] + rushOffset + WHOOSH_DELAY;
         const t = setTimeout(() => {
           try {
             const audio = new Audio("assets/whoosh.mp3");
@@ -1289,7 +1376,9 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
         return;
       }
       let timers = [];
-      if (phase === "intro") {
+      if (phase === "starfield") {
+        timers.push(setTimeout(() => setPhase("intro"), STAR_ONLY_MS));
+      } else if (phase === "intro") {
         const next = hasFlythrough ? "flythrough" : "card";
         timers.push(setTimeout(() => setPhase(next), INTRO_MS));
       } else if (phase === "flythrough") {
@@ -1302,7 +1391,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       return () => timers.forEach(clearTimeout);
     }, [phase, hasFlythrough, flyTotalMs, complete]);
     const handleTap = () => {
-      if (phase === "intro" || phase === "flythrough") setPhase("card");
+      if (phase === "starfield" || phase === "intro" || phase === "flythrough") setPhase("card");
       else if (phase === "card") setPhase("shrink");
     };
     if (reducedMotion.current) return null;
@@ -1313,7 +1402,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       position: "fixed",
       zIndex: 9999,
       transition: phase === "shrink" ? `top ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), left ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), width ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), height ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), opacity ${SHRINK_MS}ms ease-in-out` : "none",
-      animation: phase === "intro" ? "heroFadeIn 0.6s ease-out" : "none",
+      animation: phase === "starfield" || phase === "intro" && !enableSound ? "heroFadeIn 0.6s ease-out" : "none",
       cursor: phase === "shrink" ? "default" : "pointer",
       background: "#000",
       // Perspective enables the 3D flythrough effect — translateZ on child
@@ -1328,13 +1417,12 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
     };
     const positionStyle = phase !== "shrink" || !targetRect ? { top: 0, left: 0, width: "100vw", height: "100vh", opacity: 1 } : { top: `${targetRect.top}px`, left: `${targetRect.left}px`, width: `${targetRect.width}px`, height: `${targetRect.height}px`, opacity: 0 };
     const introLabelStyle = {
-      // Scales fluidly between mobile (~26px at 375px wide) and desktop
-      // (56px). Tuned so "ON FEET TODAY" with premium ✦ markers fits on a
-      // 375px phone without clipping. nowrap + maxWidth prevent wrap; if
-      // the text still overflows at some edge-case width, lower 7vw further.
       fontSize: "clamp(20px, 7vw, 56px)",
       letterSpacing: "clamp(3px, 1.5vw, 16px)",
-      color: "var(--vault-red)",
+      fontFamily: '"Granby Elephant", "Arial Narrow", Arial, sans-serif',
+      color: "transparent",
+      WebkitTextStroke: "1px var(--vault-red)",
+      textShadow: "0 0 20px var(--vault-red), 0 0 40px rgba(230,57,70,0.4)",
       textAlign: "center",
       whiteSpace: "nowrap",
       maxWidth: "95vw",
@@ -1342,10 +1430,10 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       top: "50%",
       left: "50%",
       transform: "translate(-50%, -50%)",
-      // Fade out when flythrough starts so the first image doesn't collide
-      // with the label visually.
-      animation: phase === "flythrough" ? "heroIntroFadeOut 400ms ease-out forwards" : "none",
-      opacity: phase === "intro" ? 1 : phase === "flythrough" ? 1 : 0,
+      animation: phase === "intro" ? `heroIntroDrift ${INTRO_MS}ms cubic-bezier(0.3, 0, 0.7, 0.4) forwards` : "none",
+      opacity: phase === "intro" ? 1 : 0,
+      transformStyle: "preserve-3d",
+      willChange: "transform, opacity",
       pointerEvents: "none"
     };
     const flythroughImgStyle = (delay) => ({
@@ -1381,7 +1469,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       transition: `width ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), height ${SHRINK_MS}ms cubic-bezier(0.7, 0, 0.3, 1), gap ${SHRINK_MS}ms ease`,
       // Card reveal animation only fires when entering card phase.
       animation: phase === "card" ? "heroCardReveal 500ms ease-out" : "none",
-      opacity: phase === "intro" || phase === "flythrough" ? 0 : 1
+      opacity: phase === "starfield" || phase === "intro" || phase === "flythrough" ? 0 : 1
     };
     const cardImgStyle = {
       flex: 1,
@@ -1394,14 +1482,16 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
     const cardLabelStyle = {
       fontSize: phase === "shrink" ? "9px" : "clamp(14px, 5vw, 28px)",
       letterSpacing: phase === "shrink" ? "4px" : "clamp(3px, 1.5vw, 8px)",
-      color: "var(--vault-red)",
+      fontFamily: '"Granby Elephant", "Arial Narrow", Arial, sans-serif',
+      color: "transparent",
+      WebkitTextStroke: "1px var(--vault-red)",
+      textShadow: "0 0 12px var(--vault-red), 0 0 24px rgba(230,57,70,0.3)",
       marginBottom: phase === "shrink" ? "8px" : "32px",
       transition: `font-size ${SHRINK_MS}ms ease, letter-spacing ${SHRINK_MS}ms ease, margin-bottom ${SHRINK_MS}ms ease, opacity ${SHRINK_MS}ms ease`,
-      opacity: phase === "intro" || phase === "flythrough" ? 0 : phase === "shrink" ? 0 : 1,
+      opacity: phase === "starfield" || phase === "intro" || phase === "flythrough" ? 0 : phase === "shrink" ? 0 : 1,
       textAlign: "center",
       whiteSpace: "nowrap",
       maxWidth: "95vw",
-      // Same staggered reveal as the image row.
       animation: phase === "card" ? "heroCardReveal 500ms ease-out 100ms backwards" : "none"
     };
     const cardNameStyle = {
@@ -1410,7 +1500,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       color: isPremium ? tierColor : dark ? "#f0f0f0" : "#111",
       marginTop: phase === "shrink" ? "8px" : "32px",
       transition: `font-size ${SHRINK_MS}ms ease, margin-top ${SHRINK_MS}ms ease, opacity ${SHRINK_MS}ms ease`,
-      opacity: phase === "intro" || phase === "flythrough" ? 0 : phase === "shrink" ? 0 : 1,
+      opacity: phase === "starfield" || phase === "intro" || phase === "flythrough" ? 0 : phase === "shrink" ? 0 : 1,
       textAlign: "center",
       padding: "0 24px",
       animation: phase === "card" ? "heroCardReveal 500ms ease-out 200ms backwards" : "none"
@@ -1421,7 +1511,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       color: tierColor,
       marginTop: phase === "shrink" ? "4px" : "18px",
       transition: `font-size ${SHRINK_MS}ms ease, letter-spacing ${SHRINK_MS}ms ease, margin-top ${SHRINK_MS}ms ease, opacity ${SHRINK_MS}ms ease`,
-      opacity: phase === "intro" || phase === "flythrough" ? 0 : phase === "shrink" ? 0 : 1,
+      opacity: phase === "starfield" || phase === "intro" || phase === "flythrough" ? 0 : phase === "shrink" ? 0 : 1,
       textAlign: "center",
       whiteSpace: "nowrap",
       maxWidth: "95vw",
@@ -1436,7 +1526,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       textAlign: "center",
       padding: "0 16px",
       fontStyle: "italic",
-      opacity: phase === "intro" || phase === "flythrough" ? 0 : phase === "shrink" ? 0 : 1,
+      opacity: phase === "starfield" || phase === "intro" || phase === "flythrough" ? 0 : phase === "shrink" ? 0 : 1,
       transition: `font-size ${SHRINK_MS}ms ease, margin-top ${SHRINK_MS}ms ease, opacity ${SHRINK_MS}ms ease`,
       animation: phase === "card" ? "heroCardReveal 800ms ease-out 600ms backwards" : "none"
     };
@@ -1469,7 +1559,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       transformStyle: "preserve-3d",
       willChange: "transform, opacity"
     });
-    return /* @__PURE__ */ React.createElement("div", { style: { ...baseStyle, ...positionStyle }, onClick: handleTap }, starfieldLayers.map((shadows, i) => /* @__PURE__ */ React.createElement("div", { key: `star-${i}`, style: starfieldLayerStyle(i, shadows) })), (phase === "intro" || phase === "flythrough") && /* @__PURE__ */ React.createElement("div", { style: introLabelStyle }, introLabelContent), phase === "flythrough" && safeImgs.map((src, i) => src && /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", { style: { ...baseStyle, ...positionStyle }, onClick: handleTap }, starfieldLayers.map((shadows, i) => /* @__PURE__ */ React.createElement("div", { key: `star-${i}`, style: starfieldLayerStyle(i, shadows) })), (phase === "starfield" || phase === "intro" || phase === "flythrough") && /* @__PURE__ */ React.createElement("div", { style: introLabelStyle }, introLabelContent), phase === "flythrough" && safeImgs.map((src, i) => src && /* @__PURE__ */ React.createElement(
       "img",
       {
         key: `fly-${i}`,
