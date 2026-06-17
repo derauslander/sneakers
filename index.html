@@ -309,18 +309,6 @@
     _preloadedAudio.whoosh = new Audio("assets/whoosh.mp3");
     _preloadedAudio.whoosh.preload = "auto";
   }, 2e3);
-  const migrateTiers = (inventory, colorways, grailMeta, beaterMeta) => {
-    const tierMeta = {};
-    inventory.forEach((shoe) => {
-      (colorways[shoe.shortName] || []).forEach((cw) => {
-        const key = `${shoe.id}_${cw}`;
-        if (grailMeta[key]) tierMeta[key] = "diamond";
-        else if (beaterMeta[key]) tierMeta[key] = "iron";
-        else tierMeta[key] = "silver";
-      });
-    });
-    return tierMeta;
-  };
   function SaleCountdown({ saleDate, saleTime }) {
     const [now, setNow] = useState(Date.now());
     useEffect(() => {
@@ -1607,55 +1595,11 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
     const [wearLog, setWearLog] = useState(() => ADMIN_MODE ? load("vault_wearlog_v3", {}) : {});
     const [images, setImages] = useState(() => ADMIN_MODE ? load("vault_images", {}) : {});
     const [colorwayMeta, setColorwayMeta] = useState(() => ADMIN_MODE ? load("vault_colorway_meta", {}) : {});
-    const [tierMeta, setTierMeta] = useState(() => {
-      if (!ADMIN_MODE) return {};
-      const existing = load("vault_tier_meta", null);
-      if (existing) return existing;
-      const inv = load("vault_inventory", []);
-      const cws = load("vault_colorways", {});
-      const gm = load("vault_grail_meta", {});
-      const bm = load("vault_beater_meta", {});
-      const migrated = migrateTiers(inv, cws, gm, bm);
-      try {
-        localStorage.setItem("vault_tier_meta", JSON.stringify(migrated));
-        localStorage.removeItem("vault_grail_meta");
-        localStorage.removeItem("vault_beater_meta");
-      } catch (e) {
-      }
-      return migrated;
-    });
+    const [tierMeta, setTierMeta] = useState(() => ADMIN_MODE ? load("vault_tier_meta", {}) : {});
     const [glowMeta, setGlowMeta] = useState(() => ADMIN_MODE ? load("vault_glow_meta", {}) : {});
     const [graveyardMeta, setGraveyardMeta] = useState(() => ADMIN_MODE ? load("vault_graveyard_meta", {}) : {});
     const [colorways, setColorways] = useState(() => ADMIN_MODE ? load("vault_colorways", {}) : {});
-    const [colorwayOwned, setColorwayOwned] = useState(() => {
-      if (!ADMIN_MODE) return {};
-      const existing = load("vault_colorway_owned", null);
-      if (existing) return existing;
-      const inv = load("vault_inventory", []);
-      const cws = load("vault_colorways", {});
-      const cwWishlist = load("vault_colorway_wishlist", {});
-      const owned = {};
-      inv.forEach((shoe) => {
-        (cws[shoe.shortName] || []).forEach((cw) => {
-          const key = `${shoe.id}_${cw}`;
-          owned[key] = !shoe.wishlist;
-          if (cwWishlist[key]) owned[key] = false;
-        });
-      });
-      try {
-        localStorage.setItem("vault_colorway_owned", JSON.stringify(owned));
-        localStorage.removeItem("vault_colorway_wishlist");
-        const migratedInv = inv.map((s) => {
-          const n = { ...s };
-          delete n.wishlist;
-          delete n.quantity;
-          return n;
-        });
-        localStorage.setItem("vault_inventory", JSON.stringify(migratedInv));
-      } catch (e) {
-      }
-      return owned;
-    });
+    const [colorwayOwned, setColorwayOwned] = useState(() => ADMIN_MODE ? load("vault_colorway_owned", {}) : {});
     const [wishlistOrder, setWishlistOrder] = useState(() => ADMIN_MODE ? load("vault_wishlist_order", []) : []);
     const [displayLayout, setDisplayLayout] = useState(() => ADMIN_MODE ? load("vault_display_layout", []) : []);
     const [dreamLayout, setDreamLayout] = useState(() => {
@@ -2295,10 +2239,6 @@ Make sure server.py is running, then try again.`);
           if (data.tierMeta) {
             setTierMeta(data.tierMeta);
             save("vault_tier_meta", data.tierMeta);
-          } else if (data.grailMeta || data.beaterMeta) {
-            const migrated = migrateTiers(data.inventory || [], data.colorways || {}, data.grailMeta || {}, data.beaterMeta || {});
-            setTierMeta(migrated);
-            save("vault_tier_meta", migrated);
           }
           if (data.glowMeta) {
             setGlowMeta(data.glowMeta);
@@ -2315,20 +2255,6 @@ Make sure server.py is running, then try again.`);
           if (data.colorwayOwned) {
             setColorwayOwned(data.colorwayOwned);
             save("vault_colorway_owned", data.colorwayOwned);
-          } else if (data.colorwayWishlist) {
-            const inv = data.inventory || [];
-            const cws = data.colorways || {};
-            const cwWishlist = data.colorwayWishlist || {};
-            const migrated = {};
-            inv.forEach((shoe) => {
-              (cws[shoe.shortName] || []).forEach((cw) => {
-                const key = `${shoe.id}_${cw}`;
-                migrated[key] = !shoe.wishlist;
-                if (cwWishlist[key]) migrated[key] = false;
-              });
-            });
-            setColorwayOwned(migrated);
-            save("vault_colorway_owned", migrated);
           }
           if (data.wishlistOrder) {
             setWishlistOrder(data.wishlistOrder);
