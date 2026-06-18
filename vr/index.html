@@ -2402,6 +2402,14 @@ Loading…</div>
     log(TEST_MODE
       ? "Scene ready. Click the canvas to start."
       : "Scene ready. Tap Enter VR to begin.", "ok");
+
+    // Fade out the loading log after a short delay so visitors don't
+    // see a wall of diagnostic text.  The test-mode controls banner is
+    // a separate element and stays visible.
+    setTimeout(() => {
+      statusEl.style.transition = "opacity 1s ease";
+      statusEl.style.opacity = "0";
+    }, 2000);
   </script>
 </body>
 </html>

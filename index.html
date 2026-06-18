@@ -1325,13 +1325,6 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       });
       return () => {
         timers.forEach(clearTimeout);
-        audioInstances.forEach((a) => {
-          try {
-            a.pause();
-            a.currentTime = 0;
-          } catch (e) {
-          }
-        });
       };
     }, [phase, enableSound, hasFlythrough]);
     React.useEffect(() => {
