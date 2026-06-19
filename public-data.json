@@ -803,7 +803,8 @@
     "1773621809428_Black Metallic_hover2": "Shoes/NB FF/Black Metallic/Black Metallic_hover2.png",
     "1781448435188_Grinch": "Shoes/Kobe/Grinch/Grinch.png",
     "1781448435188_Grinch_hover": "Shoes/Kobe/Grinch/Grinch_hover.png",
-    "1781448435188_Grinch_hover2": "Shoes/Kobe/Grinch/Grinch_hover2.png"
+    "1781448435188_Grinch_hover2": "Shoes/Kobe/Grinch/Grinch_hover2.png",
+    "1774096319133_Billy Hoyle_onfoot": "Shoes/ACF/Billy Hoyle/Billy Hoyle_onfoot.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -1343,7 +1344,7 @@
       "story": "",
       "saleDate": "",
       "saleTime": "",
-      "comfortRating": "",
+      "comfortRating": "8",
       "releaseYear": "2014"
     },
     "16_White Infrared": {
@@ -2391,5 +2392,5 @@
     "colorway": "Steel",
     "date": "2025-08-22"
   },
-  "builtAt": "2026-06-19T11:13:01.700012Z"
+  "builtAt": "2026-06-19T18:15:20.246688Z"
 }
