@@ -627,10 +627,10 @@ Loading…</div>
     //  HOOP — regulation dimensions, centred on the baseline
     // ════════════════════════════════════════════════════════════════════
     // Rim top at 3.05 m (10 ft), 0.46 m rim diameter, 1.83 × 1.07 m backboard
-    // with the bottom edge at 2.90 m, mounted on a pole standing just behind
-    // the baseline. The pedestal sits directly beneath, so a hero shoe is
-    // displayed under the basket. Lit by the same ambient + directional rig
-    // as the floor.
+    // with the bottom edge at 2.90 m, suspended from the ceiling via a
+    // central vertical pipe and two diagonal bracing rods. The pedestal
+    // sits directly beneath, so a hero shoe is displayed under the basket.
+    // Lit by the same ambient + directional rig as the floor.
     {
       const RIM_Y       = 3.05;
       const RIM_R       = 0.2286;                 // 18" rim diameter
@@ -641,6 +641,7 @@ Loading…</div>
       const RIM_Z       = BOARD_FACE + RIM_R + 0.05;
       const ORANGE      = 0xe8662a;
       const METAL       = 0x555555;
+      const CEILING_Y   = 7.0;
 
       // Backboard — frosted-glass panel with a bright edge frame.
       const board = new THREE.Mesh(
@@ -690,22 +691,58 @@ Loading…</div>
       net.position.set(0, RIM_Y - 0.225, RIM_Z);
       scene.add(net);
 
-      // Pole + arm — the standard, set behind the baseline on the wood margin.
-      const POLE_Z   = -7.45;
-      const poleTopY = BOARD_Y + BOARD_H / 2;     // up to the top of the board
-      const pole = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.06, 0.06, poleTopY, 24),
-        new THREE.MeshStandardMaterial({ color: METAL, roughness: 0.6, metalness: 0.1 })
+      // Ceiling mount — vertical pipe from ceiling down to backboard top,
+      // plus two diagonal bracing rods from ceiling to board corners.
+      const boardTopY = BOARD_Y + BOARD_H / 2;
+      const pipeLen = CEILING_Y - boardTopY;
+      const mountMat = new THREE.MeshStandardMaterial({ color: METAL, roughness: 0.6, metalness: 0.1 });
+
+      // Central vertical pipe
+      const pipe = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.06, 0.06, pipeLen, 24),
+        mountMat
       );
-      pole.position.set(0, poleTopY / 2, POLE_Z);
-      scene.add(pole);
-      const armLen = (BOARD_Z - BOARD_T / 2) - POLE_Z;
-      const arm = new THREE.Mesh(
-        new THREE.BoxGeometry(0.08, 0.08, armLen),
-        new THREE.MeshStandardMaterial({ color: METAL, roughness: 0.6, metalness: 0.1 })
+      pipe.position.set(0, boardTopY + pipeLen / 2, BOARD_Z);
+      scene.add(pipe);
+
+      // Mounting plate where pipe meets ceiling — a flat disc
+      const plate = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.20, 0.20, 0.03, 24),
+        mountMat
       );
-      arm.position.set(0, poleTopY - 0.10, POLE_Z + armLen / 2);
-      scene.add(arm);
+      plate.position.set(0, CEILING_Y - 0.015, BOARD_Z);
+      scene.add(plate);
+
+      // Diagonal bracing rods from ceiling anchor points to board corners.
+      // Each rod runs from a ceiling point (spread wider than the board)
+      // down to the top corner of the backboard, like the cables in a
+      // real gym ceiling-mount unit.
+      const braceRadius = 0.025;
+      const ceilAnchorSpread = BOARD_W * 0.7;  // anchor points wider than board
+      const ceilAnchorZ = BOARD_Z - 0.4;       // slightly behind the board
+      const braceEndpoints = [
+        { cx: -ceilAnchorSpread, bx: -BOARD_W / 2 + 0.1 },  // left
+        { cx:  ceilAnchorSpread, bx:  BOARD_W / 2 - 0.1 },   // right
+      ];
+
+      braceEndpoints.forEach(({ cx, bx }) => {
+        const top = new THREE.Vector3(cx, CEILING_Y - 0.05, ceilAnchorZ);
+        const bot = new THREE.Vector3(bx, boardTopY, BOARD_Z);
+        const mid = new THREE.Vector3().addVectors(top, bot).multiplyScalar(0.5);
+        const len = top.distanceTo(bot);
+        const dir = new THREE.Vector3().subVectors(bot, top).normalize();
+
+        const rod = new THREE.Mesh(
+          new THREE.CylinderGeometry(braceRadius, braceRadius, len, 12),
+          mountMat
+        );
+        rod.position.copy(mid);
+        // Align the cylinder (Y-axis) to the direction vector
+        const axis = new THREE.Vector3(0, 1, 0);
+        const quat = new THREE.Quaternion().setFromUnitVectors(axis, dir);
+        rod.setRotationFromQuaternion(quat);
+        scene.add(rod);
+      });
     }
 
     // ════════════════════════════════════════════════════════════════════
