@@ -611,6 +611,12 @@
         "date": "2026-05-26",
         "colorway": "Black Metallic"
       }
+    ],
+    "1774096319133": [
+      {
+        "date": "2026-06-19",
+        "colorway": "Billy Hoyle"
+      }
     ]
   },
   "images": {
@@ -2370,20 +2376,20 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "3_Rare Air",
-    "shoeId": 3,
-    "shoeName": "Air Jordan 3",
-    "shortName": "AJ3",
-    "colorway": "Rare Air",
-    "date": "2026-06-12"
-  },
-  "precomputedUpNext": {
     "key": "1774096319133_Billy Hoyle",
     "shoeId": 1774096319133,
     "shoeName": "Air Command Force",
     "shortName": "ACF",
     "colorway": "Billy Hoyle",
-    "date": null
+    "date": "2026-06-19"
   },
-  "builtAt": "2026-06-18T11:13:39.204471Z"
+  "precomputedUpNext": {
+    "key": "10_Steel",
+    "shoeId": 10,
+    "shoeName": "Air Jordan 10",
+    "shortName": "AJ10",
+    "colorway": "Steel",
+    "date": "2025-08-22"
+  },
+  "builtAt": "2026-06-19T11:13:01.700012Z"
 }
