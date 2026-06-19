@@ -646,7 +646,7 @@ Loading…</div>
       // Backboard — frosted-glass panel with a bright edge frame.
       const board = new THREE.Mesh(
         new THREE.BoxGeometry(BOARD_W, BOARD_H, BOARD_T),
-        new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.16, roughness: 0.1, metalness: 0.0 })
+        new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.22, roughness: 0.1, metalness: 0.0 })
       );
       board.position.set(0, BOARD_Y, BOARD_Z);
       scene.add(board);
@@ -656,6 +656,39 @@ Loading…</div>
       );
       boardFrame.position.copy(board.position);
       scene.add(boardFrame);
+
+      // Rubber padding — U-shaped guard along the bottom edge and partway
+      // up both sides, light grey. Side strips sit flush with the outer
+      // board edge; bottom strip fits between them for clean right-angle corners.
+      {
+        const PAD_T   = 0.05;                         // padding thickness (front-to-back)
+        const PAD_W   = 0.07;                         // padding width (how wide the strip is)
+        const SIDE_H  = BOARD_H * 0.40;               // how far up the sides the padding runs
+        const padMat  = new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.85, metalness: 0.0 });
+        const padZ    = BOARD_Z + BOARD_T / 2 + PAD_T / 2; // sits on the court-facing side
+        const boardBot = BOARD_Y - BOARD_H / 2;
+
+        // Bottom strip — spans between the two side strips (not full width)
+        const bottomPad = new THREE.Mesh(
+          new THREE.BoxGeometry(BOARD_W - PAD_W * 2, PAD_W, PAD_T), padMat
+        );
+        bottomPad.position.set(0, boardBot + PAD_W / 2, padZ);
+        scene.add(bottomPad);
+
+        // Left and right side strips — flush with outer board edge,
+        // extend from the bottom of the board up by SIDE_H.
+        [-1, 1].forEach(side => {
+          const sidePad = new THREE.Mesh(
+            new THREE.BoxGeometry(PAD_W, SIDE_H, PAD_T), padMat
+          );
+          sidePad.position.set(
+            side * (BOARD_W / 2 - PAD_W / 2),
+            boardBot + SIDE_H / 2,
+            padZ
+          );
+          scene.add(sidePad);
+        });
+      }
 
       // Shooter's square (24 × 18"), bottom edge at rim height, on the face.
       const sqW = 0.59, sqH = 0.45;
@@ -683,13 +716,72 @@ Loading…</div>
       bracket.position.set(0, RIM_Y, (BOARD_FACE + (RIM_Z - RIM_R)) / 2);
       scene.add(bracket);
 
-      // Net — stylized tapered open cylinder, semi-transparent white.
-      const net = new THREE.Mesh(
-        new THREE.CylinderGeometry(RIM_R * 0.95, RIM_R * 0.45, 0.45, 16, 1, true),
-        new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, side: THREE.DoubleSide, roughness: 1.0 })
-      );
-      net.position.set(0, RIM_Y - 0.225, RIM_Z);
-      scene.add(net);
+      // Net — rings-and-cords construction: horizontal loops at decreasing
+      // radii connected by vertical cord segments, like a real basketball net.
+      {
+        const NET_RINGS   = 5;           // horizontal loops top to bottom
+        const NET_CORDS   = 16;          // vertical cords around the circumference
+        const NET_TOP_R   = RIM_R * 0.92;
+        const NET_BOT_R   = RIM_R * 0.40;
+        const NET_H       = 0.45;
+        const NET_TOP_Y   = RIM_Y - 0.02; // just below the rim
+        const netMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55 });
+
+        // Precompute ring positions: Y and radius for each ring
+        const rings = [];
+        for (let r = 0; r < NET_RINGS; r++) {
+          const t = r / (NET_RINGS - 1);  // 0 at top, 1 at bottom
+          rings.push({
+            y: NET_TOP_Y - t * NET_H,
+            radius: NET_TOP_R + t * (NET_BOT_R - NET_TOP_R),
+          });
+        }
+
+        // Draw horizontal ring loops
+        rings.forEach(({ y, radius }) => {
+          const pts = [];
+          for (let c = 0; c <= NET_CORDS; c++) {
+            const angle = (c / NET_CORDS) * Math.PI * 2;
+            pts.push(new THREE.Vector3(
+              Math.cos(angle) * radius + 0,
+              y,
+              Math.sin(angle) * radius + RIM_Z
+            ));
+          }
+          scene.add(new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(pts), netMat
+          ));
+        });
+
+        // Draw vertical cords connecting rings, with a slight sag
+        // on each segment to mimic the drape of a real net.
+        for (let c = 0; c < NET_CORDS; c++) {
+          const angle = (c / NET_CORDS) * Math.PI * 2;
+          const pts = [];
+          for (let r = 0; r < NET_RINGS; r++) {
+            const { y, radius } = rings[r];
+            pts.push(new THREE.Vector3(
+              Math.cos(angle) * radius,
+              y,
+              Math.sin(angle) * radius + RIM_Z
+            ));
+            // Add a sag point between this ring and the next
+            if (r < NET_RINGS - 1) {
+              const next = rings[r + 1];
+              const midY = (y + next.y) / 2 - 0.015;  // sag downward
+              const midR = (radius + next.radius) / 2;
+              pts.push(new THREE.Vector3(
+                Math.cos(angle) * midR,
+                midY,
+                Math.sin(angle) * midR + RIM_Z
+              ));
+            }
+          }
+          scene.add(new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(pts), netMat
+          ));
+        }
+      }
 
       // Ceiling mount — vertical pipe from ceiling down to backboard top,
       // plus two diagonal bracing rods from ceiling to board corners.
@@ -699,11 +791,31 @@ Loading…</div>
 
       // Central vertical pipe
       const pipe = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.06, 0.06, pipeLen, 24),
+        new THREE.CylinderGeometry(0.08, 0.08, pipeLen, 24),
         mountMat
       );
       pipe.position.set(0, boardTopY + pipeLen / 2, BOARD_Z);
       scene.add(pipe);
+
+      // Bracket plate at the pipe-to-backboard junction — a horizontal
+      // slab that visually anchors the pipe to the board top.
+      const junctionPlate = new THREE.Mesh(
+        new THREE.BoxGeometry(0.40, 0.08, 0.25),
+        mountMat
+      );
+      junctionPlate.position.set(0, boardTopY + 0.04, BOARD_Z);
+      scene.add(junctionPlate);
+
+      // Short horizontal arm from pipe to backboard (behind the board).
+      // Connects the vertical pipe to the board's rear face so it looks
+      // structurally supported rather than just intersecting.
+      const armLen = 0.30;
+      const arm = new THREE.Mesh(
+        new THREE.BoxGeometry(0.12, 0.10, armLen),
+        mountMat
+      );
+      arm.position.set(0, boardTopY - 0.05, BOARD_Z - BOARD_T / 2 - armLen / 2);
+      scene.add(arm);
 
       // Mounting plate where pipe meets ceiling — a flat disc
       const plate = new THREE.Mesh(
@@ -1196,7 +1308,7 @@ Loading…</div>
         const panelH  = storyPanel.geometry.parameters.height;
         const shoeTop = stage.restPos.y + stageShoe.geometry.parameters.height / 2;
         const bottomY = shoeTop + 0.12;              // small gap above the shoe
-        storyPanel.position.set(PED_X, bottomY + panelH / 2, PED_Z + 0.45);
+        storyPanel.position.set(PED_X, bottomY + panelH / 2, PED_Z);
         faceUserUpright(storyPanel);
         scene.add(storyPanel);
         return;
