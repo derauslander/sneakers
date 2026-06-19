@@ -345,7 +345,7 @@ Loading…</div>
     const GAP_Y      = 0.01;
     const PITCH_X    = BOX_W + GAP_X;
     const PITCH_Y    = BOX_H + GAP_Y;
-    const CASE_Z     = -7.0;         // both cases sit on the −Z baseline (basket end)
+    const CASE_Z     = -8.93;        // back face of boxes flush with the −Z wall
     const CASE_X     = 3.4;          // lateral offset: office at −CASE_X, dream at +CASE_X, hoop centred between
     const BOTTOM_Y   = BOX_H / 2;    // lowest row rests on the floor (centre = half-height up)
     const TOP_Y      = BOTTOM_Y + (ROWS - 1) * PITCH_Y;
@@ -354,7 +354,7 @@ Loading…</div>
     // Pedestal: a stage centred under the hoop on the baseline, where a clicked
     // office-wall shoe flies out of its case to be shown beneath the basket.
     const PED_X       = 0;           // centred under the rim
-    const PED_Z       = -7.0;        // back on the baseline, under the backboard
+    const PED_Z       = -8.0;        // halfway between the baseline and the back wall
     const PED_COL_H   = 1.05;        // column height (floor up)
     const PED_CAP_TOP = PED_COL_H + 0.04;  // top surface of the cap (shoes sit here)
     const PED_SIT_SINK = 0.02;       // tuck the shoe's base slightly into the cap so it reads as resting
@@ -542,8 +542,9 @@ Loading…</div>
       // 180° rotation carries it along automatically.
       if (title) {
         const titlePanel = makeTitlePanel(title);
-        // Plaque floats just above the top of the grid, facing the user.
-        titlePanel.position.set(0, TOP_Y + BOX_H + 0.4, 0);
+        // Plaque sits above the vault-red accent stripe (~2.45m) on the
+        // back wall, clear of the padding zone.
+        titlePanel.position.set(0, 2.85, 0);
         wallGroup.add(titlePanel);
       }
 
@@ -657,36 +658,57 @@ Loading…</div>
       boardFrame.position.copy(board.position);
       scene.add(boardFrame);
 
-      // Rubber padding — U-shaped guard along the bottom edge and partway
-      // up both sides, light grey. Side strips sit flush with the outer
-      // board edge; bottom strip fits between them for clean right-angle corners.
+      // Rubber padding — U-shaped guard wrapping the bottom and partway up
+      // both sides. Each strip is a single box that spans the full depth
+      // (front pad + board + back pad) so there are no seams or alignment issues.
       {
-        const PAD_T   = 0.05;                         // padding thickness (front-to-back)
-        const PAD_W   = 0.07;                         // padding width (how wide the strip is)
-        const SIDE_H  = BOARD_H * 0.40;               // how far up the sides the padding runs
-        const padMat  = new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.85, metalness: 0.0 });
-        const padZ    = BOARD_Z + BOARD_T / 2 + PAD_T / 2; // sits on the court-facing side
+        const PAD_W    = 0.07;                          // strip width on the face
+        const PAD_T    = 0.05;                          // how far the pad protrudes from each face
+        const SIDE_H   = BOARD_H * 0.40;                // how far up the sides the padding runs
+        const padMat   = new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.85, metalness: 0.0 });
         const boardBot = BOARD_Y - BOARD_H / 2;
+        const fullDepth = BOARD_T + PAD_T * 2;          // total Z span
 
-        // Bottom strip — spans between the two side strips (not full width)
-        const bottomPad = new THREE.Mesh(
-          new THREE.BoxGeometry(BOARD_W - PAD_W * 2, PAD_W, PAD_T), padMat
+        // Bottom strip — runs the full width between the side strips
+        const bottom = new THREE.Mesh(
+          new THREE.BoxGeometry(BOARD_W - PAD_W * 2, PAD_W, fullDepth), padMat
         );
-        bottomPad.position.set(0, boardBot + PAD_W / 2, padZ);
-        scene.add(bottomPad);
+        bottom.position.set(0, boardBot + PAD_W / 2, BOARD_Z);
+        scene.add(bottom);
 
-        // Left and right side strips — flush with outer board edge,
-        // extend from the bottom of the board up by SIDE_H.
+        // Side strips — full depth, flush with outer board edge,
+        // extend from below the bottom strip up by SIDE_H so the
+        // corner is a clean right angle.
         [-1, 1].forEach(side => {
           const sidePad = new THREE.Mesh(
-            new THREE.BoxGeometry(PAD_W, SIDE_H, PAD_T), padMat
+            new THREE.BoxGeometry(PAD_W, SIDE_H, fullDepth), padMat
           );
           sidePad.position.set(
             side * (BOARD_W / 2 - PAD_W / 2),
             boardBot + SIDE_H / 2,
-            padZ
+            BOARD_Z
           );
           scene.add(sidePad);
+        });
+
+        // Bottom edge cap — spans full width including past the side caps
+        const bottomCap = new THREE.Mesh(
+          new THREE.BoxGeometry(BOARD_W + PAD_T * 2, PAD_T, fullDepth), padMat
+        );
+        bottomCap.position.set(0, boardBot - PAD_T / 2, BOARD_Z);
+        scene.add(bottomCap);
+
+        // Side edge caps — thin strips on the outer face of each side
+        [-1, 1].forEach(side => {
+          const sideCap = new THREE.Mesh(
+            new THREE.BoxGeometry(PAD_T, SIDE_H, fullDepth), padMat
+          );
+          sideCap.position.set(
+            side * (BOARD_W / 2 + PAD_T / 2),
+            boardBot + SIDE_H / 2,
+            BOARD_Z
+          );
+          scene.add(sideCap);
         });
       }
 
@@ -1851,8 +1873,6 @@ Loading…</div>
       if (_clampHead.z >  ROOM_BOUND) dz =  ROOM_BOUND - _clampHead.z;
       if (_clampHead.z < -ROOM_BOUND) dz = -ROOM_BOUND - _clampHead.z;
       if (dx || dz) {
-        // In VR, offset the player group; in test mode camera.position
-        // is local to the player group, so shifting player works either way.
         player.position.x += dx;
         player.position.z += dz;
       }
