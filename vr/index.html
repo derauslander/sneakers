@@ -336,8 +336,8 @@ Loading…</div>
     // 1cm gaps between boxes (thin shelf-line look, not airy spacing).
     // Bottom row sits 0.5m off the floor (knee-height shelf), top row at
     // ~2.35m — comfortable look-up/down range at 2.5m viewing distance.
-    const BOX_W      = 0.34;
-    const BOX_H      = 0.22225;     // 8 3/4 inches exactly
+    const BOX_W      = 0.45;
+    const BOX_H      = 0.294;        // scaled proportionally from BOX_W (original aspect ratio)
     const BOX_D      = 0.14;
     const INNER_W    = BOX_W * 0.9; // photo plane fits inside the box face
     const INNER_H    = BOX_H * 0.9;
@@ -525,6 +525,21 @@ Loading…</div>
       wallGroup.position.set(xOffset, 0, wallZ);
       if (rotateY180) wallGroup.rotation.y = Math.PI;
       scene.add(wallGroup);
+
+      // Opaque backing plane — sits just behind the boxes (between them
+      // and the gym wall) to hide the black padding seam lines from
+      // showing through the transparent shoebox shells.
+      {
+        const gridW = COLS * PITCH_X - GAP_X + 0.06;   // slightly wider than the grid
+        const gridH = ROWS * PITCH_Y - GAP_Y + 0.06;   // slightly taller
+        const gridCenterY = BOTTOM_Y + (ROWS - 1) * PITCH_Y / 2;
+        const backing = new THREE.Mesh(
+          new THREE.PlaneGeometry(gridW, gridH),
+          new THREE.MeshBasicMaterial({ color: 0x111111 })
+        );
+        backing.position.set(0, gridCenterY, -BOX_D / 2 + 0.005); // just inside the back of the boxes
+        wallGroup.add(backing);
+      }
 
       // World-space view position for pulling cases off this wall. Both walls
       // now stand on the −Z baseline (office left, dream right) facing the
@@ -1036,7 +1051,252 @@ Loading…</div>
     }
 
     // ════════════════════════════════════════════════════════════════════
-    //  PEDESTAL + STAGE SHOE (office wall)
+    //  TOP 3 PODIUM — cycles through the five ranking categories
+    // ════════════════════════════════════════════════════════════════════
+    // A classic 1st-2nd-3rd podium on the back wall (+Z), below the
+    // scoreboard. Auto-rotates every 12 seconds; click/trigger advances.
+    const podiumGroup = new THREE.Group();
+    podiumGroup.position.set(0, 0, 9 - 0.07);  // flush against the back wall (BOX_D/2 = 0.07)
+    podiumGroup.rotation.y = Math.PI;             // face the court (−Z)
+    scene.add(podiumGroup);
+
+    {
+      const rankings = data.precomputedRankings || {};
+      const CATEGORIES = [
+        { key: "wornRanked",  label: "MOST WORN",      stat: (e) => `${e.count} wears` },
+        { key: "priceRanked", label: "MOST EXPENSIVE",  stat: () => "" },
+        { key: "valueRanked", label: "BEST VALUE",      stat: (e) => `${e.wears} wears` },
+        { key: "iceRanked",   label: "LONGEST ON ICE",  stat: (e) => `${e.daysOnIce} days` },
+        { key: "gapRanked",   label: "LONGEST GAP",     stat: (e) => `${e.days} days` },
+      ];
+
+      // Filter to categories that actually have 3+ entries
+      const validCats = CATEGORIES.filter(c => (rankings[c.key] || []).length >= 3);
+      if (validCats.length === 0) {
+        log("No ranking categories with 3+ entries — podium skipped", "dim");
+      } else {
+        let currentCatIdx = 0;
+        let podiumAutoTimer = 0;
+        const PODIUM_INTERVAL = 12000; // ms between auto-advances
+
+        // Podium block heights and X positions: [2nd, 1st, 3rd]
+        const PODIUM_SLOTS = [
+          { x: -0.7, h: 0.65, place: 1 },   // 2nd place — left
+          { x:  0.0, h: 0.85, place: 0 },   // 1st place — centre (tallest)
+          { x:  0.7, h: 0.45, place: 2 },   // 3rd place — right
+        ];
+        const BLOCK_W = 0.55, BLOCK_D = 0.14;
+        const PHOTO_SIZE = 0.40;
+
+        // Build the static podium blocks — gold/silver/bronze
+        const podiumMats = {
+          0: new THREE.MeshStandardMaterial({ color: 0xFFD700, roughness: 0.3, metalness: 0.7 }), // 1st — gold
+          1: new THREE.MeshStandardMaterial({ color: 0xC0C0C0, roughness: 0.3, metalness: 0.7 }), // 2nd — silver
+          2: new THREE.MeshStandardMaterial({ color: 0xCD7F32, roughness: 0.3, metalness: 0.7 }), // 3rd — bronze
+        };
+
+        PODIUM_SLOTS.forEach(({ x, h, place }) => {
+          const block = new THREE.Mesh(
+            new THREE.BoxGeometry(BLOCK_W, h, BLOCK_D), podiumMats[place]
+          );
+          block.position.set(x, h / 2, 0);
+          podiumGroup.add(block);
+
+          // Subtle edge lines on the block
+          const edges = new THREE.LineSegments(
+            new THREE.EdgesGeometry(new THREE.BoxGeometry(BLOCK_W, h, BLOCK_D)),
+            new THREE.LineBasicMaterial({ color: 0x333333 })
+          );
+          edges.position.copy(block.position);
+          podiumGroup.add(edges);
+        });
+
+        // Place numbers (1, 2, 3) on the front face of each block
+        PODIUM_SLOTS.forEach(({ x, h, place }) => {
+          const numCanvas = document.createElement("canvas");
+          numCanvas.width = 128; numCanvas.height = 128;
+          const nctx = numCanvas.getContext("2d");
+          nctx.fillStyle = "#e63946";
+          nctx.font = "bold 90px -apple-system, BlinkMacSystemFont, sans-serif";
+          nctx.textAlign = "center"; nctx.textBaseline = "middle";
+          nctx.fillText(String(place + 1), 64, 64);
+          const numTex = new THREE.CanvasTexture(numCanvas);
+          numTex.colorSpace = THREE.SRGBColorSpace;
+          const numPlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.2, 0.2),
+            new THREE.MeshBasicMaterial({ map: numTex, transparent: true })
+          );
+          numPlane.position.set(x, h * 0.35, BLOCK_D / 2 + 0.005);
+          podiumGroup.add(numPlane);
+        });
+
+        // Dynamic elements: shoe image planes + name labels + stat labels + category title
+        // These get updated each time the category changes.
+        const shoePlanes = [];
+        const shoeNameLabels = [];
+        const nameLabels = [];
+        const statLabels = [];
+
+        PODIUM_SLOTS.forEach(({ x, h }) => {
+          // Shoe name label above the image
+          const shoeNameCanvas = document.createElement("canvas");
+          shoeNameCanvas.width = 512; shoeNameCanvas.height = 128;
+          const shoeNameTex = new THREE.CanvasTexture(shoeNameCanvas);
+          shoeNameTex.colorSpace = THREE.SRGBColorSpace;
+          const shoeNamePanel = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.50, 0.125),
+            new THREE.MeshBasicMaterial({ map: shoeNameTex, transparent: true })
+          );
+          shoeNamePanel.position.set(x, h + PHOTO_SIZE + 0.22, 0);
+          podiumGroup.add(shoeNamePanel);
+          shoeNameLabels.push({ mesh: shoeNamePanel, canvas: shoeNameCanvas, texture: shoeNameTex });
+
+          // Shoe image plane on top of the block
+          const plane = new THREE.Mesh(
+            new THREE.PlaneGeometry(PHOTO_SIZE, PHOTO_SIZE),
+            new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, side: THREE.DoubleSide })
+          );
+          plane.position.set(x, h + PHOTO_SIZE / 2 + 0.02, 0);
+          podiumGroup.add(plane);
+          shoePlanes.push(plane);
+
+          // Colorway label below the image
+          const nameCanvas = document.createElement("canvas");
+          nameCanvas.width = 512; nameCanvas.height = 128;
+          const nameTex = new THREE.CanvasTexture(nameCanvas);
+          nameTex.colorSpace = THREE.SRGBColorSpace;
+          const namePanel = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.50, 0.125),
+            new THREE.MeshBasicMaterial({ map: nameTex, transparent: true })
+          );
+          namePanel.position.set(x, h - 0.06, BLOCK_D / 2 + 0.005);
+          podiumGroup.add(namePanel);
+          nameLabels.push({ mesh: namePanel, canvas: nameCanvas, texture: nameTex });
+
+          // Stat label (wear count, days, etc.)
+          const statCanvas = document.createElement("canvas");
+          statCanvas.width = 512; statCanvas.height = 96;
+          const statTex = new THREE.CanvasTexture(statCanvas);
+          statTex.colorSpace = THREE.SRGBColorSpace;
+          const statPanel = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.50, 0.094),
+            new THREE.MeshBasicMaterial({ map: statTex, transparent: true })
+          );
+          statPanel.position.set(x, h - 0.17, BLOCK_D / 2 + 0.005);
+          podiumGroup.add(statPanel);
+          statLabels.push({ mesh: statPanel, canvas: statCanvas, texture: statTex });
+        });
+
+        // Category title panel above the podium (cycles with rankings)
+        const catCanvas = document.createElement("canvas");
+        catCanvas.width = 1024; catCanvas.height = 192;
+        const catTex = new THREE.CanvasTexture(catCanvas);
+        catTex.colorSpace = THREE.SRGBColorSpace;
+        const catPanel = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.8, 0.34),
+          new THREE.MeshBasicMaterial({ map: catTex, transparent: true })
+        );
+        catPanel.position.set(0, 1.65, 0);
+        podiumGroup.add(catPanel);
+
+        // Static "TOP 3" header above the category title — same plaque
+        // style as the OFFICE DISPLAY / DREAM DISPLAY labels.
+        const top3Panel = makeTitlePanel("TOP 3");
+        top3Panel.position.set(0, 2.05, 0);
+        podiumGroup.add(top3Panel);
+
+        // Clickable target for advancing — invisible plane covering the whole podium
+        const podiumClickTarget = new THREE.Mesh(
+          new THREE.PlaneGeometry(2.2, 2.0),
+          new THREE.MeshBasicMaterial({ visible: false })
+        );
+        podiumClickTarget.position.set(0, 1.0, BLOCK_D / 2 + 0.01);
+        podiumClickTarget.userData.isPodium = true;
+        podiumGroup.add(podiumClickTarget);
+
+        const drawTextCanvas = (canvas, texture, text, fontSize, color, fontWeight) => {
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = color || "#ffffff";
+          ctx.font = `${fontWeight || "bold"} ${fontSize || 48}px -apple-system, BlinkMacSystemFont, sans-serif`;
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+          texture.needsUpdate = true;
+        };
+
+        const showCategory = (catIdx) => {
+          const cat = validCats[catIdx];
+          const entries = rankings[cat.key].slice(0, 3);
+
+          // Update category title
+          drawTextCanvas(catCanvas, catTex, cat.label, 80, "#e63946", "bold");
+
+          // Update each podium slot
+          PODIUM_SLOTS.forEach(({ place }, slotIdx) => {
+            const entry = entries[place];
+            if (!entry) return;
+
+            // Load shoe image
+            const key = `${entry.shoeId}_${entry.colorway}`;
+            const imgPath = images[key];
+            if (imgPath) {
+              loader.load("../" + imgPath, (texture) => {
+                texture.colorSpace = THREE.SRGBColorSpace;
+                shoePlanes[slotIdx].material.map = texture;
+                shoePlanes[slotIdx].material.color.set(0xffffff);
+                shoePlanes[slotIdx].material.needsUpdate = true;
+                const aspect = texture.image.width / texture.image.height;
+                if (aspect > 1) {
+                  shoePlanes[slotIdx].scale.set(1, 1 / aspect, 1);
+                } else {
+                  shoePlanes[slotIdx].scale.set(aspect, 1, 1);
+                }
+              });
+            }
+
+            // Shoe name above the image
+            drawTextCanvas(
+              shoeNameLabels[slotIdx].canvas, shoeNameLabels[slotIdx].texture,
+              entry.shoeName, 36, "#ffffff", "bold"
+            );
+
+            // Colorway on the podium face
+            drawTextCanvas(
+              nameLabels[slotIdx].canvas, nameLabels[slotIdx].texture,
+              entry.colorway, 34, "#ffffff", "normal"
+            );
+
+            // Stat line
+            const statText = cat.stat(entry);
+            drawTextCanvas(
+              statLabels[slotIdx].canvas, statLabels[slotIdx].texture,
+              statText, 30, "#aaaaaa", "normal"
+            );
+          });
+        };
+
+        // Show the first category
+        showCategory(0);
+        log(`Podium: ${validCats.length} ranking categories loaded`, "ok");
+
+        // Auto-rotate timer
+        podiumAutoTimer = performance.now();
+        const advancePodium = () => {
+          currentCatIdx = (currentCatIdx + 1) % validCats.length;
+          showCategory(currentCatIdx);
+          podiumAutoTimer = performance.now();
+        };
+
+        // Expose for the render loop and click handler
+        podiumGroup.userData = {
+          clickTarget: podiumClickTarget,
+          advance: advancePodium,
+          update: (now) => {
+            if (now - podiumAutoTimer > PODIUM_INTERVAL) advancePodium();
+          },
+        };
+      }
+    }
     // ════════════════════════════════════════════════════════════════════
     // A column the user's clicked shoe flies onto. Kept understated (same
     // wireframe-edge vocabulary as the boxes) so the shoe is the focus.
@@ -1648,6 +1908,15 @@ Loading…</div>
         const ofdHits = raycaster.intersectObject(ofdClickTarget, false);
         if (ofdHits.length > 0) {
           ofd.trigger(now);
+          return;
+        }
+      }
+
+      // Check podium click target — advance to next ranking category.
+      if (podiumGroup.userData?.clickTarget) {
+        const podiumHits = raycaster.intersectObject(podiumGroup.userData.clickTarget, true);
+        if (podiumHits.length > 0) {
+          podiumGroup.userData.advance();
           return;
         }
       }
@@ -2564,6 +2833,7 @@ Loading…</div>
       updatePulse(now);
       updateStage(now);
       ofd.update(now, dt);
+      if (podiumGroup.userData?.update) podiumGroup.userData.update(now);
       if (storyPanel) faceUserUpright(storyPanel);
       renderer.render(scene, camera);
     });
