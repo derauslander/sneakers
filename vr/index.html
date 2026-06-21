@@ -1903,11 +1903,27 @@ Loading…</div>
       if (ofd.phase === "card") { ofd.exitCard(now); return; }
       if (ofd.phase !== "idle" && ofd.phase !== "done") return;
 
+      // During Roll Call — tap to exit; block all other interactions.
+      if (window._rc && window._rc.phase === "fly") {
+        window._rc.exit(now);
+        return;
+      }
+      if (window._rc && window._rc.phase !== "idle") return;
+
       // Check OFD display first.
       if (ofdClickTarget && (ofd.phase === "idle" || ofd.phase === "done")) {
         const ofdHits = raycaster.intersectObject(ofdClickTarget, false);
         if (ofdHits.length > 0) {
           ofd.trigger(now);
+          return;
+        }
+      }
+
+      // Check Roll Call trigger panel.
+      if (window._rc) {
+        const rcHits = raycaster.intersectObjects(scene.children.filter(c => c.userData?.isRollCall), false);
+        if (rcHits.length > 0) {
+          window._rc.trigger(now);
           return;
         }
       }
@@ -2819,6 +2835,430 @@ Loading…</div>
     }
 
     // ════════════════════════════════════════════════════════════════════
+    //  ROLL CALL — chronological collection flythrough
+    // ════════════════════════════════════════════════════════════════════
+    // A full-screen animation triggered from a panel on the left sideline
+    // wall. Cycles through every owned shoe in purchase-date order with a
+    // city-night-drive background (streaking neon lines). Each shoe shows
+    // name, colorway, purchase date, and tier. Tap to exit.
+    {
+      // Build the collection list sorted by purchase date
+      const allEntries = [];
+      for (const cell of [...displayCells, ...dreamCells]) {
+        if (cell.empty || !cell.entry?.owned) continue;
+        const e = cell.entry;
+        const pd = colorwayMeta[e.key]?.purchaseDate || "";
+        allEntries.push({
+          key: e.key,
+          shoeName: e.shoeName,
+          colorway: e.colorway,
+          tier: e.tier,
+          purchaseDate: pd,
+          imagePath: e.imagePath,
+        });
+      }
+      // Sort by purchase date (earliest first), shoes without dates go last
+      allEntries.sort((a, b) => {
+        if (!a.purchaseDate && !b.purchaseDate) return 0;
+        if (!a.purchaseDate) return 1;
+        if (!b.purchaseDate) return -1;
+        return a.purchaseDate.localeCompare(b.purchaseDate);
+      });
+
+      // Deduplicate by key (a shoe may appear on both walls)
+      const seen = new Set();
+      const rcShoes = allEntries.filter(e => {
+        if (seen.has(e.key)) return false;
+        seen.add(e.key);
+        return true;
+      });
+
+      log(`Roll Call: ${rcShoes.length} shoes in chronological order`, "ok");
+
+      if (rcShoes.length > 0) {
+
+        // ── Timing ────────────────────────────────────────────────────
+        const RC_FADEOUT_MS  = 600;
+        const RC_PER_SHOE_MS = 3500;  // total time per shoe
+        const RC_APPEAR_MS   = 400;   // fade in from distance
+        const RC_DRIFT_MS    = 800;   // drift toward camera
+        const RC_HOLD_MS     = 1300;  // pause at hero position
+        const RC_RUSH_MS     = 1000;  // rush through camera
+        const RC_FADEIN_MS   = 600;
+        const RC_TOTAL_MS    = rcShoes.length * RC_PER_SHOE_MS;
+
+        const rcEase = (t) => 1 - Math.pow(1 - t, 3);
+        const rcEaseIn = (t) => t * t * t;
+
+        // ── Roll Call state ───────────────────────────────────────────
+        const rc = { phase: "idle", t0: 0 };
+
+        // ── Fade sphere (reuse concept from OFD) ─────────────────────
+        const rcFadeSphere = new THREE.Mesh(
+          new THREE.SphereGeometry(44, 16, 12),
+          new THREE.MeshBasicMaterial({
+            color: 0x000000, side: THREE.BackSide,
+            transparent: true, opacity: 0, depthWrite: false,
+          })
+        );
+        rcFadeSphere.renderOrder = 996;
+        camera.add(rcFadeSphere);
+
+        // ── City night drive — streaking neon lines ──────────────────
+        const STREAK_COUNT = 200;
+        const streakGeo = new THREE.BufferGeometry();
+        const streakPos = new Float32Array(STREAK_COUNT * 6); // line segments: 2 verts each
+        const streakColors = new Float32Array(STREAK_COUNT * 6); // RGB per vert
+        const NEON_PALETTE = [
+          [1.0, 0.2, 0.3],   // red
+          [0.2, 0.6, 1.0],   // blue
+          [1.0, 0.5, 0.1],   // orange
+          [0.9, 0.1, 0.5],   // pink
+          [0.3, 1.0, 0.6],   // green
+          [1.0, 1.0, 0.2],   // yellow
+        ];
+        const streakSpeeds = new Float32Array(STREAK_COUNT);
+        const streakSides  = new Float32Array(STREAK_COUNT); // -1 or +1
+
+        for (let i = 0; i < STREAK_COUNT; i++) {
+          const side = Math.random() < 0.5 ? -1 : 1;
+          streakSides[i] = side;
+          const x = side * (3 + Math.random() * 8);      // spread to the sides
+          const y = (Math.random() - 0.3) * 6;            // mostly below eye level
+          const z = -(Math.random() * 40 + 5);            // behind camera spread
+          const len = 0.5 + Math.random() * 2.0;          // streak length
+          const idx = i * 6;
+          streakPos[idx]     = x; streakPos[idx + 1] = y; streakPos[idx + 2] = z;
+          streakPos[idx + 3] = x; streakPos[idx + 4] = y; streakPos[idx + 5] = z - len;
+          streakSpeeds[i] = 15 + Math.random() * 25;
+          const col = NEON_PALETTE[Math.floor(Math.random() * NEON_PALETTE.length)];
+          for (let v = 0; v < 2; v++) {
+            streakColors[idx + v * 3]     = col[0];
+            streakColors[idx + v * 3 + 1] = col[1];
+            streakColors[idx + v * 3 + 2] = col[2];
+          }
+        }
+        streakGeo.setAttribute("position", new THREE.BufferAttribute(streakPos, 3));
+        streakGeo.setAttribute("color", new THREE.BufferAttribute(streakColors, 3));
+        const streakLines = new THREE.LineSegments(streakGeo, new THREE.LineBasicMaterial({
+          vertexColors: true, transparent: true, opacity: 0.7, depthWrite: false,
+        }));
+        streakLines.visible = false;
+        streakLines.renderOrder = 997;
+        camera.add(streakLines);
+
+        const updateStreaks = (dt) => {
+          const pos = streakGeo.attributes.position.array;
+          for (let i = 0; i < STREAK_COUNT; i++) {
+            const idx = i * 6;
+            const speed = streakSpeeds[i] * dt;
+            pos[idx + 2] += speed;
+            pos[idx + 5] += speed;
+            if (pos[idx + 2] > 5) {
+              const side = streakSides[i];
+              const x = side * (3 + Math.random() * 8);
+              const y = (Math.random() - 0.3) * 6;
+              const z = -(Math.random() * 40 + 5);
+              const len = 0.5 + Math.random() * 2.0;
+              pos[idx]     = x; pos[idx + 1] = y; pos[idx + 2] = z;
+              pos[idx + 3] = x; pos[idx + 4] = y; pos[idx + 5] = z - len;
+            }
+          }
+          streakGeo.attributes.position.needsUpdate = true;
+        };
+
+        // ── Shoe display plane ───────────────────────────────────────
+        const rcShoeGroup = new THREE.Group();
+        rcShoeGroup.visible = false;
+        rcShoeGroup.renderOrder = 1001;
+        camera.add(rcShoeGroup);
+
+        const RC_FLY_W = 1.0, RC_FLY_H = 0.85;
+        const rcShoePlane = new THREE.Mesh(
+          new THREE.PlaneGeometry(RC_FLY_W, RC_FLY_H),
+          new THREE.MeshBasicMaterial({
+            color: 0xffffff, transparent: true, opacity: 0,
+            side: THREE.DoubleSide, depthWrite: false, depthTest: false,
+          })
+        );
+        rcShoePlane.renderOrder = 1002;
+        rcShoeGroup.add(rcShoePlane);
+
+        // ── Info labels (shoe name, colorway, purchase date, tier) ───
+        const rcMakeLabel = (text, fontSize, color, yPos) => {
+          const LW = 1400, LH = 160;
+          const lc = document.createElement("canvas");
+          lc.width = LW; lc.height = LH;
+          const lg = lc.getContext("2d");
+          lg.clearRect(0, 0, LW, LH);
+          lg.textAlign = "center"; lg.textBaseline = "middle";
+          lg.fillStyle = color;
+          lg.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+          lg.fillText(text, LW / 2, LH / 2);
+          const tex = new THREE.CanvasTexture(lc);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          const h = 0.25, w = h * (LW / LH);
+          const mesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(w, h),
+            new THREE.MeshBasicMaterial({
+              map: tex, transparent: true, side: THREE.DoubleSide,
+              depthWrite: false, depthTest: false,
+            })
+          );
+          mesh.position.set(0, yPos, 0);
+          mesh.renderOrder = 1003;
+          return mesh;
+        };
+
+        // Pre-create label meshes (updated each shoe)
+        const rcNameMesh = rcMakeLabel("", 72, "#ffffff", 0.65);
+        rcShoeGroup.add(rcNameMesh);
+        const rcCwMesh = rcMakeLabel("", 52, "#cccccc", 0.48);
+        rcShoeGroup.add(rcCwMesh);
+        const rcDateMesh = rcMakeLabel("", 44, "#888888", -0.62);
+        rcShoeGroup.add(rcDateMesh);
+        const rcTierMesh = rcMakeLabel("", 40, "#e63946", -0.78);
+        rcShoeGroup.add(rcTierMesh);
+
+        const TIER_LABELS = {
+          diamond: "◆ DIAMOND", platinum: "▲ PLATINUM",
+          gold: "● GOLD", silver: "■ SILVER", iron: "▪ IRON",
+        };
+        const TIER_COLORS = {
+          diamond: "#b9f2ff", platinum: "#e5e4e2",
+          gold: "#ffd700", silver: "#c0c0c0", iron: "#888888",
+        };
+
+        const rcUpdateLabel = (mesh, text, fontSize, color) => {
+          const canvas = document.createElement("canvas");
+          canvas.width = 1400; canvas.height = 160;
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, 1400, 160);
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillStyle = color;
+          ctx.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+          ctx.fillText(text, 700, 80);
+          const tex = new THREE.CanvasTexture(canvas);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          mesh.material.map?.dispose();
+          mesh.material.map = tex;
+          mesh.material.needsUpdate = true;
+        };
+
+        // ── Room hide/show (separate from OFD's) ─────────────────────
+        let _rcHiddenRoom = [];
+        const rcHideRoom = () => {
+          _rcHiddenRoom = [];
+          for (const obj of scene.children) {
+            if (obj === player) continue;
+            if (obj.visible) { _rcHiddenRoom.push(obj); obj.visible = false; }
+          }
+        };
+        const rcShowRoom = () => {
+          for (const obj of _rcHiddenRoom) obj.visible = true;
+          _rcHiddenRoom = [];
+        };
+
+        // ── Load shoe for a given index ──────────────────────────────
+        let rcCurrentTexture = null;
+        const rcLoadShoe = (idx) => {
+          const shoe = rcShoes[idx];
+          // Update labels
+          rcUpdateLabel(rcNameMesh, shoe.shoeName, 72, "#ffffff");
+          rcUpdateLabel(rcCwMesh, shoe.colorway, 52, "#cccccc");
+          const dateStr = shoe.purchaseDate
+            ? "Purchased on " + formatMMDDYYYY(shoe.purchaseDate)
+            : "";
+          rcUpdateLabel(rcDateMesh, dateStr, 44, "#888888");
+          const tierLabel = TIER_LABELS[shoe.tier] || "■ SILVER";
+          const tierColor = TIER_COLORS[shoe.tier] || "#c0c0c0";
+          rcUpdateLabel(rcTierMesh, tierLabel, 40, tierColor);
+
+          // Load shoe image
+          loader.load(shoe.imagePath, (texture) => {
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.anisotropy = 8;
+            if (rcCurrentTexture && rcCurrentTexture !== texture) {
+              rcCurrentTexture.dispose();
+            }
+            rcCurrentTexture = texture;
+            rcShoePlane.material.map = texture;
+            rcShoePlane.material.needsUpdate = true;
+            const aspect = texture.image.width / texture.image.height;
+            const fw = aspect >= 1 ? RC_FLY_W : RC_FLY_H * aspect;
+            const fh = aspect >= 1 ? RC_FLY_W / aspect : RC_FLY_H;
+            rcShoePlane.geometry.dispose();
+            rcShoePlane.geometry = new THREE.PlaneGeometry(fw, fh);
+          });
+        };
+
+        // ── Trigger panel on the left sideline wall ──────────────────
+        const rcTriggerCanvas = document.createElement("canvas");
+        rcTriggerCanvas.width = 800; rcTriggerCanvas.height = 400;
+        const rtx = rcTriggerCanvas.getContext("2d");
+
+        // Background
+        rtx.fillStyle = "#111111";
+        rtx.beginPath();
+        rtx.roundRect(0, 0, 800, 400, 20);
+        rtx.fill();
+
+        // Red border
+        rtx.strokeStyle = "#e63946";
+        rtx.lineWidth = 6;
+        rtx.beginPath();
+        rtx.roundRect(3, 3, 794, 394, 18);
+        rtx.stroke();
+
+        // Title
+        rtx.fillStyle = "#ffffff";
+        rtx.font = "bold 72px -apple-system, BlinkMacSystemFont, sans-serif";
+        rtx.textAlign = "center"; rtx.textBaseline = "middle";
+        rtx.fillText("ROLL CALL", 400, 150);
+
+        // Subtitle
+        rtx.fillStyle = "rgba(255,255,255,0.4)";
+        rtx.font = "italic 36px -apple-system, BlinkMacSystemFont, sans-serif";
+        rtx.fillText("select to launch", 400, 260);
+
+        // Count
+        rtx.fillStyle = "#e63946";
+        rtx.font = "bold 32px -apple-system, BlinkMacSystemFont, sans-serif";
+        rtx.fillText(`${rcShoes.length} shoes`, 400, 330);
+
+        const rcTriggerTex = new THREE.CanvasTexture(rcTriggerCanvas);
+        rcTriggerTex.colorSpace = THREE.SRGBColorSpace;
+
+        const rcTrigger = new THREE.Mesh(
+          new THREE.PlaneGeometry(1.4, 0.7),
+          new THREE.MeshBasicMaterial({ map: rcTriggerTex, transparent: true, side: THREE.DoubleSide })
+        );
+        // Left sideline wall (X = -9), facing into the court (+X)
+        rcTrigger.position.set(-8.95, 1.5, 0);
+        rcTrigger.rotation.y = Math.PI / 2;
+        rcTrigger.userData.isRollCall = true;
+        scene.add(rcTrigger);
+
+        // ── Trigger action ───────────────────────────────────────────
+        rc.trigger = (now) => {
+          if (rc.phase !== "idle") return;
+          rc.phase = "fadeout";
+          rc.t0 = now;
+          rc.shoeIdx = 0;
+          rcLoadShoe(0);
+        };
+
+        // ── Exit ─────────────────────────────────────────────────────
+        rc.exit = (now) => {
+          rcShoeGroup.visible = false;
+          streakLines.visible = false;
+          rc.phase = "fadein";
+          rc.t0 = now;
+        };
+
+        // ── Per-frame update ─────────────────────────────────────────
+        rc.update = (now, dt) => {
+          if (rc.phase === "idle" || rc.phase === "done") return;
+          const elapsed = now - rc.t0;
+
+          if (rc.phase === "fadeout") {
+            const t = Math.min(elapsed / RC_FADEOUT_MS, 1);
+            rcFadeSphere.material.opacity = rcEase(t);
+            if (t >= 1) {
+              rcHideRoom();
+              rcFadeSphere.material.transparent = false;
+              rcFadeSphere.material.needsUpdate = true;
+              streakLines.visible = true;
+              rcShoeGroup.visible = true;
+              rc.phase = "fly";
+              rc.t0 = now;
+              rc.shoeIdx = 0;
+              rc.shoeT0 = now;
+            }
+
+          } else if (rc.phase === "fly") {
+            updateStreaks(dt);
+
+            // Which shoe are we on?
+            const shoeElapsed = now - rc.shoeT0;
+            if (shoeElapsed >= RC_PER_SHOE_MS) {
+              // Next shoe
+              rc.shoeIdx++;
+              if (rc.shoeIdx >= rcShoes.length) {
+                // All done — auto exit
+                rc.exit(now);
+                return;
+              }
+              rc.shoeT0 = now;
+              rcLoadShoe(rc.shoeIdx);
+              return; // process next frame with fresh timing
+            }
+
+            // Animate current shoe: appear → drift → hold → rush
+            let shoeZ, shoeScale, shoeOpacity, labelOpacity;
+            if (shoeElapsed < RC_APPEAR_MS) {
+              const t = shoeElapsed / RC_APPEAR_MS;
+              shoeZ = -16 + 3 * rcEase(t);
+              shoeScale = 0.3 + 0.3 * t;
+              shoeOpacity = rcEase(t);
+              labelOpacity = rcEase(t);
+            } else if (shoeElapsed < RC_APPEAR_MS + RC_DRIFT_MS) {
+              const t = (shoeElapsed - RC_APPEAR_MS) / RC_DRIFT_MS;
+              shoeZ = -13 + 10 * rcEase(t);         // -13 → -3
+              shoeScale = 0.6 + 0.6 * rcEase(t);
+              shoeOpacity = 1;
+              labelOpacity = 1;
+            } else if (shoeElapsed < RC_APPEAR_MS + RC_DRIFT_MS + RC_HOLD_MS) {
+              shoeZ = -3;
+              shoeScale = 1.2;
+              shoeOpacity = 1;
+              labelOpacity = 1;
+            } else {
+              const rushT = (shoeElapsed - RC_APPEAR_MS - RC_DRIFT_MS - RC_HOLD_MS) / RC_RUSH_MS;
+              const rushE = rcEaseIn(Math.min(rushT, 1));
+              shoeZ = -3 + 14 * rushE;
+              shoeScale = 1.2 + 1.4 * rushE;
+              shoeOpacity = Math.max(0, 1 - rushT * 1.8);
+              labelOpacity = Math.max(0, 1 - rushT * 2.0);
+            }
+
+            rcShoePlane.position.set(0, 0, shoeZ);
+            rcShoePlane.scale.setScalar(shoeScale);
+            rcShoePlane.material.opacity = shoeOpacity;
+            rcNameMesh.material.opacity = labelOpacity;
+            rcCwMesh.material.opacity = labelOpacity;
+            rcDateMesh.material.opacity = labelOpacity;
+            rcTierMesh.material.opacity = labelOpacity;
+
+            // Labels follow shoe Z but stay fixed scale
+            const labelZ = shoeZ - 0.01;
+            rcNameMesh.position.z = labelZ;
+            rcCwMesh.position.z = labelZ;
+            rcDateMesh.position.z = labelZ;
+            rcTierMesh.position.z = labelZ;
+
+          } else if (rc.phase === "fadein") {
+            if (!rcFadeSphere.material.transparent) {
+              rcShowRoom();
+              rcFadeSphere.material.transparent = true;
+              rcFadeSphere.material.needsUpdate = true;
+            }
+            const t = Math.min(elapsed / RC_FADEIN_MS, 1);
+            rcFadeSphere.material.opacity = 1 - rcEase(t);
+            if (t >= 1) {
+              rcFadeSphere.material.opacity = 0;
+              rc.phase = "idle";   // Can be triggered again (not "done")
+            }
+          }
+        };
+
+        // ── Expose for render loop and click handler ─────────────────
+        window._rc = rc;
+
+      } // end if rcShoes.length > 0
+    } // end Roll Call block
+
+    // ════════════════════════════════════════════════════════════════════
     //  RENDER LOOP
     // ════════════════════════════════════════════════════════════════════
     let _lastFrameT = performance.now();
@@ -2833,6 +3273,7 @@ Loading…</div>
       updatePulse(now);
       updateStage(now);
       ofd.update(now, dt);
+      if (window._rc) window._rc.update(now, dt);
       if (podiumGroup.userData?.update) podiumGroup.userData.update(now);
       if (storyPanel) faceUserUpright(storyPanel);
       renderer.render(scene, camera);
