@@ -804,7 +804,10 @@
     "1781448435188_Grinch": "Shoes/Kobe/Grinch/Grinch.png",
     "1781448435188_Grinch_hover": "Shoes/Kobe/Grinch/Grinch_hover.png",
     "1781448435188_Grinch_hover2": "Shoes/Kobe/Grinch/Grinch_hover2.png",
-    "1774096319133_Billy Hoyle_onfoot": "Shoes/ACF/Billy Hoyle/Billy Hoyle_onfoot.png"
+    "1774096319133_Billy Hoyle_onfoot": "Shoes/ACF/Billy Hoyle/Billy Hoyle_onfoot.png",
+    "4_White Thunder": "Shoes/AJ4/White Thunder/White Thunder.png",
+    "4_White Thunder_hover": "Shoes/AJ4/White Thunder/White Thunder_hover.png",
+    "4_White Thunder_hover2": "Shoes/AJ4/White Thunder/White Thunder_hover2.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -1431,7 +1434,8 @@
     "18_Concord": "gold",
     "16_White Infrared": "gold",
     "1773621809428_Black Metallic": "iron",
-    "1781448435188_Grinch": "platinum"
+    "1781448435188_Grinch": "platinum",
+    "4_White Thunder": "bronze"
   },
   "glowMeta": {
     "6_Reverse Infrared": true,
@@ -1449,7 +1453,22 @@
     "9_Olive": true,
     "1773621809428_Black Metallic": true
   },
-  "graveyardMeta": {},
+  "graveyardMeta": {
+    "4_White Thunder": {
+      "shoeName": "Air Jordan 4",
+      "colorway": "White Thunder",
+      "shortName": "AJ4",
+      "category": "Jordan",
+      "tier": "bronze",
+      "purchaseDate": null,
+      "retireDate": "2024-08-31",
+      "reason": "Sold",
+      "story": "Hit on SNKRS and immediately regretted it.  Sold on Goat.",
+      "lastWorn": null,
+      "img": "Shoes/AJ4/White Thunder/White Thunder.png",
+      "hoverImg": "Shoes/AJ4/White Thunder/White Thunder_hover.png"
+    }
+  },
   "colorways": {
     "AJ1": [
       "Royal Reimagined",
@@ -1598,7 +1617,8 @@
     "1774096319133_Billy Hoyle": true,
     "1775259901810_Dark Grape": false,
     "1773621809428_Black Metallic": true,
-    "1781448435188_Grinch": false
+    "1781448435188_Grinch": false,
+    "4_White Thunder": true
   },
   "wishlistOrder": [
     "18",
@@ -2392,5 +2412,5 @@
     "colorway": "Steel",
     "date": "2025-08-22"
   },
-  "builtAt": "2026-06-21T10:28:45.294612Z"
+  "builtAt": "2026-06-21T16:44:48.787892Z"
 }
