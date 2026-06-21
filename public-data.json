@@ -1383,6 +1383,18 @@
       "saleTime": "",
       "comfortRating": "",
       "releaseYear": ""
+    },
+    "4_White Thunder": {
+      "purchaseDate": "2024-08-24",
+      "retailer": "SNKRS",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "",
+      "releaseYear": "2024"
     }
   },
   "tierMeta": {
@@ -1460,10 +1472,10 @@
       "shortName": "AJ4",
       "category": "Jordan",
       "tier": "bronze",
-      "purchaseDate": null,
+      "purchaseDate": "2024-08-24",
       "retireDate": "2024-08-31",
       "reason": "Sold",
-      "story": "Hit on SNKRS and immediately regretted it.  Sold on Goat.",
+      "story": "I hit on SNKRS and immediately regretted it.  Sold on goat on the day they were delivered.",
       "lastWorn": null,
       "img": "Shoes/AJ4/White Thunder/White Thunder.png",
       "hoverImg": "Shoes/AJ4/White Thunder/White Thunder_hover.png"
@@ -2412,5 +2424,5 @@
     "colorway": "Steel",
     "date": "2025-08-22"
   },
-  "builtAt": "2026-06-21T16:44:48.787892Z"
+  "builtAt": "2026-06-21T16:52:27.468125Z"
 }
