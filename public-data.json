@@ -468,6 +468,10 @@
       {
         "colorway": "Steel",
         "date": "2025-08-22"
+      },
+      {
+        "date": "2026-06-25",
+        "colorway": "Steel"
       }
     ],
     "11": [
@@ -2409,20 +2413,20 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "1774096319133_Billy Hoyle",
-    "shoeId": 1774096319133,
-    "shoeName": "Air Command Force",
-    "shortName": "ACF",
-    "colorway": "Billy Hoyle",
-    "date": "2026-06-19"
-  },
-  "precomputedUpNext": {
     "key": "10_Steel",
     "shoeId": 10,
     "shoeName": "Air Jordan 10",
     "shortName": "AJ10",
     "colorway": "Steel",
-    "date": "2025-08-22"
+    "date": "2026-06-25"
   },
-  "builtAt": "2026-06-21T16:52:27.468125Z"
+  "precomputedUpNext": {
+    "key": "15_Pixel Court",
+    "shoeId": 15,
+    "shoeName": "Air Tech Challenge 2",
+    "shortName": "ATC2",
+    "colorway": "Pixel Court",
+    "date": "2025-09-05"
+  },
+  "builtAt": "2026-06-25T22:15:57.116681Z"
 }
