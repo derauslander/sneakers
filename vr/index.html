@@ -1134,20 +1134,19 @@ Loading…</div>
         // These get updated each time the category changes.
         const shoePlanes = [];
         const shoeNameLabels = [];
-        const nameLabels = [];
         const statLabels = [];
 
         PODIUM_SLOTS.forEach(({ x, h }) => {
-          // Shoe name label above the image
+          // Shoe name + colorway label above the image (two lines)
           const shoeNameCanvas = document.createElement("canvas");
-          shoeNameCanvas.width = 512; shoeNameCanvas.height = 128;
+          shoeNameCanvas.width = 512; shoeNameCanvas.height = 192;
           const shoeNameTex = new THREE.CanvasTexture(shoeNameCanvas);
           shoeNameTex.colorSpace = THREE.SRGBColorSpace;
           const shoeNamePanel = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.50, 0.125),
+            new THREE.PlaneGeometry(0.50, 0.1875),
             new THREE.MeshBasicMaterial({ map: shoeNameTex, transparent: true })
           );
-          shoeNamePanel.position.set(x, h + PHOTO_SIZE + 0.22, 0);
+          shoeNamePanel.position.set(x, h + PHOTO_SIZE + 0.25, 0);
           podiumGroup.add(shoeNamePanel);
           shoeNameLabels.push({ mesh: shoeNamePanel, canvas: shoeNameCanvas, texture: shoeNameTex });
 
@@ -1160,20 +1159,7 @@ Loading…</div>
           podiumGroup.add(plane);
           shoePlanes.push(plane);
 
-          // Colorway label below the image
-          const nameCanvas = document.createElement("canvas");
-          nameCanvas.width = 512; nameCanvas.height = 128;
-          const nameTex = new THREE.CanvasTexture(nameCanvas);
-          nameTex.colorSpace = THREE.SRGBColorSpace;
-          const namePanel = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.50, 0.125),
-            new THREE.MeshBasicMaterial({ map: nameTex, transparent: true })
-          );
-          namePanel.position.set(x, h - 0.06, BLOCK_D / 2 + 0.005);
-          podiumGroup.add(namePanel);
-          nameLabels.push({ mesh: namePanel, canvas: nameCanvas, texture: nameTex });
-
-          // Stat label (wear count, days, etc.)
+          // Stat label on the podium face
           const statCanvas = document.createElement("canvas");
           statCanvas.width = 512; statCanvas.height = 96;
           const statTex = new THREE.CanvasTexture(statCanvas);
@@ -1182,7 +1168,7 @@ Loading…</div>
             new THREE.PlaneGeometry(0.50, 0.094),
             new THREE.MeshBasicMaterial({ map: statTex, transparent: true })
           );
-          statPanel.position.set(x, h - 0.17, BLOCK_D / 2 + 0.005);
+          statPanel.position.set(x, h - 0.06, BLOCK_D / 2 + 0.005);
           podiumGroup.add(statPanel);
           statLabels.push({ mesh: statPanel, canvas: statCanvas, texture: statTex });
         });
@@ -1224,6 +1210,19 @@ Loading…</div>
           texture.needsUpdate = true;
         };
 
+        const drawTwoLineCanvas = (canvas, texture, line1, line2) => {
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.textAlign = "center";
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 36px -apple-system, BlinkMacSystemFont, sans-serif";
+          ctx.fillText(line1, canvas.width / 2, canvas.height * 0.38);
+          ctx.fillStyle = "#cccccc";
+          ctx.font = "normal 30px -apple-system, BlinkMacSystemFont, sans-serif";
+          ctx.fillText(line2, canvas.width / 2, canvas.height * 0.68);
+          texture.needsUpdate = true;
+        };
+
         const showCategory = (catIdx) => {
           const cat = validCats[catIdx];
           const entries = rankings[cat.key].slice(0, 3);
@@ -1254,19 +1253,13 @@ Loading…</div>
               });
             }
 
-            // Shoe name above the image
-            drawTextCanvas(
+            // Shoe name + colorway above the image (two lines)
+            drawTwoLineCanvas(
               shoeNameLabels[slotIdx].canvas, shoeNameLabels[slotIdx].texture,
-              entry.shoeName, 36, "#ffffff", "bold"
+              entry.shoeName, entry.colorway
             );
 
-            // Colorway on the podium face
-            drawTextCanvas(
-              nameLabels[slotIdx].canvas, nameLabels[slotIdx].texture,
-              entry.colorway, 34, "#ffffff", "normal"
-            );
-
-            // Stat line
+            // Stat line on the podium face
             const statText = cat.stat(entry);
             drawTextCanvas(
               statLabels[slotIdx].canvas, statLabels[slotIdx].texture,
