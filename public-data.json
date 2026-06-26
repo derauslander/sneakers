@@ -554,6 +554,10 @@
       {
         "date": "2026-05-16",
         "colorway": "Stone Blue"
+      },
+      {
+        "date": "2026-06-26",
+        "colorway": "Pixel Court"
       }
     ],
     "16": [
@@ -2210,11 +2214,11 @@
         "wears": 4
       },
       {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Fire Red",
-        "wears": 5
+        "shoeId": 15,
+        "shoeName": "Air Tech Challenge 2",
+        "shortName": "ATC2",
+        "colorway": "Pixel Court",
+        "wears": 2
       }
     ],
     "iceRanked": [
@@ -2413,20 +2417,20 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "10_Steel",
-    "shoeId": 10,
-    "shoeName": "Air Jordan 10",
-    "shortName": "AJ10",
-    "colorway": "Steel",
-    "date": "2026-06-25"
-  },
-  "precomputedUpNext": {
     "key": "15_Pixel Court",
     "shoeId": 15,
     "shoeName": "Air Tech Challenge 2",
     "shortName": "ATC2",
     "colorway": "Pixel Court",
-    "date": "2025-09-05"
+    "date": "2026-06-26"
   },
-  "builtAt": "2026-06-26T01:19:15.811029Z"
+  "precomputedUpNext": {
+    "key": "2_Black Cement",
+    "shoeId": 2,
+    "shoeName": "Air Jordan 2",
+    "shortName": "AJ2",
+    "colorway": "Black Cement",
+    "date": "2025-09-11"
+  },
+  "builtAt": "2026-06-26T11:17:02.638343Z"
 }
