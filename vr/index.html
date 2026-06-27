@@ -2163,11 +2163,11 @@ Loading…</div>
     // a starfield + flythrough intro (same image order as the main site:
     // main → hover2 → hover). After the sequence the display clears out.
     {
-      const precomp = data.precomputedLastWorn;
-      // Only show On Feet Today if the last-worn date is actually today.
-      const _d = new Date();
-      const todayISO = _d.getFullYear() + "-" + String(_d.getMonth() + 1).padStart(2, "0") + "-" + String(_d.getDate()).padStart(2, "0");
-      const isToday = precomp && precomp.date === todayISO;
+      const precomp = data.precomputedOnFeetToday;
+      // precomputedOnFeetToday is only set when a wear was logged today
+      // (build.py compares against its local date). No client-side date
+      // gate needed — if the field is null, there's no OFD.
+      const isToday = !!precomp;
       const imgPaths = [];
       if (isToday) {
         for (const sfx of ["", "_hover2", "_hover"]) {

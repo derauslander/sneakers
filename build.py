@@ -279,6 +279,8 @@ def compute_last_worn_up_next(data):
 
     shoe_by_id = {s["id"]: s for s in inventory}
 
+    today = datetime.now().strftime("%Y-%m-%d")
+
     # Build (key → most-recent date) for every colorway that's been worn.
     last_worn_by_key = {}
     for shoe_id_str, entries in wear_log.items():
@@ -287,11 +289,35 @@ def compute_last_worn_up_next(data):
             if key not in last_worn_by_key or entry["date"] > last_worn_by_key[key]:
                 last_worn_by_key[key] = entry["date"]
 
+    # ── ON FEET TODAY ──────────────────────────────────────────────────
+    # Today's wear (if any). Separate from LAST WORN so the VR floor card
+    # and flythrough can show today's shoe while the banner shows the
+    # previous day's.
+    on_feet_today = None
+    for key, date in last_worn_by_key.items():
+        if date == today:
+            shoe_id_str, cw = key.split("_", 1)
+            shoe = shoe_by_id.get(int(shoe_id_str))
+            if shoe:
+                on_feet_today = {
+                    "key": key,
+                    "shoeId": int(shoe_id_str),
+                    "shoeName": shoe["name"],
+                    "shortName": shoe["shortName"],
+                    "colorway": cw,
+                    "date": today,
+                }
+            break
+
     # ── LAST WORN ───────────────────────────────────────────────────────
+    # Skip today's date so the banner shows the *previous* wear, not the
+    # shoe that's currently on feet (which already gets the OFD treatment).
     last_worn = None
     best_date = ""
     best_key  = None
     for key, date in last_worn_by_key.items():
+        if date == today:
+            continue
         if date > best_date:
             best_date = date
             best_key  = key
@@ -310,7 +336,6 @@ def compute_last_worn_up_next(data):
             }
 
     # ── UP NEXT ─────────────────────────────────────────────────────────
-    today = datetime.now().strftime("%Y-%m-%d")
 
     def is_new_pickup(purchase_date):
         if not purchase_date:
@@ -366,7 +391,7 @@ def compute_last_worn_up_next(data):
                 "date": pick_date,      # None if never worn
             }
 
-    return last_worn, up_next
+    return last_worn, up_next, on_feet_today
 
 def main():
     if not os.path.exists(VAULT_FILE):
@@ -387,8 +412,12 @@ def main():
                         ("Longest Gap", "gapRanked")]:
         print(f"    {label}: {len(rankings[key])} entries")
 
-    print(f"  Computing Last Worn / Up Next...")
-    last_worn, up_next = compute_last_worn_up_next(data)
+    print(f"  Computing Last Worn / Up Next / On Feet Today...")
+    last_worn, up_next, on_feet_today = compute_last_worn_up_next(data)
+    if on_feet_today:
+        print(f"    On Feet:   {on_feet_today['shoeName']} — {on_feet_today['colorway']}")
+    else:
+        print(f"    On Feet:   (none today)")
     if last_worn:
         print(f"    Last Worn: {last_worn['shoeName']} — {last_worn['colorway']} ({last_worn['date']})")
     else:
@@ -404,6 +433,7 @@ def main():
     public_data["precomputedRankings"] = strip_ranking_prices(rankings)
     public_data["precomputedLastWorn"] = last_worn
     public_data["precomputedUpNext"]   = up_next
+    public_data["precomputedOnFeetToday"] = on_feet_today
     public_data["builtAt"] = datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z")
 
     # Remove exportedAt if present (replace with builtAt)

@@ -2421,12 +2421,12 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "4_Cave Stone",
-    "shoeId": 4,
-    "shoeName": "Air Jordan 4",
-    "shortName": "AJ4",
-    "colorway": "Cave Stone",
-    "date": "2026-06-27"
+    "key": "15_Pixel Court",
+    "shoeId": 15,
+    "shoeName": "Air Tech Challenge 2",
+    "shortName": "ATC2",
+    "colorway": "Pixel Court",
+    "date": "2026-06-26"
   },
   "precomputedUpNext": {
     "key": "2_Black Cement",
@@ -2436,5 +2436,13 @@
     "colorway": "Black Cement",
     "date": "2025-09-11"
   },
-  "builtAt": "2026-06-27T19:14:25.036278Z"
+  "precomputedOnFeetToday": {
+    "key": "4_Cave Stone",
+    "shoeId": 4,
+    "shoeName": "Air Jordan 4",
+    "shortName": "AJ4",
+    "colorway": "Cave Stone",
+    "date": "2026-06-27"
+  },
+  "builtAt": "2026-06-27T21:01:00.963679Z"
 }
