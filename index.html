@@ -2388,7 +2388,18 @@ Make sure server.py is running, then try again.`);
         return a.lastWorn < b.lastWorn ? -1 : 1;
       });
       const upcomingQueue = sortedQueue.slice(1, 5);
-      const recentlyWornQueue = [...allColorwayEntries].filter((e) => e.lastWorn).sort((a, b) => a.lastWorn > b.lastWorn ? -1 : 1).slice(1, 5);
+      const recentlyWornQueue = (() => {
+        const sorted = [...allColorwayEntries].filter((e) => e.lastWorn).sort((a, b) => a.lastWorn > b.lastWorn ? -1 : 1);
+        const lwShoe = isWearingToday ? previousWornShoe : lastWornShoe;
+        const lwCw = isWearingToday ? previousWornColorway : lastWornColorway;
+        const skipKey = lwShoe ? `${lwShoe.id}_${lwCw}` : null;
+        return sorted.filter((e) => {
+          const k = `${e.shoe.id}_${e.colorway}`;
+          if (isWearingToday && e.shoe.id === (lastWornShoe == null ? void 0 : lastWornShoe.id) && e.colorway === lastWornColorway) return false;
+          if (k === skipKey) return false;
+          return true;
+        }).slice(0, 4);
+      })();
       const bannerItems = [];
       const hasNews = isWearingToday || saleAlerts.length > 0 || gotEmCelebrations.length > 0 || gotEmQuestions.length > 0 || anniversaries.length > 0;
       saleAlerts.forEach((item) => {
@@ -2823,7 +2834,7 @@ Make sure server.py is running, then try again.`);
         diamond: "The sneakers that 10-year-old me dreamed about",
         platinum: "Original colorways of my favorite sneakers",
         gold: "Sneakers I'm glad are in my collection",
-        silver: "On the thinnest of ice",
+        silver: "Wouldn't miss them, wouldn't toss them",
         bronze: "Maybe I shouldn't have bought these",
         iron: "Beaters",
         og: "Owned the original release",
@@ -3491,7 +3502,7 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
       { tier: "diamond", label: TIERS.diamond.label, color: dark ? "var(--tier-diamond)" : "var(--tier-diamond-dark)", desc: "The sneakers that 10-year-old me dreamed about" },
       { tier: "platinum", label: TIERS.platinum.label, color: "var(--tier-platinum)", desc: "Original colorways of my favorite sneakers" },
       { tier: "gold", label: TIERS.gold.label, color: "var(--tier-gold)", desc: "Sneakers I'm glad are in my collection" },
-      { tier: "silver", label: TIERS.silver.label, color: TIERS.silver.color, desc: "On the thinnest of ice" },
+      { tier: "silver", label: TIERS.silver.label, color: TIERS.silver.color, desc: "Wouldn't miss them, wouldn't toss them" },
       { tier: "bronze", label: "\u2B25 BRONZE \u2B25", color: "#CD7F32", desc: "Maybe I shouldn't have bought these" },
       { tier: "iron", label: "\u2B25 IRON \u2B25", color: TIERS.iron.color, desc: "Beaters" }
     ].map((t) => /* @__PURE__ */ React.createElement("div", { key: t.tier, style: { display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "12px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "10px", letterSpacing: "3px", color: t.color, whiteSpace: "nowrap", minWidth: "120px" } }, t.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "14px", color: T.text3, fontStyle: "italic" } }, t.desc))), (() => {
