@@ -133,7 +133,16 @@ Loading…</div>
       };
     };
 
-    const lastWornEntry = bannerEntry(data.precomputedLastWorn, "LAST WORN");
+    // Pick the right shoe for the LAST WORN banner. If the most recent
+    // wear is today's date, fall back to precomputedPreviousWorn so the
+    // banner shows something useful without needing a daily rebuild.
+    const _bd = new Date();
+    const bannerTodayISO = _bd.getFullYear() + "-" + String(_bd.getMonth() + 1).padStart(2, "0") + "-" + String(_bd.getDate()).padStart(2, "0");
+    const lastWornSource = (data.precomputedLastWorn && data.precomputedLastWorn.date === bannerTodayISO)
+      ? data.precomputedPreviousWorn
+      : data.precomputedLastWorn;
+
+    const lastWornEntry = bannerEntry(lastWornSource, "LAST WORN");
     const upNextEntry   = bannerEntry(data.precomputedUpNext,   "UP NEXT");
 
     if (lastWornEntry) log(`Last worn: ${lastWornEntry.shoeName} — ${lastWornEntry.colorway}`, "ok");
@@ -2164,10 +2173,12 @@ Loading…</div>
     // main → hover2 → hover). After the sequence the display clears out.
     {
       const precomp = data.precomputedOnFeetToday;
-      // precomputedOnFeetToday is only set when a wear was logged today
-      // (build.py compares against its local date). No client-side date
-      // gate needed — if the field is null, there's no OFD.
-      const isToday = !!precomp;
+      // precomputedOnFeetToday carries the shoe from the last build.
+      // Gate on the client's local date so it auto-expires the next day
+      // without requiring a rebuild.
+      const _d = new Date();
+      const todayISO = _d.getFullYear() + "-" + String(_d.getMonth() + 1).padStart(2, "0") + "-" + String(_d.getDate()).padStart(2, "0");
+      const isToday = precomp && precomp.date === todayISO;
       const imgPaths = [];
       if (isToday) {
         for (const sfx of ["", "_hover2", "_hover"]) {

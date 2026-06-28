@@ -309,18 +309,26 @@ def compute_last_worn_up_next(data):
                 }
             break
 
-    # ── LAST WORN ───────────────────────────────────────────────────────
-    # Skip today's date so the banner shows the *previous* wear, not the
-    # shoe that's currently on feet (which already gets the OFD treatment).
+    # ── LAST WORN + PREVIOUS WORN ──────────────────────────────────────
+    # last_worn    = the absolute most recent wear (any date).
+    # previous_worn = the most recent wear *before* last_worn's date.
+    # The VR banner uses whichever one doesn't match today's date, so it
+    # auto-expires without a rebuild.
     last_worn = None
-    best_date = ""
-    best_key  = None
+    previous_worn = None
+    best_date  = ""
+    best_key   = None
+    second_date = ""
+    second_key  = None
     for key, date in last_worn_by_key.items():
-        if date == today:
-            continue
         if date > best_date:
+            second_date = best_date
+            second_key  = best_key
             best_date = date
             best_key  = key
+        elif date > second_date:
+            second_date = date
+            second_key  = key
 
     if best_key:
         shoe_id_str, cw = best_key.split("_", 1)
@@ -333,6 +341,19 @@ def compute_last_worn_up_next(data):
                 "shortName": shoe["shortName"],
                 "colorway": cw,
                 "date": best_date,
+            }
+
+    if second_key:
+        shoe_id_str, cw = second_key.split("_", 1)
+        shoe = shoe_by_id.get(int(shoe_id_str))
+        if shoe:
+            previous_worn = {
+                "key": second_key,
+                "shoeId": int(shoe_id_str),
+                "shoeName": shoe["name"],
+                "shortName": shoe["shortName"],
+                "colorway": cw,
+                "date": second_date,
             }
 
     # ── UP NEXT ─────────────────────────────────────────────────────────
@@ -391,7 +412,7 @@ def compute_last_worn_up_next(data):
                 "date": pick_date,      # None if never worn
             }
 
-    return last_worn, up_next, on_feet_today
+    return last_worn, previous_worn, up_next, on_feet_today
 
 def main():
     if not os.path.exists(VAULT_FILE):
@@ -413,7 +434,7 @@ def main():
         print(f"    {label}: {len(rankings[key])} entries")
 
     print(f"  Computing Last Worn / Up Next / On Feet Today...")
-    last_worn, up_next, on_feet_today = compute_last_worn_up_next(data)
+    last_worn, previous_worn, up_next, on_feet_today = compute_last_worn_up_next(data)
     if on_feet_today:
         print(f"    On Feet:   {on_feet_today['shoeName']} — {on_feet_today['colorway']}")
     else:
@@ -422,6 +443,10 @@ def main():
         print(f"    Last Worn: {last_worn['shoeName']} — {last_worn['colorway']} ({last_worn['date']})")
     else:
         print(f"    Last Worn: (none)")
+    if previous_worn:
+        print(f"    Previous:  {previous_worn['shoeName']} — {previous_worn['colorway']} ({previous_worn['date']})")
+    else:
+        print(f"    Previous:  (none)")
     if up_next:
         print(f"    Up Next:   {up_next['shoeName']} — {up_next['colorway']} ({up_next['date'] or 'never worn'})")
     else:
@@ -432,6 +457,7 @@ def main():
     public_data["colorwayMeta"] = strip_prices(data.get("colorwayMeta", {}))
     public_data["precomputedRankings"] = strip_ranking_prices(rankings)
     public_data["precomputedLastWorn"] = last_worn
+    public_data["precomputedPreviousWorn"] = previous_worn
     public_data["precomputedUpNext"]   = up_next
     public_data["precomputedOnFeetToday"] = on_feet_today
     public_data["builtAt"] = datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z")
