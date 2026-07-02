@@ -192,6 +192,10 @@
       {
         "date": "2024-12-13",
         "colorway": "Black Cement"
+      },
+      {
+        "date": "2026-07-02",
+        "colorway": "Black Cement"
       }
     ],
     "3": [
@@ -2019,6 +2023,14 @@
         "lastWorn": "2025-10-17"
       },
       {
+        "shoeId": 2,
+        "shoeName": "Air Jordan 2",
+        "shortName": "AJ2",
+        "colorway": "Black Cement",
+        "count": 5,
+        "lastWorn": "2026-07-02"
+      },
+      {
         "shoeId": 12,
         "shoeName": "Air Jordan 13",
         "shortName": "AJ13",
@@ -2081,14 +2093,6 @@
         "colorway": "A Ma Maniere Dawn",
         "count": 4,
         "lastWorn": "2026-01-23"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "A Ma Maniere",
-        "count": 4,
-        "lastWorn": "2025-11-27"
       }
     ],
     "priceRanked": [
@@ -2169,6 +2173,13 @@
         "wears": 5
       },
       {
+        "shoeId": 2,
+        "shoeName": "Air Jordan 2",
+        "shortName": "AJ2",
+        "colorway": "Black Cement",
+        "wears": 5
+      },
+      {
         "shoeId": 3,
         "shoeName": "Air Jordan 3",
         "shortName": "AJ3",
@@ -2181,13 +2192,6 @@
         "shortName": "AJ13",
         "colorway": "Black Flint",
         "wears": 5
-      },
-      {
-        "shoeId": 2,
-        "shoeName": "Air Jordan 2",
-        "shortName": "AJ2",
-        "colorway": "Black Cement",
-        "wears": 4
       },
       {
         "shoeId": 1,
@@ -2421,6 +2425,14 @@
     ]
   },
   "precomputedLastWorn": {
+    "key": "2_Black Cement",
+    "shoeId": 2,
+    "shoeName": "Air Jordan 2",
+    "shortName": "AJ2",
+    "colorway": "Black Cement",
+    "date": "2026-07-02"
+  },
+  "precomputedPreviousWorn": {
     "key": "4_Cave Stone",
     "shoeId": 4,
     "shoeName": "Air Jordan 4",
@@ -2428,22 +2440,21 @@
     "colorway": "Cave Stone",
     "date": "2026-06-27"
   },
-  "precomputedPreviousWorn": {
-    "key": "15_Pixel Court",
-    "shoeId": 15,
-    "shoeName": "Air Tech Challenge 2",
-    "shortName": "ATC2",
-    "colorway": "Pixel Court",
-    "date": "2026-06-26"
-  },
   "precomputedUpNext": {
+    "key": "5_Black Tongue",
+    "shoeId": 5,
+    "shoeName": "Air Jordan 5",
+    "shortName": "AJ5",
+    "colorway": "Black Tongue",
+    "date": "2025-09-26"
+  },
+  "precomputedOnFeetToday": {
     "key": "2_Black Cement",
     "shoeId": 2,
     "shoeName": "Air Jordan 2",
     "shortName": "AJ2",
     "colorway": "Black Cement",
-    "date": "2025-09-11"
+    "date": "2026-07-02"
   },
-  "precomputedOnFeetToday": null,
-  "builtAt": "2026-06-28T13:43:59.799531Z"
+  "builtAt": "2026-07-02T12:47:00.176991Z"
 }
