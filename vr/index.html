@@ -326,6 +326,11 @@ Loading…</div>
 
     const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 100);
     camera.position.set(0, 1.6, 0); // standing eye height (desktop test mode; ignored in XR)
+    // Optional spawn point: ?test&spawn=graveyard
+    const spawnParam = new URLSearchParams(window.location.search).get("spawn");
+    if (TEST_MODE && spawnParam === "graveyard") {
+      camera.position.set(16, 1.6, 0);  // inside the graveyard, facing tombstones
+    }
 
     // Locomotion rig: the camera (and, in VR, the controllers) live inside this
     // group. Thumbstick movement/turning moves the player group, which offsets
@@ -3403,16 +3408,17 @@ Loading…</div>
       // — Transition corridor (short hallway through the wall thickness) —
       const CORR_LEN = 1.0;  // 1m deep corridor through the wall
       const corrMat = new THREE.MeshBasicMaterial({ color: 0x111111, side: THREE.DoubleSide });
-      // Corridor ceiling
-      const corrCeil = new THREE.Mesh(new THREE.PlaneGeometry(DOOR_W, CORR_LEN), corrMat);
-      corrCeil.rotation.x = Math.PI / 2;
+      // Corridor ceiling — lies flat at DOOR_H, spans CORR_LEN along X and DOOR_W along Z
+      const corrCeil = new THREE.Mesh(new THREE.PlaneGeometry(CORR_LEN, DOOR_W), corrMat);
+      corrCeil.rotation.x = -Math.PI / 2;
       corrCeil.position.set(GY_X + CORR_LEN / 2, DOOR_H, GY_Z_CENTRE);
       scene.add(corrCeil);
-      // Corridor side walls
+      // Corridor side walls — run along X (corridor depth), face inward along Z
       for (const side of [-1, 1]) {
         const cw = new THREE.Mesh(new THREE.PlaneGeometry(CORR_LEN, DOOR_H), corrMat);
         cw.position.set(GY_X + CORR_LEN / 2, DOOR_H / 2, GY_Z_CENTRE + side * DOOR_W / 2);
-        cw.rotation.y = -side * Math.PI / 2;
+        // No Y rotation — plane default faces +Z; side=+1 wall needs to face -Z (inward),
+        // side=-1 wall needs to face +Z (inward). DoubleSide handles both.
         scene.add(cw);
       }
 
@@ -3476,14 +3482,13 @@ Loading…</div>
         skyPlane.rotation.y = -Math.PI / 2;
         scene.add(skyPlane);
 
-        // Side sky walls to close the space
+        // Side sky walls to close the space — run along X, face inward along Z
         for (const side of [-1, 1]) {
           const sideSky = new THREE.Mesh(
             new THREE.PlaneGeometry(GY_DEPTH, 20),
             new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.DoubleSide })
           );
           sideSky.position.set(GY_X + GY_DEPTH / 2, 8, GY_Z_CENTRE + side * (GY_WIDTH / 2 + 5));
-          sideSky.rotation.y = side * Math.PI / 2;
           scene.add(sideSky);
         }
       }
@@ -3540,12 +3545,13 @@ Loading…</div>
         gndTex.colorSpace = THREE.SRGBColorSpace;
         gndTex.wrapS = gndTex.wrapT = THREE.RepeatWrapping;
         gndTex.repeat.set(4, 4);
+        const totalGroundDepth = CORR_LEN + GY_DEPTH;  // include corridor area
         const ground = new THREE.Mesh(
-          new THREE.PlaneGeometry(GY_WIDTH, GY_DEPTH),
+          new THREE.PlaneGeometry(totalGroundDepth, GY_WIDTH),
           new THREE.MeshBasicMaterial({ map: gndTex, side: THREE.DoubleSide })
         );
         ground.rotation.x = -Math.PI / 2;
-        ground.position.set(GY_X + CORR_LEN + GY_DEPTH / 2, GY_FLOOR_Y + 0.01, GY_Z_CENTRE);
+        ground.position.set(GY_X + totalGroundDepth / 2, GY_FLOOR_Y + 0.01, GY_Z_CENTRE);
         scene.add(ground);
       }
 
@@ -3619,112 +3625,181 @@ Loading…</div>
           const stoneZ = startZ + idx * STONE_SPACING;
 
           // Tombstone body — arched top (box + cylinder top)
-          const STONE_W = 1.2, STONE_H = 1.5, STONE_D = 0.15;
-          const stoneMat = new THREE.MeshStandardMaterial({ color: 0x666666, roughness: 0.9, metalness: 0.1 });
+          const STONE_W = 0.85, STONE_H = 1.05, STONE_D = 0.12;
+
+          // Shared procedural stone texture for the 3D geometry
+          const stCv = document.createElement("canvas");
+          stCv.width = 512; stCv.height = 512;
+          const sg = stCv.getContext("2d");
+          const sBaseR = 130, sBaseG = 125, sBaseB = 120;
+          sg.fillStyle = `rgb(${sBaseR},${sBaseG},${sBaseB})`;
+          sg.fillRect(0, 0, 512, 512);
+          sg.globalAlpha = 0.08;
+          for (let i = 0; i < 60; i++) {
+            const r = sBaseR + (Math.random() - 0.5) * 40;
+            const gr2 = sBaseG + (Math.random() - 0.5) * 40;
+            const b = sBaseB + (Math.random() - 0.5) * 40;
+            sg.fillStyle = `rgb(${r|0},${gr2|0},${b|0})`;
+            sg.beginPath();
+            sg.ellipse(Math.random()*512, Math.random()*512, 30+Math.random()*60, 20+Math.random()*40, Math.random()*Math.PI, 0, Math.PI*2);
+            sg.fill();
+          }
+          sg.globalAlpha = 0.06;
+          for (let i = 0; i < 1500; i++) {
+            sg.fillStyle = Math.random() > 0.5 ? "#ddd" : "#444";
+            sg.fillRect(Math.random()*512, Math.random()*512, 1+Math.random()*2, 1+Math.random()*2);
+          }
+          sg.globalAlpha = 0.1;
+          sg.strokeStyle = "#888"; sg.lineWidth = 0.5;
+          for (let i = 0; i < 5; i++) {
+            sg.beginPath();
+            let vx = Math.random()*512, vy = Math.random()*512;
+            sg.moveTo(vx, vy);
+            for (let j = 0; j < 4; j++) { vx += (Math.random()-0.5)*60; vy += Math.random()*40; sg.lineTo(vx, vy); }
+            sg.stroke();
+          }
+          sg.globalAlpha = 0.12;
+          for (let i = 0; i < 10; i++) {
+            const hue = 80 + Math.random()*50;
+            sg.fillStyle = `hsl(${hue}, 40%, 30%)`;
+            sg.beginPath();
+            sg.arc(Math.random()*512, 300+Math.random()*212, 8+Math.random()*15, 0, Math.PI*2);
+            sg.fill();
+          }
+          sg.globalAlpha = 1;
+          const stoneTex = new THREE.CanvasTexture(stCv);
+          stoneTex.colorSpace = THREE.SRGBColorSpace;
+          const stoneMat = new THREE.MeshBasicMaterial({ map: stoneTex });
 
           // Base rectangle
           const base = new THREE.Mesh(new THREE.BoxGeometry(STONE_W, STONE_H, STONE_D), stoneMat);
           base.position.set(stoneX, STONE_H / 2, stoneZ);
+          base.rotation.y = Math.PI / 2;  // face toward the gym (-X)
           scene.add(base);
 
-          // Arched top — half cylinder
+          // Arched top — half cylinder dome on top of the box.
           const arch = new THREE.Mesh(
             new THREE.CylinderGeometry(STONE_W / 2, STONE_W / 2, STONE_D, 16, 1, false, 0, Math.PI),
             stoneMat
           );
-          arch.rotation.x = Math.PI / 2;
           arch.rotation.z = Math.PI / 2;
           arch.position.set(stoneX, STONE_H, stoneZ);
           scene.add(arch);
 
-          // Tombstone face — canvas texture with shoe info
-          const faceCv = document.createElement("canvas");
-          const FW = 512, FH = 700;
-          faceCv.width = FW; faceCv.height = FH;
-          const g = faceCv.getContext("2d");
+          // ── ARCH PANEL — cross, shoe name, colorway ──
+          const ARCH_R = STONE_W / 2;
+          {
+            // Canvas aspect should match the plane geometry aspect
+            const planeW = STONE_W * 0.8;    // ~0.68m
+            const planeH = ARCH_R * 0.85;    // ~0.36m
+            const AW = 512, AH = Math.round(512 * (planeH / planeW));
+            const aCv = document.createElement("canvas");
+            aCv.width = AW; aCv.height = AH;
+            const ag = aCv.getContext("2d");
+            ag.clearRect(0, 0, AW, AH);
 
-          // Stone background
-          g.fillStyle = "#555";
-          g.fillRect(0, 0, FW, FH);
-          // Weathering noise
-          g.globalAlpha = 0.1;
-          for (let i = 0; i < 400; i++) {
-            g.fillStyle = Math.random() > 0.5 ? "#444" : "#666";
-            g.fillRect(Math.random() * FW, Math.random() * FH, 3 + Math.random() * 8, 2 + Math.random() * 5);
-          }
-          g.globalAlpha = 1;
+            // Layout from bottom up — bottom of canvas = bottom of semicircle
+            // Colorway near the bottom
+            ag.font = "italic 32px Georgia, serif";
+            ag.fillStyle = "#555";
+            ag.textAlign = "center";
+            ag.fillText(entry.colorway || "", AW / 2, AH - 20);
 
-          // Cross at the top
-          g.fillStyle = "#999";
-          g.fillRect(FW / 2 - 4, 20, 8, 50);
-          g.fillRect(FW / 2 - 20, 35, 40, 8);
+            // Shoe name above colorway
+            ag.fillStyle = "#555";
+            ag.font = "bold 42px Georgia, serif";
+            ag.fillText(entry.shoeName || "", AW / 2, AH - 60);
 
-          // Shoe name
-          g.fillStyle = "#ddd";
-          g.font = "bold 36px Georgia, serif";
-          g.textAlign = "center";
-          g.fillText(entry.shoeName || "", FW / 2, 110);
+            // Cross — large, near the top of the arch
+            ag.fillStyle = "#555";
+            ag.fillRect(AW / 2 - 14, 5, 28, 110);
+            ag.fillRect(AW / 2 - 50, 35, 100, 24);
 
-          // Colorway
-          g.font = "italic 28px Georgia, serif";
-          g.fillStyle = "#bbb";
-          g.fillText(entry.colorway || "", FW / 2, 150);
-
-          // Dates
-          const purchDate = entry.purchaseDate || "???";
-          const retDate = entry.retireDate || "???";
-          g.font = "24px Georgia, serif";
-          g.fillStyle = "#aaa";
-          g.fillText(`${purchDate}  —  ${retDate}`, FW / 2, 195);
-
-          // Reason
-          if (entry.reason) {
-            g.font = "bold 22px Georgia, serif";
-            g.fillStyle = "#c9a040";
-            g.fillText(entry.reason.toUpperCase(), FW / 2, 240);
+            const archTex = new THREE.CanvasTexture(aCv);
+            archTex.colorSpace = THREE.SRGBColorSpace;
+            const archFace = new THREE.Mesh(
+              new THREE.PlaneGeometry(planeW, planeH),
+              new THREE.MeshBasicMaterial({ map: archTex, transparent: true })
+            );
+            archFace.position.set(stoneX - STONE_D / 2 - 0.01, STONE_H + ARCH_R * 0.4, stoneZ);
+            archFace.rotation.y = -Math.PI / 2;
+            scene.add(archFace);
           }
 
-          // Story — word wrap
-          if (entry.story) {
-            g.font = "italic 20px Georgia, serif";
-            g.fillStyle = "#999";
-            const words = entry.story.split(" ");
-            let line = "", lineY = 280, maxW = FW - 60;
-            for (const word of words) {
-              const test = line ? line + " " + word : word;
-              if (g.measureText(test).width > maxW && line) {
-                g.fillText(line, FW / 2, lineY);
-                line = word; lineY += 26;
-                if (lineY > FH - 30) break;
-              } else {
-                line = test;
-              }
+          // ── RECT PANEL — dates, reason, story ──
+          {
+            const rPlaneW = STONE_W * 0.85;   // ~0.72m
+            const rPlaneH = STONE_H * 0.55;   // ~0.58m
+            const RW = 512, RH = Math.round(512 * (rPlaneH / rPlaneW));
+            const rCv = document.createElement("canvas");
+            rCv.width = RW; rCv.height = RH;
+            const rg = rCv.getContext("2d");
+            rg.clearRect(0, 0, RW, RH);
+
+            // Dates — formatted as Month Day, Year
+            const fmtDate = (iso) => {
+              if (!iso || iso === "???") return "???";
+              const [y, m, d] = iso.split("-");
+              const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+              return `${months[parseInt(m, 10) - 1]} ${parseInt(d, 10)}, ${y}`;
+            };
+            const purchDate = fmtDate(entry.purchaseDate);
+            const retDate = fmtDate(entry.retireDate);
+            // Reason
+            if (entry.reason) {
+              rg.font = "bold 28px Georgia, serif";
+              rg.fillStyle = "#555";
+              rg.textAlign = "center";
+              rg.fillText(entry.reason.toUpperCase(), RW / 2, 45);
             }
-            if (line && lineY <= FH - 30) g.fillText(line, FW / 2, lineY);
+
+            rg.font = "30px Georgia, serif";
+            rg.fillStyle = "#555";
+            rg.textAlign = "center";
+            rg.fillText(`${purchDate}  —  ${retDate}`, RW / 2, 90);
+
+            // Story — word wrap
+            if (entry.story) {
+              rg.font = "italic 24px Georgia, serif";
+              rg.fillStyle = "#555";
+              const words = entry.story.split(" ");
+              let line = "", lineY = 135, maxW = RW - 50;
+              for (const word of words) {
+                const test = line ? line + " " + word : word;
+                if (rg.measureText(test).width > maxW && line) {
+                  rg.fillText(line, RW / 2, lineY);
+                  line = word; lineY += 26;
+                  if (lineY > RH - 30) break;
+                } else {
+                  line = test;
+                }
+              }
+              if (line && lineY <= RH - 30) rg.fillText(line, RW / 2, lineY);
+            }
+
+            const rectTex = new THREE.CanvasTexture(rCv);
+            rectTex.colorSpace = THREE.SRGBColorSpace;
+            const rectFace = new THREE.Mesh(
+              new THREE.PlaneGeometry(rPlaneW, rPlaneH),
+              new THREE.MeshBasicMaterial({ map: rectTex, transparent: true })
+            );
+            rectFace.position.set(stoneX - STONE_D / 2 - 0.01, STONE_H * 0.72, stoneZ);
+            rectFace.rotation.y = -Math.PI / 2;
+            scene.add(rectFace);
           }
 
-          const faceTex = new THREE.CanvasTexture(faceCv);
-          faceTex.colorSpace = THREE.SRGBColorSpace;
-          const face = new THREE.Mesh(
-            new THREE.PlaneGeometry(STONE_W * 0.9, STONE_H * 0.9),
-            new THREE.MeshBasicMaterial({ map: faceTex, transparent: true })
-          );
-          face.position.set(stoneX - STONE_D / 2 - 0.01, STONE_H / 2, stoneZ);
-          face.rotation.y = -Math.PI / 2;  // face toward gym
-          scene.add(face);
-
-          // Shoe image on the tombstone (above the text)
+          // Shoe image in the lower portion of the rectangle
           const imgPath = entry.img ? ("../" + entry.img) : (images[gKey] ? ("../" + images[gKey]) : null);
           if (imgPath) {
             loader.load(imgPath, (tex) => {
               tex.colorSpace = THREE.SRGBColorSpace;
               const aspect = tex.image.width / tex.image.height;
-              const imgH = 0.45, imgW = imgH * aspect;
+              const imgH = 0.32, imgW = imgH * aspect;
               const imgMesh = new THREE.Mesh(
                 new THREE.PlaneGeometry(imgW, imgH),
                 new THREE.MeshBasicMaterial({ map: tex, transparent: true })
               );
-              imgMesh.position.set(stoneX - STONE_D / 2 - 0.02, STONE_H + 0.3, stoneZ);
+              imgMesh.position.set(stoneX - STONE_D / 2 - 0.02, STONE_H * 0.38, stoneZ);
               imgMesh.rotation.y = -Math.PI / 2;
               scene.add(imgMesh);
             });
@@ -3735,7 +3810,7 @@ Loading…</div>
             new THREE.SphereGeometry(0.5, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2),
             new THREE.MeshBasicMaterial({ color: 0x2a1f15 })
           );
-          mound.scale.set(1.5, 0.3, 0.8);
+          mound.scale.set(1.1, 0.25, 0.6);
           mound.position.set(stoneX, GY_FLOOR_Y, stoneZ);
           scene.add(mound);
         });

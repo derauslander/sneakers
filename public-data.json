@@ -2448,13 +2448,6 @@
     "colorway": "Black Tongue",
     "date": "2025-09-26"
   },
-  "precomputedOnFeetToday": {
-    "key": "2_Black Cement",
-    "shoeId": 2,
-    "shoeName": "Air Jordan 2",
-    "shortName": "AJ2",
-    "colorway": "Black Cement",
-    "date": "2026-07-02"
-  },
-  "builtAt": "2026-07-02T12:47:00.176991Z"
+  "precomputedOnFeetToday": null,
+  "builtAt": "2026-07-03T12:34:06.656317Z"
 }
