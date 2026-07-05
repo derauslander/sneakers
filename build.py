@@ -18,7 +18,7 @@ VAULT_FILE  = "vault-data.json"
 PUBLIC_FILE = "public-data.json"
 
 # Tiers excluded from rotation, rankings, and UP NEXT candidacy.
-EXCLUDED_TIERS = {"iron"}
+EXCLUDED_TIERS = {"iron", "phantom"}
 
 def parse_price(raw):
     """Strip non-numeric chars and parse as float. Returns None if invalid."""

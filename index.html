@@ -293,13 +293,14 @@
     gold: { label: "\u2726 GOLD \u2726", color: "var(--tier-gold)", glowRgba: null, ripLabel: "\u2726 R.I.P. \u2726" },
     silver: { label: "\u2B25 SILVER \u2B25", color: "#aaaaaa", glowRgba: "rgba(192,192,192,0.6)", ripLabel: "\u2B25 R.I.P. \u2B25" },
     bronze: { label: "\u2B25 BUYER'S REMORSE \u2B25", color: "#CD7F32", glowRgba: null, ripLabel: "\u2B25 R.I.P. \u2B25" },
-    iron: { label: "\u{1F480} BEATER \u{1F480}", color: "#71797E", glowRgba: "rgba(180,80,20,0.8)", ripLabel: "\u{1F480} R.I.P. \u{1F480}" }
+    iron: { label: "\u{1F480} BEATER \u{1F480}", color: "#71797E", glowRgba: "rgba(180,80,20,0.8)", ripLabel: "\u{1F480} R.I.P. \u{1F480}" },
+    phantom: { label: "\u{1F47B} PHANTOM \u{1F47B}", color: "#8b7fc7", glowRgba: "rgba(139,127,199,0.6)", ripLabel: "\u{1F47B} R.I.P. \u{1F47B}" }
   };
   const TIER_OPTIONS = ["diamond", "platinum", "gold", "silver", "bronze", "iron"];
   const tierOf = (tierMeta, key) => tierMeta[key] || "silver";
   const tierHasCrossfade = (tier) => tier === "diamond" || tier === "platinum" || tier === "gold" || tier === "silver";
-  const tierExcludedFromRotation = (tier) => tier === "iron";
-  const tierAnniversaryColor = (tier) => tier === "diamond" ? "var(--tier-diamond)" : tier === "platinum" ? "var(--tier-platinum)" : tier === "gold" ? "var(--tier-gold)" : tier === "bronze" ? "#CD7F32" : tier === "iron" ? "#71797E" : "#aaa";
+  const tierExcludedFromRotation = (tier) => tier === "iron" || tier === "phantom";
+  const tierAnniversaryColor = (tier) => tier === "diamond" ? "var(--tier-diamond)" : tier === "platinum" ? "var(--tier-platinum)" : tier === "gold" ? "var(--tier-gold)" : tier === "bronze" ? "#CD7F32" : tier === "iron" ? "#71797E" : tier === "phantom" ? "#8b7fc7" : "#aaa";
   const _preloadedAudio = { glow: null, break: null, whoosh: null };
   setTimeout(() => {
     _preloadedAudio.glow = new Audio("assets/glow.mp3");
@@ -3572,9 +3573,10 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
       const silvers = entries.filter(([, e]) => getTier(e) === "silver");
       const bronzes = entries.filter(([, e]) => getTier(e) === "bronze");
       const irons = entries.filter(([, e]) => getTier(e) === "iron");
+      const phantoms = entries.filter(([, e]) => getTier(e) === "phantom");
       const SectionHeader = ({ label, color }) => /* @__PURE__ */ React.createElement("div", { style: { fontSize: "10px", letterSpacing: "4px", color, marginBottom: "16px", marginTop: "8px" } }, label);
       const renderSection = (items, label, color) => items.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: "32px" } }, /* @__PURE__ */ React.createElement(SectionHeader, { label, color }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: "12px" } }, items.map(([k, e]) => /* @__PURE__ */ React.createElement(GraveyardCard, { key: k, entryKey: k, entry: e, T, CT, dark, setColorways, setGraveyardMeta, setColorwayOwned, setTierMeta, isMobilePublic }))));
-      return /* @__PURE__ */ React.createElement("div", null, entries.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "4px", color: T.text5 } }, "\u{1FAA6} THE GRAVEYARD IS EMPTY") : /* @__PURE__ */ React.createElement(React.Fragment, null, renderSection(diamonds, "\u2726 RETIRED DIAMOND \u2726", "var(--tier-diamond)"), renderSection(platinums, "\u2726 RETIRED PLATINUM \u2726", "var(--tier-platinum)"), renderSection(golds, "\u2726 RETIRED GOLD \u2726", "var(--tier-gold)"), renderSection(silvers, "\u2B25 RETIRED SILVER \u2B25", T.text4), renderSection(bronzes, "\u2B25 RETIRED BRONZE \u2B25", "#CD7F32"), renderSection(irons, "\u{1F480} RETIRED IRON \u{1F480}", "#71797E")));
+      return /* @__PURE__ */ React.createElement("div", null, entries.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "4px", color: T.text5 } }, "\u{1FAA6} THE GRAVEYARD IS EMPTY") : /* @__PURE__ */ React.createElement(React.Fragment, null, renderSection(diamonds, "\u2726 RETIRED DIAMOND \u2726", "var(--tier-diamond)"), renderSection(platinums, "\u2726 RETIRED PLATINUM \u2726", "var(--tier-platinum)"), renderSection(golds, "\u2726 RETIRED GOLD \u2726", "var(--tier-gold)"), renderSection(silvers, "\u2B25 RETIRED SILVER \u2B25", T.text4), renderSection(bronzes, "\u2B25 RETIRED BRONZE \u2B25", "#CD7F32"), renderSection(irons, "\u{1F480} RETIRED IRON \u{1F480}", "#71797E"), renderSection(phantoms, "\u{1F47B} PHANTOM \u{1F47B}", "#8b7fc7")));
     })(), storySlideshow && ReactDOM.createPortal(
       (() => {
         const { index, entries } = storySlideshow;
@@ -3665,7 +3667,7 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
         const shoe = inventory.find((s) => s.id === shoeId);
         const metaKey = `${shoeId}_${colorway}`;
         const currentTier = tierOf(tierMeta, metaKey);
-        const tierOptions = ["diamond", "platinum", "gold", "silver", "bronze", "iron"];
+        const tierOptions = ["diamond", "platinum", "gold", "silver", "bronze", "iron", "phantom"];
         const menuItems = [
           { label: "LOG WEAR", icon: "\u{1F45F}", action: () => {
             setLoggingId(shoeId);
@@ -3715,7 +3717,7 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
                 cursor: "pointer",
                 fontFamily: "'Aptos','Segoe UI',sans-serif",
                 textTransform: "uppercase"
-              } }, t === "diamond" ? "\u{1F48E}" : t === "platinum" ? "PT" : t === "gold" ? "AU" : t === "silver" ? "AG" : t === "bronze" ? "\u2B25" : "FE");
+              } }, t === "diamond" ? "\u{1F48E}" : t === "platinum" ? "PT" : t === "gold" ? "AU" : t === "silver" ? "AG" : t === "bronze" ? "\u2B25" : t === "phantom" ? "\u{1F47B}" : "FE");
             })));
           }
           return /* @__PURE__ */ React.createElement(

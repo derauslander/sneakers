@@ -823,7 +823,10 @@
     "1774096319133_Billy Hoyle_onfoot": "Shoes/ACF/Billy Hoyle/Billy Hoyle_onfoot.png",
     "4_White Thunder": "Shoes/AJ4/White Thunder/White Thunder.png",
     "4_White Thunder_hover": "Shoes/AJ4/White Thunder/White Thunder_hover.png",
-    "4_White Thunder_hover2": "Shoes/AJ4/White Thunder/White Thunder_hover2.png"
+    "4_White Thunder_hover2": "Shoes/AJ4/White Thunder/White Thunder_hover2.png",
+    "1_Reverse Olive": "Shoes/AJ1/Reverse Olive/Reverse Olive.png",
+    "1_Reverse Olive_hover": "Shoes/AJ1/Reverse Olive/Reverse Olive_hover.png",
+    "1_Reverse Olive_hover2": "Shoes/AJ1/Reverse Olive/Reverse Olive_hover2.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -1411,6 +1414,18 @@
       "saleTime": "",
       "comfortRating": "",
       "releaseYear": "2024"
+    },
+    "1_Reverse Olive": {
+      "purchaseDate": "2024-10-05",
+      "retailer": "Goat",
+      "size": "12.5",
+      "notes": "",
+      "ogYear": "",
+      "story": "",
+      "saleDate": "",
+      "saleTime": "",
+      "comfortRating": "7",
+      "releaseYear": "2024"
     }
   },
   "tierMeta": {
@@ -1487,7 +1502,7 @@
       "colorway": "White Thunder",
       "shortName": "AJ4",
       "category": "Jordan",
-      "tier": "bronze",
+      "tier": "phantom",
       "purchaseDate": "2024-08-24",
       "retireDate": "2024-08-31",
       "reason": "Sold",
@@ -1495,6 +1510,20 @@
       "lastWorn": null,
       "img": "Shoes/AJ4/White Thunder/White Thunder.png",
       "hoverImg": "Shoes/AJ4/White Thunder/White Thunder_hover.png"
+    },
+    "1_Reverse Olive": {
+      "shoeName": "Air Jordan 1",
+      "colorway": "Reverse Olive",
+      "shortName": "AJ1",
+      "category": "Jordan",
+      "tier": "phantom",
+      "purchaseDate": "2024-10-05",
+      "retireDate": "2025-05-30",
+      "reason": "Sold",
+      "story": "Realized I was never going to wear these and sold them on Goat.",
+      "lastWorn": null,
+      "img": "Shoes/AJ1/Reverse Olive/Reverse Olive.png",
+      "hoverImg": "Shoes/AJ1/Reverse Olive/Reverse Olive_hover.png"
     }
   },
   "colorways": {
@@ -1646,7 +1675,8 @@
     "1775259901810_Dark Grape": false,
     "1773621809428_Black Metallic": true,
     "1781448435188_Grinch": false,
-    "4_White Thunder": true
+    "4_White Thunder": true,
+    "1_Reverse Olive": true
   },
   "wishlistOrder": [
     "18",
@@ -2449,5 +2479,5 @@
     "date": "2025-09-26"
   },
   "precomputedOnFeetToday": null,
-  "builtAt": "2026-07-03T12:34:06.656317Z"
+  "builtAt": "2026-07-05T18:09:31.217417Z"
 }
