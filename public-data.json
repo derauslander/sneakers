@@ -174,6 +174,10 @@
       {
         "date": "2024-11-27",
         "colorway": "Royal Reimagined"
+      },
+      {
+        "date": "2026-07-10",
+        "colorway": "Royal Reimagined"
       }
     ],
     "2": [
@@ -2053,6 +2057,14 @@
         "lastWorn": "2025-10-17"
       },
       {
+        "shoeId": 1,
+        "shoeName": "Air Jordan 1",
+        "shortName": "AJ1",
+        "colorway": "Royal Reimagined",
+        "count": 5,
+        "lastWorn": "2026-07-10"
+      },
+      {
         "shoeId": 2,
         "shoeName": "Air Jordan 2",
         "shortName": "AJ2",
@@ -2115,14 +2127,6 @@
         "colorway": "Infrared",
         "count": 4,
         "lastWorn": "2026-04-11"
-      },
-      {
-        "shoeId": 5,
-        "shoeName": "Air Jordan 5",
-        "shortName": "AJ5",
-        "colorway": "A Ma Maniere Dawn",
-        "count": 4,
-        "lastWorn": "2026-01-23"
       }
     ],
     "priceRanked": [
@@ -2217,18 +2221,18 @@
         "wears": 6
       },
       {
+        "shoeId": 1,
+        "shoeName": "Air Jordan 1",
+        "shortName": "AJ1",
+        "colorway": "Royal Reimagined",
+        "wears": 5
+      },
+      {
         "shoeId": 12,
         "shoeName": "Air Jordan 13",
         "shortName": "AJ13",
         "colorway": "Black Flint",
         "wears": 5
-      },
-      {
-        "shoeId": 1,
-        "shoeName": "Air Jordan 1",
-        "shortName": "AJ1",
-        "colorway": "Royal Reimagined",
-        "wears": 4
       },
       {
         "shoeId": 13,
@@ -2455,20 +2459,20 @@
     ]
   },
   "precomputedLastWorn": {
+    "key": "1_Royal Reimagined",
+    "shoeId": 1,
+    "shoeName": "Air Jordan 1",
+    "shortName": "AJ1",
+    "colorway": "Royal Reimagined",
+    "date": "2026-07-10"
+  },
+  "precomputedPreviousWorn": {
     "key": "2_Black Cement",
     "shoeId": 2,
     "shoeName": "Air Jordan 2",
     "shortName": "AJ2",
     "colorway": "Black Cement",
     "date": "2026-07-02"
-  },
-  "precomputedPreviousWorn": {
-    "key": "4_Cave Stone",
-    "shoeId": 4,
-    "shoeName": "Air Jordan 4",
-    "shortName": "AJ4",
-    "colorway": "Cave Stone",
-    "date": "2026-06-27"
   },
   "precomputedUpNext": {
     "key": "5_Black Tongue",
@@ -2478,6 +2482,13 @@
     "colorway": "Black Tongue",
     "date": "2025-09-26"
   },
-  "precomputedOnFeetToday": null,
-  "builtAt": "2026-07-05T18:09:31.217417Z"
+  "precomputedOnFeetToday": {
+    "key": "1_Royal Reimagined",
+    "shoeId": 1,
+    "shoeName": "Air Jordan 1",
+    "shortName": "AJ1",
+    "colorway": "Royal Reimagined",
+    "date": "2026-07-10"
+  },
+  "builtAt": "2026-07-10T10:32:54.208639Z"
 }

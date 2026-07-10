@@ -1607,7 +1607,7 @@ Loading…</div>
     // Text rendered into a 1024×768 canvas, used as a texture on a 1.2m ×
     // 0.9m plane. Roughly double the previous font sizes; brighter colors
     // for VR readability. Story text wraps at canvas width minus padding.
-    const TIER_GLYPH = { diamond: "◆", platinum: "▲", gold: "●", silver: "■" };
+    const TIER_GLYPH = { diamond: "◆", platinum: "▲", gold: "●", silver: "■", phantom: "👻" };
 
     const makeTextPanel = (headline, subhead, story) => {
       const W = 1024;
@@ -3155,11 +3155,11 @@ Loading…</div>
 
         const TIER_LABELS = {
           diamond: "◆ DIAMOND", platinum: "▲ PLATINUM",
-          gold: "● GOLD", silver: "■ SILVER", iron: "▪ IRON",
+          gold: "● GOLD", silver: "■ SILVER", iron: "▪ IRON", phantom: "👻 PHANTOM",
         };
         const TIER_COLORS = {
           diamond: "#b9f2ff", platinum: "#e5e4e2",
-          gold: "#ffd700", silver: "#c0c0c0", iron: "#888888",
+          gold: "#ffd700", silver: "#c0c0c0", iron: "#888888", phantom: "#8b7fc7",
         };
 
         const rcUpdateLabel = (mesh, text, fontSize, color) => {
@@ -3546,12 +3546,13 @@ Loading…</div>
         gndTex.wrapS = gndTex.wrapT = THREE.RepeatWrapping;
         gndTex.repeat.set(4, 4);
         const totalGroundDepth = CORR_LEN + GY_DEPTH;  // include corridor area
+        const GRASS_PAD = 4;  // extra grass beyond the fence on each side
         const ground = new THREE.Mesh(
-          new THREE.PlaneGeometry(totalGroundDepth, GY_WIDTH),
+          new THREE.PlaneGeometry(totalGroundDepth + GRASS_PAD, GY_WIDTH + GRASS_PAD * 2),
           new THREE.MeshBasicMaterial({ map: gndTex, side: THREE.DoubleSide })
         );
         ground.rotation.x = -Math.PI / 2;
-        ground.position.set(GY_X + totalGroundDepth / 2, GY_FLOOR_Y + 0.01, GY_Z_CENTRE);
+        ground.position.set(GY_X + totalGroundDepth / 2 + GRASS_PAD / 2, GY_FLOOR_Y + 0.01, GY_Z_CENTRE);
         scene.add(ground);
       }
 
@@ -3595,12 +3596,12 @@ Loading…</div>
           -w, 0, 0,  w, 0, 0,  0, h, 0
         ], 3));
         grassGeo.computeVertexNormals();
-        for (let i = 0; i < 150; i++) {
+        for (let i = 0; i < 250; i++) {
           const blade = new THREE.Mesh(grassGeo, grassMat);
           blade.position.set(
-            GY_X + CORR_LEN + 1 + Math.random() * (GY_DEPTH - 2),
+            GY_X + CORR_LEN - 1 + Math.random() * (GY_DEPTH + 4),
             GY_FLOOR_Y,
-            GY_Z_CENTRE + (Math.random() - 0.5) * (GY_WIDTH - 2)
+            GY_Z_CENTRE + (Math.random() - 0.5) * (GY_WIDTH + 6)
           );
           blade.rotation.y = Math.random() * Math.PI;
           blade.scale.set(
@@ -3805,13 +3806,13 @@ Loading…</div>
             });
           }
 
-          // Dirt mound at the base
+          // Dirt mound in front of the grave (toward the gym)
           const mound = new THREE.Mesh(
             new THREE.SphereGeometry(0.5, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2),
             new THREE.MeshBasicMaterial({ color: 0x2a1f15 })
           );
           mound.scale.set(1.1, 0.25, 0.6);
-          mound.position.set(stoneX, GY_FLOOR_Y, stoneZ);
+          mound.position.set(stoneX - STONE_D / 2 - 0.5, GY_FLOOR_Y, stoneZ);
           scene.add(mound);
         });
       }
@@ -3837,12 +3838,7 @@ Loading…</div>
           // Top rail
           const rail = new THREE.Mesh(new THREE.CylinderGeometry(railR, railR, len, 6), fenceMat);
           rail.position.set((x1 + x2) / 2, fenceH * 0.9, (z1 + z2) / 2);
-          rail.rotation.z = Math.PI / 2;
-          const angle = Math.atan2(z2 - z1, x2 - x1);
-          rail.rotation.y = -angle;
-          // CylinderGeometry is along Y by default; after rotation.z = PI/2 it lies along X.
-          // We need to aim it along the (x1,z1)->(x2,z2) direction.
-          rail.rotation.set(0, 0, 0);
+          // CylinderGeometry is along Y by default; rotate to aim along the fence segment.
           rail.quaternion.setFromUnitVectors(
             new THREE.Vector3(0, 1, 0),
             new THREE.Vector3(x2 - x1, 0, z2 - z1).normalize()
