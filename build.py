@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-The Vault — Public Data Builder
+The Vault - Public Data Builder
 Reads vault-data.json, computes all 5 Top 10 rankings, strips purchase prices,
 and writes public-data.json for the public site.
 
@@ -132,7 +132,7 @@ def compute_rankings(data):
             price = parse_price(meta.get("purchasePrice"))
             if price is None:
                 continue
-            # Count wears — wearLog keys may be int or string
+            # Count wears - wearLog keys may be int or string
             wears_list = wear_log.get(str(shoe_id), wear_log.get(shoe_id, []))
             wears = len([e for e in wears_list if e["colorway"] == cw])
             if wears == 0:
@@ -141,7 +141,7 @@ def compute_rankings(data):
                 "shoeId": shoe_id, "shoeName": shoe["name"],
                 "shortName": shoe["shortName"], "colorway": cw,
                 "price": price, "wears": wears,
-                # Unrounded — this is a SORT KEY, not a display value (it's
+                # Unrounded - this is a SORT KEY, not a display value (it's
                 # stripped by strip_ranking_prices before the public file is
                 # written). Sorting on a rounded value let two near-equal
                 # cost-per-wear entries tie here and fall to the wears
@@ -240,7 +240,7 @@ def strip_ranking_prices(rankings):
     """Remove price/costPerWear from ranking entries so dollar amounts stay private.
     purchaseDate is stripped from price/value rankings (it's financial context) but
     preserved on iceRanked (where it's the start of the on-ice window) and gapRanked."""
-    # Fields to strip per ranking — only remove purchaseDate where it implies price context
+    # Fields to strip per ranking - only remove purchaseDate where it implies price context
     STRIP_FIELDS = {
         "wornRanked":  ("price", "costPerWear", "purchaseDate"),
         "priceRanked": ("price", "costPerWear", "purchaseDate"),
@@ -262,8 +262,8 @@ def strip_ranking_prices(rankings):
 def compute_last_worn_up_next(data):
     """Compute LAST WORN and UP NEXT for the public site and VR.
 
-    LAST WORN — most recent wear across the entire log, no exclusions.
-    UP NEXT   — owned, non-iron, non-new-pickup colorway with the oldest
+    LAST WORN - most recent wear across the entire log, no exclusions.
+    UP NEXT   - owned, non-iron, non-new-pickup colorway with the oldest
                 last-worn date. A never-worn pair outranks any worn one;
                 first-encountered breaks ties. Same logic the admin site
                 uses at runtime.
@@ -436,23 +436,23 @@ def main():
     print(f"  Computing Last Worn / Up Next / On Feet Today...")
     last_worn, previous_worn, up_next, on_feet_today = compute_last_worn_up_next(data)
     if on_feet_today:
-        print(f"    On Feet:   {on_feet_today['shoeName']} — {on_feet_today['colorway']}")
+        print(f"    On Feet:   {on_feet_today['shoeName']} - {on_feet_today['colorway']}")
     else:
         print(f"    On Feet:   (none today)")
     if last_worn:
-        print(f"    Last Worn: {last_worn['shoeName']} — {last_worn['colorway']} ({last_worn['date']})")
+        print(f"    Last Worn: {last_worn['shoeName']} - {last_worn['colorway']} ({last_worn['date']})")
     else:
         print(f"    Last Worn: (none)")
     if previous_worn:
-        print(f"    Previous:  {previous_worn['shoeName']} — {previous_worn['colorway']} ({previous_worn['date']})")
+        print(f"    Previous:  {previous_worn['shoeName']} - {previous_worn['colorway']} ({previous_worn['date']})")
     else:
         print(f"    Previous:  (none)")
     if up_next:
-        print(f"    Up Next:   {up_next['shoeName']} — {up_next['colorway']} ({up_next['date'] or 'never worn'})")
+        print(f"    Up Next:   {up_next['shoeName']} - {up_next['colorway']} ({up_next['date'] or 'never worn'})")
     else:
         print(f"    Up Next:   (none)")
 
-    # Build public data — full data minus purchasePrice, plus pre-computed rankings
+    # Build public data - full data minus purchasePrice, plus pre-computed rankings
     public_data = dict(data)
     public_data["colorwayMeta"] = strip_prices(data.get("colorwayMeta", {}))
     public_data["precomputedRankings"] = strip_ranking_prices(rankings)
@@ -472,7 +472,7 @@ def main():
 
 if __name__ == "__main__":
     print(f"\n  ╔══════════════════════════════════════╗")
-    print(f"  ║     THE VAULT — PUBLIC DATA BUILD    ║")
+    print(f"  ║     THE VAULT - PUBLIC DATA BUILD    ║")
     print(f"  ╚══════════════════════════════════════╝\n")
     main()
     print()
