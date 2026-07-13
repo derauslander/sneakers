@@ -126,7 +126,9 @@ Loading…</div>
       if (!imagePath) return null;
       return {
         key: precomp.key, label,
-        dateStr: precomp.date ? formatMMDDYYYY(precomp.date) : "Never worn",
+        dateStr: precomp.date
+          ? (label === "LAST WORN" ? "Worn on " : "Last worn ") + formatMMDDYYYY(precomp.date)
+          : "Never worn",
         shoeName: precomp.shoeName,
         colorway: precomp.colorway,
         imagePath: "../" + imagePath,
@@ -966,8 +968,8 @@ Loading…</div>
         tex.colorSpace = THREE.SRGBColorSpace;
         return tex;
       };
-      const wallMatBand  = new THREE.MeshBasicMaterial({ map: makeWallTexture(true),  side: THREE.DoubleSide });
-      const wallMatPlain = new THREE.MeshBasicMaterial({ map: makeWallTexture(false), side: THREE.DoubleSide });
+      const wallMatBand  = new THREE.MeshBasicMaterial({ map: makeWallTexture(true),  side: THREE.FrontSide });
+      const wallMatPlain = new THREE.MeshBasicMaterial({ map: makeWallTexture(false), side: THREE.FrontSide });
       const midY = ROOM_H / 2;
       const addWall = (mat, x, y, z, rotY) => {
         const m = new THREE.Mesh(new THREE.PlaneGeometry(ROOM, ROOM_H), mat);
@@ -1020,7 +1022,7 @@ Loading…</div>
         const topH = ROOM_H - DOOR_H;
         const topMesh = new THREE.Mesh(
           new THREE.PlaneGeometry(ROOM, topH),
-          new THREE.MeshBasicMaterial({ map: makeTopTexture(), side: THREE.DoubleSide })
+          new THREE.MeshBasicMaterial({ map: makeTopTexture(), side: THREE.FrontSide })
         );
         topMesh.position.set(HALF, DOOR_H + topH / 2, 0);
         topMesh.rotation.y = -Math.PI / 2;
@@ -1030,7 +1032,7 @@ Loading…</div>
         const sideLen = HALF - DOOR_W / 2;
         const leftSeg = new THREE.Mesh(
           new THREE.PlaneGeometry(sideLen, DOOR_H),
-          new THREE.MeshBasicMaterial({ map: makeSideTexture(), side: THREE.DoubleSide })
+          new THREE.MeshBasicMaterial({ map: makeSideTexture(), side: THREE.FrontSide })
         );
         leftSeg.position.set(HALF, DOOR_H / 2, -(DOOR_W / 2 + sideLen / 2));
         leftSeg.rotation.y = -Math.PI / 2;
@@ -1039,11 +1041,27 @@ Loading…</div>
         // Right segment - from z=+(DOOR_W/2) to z=+HALF
         const rightSeg = new THREE.Mesh(
           new THREE.PlaneGeometry(sideLen, DOOR_H),
-          new THREE.MeshBasicMaterial({ map: makeSideTexture(), side: THREE.DoubleSide })
+          new THREE.MeshBasicMaterial({ map: makeSideTexture(), side: THREE.FrontSide })
         );
         rightSeg.position.set(HALF, DOOR_H / 2, DOOR_W / 2 + sideLen / 2);
         rightSeg.rotation.y = -Math.PI / 2;
         scene.add(rightSeg);
+
+        // Dark exterior wall planes (facing +X, visible from the graveyard).
+        // Same three-segment split as the interior so the doorway stays open.
+        const extMat = new THREE.MeshBasicMaterial({ color: 0x111111, side: THREE.FrontSide });
+        const extTop = new THREE.Mesh(new THREE.PlaneGeometry(ROOM, topH), extMat);
+        extTop.position.set(HALF, DOOR_H + topH / 2, 0);
+        extTop.rotation.y = Math.PI / 2;
+        scene.add(extTop);
+        const extLeft = new THREE.Mesh(new THREE.PlaneGeometry(sideLen, DOOR_H), extMat);
+        extLeft.position.set(HALF, DOOR_H / 2, -(DOOR_W / 2 + sideLen / 2));
+        extLeft.rotation.y = Math.PI / 2;
+        scene.add(extLeft);
+        const extRight = new THREE.Mesh(new THREE.PlaneGeometry(sideLen, DOOR_H), extMat);
+        extRight.position.set(HALF, DOOR_H / 2, DOOR_W / 2 + sideLen / 2);
+        extRight.rotation.y = Math.PI / 2;
+        scene.add(extRight);
 
         // Door frame - dark iron arch
         const frameMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a });
@@ -1101,7 +1119,7 @@ Loading…</div>
       };
       const ceiling = new THREE.Mesh(
         new THREE.PlaneGeometry(ROOM, ROOM),
-        new THREE.MeshBasicMaterial({ map: makeCeilingTexture(), side: THREE.DoubleSide })
+        new THREE.MeshBasicMaterial({ map: makeCeilingTexture(), side: THREE.FrontSide })
       );
       ceiling.position.set(0, ROOM_H, 0);
       ceiling.rotation.x = Math.PI / 2;
@@ -1521,7 +1539,7 @@ Loading…</div>
         g.moveTo(i, i);
         g.lineTo(W - i, i);
         g.lineTo(W - i, H - i);
-        g.lineTo(W / 2, H - notch + i * 1.5);
+        g.lineTo(W / 2, H - notch + i);
         g.lineTo(i, H - i);
         g.closePath();
       };
@@ -1538,7 +1556,7 @@ Loading…</div>
       for (let i = 0; i < 380; i++) g.fillRect(Math.random() * W, Math.random() * H, 1, 6);
       g.restore();
 
-      outline(26);                                             // gold border
+      outline(14);                                             // gold border
       g.lineJoin = "round"; g.lineWidth = 14; g.strokeStyle = "#d9b44a"; g.stroke();
 
       const line = (txt, font, fill, yy, sw) => {
@@ -3473,23 +3491,96 @@ Loading…</div>
         g.globalAlpha = 1.0;
         const skyTex = new THREE.CanvasTexture(skyCv);
         skyTex.colorSpace = THREE.SRGBColorSpace;
-        // Large dome behind the graveyard
-        const skyPlane = new THREE.Mesh(
-          new THREE.PlaneGeometry(GY_WIDTH + 10, 20),
-          new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.DoubleSide })
-        );
-        skyPlane.position.set(GY_X + GY_DEPTH, 8, GY_Z_CENTRE);
-        skyPlane.rotation.y = -Math.PI / 2;
-        scene.add(skyPlane);
+        const skyMat = new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.DoubleSide });
 
-        // Side sky walls to close the space - run along X, face inward along Z
+        // Sky box dimensions - enclose the entire graveyard.
+        // Each panel extends 0.5m past its edges so panels overlap at
+        // every corner and seam, eliminating visible gaps.
+        const SKY_PAD = 0.5;
+        const SKY_H = 20;                         // total height
+        const SKY_Y = SKY_H / 2;                  // centre height
+        const SKY_TOP = SKY_H;                     // ceiling Y
+        const SKY_X0 = GY_X;                       // gym wall edge
+        const SKY_X1 = GY_X + GY_DEPTH + 1;        // far edge (1m past graveyard)
+        const SKY_DX = SKY_X1 - SKY_X0;            // depth along X
+        const SKY_CX = (SKY_X0 + SKY_X1) / 2;      // centre X
+        const SKY_HW = GY_WIDTH / 2 + 5;           // half-width along Z
+        const SKY_WZ = SKY_HW * 2;                  // full width along Z
+
+        // Back wall (far edge, facing -X toward gym)
+        const skyBack = new THREE.Mesh(new THREE.PlaneGeometry(SKY_WZ + SKY_PAD * 2, SKY_H + SKY_PAD), skyMat);
+        skyBack.position.set(SKY_X1, SKY_Y, GY_Z_CENTRE);
+        skyBack.rotation.y = -Math.PI / 2;
+        scene.add(skyBack);
+
+        // Side walls (face inward along Z)
         for (const side of [-1, 1]) {
-          const sideSky = new THREE.Mesh(
-            new THREE.PlaneGeometry(GY_DEPTH, 20),
-            new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.DoubleSide })
-          );
-          sideSky.position.set(GY_X + GY_DEPTH / 2, 8, GY_Z_CENTRE + side * (GY_WIDTH / 2 + 5));
+          const sideSky = new THREE.Mesh(new THREE.PlaneGeometry(SKY_DX + SKY_PAD * 2, SKY_H + SKY_PAD), skyMat);
+          sideSky.position.set(SKY_CX, SKY_Y, GY_Z_CENTRE + side * SKY_HW);
           scene.add(sideSky);
+        }
+
+        // Ceiling - separate texture (uniform dark, stars everywhere, no gradient)
+        const ceilCv = document.createElement("canvas");
+        ceilCv.width = 512; ceilCv.height = 512;
+        const cg = ceilCv.getContext("2d");
+        cg.fillStyle = "#0a0a1a";
+        cg.fillRect(0, 0, 512, 512);
+        cg.fillStyle = "#ffffff";
+        for (let i = 0; i < 200; i++) {
+          const sz = Math.random() * 2 + 0.5;
+          cg.globalAlpha = Math.random() * 0.7 + 0.3;
+          cg.fillRect(Math.random() * 512, Math.random() * 512, sz, sz);
+        }
+        cg.globalAlpha = 1.0;
+        const ceilTex = new THREE.CanvasTexture(ceilCv);
+        ceilTex.colorSpace = THREE.SRGBColorSpace;
+        const skyCeil = new THREE.Mesh(new THREE.PlaneGeometry(SKY_DX + SKY_PAD * 2, SKY_WZ + SKY_PAD * 2),
+          new THREE.MeshBasicMaterial({ map: ceilTex, side: THREE.DoubleSide }));
+        skyCeil.rotation.x = Math.PI / 2;
+        skyCeil.position.set(SKY_CX, SKY_TOP, GY_Z_CENTRE);
+        scene.add(skyCeil);
+
+        // Gym-side sky wall - single plane with the doorway cut out via
+        // transparent alpha. Custom canvas draws the same sky gradient rotated
+        // to match the side walls' visual appearance, then clears the door rect.
+        {
+          const GW = 1024, GH = Math.round(1024 * (SKY_H / SKY_WZ));
+          const gcv = document.createElement("canvas");
+          gcv.width = GW; gcv.height = GH;
+          const gg = gcv.getContext("2d");
+          // Same gradient as the side/back walls, top-to-bottom
+          const gGrad = gg.createLinearGradient(0, 0, 0, GH);
+          gGrad.addColorStop(0, "#0a0a1a");
+          gGrad.addColorStop(0.6, "#0d0d2b");
+          gGrad.addColorStop(1, "#1a1a2e");
+          gg.fillStyle = gGrad;
+          gg.fillRect(0, 0, GW, GH);
+          // Stars
+          gg.fillStyle = "#ffffff";
+          for (let i = 0; i < 200; i++) {
+            const sz = Math.random() * 2 + 0.5;
+            gg.globalAlpha = Math.random() * 0.7 + 0.3;
+            gg.fillRect(Math.random() * GW, Math.random() * (GH * 0.78), sz, sz);
+          }
+          gg.globalAlpha = 1.0;
+          // Cut out the doorway - map door position to canvas coordinates.
+          // Plane spans z = -SKY_HW to +SKY_HW (width) and y = 0 to SKY_H (height).
+          // Canvas x maps to z (left = -SKY_HW), canvas y maps to height (top = SKY_H).
+          const doorCxL = ((- DOOR_W / 2) + SKY_HW) / (SKY_HW * 2) * GW;
+          const doorCxR = ((+ DOOR_W / 2) + SKY_HW) / (SKY_HW * 2) * GW;
+          const doorCyTop = (1 - DOOR_H / SKY_H) * GH;
+          gg.clearRect(doorCxL, doorCyTop, doorCxR - doorCxL, GH - doorCyTop);
+
+          const gymTex = new THREE.CanvasTexture(gcv);
+          gymTex.colorSpace = THREE.SRGBColorSpace;
+          const skyGymWall = new THREE.Mesh(
+            new THREE.PlaneGeometry(SKY_WZ + SKY_PAD * 2, SKY_H + SKY_PAD),
+            new THREE.MeshBasicMaterial({ map: gymTex, transparent: true, alphaTest: 0.02, side: THREE.FrontSide })
+          );
+          skyGymWall.position.set(SKY_X0 + 0.05, SKY_H / 2, GY_Z_CENTRE);
+          skyGymWall.rotation.y = Math.PI / 2;
+          scene.add(skyGymWall);
         }
       }
 
