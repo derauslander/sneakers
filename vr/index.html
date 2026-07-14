@@ -2292,6 +2292,15 @@ Loading…</div>
         if (_clampHead.x > GY_BOUND_X) dx = GY_BOUND_X - _clampHead.x;
         if (_clampHead.z >  GY_BOUND_Z) dz =  GY_BOUND_Z - _clampHead.z;
         if (_clampHead.z < -GY_BOUND_Z) dz = -GY_BOUND_Z - _clampHead.z;
+        // Gym wall: block re-entry unless within the doorway opening
+        // Wall is at x=9 (HALF), use a small buffer inside the graveyard
+        const GY_WALL_LIMIT = ROOM_BOUND + 0.6;  // 9.3 - just past the wall
+        if (_clampHead.x < GY_WALL_LIMIT) {
+          const inDoorway = Math.abs(_clampHead.z) < GY_DOOR_HALF_W;
+          if (!inDoorway) {
+            dx = GY_WALL_LIMIT - _clampHead.x;
+          }
+        }
       } else {
         // In the gym - normal bounds, but allow passage through the doorway
         if (_clampHead.x < -ROOM_BOUND) dx = -ROOM_BOUND - _clampHead.x;
