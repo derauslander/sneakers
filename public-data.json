@@ -376,6 +376,10 @@
       {
         "date": "2026-06-27",
         "colorway": "Cave Stone"
+      },
+      {
+        "date": "2026-07-16",
+        "colorway": "Military Blue"
       }
     ],
     "5": [
@@ -2057,6 +2061,14 @@
         "lastWorn": "2025-10-17"
       },
       {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "Military Blue",
+        "count": 5,
+        "lastWorn": "2026-07-16"
+      },
+      {
         "shoeId": 1,
         "shoeName": "Air Jordan 1",
         "shortName": "AJ1",
@@ -2119,14 +2131,6 @@
         "colorway": "Flint Grey",
         "count": 4,
         "lastWorn": "2026-06-05"
-      },
-      {
-        "shoeId": 6,
-        "shoeName": "Air Jordan 6",
-        "shortName": "AJ6",
-        "colorway": "Infrared",
-        "count": 4,
-        "lastWorn": "2026-04-11"
       }
     ],
     "priceRanked": [
@@ -2235,17 +2239,17 @@
         "wears": 5
       },
       {
-        "shoeId": 13,
-        "shoeName": "Air Jordan 14",
-        "shortName": "AJ14",
-        "colorway": "Flint Grey",
-        "wears": 4
-      },
-      {
         "shoeId": 4,
         "shoeName": "Air Jordan 4",
         "shortName": "AJ4",
         "colorway": "Military Blue",
+        "wears": 5
+      },
+      {
+        "shoeId": 13,
+        "shoeName": "Air Jordan 14",
+        "shortName": "AJ14",
+        "colorway": "Flint Grey",
         "wears": 4
       },
       {
@@ -2459,20 +2463,20 @@
     ]
   },
   "precomputedLastWorn": {
+    "key": "4_Military Blue",
+    "shoeId": 4,
+    "shoeName": "Air Jordan 4",
+    "shortName": "AJ4",
+    "colorway": "Military Blue",
+    "date": "2026-07-16"
+  },
+  "precomputedPreviousWorn": {
     "key": "1_Royal Reimagined",
     "shoeId": 1,
     "shoeName": "Air Jordan 1",
     "shortName": "AJ1",
     "colorway": "Royal Reimagined",
     "date": "2026-07-10"
-  },
-  "precomputedPreviousWorn": {
-    "key": "2_Black Cement",
-    "shoeId": 2,
-    "shoeName": "Air Jordan 2",
-    "shortName": "AJ2",
-    "colorway": "Black Cement",
-    "date": "2026-07-02"
   },
   "precomputedUpNext": {
     "key": "5_Black Tongue",
@@ -2483,12 +2487,12 @@
     "date": "2025-09-26"
   },
   "precomputedOnFeetToday": {
-    "key": "1_Royal Reimagined",
-    "shoeId": 1,
-    "shoeName": "Air Jordan 1",
-    "shortName": "AJ1",
-    "colorway": "Royal Reimagined",
-    "date": "2026-07-10"
+    "key": "4_Military Blue",
+    "shoeId": 4,
+    "shoeName": "Air Jordan 4",
+    "shortName": "AJ4",
+    "colorway": "Military Blue",
+    "date": "2026-07-16"
   },
-  "builtAt": "2026-07-11T02:12:52.621192Z"
+  "builtAt": "2026-07-16T15:12:14.078396Z"
 }
