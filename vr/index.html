@@ -1147,36 +1147,73 @@ Loading…</div>
         }, undefined, (err) => log(`Wordmark ../assets/title2.png failed to load: ${err?.message || err}`, "err"));
       }
 
-      // - Live scoreboard on the wall behind the user -
-      // HOME = pairs in the vault, GUEST = pairs still on the wishlist; home
-      // stays higher by nature. (Swap guestScore to the graveyard count for a
-      // 41-0 shutout instead.)
+      // - Rotating scoreboard on the wall behind the user -
+      // Picks two random shoes as HOME and GUEST, shows their owned
+      // colorway counts as the score. Rotates every 5 minutes.
       {
-        const totalColorways = inventory.reduce((n, s) => n + ((data.colorways || {})[s.shortName] || []).length, 0);
-        const unowned    = Object.values(colorwayOwned).filter((v) => v === false).length;
-        const homeScore  = totalColorways - unowned;
-        const guestScore = (data.wishlistOrder || []).length;
+        // Build list of shoes with their owned colorway counts
+        const shoeScores = inventory.map(s => {
+          const allCW = (data.colorways || {})[s.shortName] || [];
+          let owned = 0;
+          for (const cw of allCW) {
+            const key = s.shortName + ":" + cw;
+            if (colorwayOwned[key] !== false) owned++;
+          }
+          return { name: s.name, owned };
+        }).filter(s => s.owned > 0);  // only shoes with at least 1 owned colorway
 
         const W = 1024, H = 512;
         const cv = document.createElement("canvas");
         cv.width = W; cv.height = H;
         const g = cv.getContext("2d");
-        g.fillStyle = "#0a0a0a"; g.fillRect(0, 0, W, H);
-        g.strokeStyle = "#e63946"; g.lineWidth = 10; g.strokeRect(8, 8, W - 16, H - 16);
-        g.textAlign = "center";
-        g.fillStyle = "#e63946"; g.font = "bold 70px -apple-system, BlinkMacSystemFont, sans-serif";
-        g.fillText("THE VAULT", W / 2, 95);
-        g.fillStyle = "#e8e8e8"; g.font = "bold 54px -apple-system, BlinkMacSystemFont, sans-serif";
-        g.fillText("HOME", W * 0.27, 200);
-        g.fillText("GUEST", W * 0.73, 200);
-        g.fillStyle = "#ffcc00"; g.font = "bold 180px 'Courier New', monospace";
-        g.fillText(String(homeScore), W * 0.27, 430);
-        g.fillText(String(guestScore), W * 0.73, 430);
-        g.strokeStyle = "#333333"; g.lineWidth = 4;
-        g.beginPath(); g.moveTo(W / 2, 150); g.lineTo(W / 2, H - 40); g.stroke();
-
         const tex = new THREE.CanvasTexture(cv);
         tex.colorSpace = THREE.SRGBColorSpace;
+
+        let lastPair = [-1, -1];
+        const drawMatchup = () => {
+          // Pick two different random shoes
+          let a, b;
+          do {
+            a = Math.floor(Math.random() * shoeScores.length);
+            b = Math.floor(Math.random() * shoeScores.length);
+          } while (b === a || (a === lastPair[0] && b === lastPair[1]));
+          lastPair = [a, b];
+          const home = shoeScores[a], guest = shoeScores[b];
+
+          g.clearRect(0, 0, W, H);
+          g.fillStyle = "#0a0a0a"; g.fillRect(0, 0, W, H);
+          g.strokeStyle = "#e63946"; g.lineWidth = 10; g.strokeRect(8, 8, W - 16, H - 16);
+          g.textAlign = "center";
+          g.fillStyle = "#e63946"; g.font = "bold 70px -apple-system, BlinkMacSystemFont, sans-serif";
+          g.fillText("THE VAULT", W / 2, 95);
+
+          // Team names - shrink font if needed to fit
+          g.fillStyle = "#e8e8e8";
+          for (const [label, xPos] of [[home.name, W * 0.27], [guest.name, W * 0.73]]) {
+            let fontSize = 48;
+            g.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+            while (g.measureText(label).width > W * 0.42 && fontSize > 24) {
+              fontSize -= 2;
+              g.font = `bold ${fontSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
+            }
+            g.fillText(label, xPos, 200);
+          }
+
+          // Scores
+          g.fillStyle = "#ffcc00"; g.font = "bold 180px 'Courier New', monospace";
+          g.fillText(String(home.owned), W * 0.27, 430);
+          g.fillText(String(guest.owned), W * 0.73, 430);
+
+          // Divider
+          g.strokeStyle = "#333333"; g.lineWidth = 4;
+          g.beginPath(); g.moveTo(W / 2, 150); g.lineTo(W / 2, H - 40); g.stroke();
+
+          tex.needsUpdate = true;
+        };
+
+        drawMatchup();
+        setInterval(drawMatchup, 5 * 60 * 1000);  // rotate every 5 minutes
+
         const board = new THREE.Mesh(
           new THREE.PlaneGeometry(3.6, 1.8),
           new THREE.MeshBasicMaterial({ map: tex })
