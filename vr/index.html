@@ -1047,21 +1047,12 @@ Loading…</div>
         rightSeg.rotation.y = -Math.PI / 2;
         scene.add(rightSeg);
 
-        // Dark exterior wall planes (facing +X, visible from the graveyard).
-        // Same three-segment split as the interior so the doorway stays open.
-        const extMat = new THREE.MeshBasicMaterial({ color: 0x111111, side: THREE.FrontSide });
-        const extTop = new THREE.Mesh(new THREE.PlaneGeometry(ROOM, topH), extMat);
-        extTop.position.set(HALF, DOOR_H + topH / 2, 0);
-        extTop.rotation.y = Math.PI / 2;
-        scene.add(extTop);
-        const extLeft = new THREE.Mesh(new THREE.PlaneGeometry(sideLen, DOOR_H), extMat);
-        extLeft.position.set(HALF, DOOR_H / 2, -(DOOR_W / 2 + sideLen / 2));
-        extLeft.rotation.y = Math.PI / 2;
-        scene.add(extLeft);
-        const extRight = new THREE.Mesh(new THREE.PlaneGeometry(sideLen, DOOR_H), extMat);
-        extRight.position.set(HALF, DOOR_H / 2, DOOR_W / 2 + sideLen / 2);
-        extRight.rotation.y = Math.PI / 2;
-        scene.add(extRight);
+        // The dark exterior wall planes that used to sit here (extTop,
+        // extLeft, extRight at x=HALF, facing +X) made the gym read as a
+        // solid building from the graveyard. The gym-side sky plane sits
+        // 5cm in front of them at x=9.05 and is opaque everywhere except
+        // the door cutout, so they could never actually be seen. The
+        // graveyard side is meant to be open sky now, so they are gone.
 
         // Door frame - dark iron arch
         const frameMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a });
@@ -2316,27 +2307,38 @@ Loading…</div>
     //  ROOM BOUNDS - keep the user inside the gym walls
     // ════════════════════════════════════════════════════════════════════
     const ROOM_BOUND = 8.7;              // walls at ±9, 0.3m buffer so you don't clip
-    const GY_BOUND_X = 9 + 1.0 + 14 - 0.3;  // far edge of graveyard
-    const GY_BOUND_Z = 8.0;                   // half-width of graveyard
+    const WALL_X = 9.0;                  // the right wall plane itself (ROOM / 2)
+    const GY_BOUND_X = 9 + 1.0 + 18 - 0.6;    // 27.4 - just inside the far stone wall
+    const GY_BOUND_Z = 18 / 2 - 0.6;          // 8.4 - just inside the side walls
+    const GY_STONE_LIMIT = 10.41 + 0.39;      // 10.80 - just inside the gym-side wall
+    const GY_PATH_Z      = 1.34;              // inner face of the walled path out from the portal
     const GY_DOOR_HALF_W = 1.2;               // half the doorway width (2.4m / 2)
     const _clampHead = new THREE.Vector3();
     const clampToRoom = () => {
       camera.getWorldPosition(_clampHead);
       let dx = 0, dz = 0;
-      const inGraveyard = _clampHead.x > ROOM_BOUND;
+      // Split the zones at the wall plane (9.0), not at ROOM_BOUND (8.7).
+      // Using ROOM_BOUND here made the gym branch's right-wall check
+      // unreachable, and sent anyone who stepped past 8.7 into the
+      // graveyard branch, which then pushed them out past the wall
+      // (9.3) - straight through the wall instead of back off it.
+      const inGraveyard = _clampHead.x > WALL_X;
       if (inGraveyard) {
-        // In the graveyard - clamp to graveyard bounds
-        if (_clampHead.x > GY_BOUND_X) dx = GY_BOUND_X - _clampHead.x;
-        if (_clampHead.z >  GY_BOUND_Z) dz =  GY_BOUND_Z - _clampHead.z;
-        if (_clampHead.z < -GY_BOUND_Z) dz = -GY_BOUND_Z - _clampHead.z;
-        // Gym wall: block re-entry unless within the doorway opening
-        // Wall is at x=9 (HALF), use a small buffer inside the graveyard
-        const GY_WALL_LIMIT = ROOM_BOUND + 0.6;  // 9.3 - just past the wall
-        if (_clampHead.x < GY_WALL_LIMIT) {
-          const inDoorway = Math.abs(_clampHead.z) < GY_DOOR_HALF_W;
-          if (!inDoorway) {
-            dx = GY_WALL_LIMIT - _clampHead.x;
+        if (_clampHead.x < GY_STONE_LIMIT) {
+          // Between the portal and the yard, walled on both sides.
+          if (Math.abs(_clampHead.z) < GY_PATH_Z) {
+            // In the channel: steer along it. A hard X barrier here would
+            // shove you forward into the yard instead of letting you walk.
+            if (_clampHead.z >  GY_DOOR_HALF_W) dz =  GY_DOOR_HALF_W - _clampHead.z;
+            if (_clampHead.z < -GY_DOOR_HALF_W) dz = -GY_DOOR_HALF_W - _clampHead.z;
+          } else {
+            // Beside the path: the gym-side perimeter wall stops you.
+            dx = GY_STONE_LIMIT - _clampHead.x;
           }
+        } else {
+          if (_clampHead.x > GY_BOUND_X) dx = GY_BOUND_X - _clampHead.x;
+          if (_clampHead.z >  GY_BOUND_Z) dz =  GY_BOUND_Z - _clampHead.z;
+          if (_clampHead.z < -GY_BOUND_Z) dz = -GY_BOUND_Z - _clampHead.z;
         }
       } else {
         // In the gym - normal bounds, but allow passage through the doorway
@@ -3464,26 +3466,107 @@ Loading…</div>
     const graveyardAnims = [];   // fog planes to animate
     {
       const GY_X = 9;                  // doorway is at x=+9
-      const GY_DEPTH = 14;            // extends 14m out from the wall
-      const GY_WIDTH = 16;            // 16m wide (±8 from door centre)
+      const GY_DEPTH = 18;            // walled plot depth (x = 10 to 28), matches the gym
+      const GY_WIDTH = 18;            // walled plot width (z = +/-9), matches the gym
       const GY_Z_CENTRE = 0;          // door centred at z=0
       const GY_FLOOR_Y = 0;
 
       // - Transition corridor (short hallway through the wall thickness) -
       const CORR_LEN = 1.0;  // 1m deep corridor through the wall
-      const corrMat = new THREE.MeshBasicMaterial({ color: 0x111111, side: THREE.DoubleSide });
-      // Corridor ceiling - lies flat at DOOR_H, spans CORR_LEN along X and DOOR_W along Z
-      const corrCeil = new THREE.Mesh(new THREE.PlaneGeometry(CORR_LEN, DOOR_W), corrMat);
-      corrCeil.rotation.x = -Math.PI / 2;
-      corrCeil.position.set(GY_X + CORR_LEN / 2, DOOR_H, GY_Z_CENTRE);
-      scene.add(corrCeil);
-      // Corridor side walls - run along X (corridor depth), face inward along Z
-      for (const side of [-1, 1]) {
-        const cw = new THREE.Mesh(new THREE.PlaneGeometry(CORR_LEN, DOOR_H), corrMat);
-        cw.position.set(GY_X + CORR_LEN / 2, DOOR_H / 2, GY_Z_CENTRE + side * DOOR_W / 2);
-        // No Y rotation - plane default faces +Z; side=+1 wall needs to face -Z (inward),
-        // side=-1 wall needs to face +Z (inward). DoubleSide handles both.
-        scene.add(cw);
+
+      // Everything past the stone wall is set dressing, never walkable. The
+      // backdrop used to sit on the fence rail (both at x=24), which left no
+      // "beyond" for the eye to read. These push it well out so the ground
+      // has room to recede.
+      const GY_OUTER_DEPTH = 32;                                        // ground past the far wall
+      const GY_OUTER_SIDE  = 26;                                        // ground past each side wall
+      const GY_FAR_X  = GY_X + CORR_LEN + GY_DEPTH + GY_OUTER_DEPTH;    // 60 - sky back wall
+      const GY_FAR_HW = GY_WIDTH / 2 + GY_OUTER_SIDE;                   // 35 - sky half-width
+
+      // Stone wall geometry.
+      //
+      // Nothing runs along the gym face any more. A run parallel to the wall
+      // forces every pier and capstone into the narrow strip between the gym
+      // (x=9) and wherever the sky plane sits, and that strip is never wide
+      // enough - it produced clipped piers, sliced caps, and a sky plane with
+      // nowhere safe to live. Instead a short path runs out perpendicular
+      // from the portal, and the perimeter starts at the far end of it.
+      //
+      // A run along X is much better behaved: its thickness and its capstone
+      // overhang are both in Z, so its X footprint is exactly its length and
+      // it can start wherever we like without reaching back toward the gym.
+      const GY_WALL_T    = 0.42;   // wall thickness
+      const GY_PIER_S    = 0.62;   // run pier footprint
+      const GY_GATE_S    = 0.80;   // gate pier footprint
+      const GY_CAP_OVER  = 0.16;   // capstone overhang, total across both faces
+
+      const GY_PATH_X0   = GY_X + 0.20;              // 9.20 - path starts clear of the gym
+      const GY_PATH_LEN  = 1.00;                     // path length out from the portal
+      // GY_PATH_Z (1.34) is declared with the clamp bounds above and is the
+      // inner face of these walls. Centreline derives from it so the collision
+      // channel and the geometry cannot drift apart.
+      const GY_PATH_HALF = GY_PATH_Z + GY_WALL_T / 2;      // 1.55 - path wall centreline
+      const GY_WALL_X    = GY_PATH_X0 + GY_PATH_LEN; // 10.20 - perimeter line, where the path ends
+      const GY_SKY_X     = GY_X + 0.08;              // 9.08 - clear of the gym, 12cm behind the path
+      const GY_PLOT_X0   = GY_WALL_X + GY_WALL_T / 2;                    // 10.41 - inner face, gym side
+      const GY_PLOT_X1   = GY_X + CORR_LEN + GY_DEPTH - GY_WALL_T / 2;   // 27.79 - inner face, far side
+
+
+      // - Gym-side backstop -
+      // Sits just inside the gym wall, facing the graveyard, with the portal
+      // cut out. In normal operation it is never seen: the sky panel stands
+      // in front of it and is opaque everywhere except the portal. It exists
+      // so that if a sightline ever does get past the sky panel, it lands on
+      // black rather than on a view straight into the gym. Deliberately much
+      // larger than the gym footprint so it cannot be flanked.
+      // FrontSide facing +X, so from inside the gym its back face is culled
+      // and it stays invisible from the court.
+      {
+        const BS_X = GY_X - 0.02;
+        const BS_HW = 24, BS_H = 20;
+        const bsMat = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.FrontSide });
+        const bsSide = BS_HW - DOOR_W / 2;
+        const above = new THREE.Mesh(new THREE.PlaneGeometry(BS_HW * 2, BS_H - DOOR_H), bsMat);
+        above.position.set(BS_X, DOOR_H + (BS_H - DOOR_H) / 2, GY_Z_CENTRE);
+        above.rotation.y = Math.PI / 2;
+        scene.add(above);
+        for (const side of [-1, 1]) {
+          const seg = new THREE.Mesh(new THREE.PlaneGeometry(bsSide, DOOR_H), bsMat);
+          seg.position.set(BS_X, DOOR_H / 2, GY_Z_CENTRE + side * (DOOR_W / 2 + bsSide / 2));
+          seg.rotation.y = Math.PI / 2;
+          scene.add(seg);
+        }
+      }
+
+      // - Portal reveal -
+      // The sky plane stands GY_SKY_X - GY_X in front of the gym wall and
+      // both carry a doorway-sized hole. At a grazing angle a sightline can
+      // enter through the sky hole and then meet the gym wall outside its
+      // hole - and the gym wall is FrontSide facing inward, so from out here
+      // its back face is culled and you see straight through into the gym.
+      //
+      // This lines that gap. Any ray that enters the sky hole and leaves the
+      // opening sideways or upward has to cross one of these three planes, so
+      // it closes the leak completely rather than just narrowing it. It is
+      // the old corridor idea at 8cm instead of a metre, which is why it
+      // cannot stick out through the starfield the way that one did.
+      {
+        const revealD = GY_SKY_X - GY_X;
+        const revealMat = new THREE.MeshBasicMaterial({ color: 0x141414, side: THREE.DoubleSide });
+        const revealW = revealD + 0.02;   // slight overlap at both ends, no hairline seam
+        const revealCX = GY_X + revealD / 2;
+        // Jamb reveals. PlaneGeometry lies in XY with its normal along Z,
+        // which is already the orientation these need.
+        for (const side of [-1, 1]) {
+          const jamb = new THREE.Mesh(new THREE.PlaneGeometry(revealW, DOOR_H), revealMat);
+          jamb.position.set(revealCX, DOOR_H / 2, GY_Z_CENTRE + side * DOOR_W / 2);
+          scene.add(jamb);
+        }
+        // Head reveal
+        const head = new THREE.Mesh(new THREE.PlaneGeometry(revealW, DOOR_W), revealMat);
+        head.rotation.x = -Math.PI / 2;
+        head.position.set(revealCX, DOOR_H, GY_Z_CENTRE);
+        scene.add(head);
       }
 
       // - Fog wall at the doorway (visible from inside the gym) -
@@ -3506,7 +3589,9 @@ Loading…</div>
             new THREE.PlaneGeometry(DOOR_W * 1.2, DOOR_H * 1.1),
             new THREE.MeshBasicMaterial({ map: fogTex, transparent: true, side: THREE.DoubleSide, depthWrite: false, opacity: 0.7 - i * 0.2 })
           );
-          fogPlane.position.set(GY_X + 0.2 + i * 0.5, DOOR_H / 2, GY_Z_CENTRE);
+          // Clear of both the sky plane (9.20) and the wall's front face
+          // (9.66), so the fog reads in the opening rather than z-fighting.
+          fogPlane.position.set(GY_PATH_X0 + 0.25 + i * 0.5, DOOR_H / 2, GY_Z_CENTRE);
           fogPlane.rotation.y = -Math.PI / 2;
           fogPlane.userData.baseZ = fogPlane.position.z;
           fogPlane.userData.drift = i;
@@ -3527,9 +3612,10 @@ Loading…</div>
         skyGrad.addColorStop(1, "#1a1a2e");
         g.fillStyle = skyGrad;
         g.fillRect(0, 0, 512, 512);
-        // Stars
+        // Stars. Count is up from 200 because the panels are now roughly
+        // three times wider, and the old density read as a sparse sky.
         g.fillStyle = "#ffffff";
-        for (let i = 0; i < 200; i++) {
+        for (let i = 0; i < 650; i++) {
           const sz = Math.random() * 2 + 0.5;
           g.globalAlpha = Math.random() * 0.7 + 0.3;
           g.fillRect(Math.random() * 512, Math.random() * 400, sz, sz);
@@ -3543,14 +3629,14 @@ Loading…</div>
         // Each panel extends 0.5m past its edges so panels overlap at
         // every corner and seam, eliminating visible gaps.
         const SKY_PAD = 0.5;
-        const SKY_H = 20;                         // total height
+        const SKY_H = 36;                         // total height
         const SKY_Y = SKY_H / 2;                  // centre height
         const SKY_TOP = SKY_H;                     // ceiling Y
         const SKY_X0 = GY_X;                       // gym wall edge
-        const SKY_X1 = GY_X + GY_DEPTH + 1;        // far edge (1m past graveyard)
+        const SKY_X1 = GY_FAR_X;                   // far edge, well past the stone wall
         const SKY_DX = SKY_X1 - SKY_X0;            // depth along X
         const SKY_CX = (SKY_X0 + SKY_X1) / 2;      // centre X
-        const SKY_HW = GY_WIDTH / 2 + 5;           // half-width along Z
+        const SKY_HW = GY_FAR_HW;                  // half-width along Z
         const SKY_WZ = SKY_HW * 2;                  // full width along Z
 
         // Back wall (far edge, facing -X toward gym)
@@ -3573,7 +3659,7 @@ Loading…</div>
         cg.fillStyle = "#0a0a1a";
         cg.fillRect(0, 0, 512, 512);
         cg.fillStyle = "#ffffff";
-        for (let i = 0; i < 200; i++) {
+        for (let i = 0; i < 650; i++) {
           const sz = Math.random() * 2 + 0.5;
           cg.globalAlpha = Math.random() * 0.7 + 0.3;
           cg.fillRect(Math.random() * 512, Math.random() * 512, sz, sz);
@@ -3591,7 +3677,16 @@ Loading…</div>
         // transparent alpha. Custom canvas draws the same sky gradient rotated
         // to match the side walls' visual appearance, then clears the door rect.
         {
-          const GW = 1024, GH = Math.round(1024 * (SKY_H / SKY_WZ));
+          // The plane is built at SKY_WZ + SKY_PAD*2 by SKY_H + SKY_PAD, not
+          // at the nominal SKY_WZ by SKY_H. Mapping the cutout against the
+          // nominal figures stretched the texture over a larger quad and put
+          // the hole's top edge about 21cm below the lintel, so the sky
+          // covered the head of the doorway. Everything below maps against
+          // the real plane size.
+          const PW  = SKY_WZ + SKY_PAD * 2;   // true plane width, along Z
+          const PH  = SKY_H + SKY_PAD;        // true plane height
+          const PY1 = SKY_H / 2 + PH / 2;     // world Y of the plane's top edge
+          const GW = 1024, GH = Math.round(GW * (PH / PW));
           const gcv = document.createElement("canvas");
           gcv.width = GW; gcv.height = GH;
           const gg = gcv.getContext("2d");
@@ -3604,27 +3699,37 @@ Loading…</div>
           gg.fillRect(0, 0, GW, GH);
           // Stars
           gg.fillStyle = "#ffffff";
-          for (let i = 0; i < 200; i++) {
+          for (let i = 0; i < 650; i++) {
             const sz = Math.random() * 2 + 0.5;
             gg.globalAlpha = Math.random() * 0.7 + 0.3;
             gg.fillRect(Math.random() * GW, Math.random() * (GH * 0.78), sz, sz);
           }
           gg.globalAlpha = 1.0;
-          // Cut out the doorway - map door position to canvas coordinates.
-          // Plane spans z = -SKY_HW to +SKY_HW (width) and y = 0 to SKY_H (height).
-          // Canvas x maps to z (left = -SKY_HW), canvas y maps to height (top = SKY_H).
-          const doorCxL = ((- DOOR_W / 2) + SKY_HW) / (SKY_HW * 2) * GW;
-          const doorCxR = ((+ DOOR_W / 2) + SKY_HW) / (SKY_HW * 2) * GW;
-          const doorCyTop = (1 - DOOR_H / SKY_H) * GH;
+          // Cut the portal out. Canvas x maps to z (left = -PW/2), canvas y
+          // maps downward from the plane's top edge.
+          const doorCxL = ((-DOOR_W / 2) + PW / 2) / PW * GW;
+          const doorCxR = ((+DOOR_W / 2) + PW / 2) / PW * GW;
+          const doorCyTop = (PY1 - DOOR_H) / PH * GH;
           gg.clearRect(doorCxL, doorCyTop, doorCxR - doorCxL, GH - doorCyTop);
 
           const gymTex = new THREE.CanvasTexture(gcv);
           gymTex.colorSpace = THREE.SRGBColorSpace;
           const skyGymWall = new THREE.Mesh(
             new THREE.PlaneGeometry(SKY_WZ + SKY_PAD * 2, SKY_H + SKY_PAD),
-            new THREE.MeshBasicMaterial({ map: gymTex, transparent: true, alphaTest: 0.02, side: THREE.FrontSide })
+            // Opaque with an alpha cutout, not transparent. The texture is
+            // fully opaque apart from the portal hole, so there is nothing to
+            // blend. transparent:true put this in the transparent queue, which
+            // draws after all opaque geometry and sorts by object centre
+            // rather than per-pixel depth - and the gym is full of transparent
+            // planes (banners, cell backings, shoe images) that could then
+            // draw over a panel they sit well behind. Every other sky panel is
+            // plain opaque; this one is now consistent with them.
+            new THREE.MeshBasicMaterial({ map: gymTex, alphaTest: 0.5, side: THREE.FrontSide })
           );
-          skyGymWall.position.set(SKY_X0 + 0.05, SKY_H / 2, GY_Z_CENTRE);
+          // Sits in the gap between the gym wall and the nearest stone. It
+          // must stay outside x=9 so its back face is culled from inside the
+          // gym, and behind the stone so it never slices through a pier.
+          skyGymWall.position.set(GY_SKY_X, SKY_H / 2, GY_Z_CENTRE);
           skyGymWall.rotation.y = Math.PI / 2;
           scene.add(skyGymWall);
         }
@@ -3652,16 +3757,19 @@ Loading…</div>
         const moonTex = new THREE.CanvasTexture(moonCv);
         moonTex.colorSpace = THREE.SRGBColorSpace;
         const moon = new THREE.Mesh(
-          new THREE.PlaneGeometry(4, 4),
+          new THREE.PlaneGeometry(9, 9),
           new THREE.MeshBasicMaterial({ map: moonTex, transparent: true, side: THREE.DoubleSide, depthWrite: false })
         );
-        moon.position.set(GY_X + GY_DEPTH - 2, 12, GY_Z_CENTRE - 3);
+        // Sits just inside the sky back wall. It used to be at x=25, which is
+        // now inside the walled plot - it would hang over the yard instead of
+        // on the horizon. Scaled up to hold its apparent size at 45m out.
+        moon.position.set(GY_FAR_X - 1.5, 21, GY_Z_CENTRE - 13);
         moon.rotation.y = -Math.PI / 2;
         scene.add(moon);
 
-        // Moonlight - dim directional light casting down into the graveyard
+        // Moonlight - dim point light over the walled plot
         const moonLight = new THREE.PointLight(0x8899bb, 1.5, 30);
-        moonLight.position.set(GY_X + GY_DEPTH / 2, 8, GY_Z_CENTRE);
+        moonLight.position.set(GY_X + CORR_LEN + GY_DEPTH / 2, 8, GY_Z_CENTRE);
         scene.add(moonLight);
       }
 
@@ -3681,44 +3789,90 @@ Loading…</div>
         const gndTex = new THREE.CanvasTexture(gndCv);
         gndTex.colorSpace = THREE.SRGBColorSpace;
         gndTex.wrapS = gndTex.wrapT = THREE.RepeatWrapping;
-        gndTex.repeat.set(4, 4);
-        const totalGroundDepth = CORR_LEN + GY_DEPTH;  // include corridor area
-        const GRASS_PAD = 4;  // extra grass beyond the fence on each side
+        // Ground now runs from the gym wall out to the sky box on all three
+        // open sides, so the eye has somewhere to travel past the stone wall.
+        // 1m of overshoot past the sky panels hides the ground/sky seam.
+        const groundX0 = GY_X;
+        const groundX1 = GY_FAR_X + 1;
+        const groundHW = GY_FAR_HW + 1;
+        const groundDepth = groundX1 - groundX0;
+        const groundWidth = groundHW * 2;
+        // Keep roughly the original 4.75m per tile instead of stretching 4
+        // repeats across the whole 52m.
+        gndTex.repeat.set(groundDepth / 4.75, groundWidth / 4.75);
         const ground = new THREE.Mesh(
-          new THREE.PlaneGeometry(totalGroundDepth + GRASS_PAD, GY_WIDTH + GRASS_PAD * 2),
+          new THREE.PlaneGeometry(groundDepth, groundWidth),
           new THREE.MeshBasicMaterial({ map: gndTex, side: THREE.DoubleSide })
         );
         ground.rotation.x = -Math.PI / 2;
-        ground.position.set(GY_X + totalGroundDepth / 2 + GRASS_PAD / 2, GY_FLOOR_Y + 0.01, GY_Z_CENTRE);
+        ground.position.set((groundX0 + groundX1) / 2, GY_FLOOR_Y + 0.01, GY_Z_CENTRE);
         scene.add(ground);
       }
 
       // - Ground fog (low-lying mist across the graveyard) -
+      // Scattered soft-edged patches rather than aligned bands. The texture
+      // is masked to a soft circle so a patch fades to nothing at every
+      // edge in every direction, which is what kills the visible seams.
       {
         const mistCv = document.createElement("canvas");
-        mistCv.width = 256; mistCv.height = 64;
+        mistCv.width = 256; mistCv.height = 256;
         const g = mistCv.getContext("2d");
-        const mistGrad = g.createLinearGradient(0, 0, 0, 64);
-        mistGrad.addColorStop(0, "rgba(120,130,140,0.35)");
-        mistGrad.addColorStop(1, "rgba(120,130,140,0)");
+
+        // Base falloff, densest in the middle.
+        const mistGrad = g.createRadialGradient(128, 128, 8, 128, 128, 128);
+        mistGrad.addColorStop(0.0,  "rgba(120,130,140,0.42)");
+        mistGrad.addColorStop(0.45, "rgba(120,130,140,0.24)");
+        mistGrad.addColorStop(1.0,  "rgba(120,130,140,0)");
         g.fillStyle = mistGrad;
-        g.fillRect(0, 0, 256, 64);
+        g.fillRect(0, 0, 256, 256);
+
+        // A few offset lobes so the patch is not a perfect circle. Without
+        // these, 14 copies of the same round blob read as bubbles.
+        for (let i = 0; i < 12; i++) {
+          const cx = 55 + Math.random() * 146;
+          const cy = 55 + Math.random() * 146;
+          const r  = 30 + Math.random() * 45;
+          const lobe = g.createRadialGradient(cx, cy, 0, cx, cy, r);
+          lobe.addColorStop(0, "rgba(132,142,152,0.17)");
+          lobe.addColorStop(1, "rgba(132,142,152,0)");
+          g.fillStyle = lobe;
+          g.fillRect(cx - r, cy - r, r * 2, r * 2);
+        }
+
+        // Mask everything back to a soft circle. Guarantees zero alpha at
+        // the canvas edges no matter where the lobes landed above.
+        g.globalCompositeOperation = "destination-in";
+        const mask = g.createRadialGradient(128, 128, 40, 128, 128, 128);
+        mask.addColorStop(0, "rgba(0,0,0,1)");
+        mask.addColorStop(1, "rgba(0,0,0,0)");
+        g.fillStyle = mask;
+        g.fillRect(0, 0, 256, 256);
+        g.globalCompositeOperation = "source-over";
+
         const mistTex = new THREE.CanvasTexture(mistCv);
         mistTex.colorSpace = THREE.SRGBColorSpace;
 
-        for (let i = 0; i < 5; i++) {
+        // Patch centres stay at x >= 13.5 so that even with the drift below,
+        // no fog reaches back toward the doorway wall at x=9.
+        for (let i = 0; i < 20; i++) {
+          const w = 3.5 + Math.random() * 3.0;
+          const h = 3.5 + Math.random() * 3.0;
           const mist = new THREE.Mesh(
-            new THREE.PlaneGeometry(GY_WIDTH * 0.8, 1.2),
-            new THREE.MeshBasicMaterial({ map: mistTex, transparent: true, side: THREE.DoubleSide, depthWrite: false, opacity: 0.5 })
+            new THREE.PlaneGeometry(w, h),
+            new THREE.MeshBasicMaterial({ map: mistTex, transparent: true, side: THREE.DoubleSide, depthWrite: false })
           );
           mist.rotation.x = -Math.PI / 2;
+          mist.rotation.z = Math.random() * Math.PI * 2;  // yaw, breaks the grid look
           mist.position.set(
-            GY_X + CORR_LEN + 2 + i * 2.5,
-            GY_FLOOR_Y + 0.15 + Math.random() * 0.2,
-            GY_Z_CENTRE + (Math.random() - 0.5) * 4
+            13.5 + Math.random() * 13.0,
+            GY_FLOOR_Y + 0.12 + Math.random() * 0.3,
+            GY_Z_CENTRE + (Math.random() - 0.5) * 15
           );
-          mist.userData.baseX = mist.position.x;
-          mist.userData.drift = i;
+          mist.userData.baseX       = mist.position.x;
+          mist.userData.baseZg      = mist.position.z;
+          mist.userData.baseOpacity = 0.26 + Math.random() * 0.22;
+          mist.userData.drift       = Math.random() * 12;  // random phase, no syncing
+          mist.material.opacity     = mist.userData.baseOpacity;
           scene.add(mist);
           graveyardAnims.push(mist);
         }
@@ -3733,12 +3887,14 @@ Loading…</div>
           -w, 0, 0,  w, 0, 0,  0, h, 0
         ], 3));
         grassGeo.computeVertexNormals();
-        for (let i = 0; i < 250; i++) {
+        // Blades only read from close up, so keep them inside the walled plot
+        // rather than scattering them across the full 52m of ground.
+        for (let i = 0; i < 400; i++) {
           const blade = new THREE.Mesh(grassGeo, grassMat);
           blade.position.set(
-            GY_X + CORR_LEN - 1 + Math.random() * (GY_DEPTH + 4),
+            GY_PLOT_X0 + Math.random() * (GY_PLOT_X1 - GY_PLOT_X0),
             GY_FLOOR_Y,
-            GY_Z_CENTRE + (Math.random() - 0.5) * (GY_WIDTH + 6)
+            GY_Z_CENTRE + (Math.random() - 0.5) * GY_WIDTH
           );
           blade.rotation.y = Math.random() * Math.PI;
           blade.scale.set(
@@ -3954,43 +4110,141 @@ Loading…</div>
         });
       }
 
-      // - Wrought iron fence along the edges -
+      // - Low stone wall along the edges -
+      // Waist-high so you can see the ground continuing past it. This is the
+      // visible reason the walk stops; the clamp bounds sit just inside it.
       {
-        const fenceMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a });
-        const fenceH = 1.8, postR = 0.04, railR = 0.02;
-        const buildFence = (x1, z1, x2, z2) => {
-          const len = Math.sqrt((x2 - x1) ** 2 + (z2 - z1) ** 2);
-          const posts = Math.max(2, Math.ceil(len / 1.5));
-          for (let i = 0; i <= posts; i++) {
-            const t = i / posts;
-            const px = x1 + (x2 - x1) * t, pz = z1 + (z2 - z1) * t;
-            const post = new THREE.Mesh(new THREE.CylinderGeometry(postR, postR, fenceH, 6), fenceMat);
-            post.position.set(px, fenceH / 2, pz);
-            scene.add(post);
-            // Pointed top
-            const point = new THREE.Mesh(new THREE.ConeGeometry(postR * 1.8, 0.12, 6), fenceMat);
-            point.position.set(px, fenceH + 0.06, pz);
-            scene.add(point);
+        const WALL_H  = 0.95;          // wall height (floor to underside of capstone)
+        const WALL_T  = GY_WALL_T;     // thickness
+        const CAP_H   = 0.14;          // capstone height
+        const CAP_OVER = GY_CAP_OVER;  // capstone overhang, total across both faces
+        const PIER_H  = 1.28;          // piers stand slightly proud of the wall
+        const PIER_S  = GY_PIER_S;     // pier footprint
+        const PIER_GAP = 5;            // metres between piers
+
+        // Mortared rubble courses. Irregular block widths and a dark mortar
+        // bed underneath, so the wall does not read as a tiled plane.
+        const makeStoneWallTexture = () => {
+          const cv = document.createElement("canvas");
+          cv.width = 512; cv.height = 256;
+          const g = cv.getContext("2d");
+          g.fillStyle = "#211f1b";  // mortar bed
+          g.fillRect(0, 0, 512, 256);
+          let y = 0;
+          while (y < 256) {
+            const rowH = 24 + Math.random() * 18;
+            let x = -Math.random() * 50;
+            while (x < 512) {
+              const w = 34 + Math.random() * 58;
+              const lum = 13 + Math.random() * 9;
+              g.fillStyle = `hsl(${36 + Math.random() * 16}, ${5 + Math.random() * 7}%, ${lum}%)`;
+              g.fillRect(x + 2.5, y + 2.5, w - 5, rowH - 5);
+              // Grain speckle and a few darker pits per block
+              for (let s = 0; s < 14; s++) {
+                g.fillStyle = `rgba(210,205,192,${Math.random() * 0.06})`;
+                g.fillRect(x + 4 + Math.random() * (w - 9), y + 4 + Math.random() * (rowH - 9), 2, 2);
+              }
+              for (let s = 0; s < 3; s++) {
+                g.fillStyle = `rgba(0,0,0,${0.10 + Math.random() * 0.14})`;
+                g.fillRect(x + 4 + Math.random() * (w - 9), y + 4 + Math.random() * (rowH - 9), 3, 2);
+              }
+              x += w;
+            }
+            y += rowH;
           }
-          // Top rail
-          const rail = new THREE.Mesh(new THREE.CylinderGeometry(railR, railR, len, 6), fenceMat);
-          rail.position.set((x1 + x2) / 2, fenceH * 0.9, (z1 + z2) / 2);
-          // CylinderGeometry is along Y by default; rotate to aim along the fence segment.
-          rail.quaternion.setFromUnitVectors(
-            new THREE.Vector3(0, 1, 0),
-            new THREE.Vector3(x2 - x1, 0, z2 - z1).normalize()
+          const t = new THREE.CanvasTexture(cv);
+          t.colorSpace = THREE.SRGBColorSpace;
+          t.wrapS = t.wrapT = THREE.RepeatWrapping;
+          return t;
+        };
+        const wallTexBase = makeStoneWallTexture();
+        const capMat  = new THREE.MeshBasicMaterial({ color: 0x35332d });
+        const pierMat = new THREE.MeshBasicMaterial({ map: wallTexBase });
+
+        // Rotate so the box's local +X follows the run direction.
+        const runRotation = (dx, dz) => Math.atan2(-dz, dx);
+
+        const buildWall = (x1, z1, x2, z2, opts = {}) => {
+          const dx = x2 - x1, dz = z2 - z1;
+          const len = Math.hypot(dx, dz);
+          const cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
+          const rotY = runRotation(dx, dz);
+
+          // Own texture clone per run so the course size stays constant
+          // regardless of how long the run is.
+          const tex = wallTexBase.clone();
+          tex.needsUpdate = true;
+          tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+          tex.repeat.set(len / 3, 1);
+
+          const seg = new THREE.Mesh(
+            new THREE.BoxGeometry(len, WALL_H, WALL_T),
+            new THREE.MeshBasicMaterial({ map: tex })
           );
-          rail.position.set((x1 + x2) / 2, fenceH * 0.9, (z1 + z2) / 2);
-          scene.add(rail);
+          seg.position.set(cx, WALL_H / 2, cz);
+          seg.rotation.y = rotY;
+          scene.add(seg);
+
+          const cap = new THREE.Mesh(
+            new THREE.BoxGeometry(len, CAP_H, WALL_T + CAP_OVER),
+            capMat
+          );
+          cap.position.set(cx, WALL_H + CAP_H / 2, cz);
+          cap.rotation.y = rotY;
+          scene.add(cap);
+
+          const piers = opts.piers !== undefined
+            ? opts.piers
+            : Math.max(2, Math.round(len / PIER_GAP));   // at least a mid-run pier
+          const first = opts.skipFirst ? 1 : 0;
+          const last  = opts.skipLast  ? piers - 1 : piers;
+          for (let i = first; i <= last; i++) {
+            const t = i / piers;
+            const px = x1 + dx * t, pz = z1 + dz * t;
+            const pier = new THREE.Mesh(new THREE.BoxGeometry(PIER_S, PIER_H, PIER_S), pierMat);
+            pier.position.set(px, PIER_H / 2, pz);
+            pier.rotation.y = rotY;
+            scene.add(pier);
+            const pcap = new THREE.Mesh(new THREE.BoxGeometry(PIER_S + CAP_OVER, 0.12, PIER_S + CAP_OVER), capMat);
+            pcap.position.set(px, PIER_H + 0.06, pz);
+            pcap.rotation.y = rotY;
+            scene.add(pcap);
+          }
         };
 
-        const fxMin = GY_X + CORR_LEN;
-        const fxMax = GY_X + CORR_LEN + GY_DEPTH;
-        const fzMin = GY_Z_CENTRE - GY_WIDTH / 2;
-        const fzMax = GY_Z_CENTRE + GY_WIDTH / 2;
-        buildFence(fxMax, fzMin, fxMax, fzMax);  // far side
-        buildFence(fxMin, fzMin, fxMax, fzMin);  // left side
-        buildFence(fxMin, fzMax, fxMax, fzMax);  // right side
+        const wxMax = GY_X + CORR_LEN + GY_DEPTH;
+        const wzMin = GY_Z_CENTRE - GY_WIDTH / 2;
+        const wzMax = GY_Z_CENTRE + GY_WIDTH / 2;
+        const PH = GY_PATH_HALF;
+
+        // Perimeter. Corner piers belong to whichever run reaches them first,
+        // so later runs skip that end rather than building a second box in
+        // the same place and z-fighting.
+        buildWall(wxMax, wzMin, wxMax, wzMax);                              // far side, owns both corners
+        buildWall(GY_WALL_X, wzMin, wxMax, wzMin, { skipLast: true });      // left side, owns the near corner
+        buildWall(GY_WALL_X, wzMax, wxMax, wzMax, { skipLast: true });      // right side, owns the near corner
+        // Gym-side perimeter, stopping either side of the path mouth. Near
+        // corners come from the side runs, path ends get the gate piers.
+        buildWall(GY_WALL_X, wzMin, GY_WALL_X, -PH, { skipFirst: true, skipLast: true });
+        buildWall(GY_WALL_X, PH, GY_WALL_X, wzMax, { skipFirst: true, skipLast: true });
+
+        // The path itself: two short runs out to the portal. piers: 1 gives
+        // endpoints only, and both ends are skipped, so a 1m run gets no
+        // pier dropped in the middle of it. The near ends stay free of the
+        // gym because a run along X has no capstone overhang along X.
+        buildWall(GY_PATH_X0, -PH, GY_WALL_X, -PH, { skipFirst: true, skipLast: true, piers: 1 });
+        buildWall(GY_PATH_X0,  PH, GY_WALL_X,  PH, { skipFirst: true, skipLast: true, piers: 1 });
+
+        // Gate piers where the path meets the perimeter.
+        const GATE_H = 1.7;
+        for (const gz of [-PH, PH]) {
+          const gp = new THREE.Mesh(new THREE.BoxGeometry(GY_GATE_S, GATE_H, GY_GATE_S), pierMat);
+          gp.position.set(GY_WALL_X, GATE_H / 2, gz);
+          scene.add(gp);
+          const gcap = new THREE.Mesh(new THREE.BoxGeometry(GY_GATE_S + CAP_OVER, 0.14, GY_GATE_S + CAP_OVER), capMat);
+          gcap.position.set(GY_WALL_X, GATE_H + 0.07, gz);
+          scene.add(gcap);
+        }
       }
     } // end graveyard block
 
@@ -4019,8 +4273,11 @@ Loading…</div>
           fp.position.z = fp.userData.baseZ + Math.sin(t * 0.4) * 0.15;
           fp.material.opacity = 0.4 + Math.sin(t * 0.3) * 0.15;
         } else if (fp.userData.baseX !== undefined) {
-          fp.position.x = fp.userData.baseX + Math.sin(t * 0.25) * 0.3;
-          fp.material.opacity = 0.3 + Math.sin(t * 0.2 + 1) * 0.1;
+          // Ground fog patches: wander on both axes and breathe around
+          // their own base opacity rather than a shared fixed value.
+          fp.position.x = fp.userData.baseX  + Math.sin(t * 0.25) * 0.35;
+          fp.position.z = fp.userData.baseZg + Math.cos(t * 0.19) * 0.45;
+          fp.material.opacity = fp.userData.baseOpacity * (0.75 + Math.sin(t * 0.2 + 1) * 0.25);
         }
       }
       renderer.render(scene, camera);
