@@ -3697,12 +3697,17 @@ Loading…</div>
           gGrad.addColorStop(1, "#1a1a2e");
           gg.fillStyle = gGrad;
           gg.fillRect(0, 0, GW, GH);
-          // Stars
+          // Stars. Drawn down to 92% of the panel (nearly to the base) rather
+          // than the top 78%. The other sky panels keep a dark lower band
+          // because the skyline silhouette hides it; the gym panel has no
+          // silhouette in front, so any starless band reads as a dark wall
+          // over the boundary wall. The tall gym-side stone wall covers the
+          // very bottom; stars cover everything above it.
           gg.fillStyle = "#ffffff";
-          for (let i = 0; i < 650; i++) {
+          for (let i = 0; i < 780; i++) {
             const sz = Math.random() * 2 + 0.5;
             gg.globalAlpha = Math.random() * 0.7 + 0.3;
-            gg.fillRect(Math.random() * GW, Math.random() * (GH * 0.78), sz, sz);
+            gg.fillRect(Math.random() * GW, Math.random() * (GH * 0.92), sz, sz);
           }
           gg.globalAlpha = 1.0;
           // Cut the portal out. Canvas x maps to z (left = -PW/2), canvas y
@@ -3876,6 +3881,228 @@ Loading…</div>
           scene.add(mist);
           graveyardAnims.push(mist);
         }
+      }
+
+      // - Horizon: a distant silhouette skyline, foreground bare trees,
+      //   and haze along the seam where ground meets sky. -
+      //
+      // Design intent: make the yard read as far bigger than you can walk,
+      // without walling the sky back in. Everything here is a black-on-
+      // transparent cutout (unlit at night anyway), so it is cheap, and it is
+      // kept LOW and RAGGED so open sky always shows above it. A jagged
+      // horizon is what sells distance; a solid treeline would undo the 50m
+      // of depth we opened up. A gap is left around the moon so it stays
+      // framed by branches rather than blocked.
+      {
+        // Draw one ragged skyline strip: bare tree crowns, the odd hill, a
+        // far spire. Black shapes on a transparent canvas. gapCentre/gapHalf
+        // (in 0..1 across the strip) leave a hole. cutHill controls whether
+        // the gap clears only trees (false, e.g. the moon gap - hill can stay)
+        // or cuts all the way to the ground (true, e.g. the portal - the way
+        // through must be open floor to sky).
+        const makeSkylineTex = (w, h, gapCentre, gapHalf, seed, cutHill) => {
+          let s = seed;
+          const rnd = () => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+          const cv = document.createElement("canvas");
+          cv.width = w; cv.height = h;
+          const g = cv.getContext("2d");
+          g.fillStyle = "#000000";
+          const inGap = (u, half) => gapHalf > 0 && Math.abs(u - gapCentre) < gapHalf + half;
+
+          // Low rolling hill along the base. hillBase is kept high enough
+          // (and its variation gentle enough) that the solid fill never dips
+          // to the strip's bottom edge - otherwise sky shows through under
+          // the trees at the corners where two strips meet at 90 degrees.
+          g.beginPath();
+          g.moveTo(0, h);
+          const hillBase = h * 0.60;
+          for (let x = 0; x <= w; x += w / 24) {
+            const u = x / w;
+            const y = hillBase + Math.sin(u * 7 + seed) * h * 0.05 + Math.sin(u * 19) * h * 0.025;
+            g.lineTo(x, y);
+          }
+          g.lineTo(w, h); g.closePath(); g.fill();
+
+          // A bare tree: trunk plus a few forking branch strokes. Drawn as
+          // strokes so it stays a thin, twiggy silhouette.
+          const tree = (cx, groundY, scale) => {
+            g.strokeStyle = "#000000";
+            g.lineCap = "round";
+            const branch = (x, y, ang, len, wdt, depth) => {
+              if (depth <= 0 || len < 2) return;
+              const x2 = x + Math.cos(ang) * len;
+              const y2 = y + Math.sin(ang) * len;
+              g.lineWidth = wdt;
+              g.beginPath(); g.moveTo(x, y); g.lineTo(x2, y2); g.stroke();
+              const n = 2 + Math.floor(rnd() * 2);
+              for (let i = 0; i < n; i++) {
+                branch(x2, y2, ang - 0.5 + rnd() * 1.0, len * (0.62 + rnd() * 0.18),
+                       Math.max(1, wdt * 0.68), depth - 1);
+              }
+            };
+            branch(cx, groundY, -Math.PI / 2 + (rnd() - 0.5) * 0.2,
+                   groundY * 0.30 * scale, 5 * scale, 5);
+          };
+
+          // Scatter trees across the strip, skipping the moon gap and giving
+          // the ends a couple of taller ones so the corners are not bald.
+          const count = Math.round(w / 130);
+          for (let i = 0; i < count; i++) {
+            const u = (i + 0.5) / count + (rnd() - 0.5) * 0.03;
+            if (inGap(u, 0.03)) continue;
+            const scale = 0.68 + rnd() * 0.55;
+            tree(u * w, hillBase + h * 0.04, scale);
+          }
+          // A distant spire, off to one side, only if it misses the gap.
+          if (!inGap(0.22, 0.04)) {
+            const sx = w * 0.22, sy = hillBase - h * 0.16;
+            g.fillRect(sx - 3, sy, 6, h - sy);
+            g.beginPath(); g.moveTo(sx - 5, sy); g.lineTo(sx, sy - h * 0.10);
+            g.lineTo(sx + 5, sy); g.closePath(); g.fill();
+          }
+          // Clear the gap down through everything (hill included) when asked.
+          // Done last so no tree branch overhangs into it. The portal uses
+          // this; the moon gap does not (cutHill false) so distant ground
+          // still reads beneath the moon.
+          if (cutHill && gapHalf > 0) {
+            const gx0 = (gapCentre - gapHalf) * w;
+            const gx1 = (gapCentre + gapHalf) * w;
+            g.clearRect(gx0, 0, gx1 - gx0, h);
+          }
+          const t = new THREE.CanvasTexture(cv);
+          t.colorSpace = THREE.SRGBColorSpace;
+          return t;
+        };
+
+        // Strip height in world units. Low: about a third of the sky height.
+        const bandH = 11;
+        const bandY = bandH / 2 - 0.5;   // base sits just under the ground line
+
+        // The moon is at (GY_FAR_X-1.5, .., GY_Z_CENTRE-13). On the far strip
+        // that maps to u = (z + FAR_HW) / (2*FAR_HW).
+        const moonU = (-13 + GY_FAR_HW) / (2 * GY_FAR_HW);
+
+        const addBand = (cx, cz, wUnits, rotY, gapCentre, gapHalf, seed, cutHill) => {
+          const px = Math.min(2048, Math.round(wUnits * 22));
+          const tex = makeSkylineTex(px, Math.round(px * bandH / wUnits), gapCentre, gapHalf, seed, cutHill);
+          const mesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(wUnits, bandH),
+            new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false })
+          );
+          mesh.position.set(cx, bandY, cz);
+          mesh.rotation.y = rotY;
+          scene.add(mesh);
+        };
+
+        // Sit the strips a little inside the sky box so they never poke past
+        // it. Each strip is extended past the corners by `over` on both ends
+        // and the three strips overlap there, so the L-shaped notch that used
+        // to open at each back corner is covered from both directions. The
+        // far strip is placed slightly further out than the side strips so at
+        // the overlap the far one sits behind, and its hill fills whatever the
+        // side strip's ragged end leaves.
+        const inset = 1.5;
+        const over = 6;   // corner overlap each way
+        // Far strip (faces -X back toward the viewer), with the moon gap.
+        // Widened by 2*over so it runs past both back corners.
+        addBand(GY_FAR_X - inset, GY_Z_CENTRE, GY_FAR_HW * 2 + over * 2, Math.PI / 2, moonU, 0.05, 1234);
+        // Side strips (face +/-Z), no gap. Run from the gym wall out to just
+        // shy of the sky wall (not past it), overlapping the far strip at the
+        // back corner. The far strip is widened instead to guarantee the
+        // corner is covered from both directions.
+        const sideLenB = (GY_FAR_X - inset) - GY_X;
+        const sideCX = GY_X + sideLenB / 2;
+        addBand(sideCX, -GY_FAR_HW + inset, sideLenB, 0, 0.5, 0, 5678);
+        addBand(sideCX,  GY_FAR_HW - inset, sideLenB, 0, 0.5, 0, 9012);
+
+        // Corner fillers. Two thin strips meeting at a 90-degree seam still
+        // let a sliver of void through at oblique angles: both are flat and
+        // depthWrite:false, so where their transparent regions overlap the
+        // draw order can reveal the gap behind before the other strip's solid
+        // part covers it. A short opaque panel sitting DIAGONALLY across each
+        // back corner, filled solid up to the hill line, guarantees there is
+        // always opaque geometry behind the seam no matter the viewing angle.
+        {
+          const hillTop = bandY - bandH / 2 + bandH * 0.40;   // matches the 0.60 hill base
+          const fillH = hillTop - (bandY - bandH / 2);
+          const fillMat = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide });
+          for (const sz of [-1, 1]) {
+            const cx = GY_FAR_X - inset, cz = sz * (GY_FAR_HW - inset);
+            const filler = new THREE.Mesh(new THREE.PlaneGeometry(over * 3, fillH), fillMat);
+            // Span the corner diagonally (45 degrees in the XZ plane).
+            filler.rotation.x = -0;              // vertical
+            filler.rotation.y = sz * Math.PI / 4;
+            filler.position.set(cx - 1.5, (bandY - bandH / 2) + fillH / 2, cz + sz * 1.5);
+            scene.add(filler);
+          }
+        }
+
+        // A few real bare trees just outside the perimeter wall, close enough
+        // to catch parallax as you move. These give the yard a foreground
+        // edge the flat strips cannot. Sparse and gappy, so they frame the
+        // view rather than enclose it.
+        const treeMat = new THREE.MeshBasicMaterial({ color: 0x0a0a0c });
+        const makeTree = (x, z, scale) => {
+          const grp = new THREE.Group();
+          const limb = (x0, y0, z0, ang, tilt, len, rad, depth) => {
+            if (depth <= 0 || len < 0.15) return;
+            const x1 = x0 + Math.cos(ang) * Math.cos(tilt) * len;
+            const y1 = y0 + Math.sin(tilt) * len;
+            const z1 = z0 + Math.sin(ang) * Math.cos(tilt) * len;
+            const geo = new THREE.CylinderGeometry(rad * 0.7, rad, len, 5);
+            const seg = new THREE.Mesh(geo, treeMat);
+            seg.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+            seg.quaternion.setFromUnitVectors(
+              new THREE.Vector3(0, 1, 0),
+              new THREE.Vector3(x1 - x0, y1 - y0, z1 - z0).normalize()
+            );
+            grp.add(seg);
+            const n = 2 + Math.floor(Math.random() * 2);
+            for (let i = 0; i < n; i++) {
+              limb(x1, y1, z1,
+                   ang + (Math.random() - 0.5) * 1.6,
+                   tilt - 0.15 - Math.random() * 0.5,
+                   len * (0.62 + Math.random() * 0.16),
+                   rad * 0.68, depth - 1);
+            }
+          };
+          limb(0, 0, 0, Math.random() * 6.28, Math.PI / 2 - 0.1,
+               1.6 * scale, 0.16 * scale, 5);
+          grp.position.set(x, 0, z);
+          scene.add(grp);
+        };
+        // Placed outside the walls (x > perimeter, or |z| > half width), never
+        // in the walkable plot, and clear of the portal sightline.
+        makeTree(GY_PLOT_X1 + 3.5, -6.5, 1.1);
+        makeTree(GY_PLOT_X1 + 5.0,  7.0, 0.9);
+        makeTree(GY_PLOT_X1 + 9.0, -1.5, 1.25);
+        makeTree(14, GY_FAR_HW * 0 + 12.5, 1.0);
+        makeTree(20, -12.5, 0.85);
+
+        // Seam haze: a few wide, low, faint cards along the horizon to blur
+        // the hard ground-to-sky cut and tie the silhouette into the fog.
+        const hazeCv = document.createElement("canvas");
+        hazeCv.width = 256; hazeCv.height = 64;
+        const hg = hazeCv.getContext("2d");
+        const hGrad = hg.createLinearGradient(0, 64, 0, 0);
+        hGrad.addColorStop(0, "rgba(150,160,175,0.30)");
+        hGrad.addColorStop(1, "rgba(150,160,175,0)");
+        hg.fillStyle = hGrad;
+        hg.fillRect(0, 0, 256, 64);
+        const hazeTex = new THREE.CanvasTexture(hazeCv);
+        hazeTex.colorSpace = THREE.SRGBColorSpace;
+        const addHaze = (cx, cz, wUnits, rotY) => {
+          const m = new THREE.Mesh(
+            new THREE.PlaneGeometry(wUnits, 3.5),
+            new THREE.MeshBasicMaterial({ map: hazeTex, transparent: true, side: THREE.DoubleSide, depthWrite: false, opacity: 0.6 })
+          );
+          m.position.set(cx, 1.4, cz);
+          m.rotation.y = rotY;
+          scene.add(m);
+        };
+        addHaze(GY_FAR_X - inset - 1, GY_Z_CENTRE, GY_FAR_HW * 2, Math.PI / 2);
+        addHaze((GY_X + GY_FAR_X) / 2, -GY_FAR_HW + inset + 1, GY_FAR_X - GY_X, 0);
+        addHaze((GY_X + GY_FAR_X) / 2,  GY_FAR_HW - inset - 1, GY_FAR_X - GY_X, 0);
       }
 
       // - 3D grass blades (thin triangles scattered around) -
@@ -4169,19 +4396,21 @@ Loading…</div>
           const len = Math.hypot(dx, dz);
           const cx = (x1 + x2) / 2, cz = (z1 + z2) / 2;
           const rotY = runRotation(dx, dz);
+          const wallH = opts.height !== undefined ? opts.height : WALL_H;
 
           // Own texture clone per run so the course size stays constant
-          // regardless of how long the run is.
+          // regardless of how long the run is. Taller runs get more vertical
+          // repeats so the courses do not stretch.
           const tex = wallTexBase.clone();
           tex.needsUpdate = true;
           tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-          tex.repeat.set(len / 3, 1);
+          tex.repeat.set(len / 3, wallH / WALL_H);
 
           const seg = new THREE.Mesh(
-            new THREE.BoxGeometry(len, WALL_H, WALL_T),
+            new THREE.BoxGeometry(len, wallH, WALL_T),
             new THREE.MeshBasicMaterial({ map: tex })
           );
-          seg.position.set(cx, WALL_H / 2, cz);
+          seg.position.set(cx, wallH / 2, cz);
           seg.rotation.y = rotY;
           scene.add(seg);
 
@@ -4189,10 +4418,12 @@ Loading…</div>
             new THREE.BoxGeometry(len, CAP_H, WALL_T + CAP_OVER),
             capMat
           );
-          cap.position.set(cx, WALL_H + CAP_H / 2, cz);
+          cap.position.set(cx, wallH + CAP_H / 2, cz);
           cap.rotation.y = rotY;
           scene.add(cap);
 
+          // Piers rise proud of whatever the wall height is.
+          const pierH = wallH + (PIER_H - WALL_H);
           const piers = opts.piers !== undefined
             ? opts.piers
             : Math.max(2, Math.round(len / PIER_GAP));   // at least a mid-run pier
@@ -4201,12 +4432,12 @@ Loading…</div>
           for (let i = first; i <= last; i++) {
             const t = i / piers;
             const px = x1 + dx * t, pz = z1 + dz * t;
-            const pier = new THREE.Mesh(new THREE.BoxGeometry(PIER_S, PIER_H, PIER_S), pierMat);
-            pier.position.set(px, PIER_H / 2, pz);
+            const pier = new THREE.Mesh(new THREE.BoxGeometry(PIER_S, pierH, PIER_S), pierMat);
+            pier.position.set(px, pierH / 2, pz);
             pier.rotation.y = rotY;
             scene.add(pier);
             const pcap = new THREE.Mesh(new THREE.BoxGeometry(PIER_S + CAP_OVER, 0.12, PIER_S + CAP_OVER), capMat);
-            pcap.position.set(px, PIER_H + 0.06, pz);
+            pcap.position.set(px, pierH + 0.06, pz);
             pcap.rotation.y = rotY;
             scene.add(pcap);
           }
@@ -4244,6 +4475,64 @@ Loading…</div>
           const gcap = new THREE.Mesh(new THREE.BoxGeometry(GY_GATE_S + CAP_OVER, 0.14, GY_GATE_S + CAP_OVER), capMat);
           gcap.position.set(GY_WALL_X, GATE_H + 0.07, gz);
           scene.add(gcap);
+        }
+
+        // - Shrubs in sections 1 and 5 -
+        // The outer ground PAST the corners of the gym-side wall (|z| > 9),
+        // left and right, where the gym-side sky panel meets the grass with
+        // nothing in front of it. A row of shrubs there breaks up that flat
+        // seam. This is beyond where the wall ends - not the walled runs
+        // (those are sections 2 and 4) and not the door (section 3), which
+        // are all left untouched.
+        {
+          const shrubMat  = new THREE.MeshBasicMaterial({ color: 0x1c2c16 });
+          const shrubMatB = new THREE.MeshBasicMaterial({ color: 0x243a1c });
+          const trunkMat  = new THREE.MeshBasicMaterial({ color: 0x2a2018 });
+          const plantShrub = (x, z, scale) => {
+            const grp = new THREE.Group();
+            // Short woody trunk anchoring the shrub to the ground, so the
+            // foliage does not float. Foliage clusters just above its top.
+            const trunkH = (0.45 + Math.random() * 0.25) * scale;
+            const trunk = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.05 * scale, 0.08 * scale, trunkH, 5),
+              trunkMat
+            );
+            trunk.position.y = trunkH / 2;
+            grp.add(trunk);
+
+            const blobs = 5 + Math.floor(Math.random() * 3);
+            for (let i = 0; i < blobs; i++) {
+              const r = (0.34 + Math.random() * 0.24) * scale;
+              const blob = new THREE.Mesh(
+                new THREE.SphereGeometry(r, 6, 5),
+                Math.random() < 0.5 ? shrubMat : shrubMatB
+              );
+              // Cluster the foliage around the top of the trunk, overlapping
+              // it slightly so the join reads as one plant.
+              blob.position.set(
+                (Math.random() - 0.5) * 0.7 * scale,
+                trunkH + r * 0.4 + Math.random() * 0.25 * scale,
+                (Math.random() - 0.5) * 0.7 * scale
+              );
+              blob.scale.y = 0.85;
+              grp.add(blob);
+            }
+            grp.position.set(x, 0, z);
+            scene.add(grp);
+          };
+
+          const shrubX = 11.5;   // near the gym-side wall line, out past the corner
+          // Section 5 (left, past the -z corner) and section 1 (right, past
+          // the +z corner). These sit in the outer ground BEYOND the corners
+          // (|z| > 9), where the gym-side sky panel meets grass with nothing
+          // in front. A row along the gym side on each side breaks that up.
+          for (const dir of [-1, 1]) {
+            let d = 11.0;   // start well past the corner so nearest shrubs clear the wall
+            while (d < 19.5) {
+              plantShrub(shrubX + (Math.random() - 0.5) * 2.5, dir * d, 1.1 + Math.random() * 0.5);
+              d += 1.1 + Math.random() * 0.7;
+            }
+          }
         }
       }
     } // end graveyard block
