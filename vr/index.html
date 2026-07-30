@@ -3644,15 +3644,18 @@ Loading…</div>
         const skyCv = document.createElement("canvas");
         skyCv.width = 512; skyCv.height = 512;
         const g = skyCv.getContext("2d");
-        // Night sky gradient. The glow peak sits at ~0.72 (about 10m up,
-        // just under the skyline strip's top) so the silhouette trees read
-        // backlit, then the sky falls toward near-black at the base - real
-        // night horizons darken low, and a dark base hides the seam where
-        // the flat panel meets ground or architecture.
+        // Night sky gradient. Brightens gently toward a soft shoulder above
+        // the skyline strip, then eases to near-black at the base. The
+        // shoulder is deliberately subtle and spread across several stops:
+        // an earlier version peaked at #1a1a2e with darker sky on both
+        // sides, and that local maximum rendered as a visible horizontal
+        // ribbon across the sky (gradient stops also Mach-band, which
+        // sharpened it further).
         const skyGrad = g.createLinearGradient(0, 0, 0, 512);
         skyGrad.addColorStop(0, "#0a0a1a");
-        skyGrad.addColorStop(0.6, "#0d0d2b");
-        skyGrad.addColorStop(0.72, "#1a1a2e");
+        skyGrad.addColorStop(0.55, "#0d0d2b");
+        skyGrad.addColorStop(0.75, "#10102a");
+        skyGrad.addColorStop(0.9, "#0d0d20");
         skyGrad.addColorStop(1, "#0b0b16");
         g.fillStyle = skyGrad;
         g.fillRect(0, 0, 512, 512);
@@ -3743,8 +3746,9 @@ Loading…</div>
           // sky, not surface.
           const gGrad = gg.createLinearGradient(0, 0, 0, GH);
           gGrad.addColorStop(0, "#0a0a1a");
-          gGrad.addColorStop(0.6, "#0d0d2b");
-          gGrad.addColorStop(0.72, "#1a1a2e");
+          gGrad.addColorStop(0.55, "#0d0d2b");
+          gGrad.addColorStop(0.75, "#10102a");
+          gGrad.addColorStop(0.9, "#0d0d20");
           gGrad.addColorStop(1, "#0b0b16");
           gg.fillStyle = gGrad;
           gg.fillRect(0, 0, GW, GH);

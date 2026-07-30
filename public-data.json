@@ -430,10 +430,6 @@
       {
         "date": "2026-07-24",
         "colorway": "Black Tongue"
-      },
-      {
-        "date": "2026-07-30",
-        "colorway": "Grape"
       }
     ],
     "6": [
@@ -2281,11 +2277,11 @@
         "wears": 4
       },
       {
-        "shoeId": 5,
-        "shoeName": "Air Jordan 5",
-        "shortName": "AJ5",
-        "colorway": "Grape",
-        "wears": 3
+        "shoeId": 15,
+        "shoeName": "Air Tech Challenge 2",
+        "shortName": "ATC2",
+        "colorway": "Pixel Court",
+        "wears": 2
       }
     ],
     "iceRanked": [
@@ -2484,14 +2480,6 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "5_Grape",
-    "shoeId": 5,
-    "shoeName": "Air Jordan 5",
-    "shortName": "AJ5",
-    "colorway": "Grape",
-    "date": "2026-07-30"
-  },
-  "precomputedPreviousWorn": {
     "key": "5_Black Tongue",
     "shoeId": 5,
     "shoeName": "Air Jordan 5",
@@ -2499,21 +2487,22 @@
     "colorway": "Black Tongue",
     "date": "2026-07-24"
   },
-  "precomputedUpNext": {
-    "key": "3_White Cement Reimagined",
-    "shoeId": 3,
-    "shoeName": "Air Jordan 3",
-    "shortName": "AJ3",
-    "colorway": "White Cement Reimagined",
-    "date": "2025-10-17"
+  "precomputedPreviousWorn": {
+    "key": "4_Military Blue",
+    "shoeId": 4,
+    "shoeName": "Air Jordan 4",
+    "shortName": "AJ4",
+    "colorway": "Military Blue",
+    "date": "2026-07-16"
   },
-  "precomputedOnFeetToday": {
+  "precomputedUpNext": {
     "key": "5_Grape",
     "shoeId": 5,
     "shoeName": "Air Jordan 5",
     "shortName": "AJ5",
     "colorway": "Grape",
-    "date": "2026-07-30"
+    "date": "2025-10-10"
   },
-  "builtAt": "2026-07-30T08:44:16.978371Z"
+  "precomputedOnFeetToday": null,
+  "builtAt": "2026-07-30T23:27:27.760081Z"
 }
