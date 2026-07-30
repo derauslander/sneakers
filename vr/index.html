@@ -1300,6 +1300,7 @@ Loading…</div>
         const shoePlanes = [];
         const shoeNameLabels = [];
         const statLabels = [];
+        const podiumTexCache = new Map();   // path → { texture, aspect }
 
         PODIUM_SLOTS.forEach(({ x, h }) => {
           // Shoe name + colorway label above the image (two lines)
@@ -1400,22 +1401,40 @@ Loading…</div>
             const entry = entries[place];
             if (!entry) return;
 
-            // Load shoe image
+            // Load shoe image. Textures are cached per path - the podium
+            // cycles every 12s forever, and a bare loader.load here was
+            // creating a fresh GPU texture on every cycle without disposing
+            // the old one (unbounded growth over a long session). The
+            // collection is a finite set, so caching bounds memory and makes
+            // revisits instant. wantPath guards a slow first load from
+            // applying after the category has already advanced.
             const key = `${entry.shoeId}_${entry.colorway}`;
             const imgPath = images[key];
             if (imgPath) {
-              loader.load("../" + imgPath, (texture) => {
-                texture.colorSpace = THREE.SRGBColorSpace;
+              const path = "../" + imgPath;
+              shoePlanes[slotIdx].userData.wantPath = path;
+              const applyPodiumTexture = (texture, aspect) => {
+                if (shoePlanes[slotIdx].userData.wantPath !== path) return; // stale
                 shoePlanes[slotIdx].material.map = texture;
                 shoePlanes[slotIdx].material.color.set(0xffffff);
                 shoePlanes[slotIdx].material.needsUpdate = true;
-                const aspect = texture.image.width / texture.image.height;
                 if (aspect > 1) {
                   shoePlanes[slotIdx].scale.set(1, 1 / aspect, 1);
                 } else {
                   shoePlanes[slotIdx].scale.set(aspect, 1, 1);
                 }
-              });
+              };
+              const cached = podiumTexCache.get(path);
+              if (cached) {
+                applyPodiumTexture(cached.texture, cached.aspect);
+              } else {
+                loader.load(path, (texture) => {
+                  texture.colorSpace = THREE.SRGBColorSpace;
+                  const aspect = texture.image.width / texture.image.height;
+                  podiumTexCache.set(path, { texture, aspect });
+                  applyPodiumTexture(texture, aspect);
+                });
+              }
             }
 
             // Shoe name + colorway above the image (two lines)
@@ -2565,13 +2584,31 @@ Loading…</div>
         fadeSphere.renderOrder = 998;
         camera.add(fadeSphere);
 
+        // World-space anchor for the animation. Everything except the fade
+        // sphere parents to this instead of the camera: at trigger time it
+        // snapshots the head's position and yaw, so the sequence plays out
+        // in front of wherever you were facing but stays fixed in the world
+        // - you can look (and walk) around inside it. Head-locked visuals
+        // for a 37s sequence are the classic VR comfort violation; the fade
+        // sphere alone stays on the camera because it must surround the head.
+        const ofdAnchor = new THREE.Group();
+        scene.add(ofdAnchor);
+        const _anchorDir = new THREE.Vector3();
+        const placeOfdAnchor = () => {
+          camera.getWorldPosition(ofdAnchor.position);
+          camera.getWorldDirection(_anchorDir);
+          // Yaw only - keep the anchor upright even if the head is tilted.
+          ofdAnchor.rotation.set(0, Math.atan2(-_anchorDir.x, -_anchorDir.z), 0);
+        };
+
         // Hide/show all room content (everything except the player group,
-        // which carries the camera and all OFD animation elements).
+        // which carries the camera, and the OFD anchor, which carries the
+        // animation elements).
         let _hiddenRoom = [];
         const hideRoom = () => {
           _hiddenRoom = [];
           for (const obj of scene.children) {
-            if (obj === player) continue;
+            if (obj === player || obj === ofdAnchor) continue;
             if (obj.visible) { _hiddenRoom.push(obj); obj.visible = false; }
           }
         };
@@ -2580,7 +2617,8 @@ Loading…</div>
           _hiddenRoom = [];
         };
 
-        // Starfield particles (camera-local so they always stream from ahead)
+        // Starfield particles (anchor-local so they stream from wherever
+        // you were facing at trigger time, but stay fixed in the world)
         const STAR_COUNT = 400, WARP_SPEED = 22;
         const starGeo = new THREE.BufferGeometry();
         const starPos = new Float32Array(STAR_COUNT * 3);
@@ -2599,7 +2637,7 @@ Loading…</div>
         }));
         starField.visible = false;
         starField.renderOrder = 999;
-        camera.add(starField);
+        ofdAnchor.add(starField);
 
         const warpStars = (dt) => {
           const pos = starGeo.attributes.position.array;
@@ -2713,7 +2751,7 @@ Loading…</div>
         const introGroup = new THREE.Group();
         introGroup.visible = false;
         introGroup.renderOrder = 1001;
-        camera.add(introGroup);
+        ofdAnchor.add(introGroup);
 
         const introLabel = makeStencilLabel("ON FEET TODAY", 130, "#ffffff", 18);
         introLabel.renderOrder = 1002;
@@ -2733,7 +2771,7 @@ Loading…</div>
         // Flythrough planes (one per image, camera-local)
         const flyGroup = new THREE.Group();
         flyGroup.visible = false;
-        camera.add(flyGroup);
+        ofdAnchor.add(flyGroup);
 
         const FLY_W = 1.2, FLY_H = 1.0;
         const flyPlanes = [];
@@ -2753,7 +2791,7 @@ Loading…</div>
         const cardGroup = new THREE.Group();
         cardGroup.visible = false;
         cardGroup.position.set(0, 0, -3.5);
-        camera.add(cardGroup);
+        ofdAnchor.add(cardGroup);
 
         const cardTitle = makeStencilLabel("ON FEET TODAY", 100, "#e63946", 14);
         cardTitle.position.set(0, 1.1, 0);
@@ -2849,6 +2887,7 @@ Loading…</div>
 
         // ── Trigger ─────────────────────────────────────────────────────
         ofd.trigger = (now) => {
+          placeOfdAnchor();       // sequence plays out in front of where you're facing now
           ofd.phase = "fadeout";
           ofd.t0 = now;
           ofdDisplay.visible = false;
@@ -3605,11 +3644,16 @@ Loading…</div>
         const skyCv = document.createElement("canvas");
         skyCv.width = 512; skyCv.height = 512;
         const g = skyCv.getContext("2d");
-        // Night sky gradient
+        // Night sky gradient. The glow peak sits at ~0.72 (about 10m up,
+        // just under the skyline strip's top) so the silhouette trees read
+        // backlit, then the sky falls toward near-black at the base - real
+        // night horizons darken low, and a dark base hides the seam where
+        // the flat panel meets ground or architecture.
         const skyGrad = g.createLinearGradient(0, 0, 0, 512);
         skyGrad.addColorStop(0, "#0a0a1a");
         skyGrad.addColorStop(0.6, "#0d0d2b");
-        skyGrad.addColorStop(1, "#1a1a2e");
+        skyGrad.addColorStop(0.72, "#1a1a2e");
+        skyGrad.addColorStop(1, "#0b0b16");
         g.fillStyle = skyGrad;
         g.fillRect(0, 0, 512, 512);
         // Stars. Count is up from 200 because the panels are now roughly
@@ -3690,11 +3734,18 @@ Loading…</div>
           const gcv = document.createElement("canvas");
           gcv.width = GW; gcv.height = GH;
           const gg = gcv.getContext("2d");
-          // Same gradient as the side/back walls, top-to-bottom
+          // Same gradient as the side/back walls, top-to-bottom. The darkened
+          // base used to be avoided here ("a starless dark band reads as a
+          // dark wall") - but that was when nothing stood in front of this
+          // panel. With the stone wing walls now running along its base, a
+          // darker low sky over a wall is exactly what a night horizon looks
+          // like; stars still cover it (drawn to 92% below), so it reads as
+          // sky, not surface.
           const gGrad = gg.createLinearGradient(0, 0, 0, GH);
           gGrad.addColorStop(0, "#0a0a1a");
           gGrad.addColorStop(0.6, "#0d0d2b");
-          gGrad.addColorStop(1, "#1a1a2e");
+          gGrad.addColorStop(0.72, "#1a1a2e");
+          gGrad.addColorStop(1, "#0b0b16");
           gg.fillStyle = gGrad;
           gg.fillRect(0, 0, GW, GH);
           // Stars. Drawn down to 92% of the panel (nearly to the base) rather
@@ -3900,7 +3951,7 @@ Loading…</div>
         // the gap clears only trees (false, e.g. the moon gap - hill can stay)
         // or cuts all the way to the ground (true, e.g. the portal - the way
         // through must be open floor to sky).
-        const makeSkylineTex = (w, h, gapCentre, gapHalf, seed, cutHill) => {
+        const makeSkylineTex = (w, h, gapCentre, gapHalf, seed, cutHill, treeCount) => {
           let s = seed;
           const rnd = () => (s = (s * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
           const cv = document.createElement("canvas");
@@ -3946,7 +3997,7 @@ Loading…</div>
 
           // Scatter trees across the strip, skipping the moon gap and giving
           // the ends a couple of taller ones so the corners are not bald.
-          const count = Math.round(w / 130);
+          const count = treeCount || Math.round(w / 130);
           for (let i = 0; i < count; i++) {
             const u = (i + 0.5) / count + (rnd() - 0.5) * 0.03;
             if (inGap(u, 0.03)) continue;
@@ -3978,63 +4029,37 @@ Loading…</div>
         const bandH = 11;
         const bandY = bandH / 2 - 0.5;   // base sits just under the ground line
 
-        // The moon is at (GY_FAR_X-1.5, .., GY_Z_CENTRE-13). On the far strip
-        // that maps to u = (z + FAR_HW) / (2*FAR_HW).
-        const moonU = (-13 + GY_FAR_HW) / (2 * GY_FAR_HW);
+        // ── One continuous skyline cylinder ─────────────────────────────
+        // The silhouette used to be three flat bands (far + two sides) that
+        // met at the back corners. Each band had its own random texture, so
+        // the hill heights never agreed at a corner, and the two planes
+        // could open a sliver of void at oblique angles - a visible seam no
+        // amount of overlap/filler fully hid. Instead: a single open-ended
+        // half-cylinder centred on the doorway, wrapping from one end of
+        // the gym wall around the far side to the other end. One continuous
+        // texture, so there are no corners and no seams anywhere; both ends
+        // of the arc land exactly on the gym wall plane (x = GY_X), so even
+        // the texture's edges are hidden. Slightly curved silhouette at
+        // 30m+ in the dark reads as horizon, not cylinder.
+        const SKYLINE_R = GY_FAR_HW - 1.5;          // 33.5 - inside the side sky planes
+        const skylineArc = Math.PI * SKYLINE_R;      // ~105 world units around
 
-        const addBand = (cx, cz, wUnits, rotY, gapCentre, gapHalf, seed, cutHill) => {
-          const px = Math.min(2048, Math.round(wUnits * 22));
-          const tex = makeSkylineTex(px, Math.round(px * bandH / wUnits), gapCentre, gapHalf, seed, cutHill);
-          const mesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(wUnits, bandH),
-            new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false })
-          );
-          mesh.position.set(cx, bandY, cz);
-          mesh.rotation.y = rotY;
-          scene.add(mesh);
-        };
+        // The moon sits at (GY_FAR_X-1.5, 21, GY_Z_CENTRE-13) - see the moon
+        // block above; keep these expressions in sync. Map its bearing from
+        // the cylinder centre to texture-u (CylinderGeometry maps u linearly
+        // over theta, theta measured from +Z toward +X).
+        const moonU = Math.atan2((GY_FAR_X - 1.5) - GY_X, (GY_Z_CENTRE - 13) - GY_Z_CENTRE) / Math.PI;
 
-        // Sit the strips a little inside the sky box so they never poke past
-        // it. Each strip is extended past the corners by `over` on both ends
-        // and the three strips overlap there, so the L-shaped notch that used
-        // to open at each back corner is covered from both directions. The
-        // far strip is placed slightly further out than the side strips so at
-        // the overlap the far one sits behind, and its hill fills whatever the
-        // side strip's ragged end leaves.
-        const inset = 1.5;
-        const over = 6;   // corner overlap each way
-        // Far strip (faces -X back toward the viewer), with the moon gap.
-        // Widened by 2*over so it runs past both back corners.
-        addBand(GY_FAR_X - inset, GY_Z_CENTRE, GY_FAR_HW * 2 + over * 2, Math.PI / 2, moonU, 0.05, 1234);
-        // Side strips (face +/-Z), no gap. Run from the gym wall out to just
-        // shy of the sky wall (not past it), overlapping the far strip at the
-        // back corner. The far strip is widened instead to guarantee the
-        // corner is covered from both directions.
-        const sideLenB = (GY_FAR_X - inset) - GY_X;
-        const sideCX = GY_X + sideLenB / 2;
-        addBand(sideCX, -GY_FAR_HW + inset, sideLenB, 0, 0.5, 0, 5678);
-        addBand(sideCX,  GY_FAR_HW - inset, sideLenB, 0, 0.5, 0, 9012);
-
-        // Corner fillers. Two thin strips meeting at a 90-degree seam still
-        // let a sliver of void through at oblique angles: both are flat and
-        // depthWrite:false, so where their transparent regions overlap the
-        // draw order can reveal the gap behind before the other strip's solid
-        // part covers it. A short opaque panel sitting DIAGONALLY across each
-        // back corner, filled solid up to the hill line, guarantees there is
-        // always opaque geometry behind the seam no matter the viewing angle.
         {
-          const hillTop = bandY - bandH / 2 + bandH * 0.40;   // matches the 0.60 hill base
-          const fillH = hillTop - (bandY - bandH / 2);
-          const fillMat = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide });
-          for (const sz of [-1, 1]) {
-            const cx = GY_FAR_X - inset, cz = sz * (GY_FAR_HW - inset);
-            const filler = new THREE.Mesh(new THREE.PlaneGeometry(over * 3, fillH), fillMat);
-            // Span the corner diagonally (45 degrees in the XZ plane).
-            filler.rotation.x = -0;              // vertical
-            filler.rotation.y = sz * Math.PI / 4;
-            filler.position.set(cx - 1.5, (bandY - bandH / 2) + fillH / 2, cz + sz * 1.5);
-            scene.add(filler);
-          }
+          const px = 2048;
+          const tex = makeSkylineTex(px, Math.round(px * bandH / skylineArc), moonU, 0.04, 1234,
+                                     false, Math.round(skylineArc / 6));
+          const cyl = new THREE.Mesh(
+            new THREE.CylinderGeometry(SKYLINE_R, SKYLINE_R, bandH, 96, 1, true, 0, Math.PI),
+            new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.5, side: THREE.BackSide, depthWrite: false })
+          );
+          cyl.position.set(GY_X, bandY, GY_Z_CENTRE);
+          scene.add(cyl);
         }
 
         // A few real bare trees just outside the perimeter wall, close enough
@@ -4079,8 +4104,13 @@ Loading…</div>
         makeTree(14, GY_FAR_HW * 0 + 12.5, 1.0);
         makeTree(20, -12.5, 0.85);
 
-        // Seam haze: a few wide, low, faint cards along the horizon to blur
-        // the hard ground-to-sky cut and tie the silhouette into the fog.
+        // Seam haze: blurs the hard ground-to-sky cut and ties the silhouette
+        // into the fog. Follows the skyline as a slightly smaller half-
+        // cylinder just inside it (flat cards along the old rectangle would
+        // now sit behind the silhouette and vanish). Centre is nudged +X so
+        // the transparent sort - which uses object centres, and the viewer
+        // is always at x > GY_X - draws the haze after (in front of) the
+        // skyline, which shares its centre otherwise.
         const hazeCv = document.createElement("canvas");
         hazeCv.width = 256; hazeCv.height = 64;
         const hg = hazeCv.getContext("2d");
@@ -4091,18 +4121,14 @@ Loading…</div>
         hg.fillRect(0, 0, 256, 64);
         const hazeTex = new THREE.CanvasTexture(hazeCv);
         hazeTex.colorSpace = THREE.SRGBColorSpace;
-        const addHaze = (cx, cz, wUnits, rotY) => {
-          const m = new THREE.Mesh(
-            new THREE.PlaneGeometry(wUnits, 3.5),
-            new THREE.MeshBasicMaterial({ map: hazeTex, transparent: true, side: THREE.DoubleSide, depthWrite: false, opacity: 0.6 })
+        {
+          const hazeCyl = new THREE.Mesh(
+            new THREE.CylinderGeometry(SKYLINE_R - 0.8, SKYLINE_R - 0.8, 3.5, 96, 1, true, 0, Math.PI),
+            new THREE.MeshBasicMaterial({ map: hazeTex, transparent: true, side: THREE.BackSide, depthWrite: false, opacity: 0.6 })
           );
-          m.position.set(cx, 1.4, cz);
-          m.rotation.y = rotY;
-          scene.add(m);
-        };
-        addHaze(GY_FAR_X - inset - 1, GY_Z_CENTRE, GY_FAR_HW * 2, Math.PI / 2);
-        addHaze((GY_X + GY_FAR_X) / 2, -GY_FAR_HW + inset + 1, GY_FAR_X - GY_X, 0);
-        addHaze((GY_X + GY_FAR_X) / 2,  GY_FAR_HW - inset - 1, GY_FAR_X - GY_X, 0);
+          hazeCyl.position.set(GY_X + 0.5, 1.4, GY_Z_CENTRE);
+          scene.add(hazeCyl);
+        }
       }
 
       // - 3D grass blades (thin triangles scattered around) -
@@ -4477,6 +4503,29 @@ Loading…</div>
           scene.add(gcap);
         }
 
+        // - Wing walls -
+        // The gym-side sky panel used to meet the grass bare past the plot
+        // corners (|z| > 9) - a flat sky texture standing right next to real
+        // architecture, the harshest possible comparison. These wings extend
+        // the gym-side perimeter from the plot corners outward until the
+        // wall runs into the skyline cylinder's opaque hill and simply
+        // disappears into it - so the wall never visibly ends, it recedes
+        // into the dark. Real geometry with parallax, in the exact same
+        // stone vocabulary as the rest of the perimeter, so it reads as the
+        // graveyard wall continuing around the grounds. skipFirst: the plot
+        // corner pier already exists (owned by the side runs). skipLast: no
+        // terminating pier - a formal endpoint would read as "the wall stops
+        // here" and fight the illusion.
+        // (An old comment above warns against runs along the gym face; that
+        // predates pinning the sky panel at GY_SKY_X=9.08. At the perimeter
+        // line the caps and piers clear it by over a metre.)
+        {
+          // End just inside where the skyline cylinder crosses this X.
+          const wingEnd = Math.sqrt((GY_FAR_HW - 1.5) ** 2 - (GY_WALL_X - GY_X) ** 2) - 0.3;
+          buildWall(GY_WALL_X, wzMin, GY_WALL_X, -wingEnd, { skipFirst: true, skipLast: true });
+          buildWall(GY_WALL_X, wzMax, GY_WALL_X,  wingEnd, { skipFirst: true, skipLast: true });
+        }
+
         // - Shrubs in sections 1 and 5 -
         // The outer ground PAST the corners of the gym-side wall (|z| > 9),
         // left and right, where the gym-side sky panel meets the grass with
@@ -4521,16 +4570,19 @@ Loading…</div>
             scene.add(grp);
           };
 
-          const shrubX = 11.5;   // near the gym-side wall line, out past the corner
-          // Section 5 (left, past the -z corner) and section 1 (right, past
-          // the +z corner). These sit in the outer ground BEYOND the corners
-          // (|z| > 9), where the gym-side sky panel meets grass with nothing
-          // in front. A row along the gym side on each side breaks that up.
+          // Overgrowth along the wing walls. These used to be a dense row
+          // (|z| 11-19.5, ~1.4m apart) hiding the bare sky-panel seam; the
+          // wing walls do that job now, so the shrubs' role has changed to
+          // ageing the wall. Spread along its full run with big irregular
+          // gaps - occasional volunteers seeding against a neglected wall,
+          // not a planted hedge. They hug the wall's yard face (front face
+          // at x = 10.41) so each reads as growing against the stone.
+          const wingEndZ = Math.sqrt((GY_FAR_HW - 1.5) ** 2 - (GY_WALL_X - GY_X) ** 2) - 1.0;
           for (const dir of [-1, 1]) {
-            let d = 11.0;   // start well past the corner so nearest shrubs clear the wall
-            while (d < 19.5) {
-              plantShrub(shrubX + (Math.random() - 0.5) * 2.5, dir * d, 1.1 + Math.random() * 0.5);
-              d += 1.1 + Math.random() * 0.7;
+            let d = 10.5 + Math.random() * 1.5;
+            while (d < wingEndZ) {
+              plantShrub(10.9 + Math.random() * 1.2, dir * d, 1.1 + Math.random() * 0.5);
+              d += 2.6 + Math.random() * 2.6;
             }
           }
         }
@@ -4540,6 +4592,43 @@ Loading…</div>
     // ════════════════════════════════════════════════════════════════════
     //  RENDER LOOP
     // ════════════════════════════════════════════════════════════════════
+
+    // ── Perf instrumentation ────────────────────────────────────────────
+    // Tripwires (see session notes): draw calls > ~250, textures > ~100,
+    // or failure to hold native refresh in-headset. TEST_MODE gets a live
+    // HUD; both modes log one snapshot after the first frame so headset
+    // runs leave a number in the status panel. Zero per-frame cost outside
+    // TEST_MODE beyond the one snapshot.
+    let _perfLogged = false;
+    const perfSnapshot = () => {
+      const r = renderer.info.render, m = renderer.info.memory;
+      return `${r.calls} calls / ${(r.triangles / 1000).toFixed(1)}k tris / ` +
+             `${m.textures} tex / ${m.geometries} geo`;
+    };
+    let perfTick = null;
+    if (TEST_MODE) {
+      const hud = document.createElement("div");
+      hud.style.cssText =
+        "position:fixed;top:8px;right:8px;padding:6px 10px;" +
+        "background:rgba(0,0,0,0.65);color:#8f8;font:12px/1.5 monospace;" +
+        "white-space:pre;pointer-events:none;z-index:20;border-radius:4px;";
+      document.body.appendChild(hud);
+      let frames = 0, accum = 0, worst = 0, lastHud = performance.now();
+      perfTick = (now, dt) => {
+        frames++;
+        const ms = dt * 1000;
+        accum += ms;
+        if (ms > worst) worst = ms;
+        if (now - lastHud > 500) {
+          const avg = accum / frames;
+          hud.textContent =
+            `${(1000 / avg).toFixed(0)} fps  avg ${avg.toFixed(1)}ms  worst ${worst.toFixed(1)}ms\n` +
+            perfSnapshot();
+          frames = 0; accum = 0; worst = 0; lastHud = now;
+        }
+      };
+    }
+
     let _lastFrameT = performance.now();
     renderer.setAnimationLoop((time) => {
       const now = time || performance.now();
@@ -4570,6 +4659,15 @@ Loading…</div>
         }
       }
       renderer.render(scene, camera);
+      if (perfTick) perfTick(now, dt);
+      if (!_perfLogged) {
+        _perfLogged = true;
+        log("perf: " + perfSnapshot(), "dim");  // visible before the status fade
+        // Textures stream in async - log a settled count once they've had
+        // time to land. Console-only (panel has faded by now); on Quest,
+        // read it via chrome://inspect remote debugging.
+        setTimeout(() => console.log("[VR] perf (settled): " + perfSnapshot()), 8000);
+      }
     });
 
     log(TEST_MODE
