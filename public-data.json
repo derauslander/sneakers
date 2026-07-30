@@ -1540,6 +1540,20 @@
       "lastWorn": null,
       "img": "Shoes/AJ1/Reverse Olive/Reverse Olive.png",
       "hoverImg": "Shoes/AJ1/Reverse Olive/Reverse Olive_hover.png"
+    },
+    "1773621809428_Sea Salt": {
+      "shoeName": "NB 1080 V14",
+      "colorway": "Sea Salt",
+      "shortName": "NB FF",
+      "category": "New Balance",
+      "tier": "iron",
+      "purchaseDate": "2026-03-02",
+      "retireDate": "2026-07-30",
+      "reason": "Donated",
+      "story": "These had about 100 miles left in them, but decided to start fresh after recovering from plantar fasciitis.",
+      "lastWorn": "2026-03-15",
+      "img": "Shoes/NB FF/Sea Salt/Sea Salt.png",
+      "hoverImg": "Shoes/NB FF/Sea Salt/Sea Salt_hover.png"
     }
   },
   "colorways": {
@@ -1628,7 +1642,6 @@
       "Purple"
     ],
     "NB FF": [
-      "Sea Salt",
       "Black Metallic"
     ],
     "ACF": [
@@ -2502,5 +2515,5 @@
     "colorway": "Grape",
     "date": "2026-07-30"
   },
-  "builtAt": "2026-07-30T08:17:21.806803Z"
+  "builtAt": "2026-07-30T08:44:16.978371Z"
 }
