@@ -262,6 +262,10 @@
       {
         "date": "2026-06-12",
         "colorway": "Rare Air"
+      },
+      {
+        "date": "2026-08-01",
+        "colorway": "White Cement Reimagined"
       }
     ],
     "4": [
@@ -847,7 +851,7 @@
       "size": "12.5",
       "notes": "",
       "ogYear": "",
-      "story": "",
+      "story": "This was the first pair of sneakers that I purchased off the SNKRS app.",
       "saleDate": "",
       "saleTime": "",
       "comfortRating": "",
@@ -2074,8 +2078,8 @@
         "shoeName": "Air Jordan 3",
         "shortName": "AJ3",
         "colorway": "White Cement Reimagined",
-        "count": 6,
-        "lastWorn": "2025-10-17"
+        "count": 7,
+        "lastWorn": "2026-08-01"
       },
       {
         "shoeId": 4,
@@ -2221,6 +2225,13 @@
         "wears": 5
       },
       {
+        "shoeId": 3,
+        "shoeName": "Air Jordan 3",
+        "shortName": "AJ3",
+        "colorway": "White Cement Reimagined",
+        "wears": 7
+      },
+      {
         "shoeId": 17,
         "shoeName": "Air Max 86",
         "shortName": "AM86",
@@ -2233,13 +2244,6 @@
         "shortName": "AJ2",
         "colorway": "Black Cement",
         "wears": 5
-      },
-      {
-        "shoeId": 3,
-        "shoeName": "Air Jordan 3",
-        "shortName": "AJ3",
-        "colorway": "White Cement Reimagined",
-        "wears": 6
       },
       {
         "shoeId": 1,
@@ -2480,20 +2484,20 @@
     ]
   },
   "precomputedLastWorn": {
+    "key": "3_White Cement Reimagined",
+    "shoeId": 3,
+    "shoeName": "Air Jordan 3",
+    "shortName": "AJ3",
+    "colorway": "White Cement Reimagined",
+    "date": "2026-08-01"
+  },
+  "precomputedPreviousWorn": {
     "key": "5_Black Tongue",
     "shoeId": 5,
     "shoeName": "Air Jordan 5",
     "shortName": "AJ5",
     "colorway": "Black Tongue",
     "date": "2026-07-24"
-  },
-  "precomputedPreviousWorn": {
-    "key": "4_Military Blue",
-    "shoeId": 4,
-    "shoeName": "Air Jordan 4",
-    "shortName": "AJ4",
-    "colorway": "Military Blue",
-    "date": "2026-07-16"
   },
   "precomputedUpNext": {
     "key": "5_Grape",
@@ -2503,6 +2507,13 @@
     "colorway": "Grape",
     "date": "2025-10-10"
   },
-  "precomputedOnFeetToday": null,
-  "builtAt": "2026-07-30T23:27:27.760081Z"
+  "precomputedOnFeetToday": {
+    "key": "3_White Cement Reimagined",
+    "shoeId": 3,
+    "shoeName": "Air Jordan 3",
+    "shortName": "AJ3",
+    "colorway": "White Cement Reimagined",
+    "date": "2026-08-01"
+  },
+  "builtAt": "2026-08-01T12:10:26.295328Z"
 }
