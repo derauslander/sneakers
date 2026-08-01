@@ -842,7 +842,43 @@
     "4_White Thunder_hover2": "Shoes/AJ4/White Thunder/White Thunder_hover2.png",
     "1_Reverse Olive": "Shoes/AJ1/Reverse Olive/Reverse Olive.png",
     "1_Reverse Olive_hover": "Shoes/AJ1/Reverse Olive/Reverse Olive_hover.png",
-    "1_Reverse Olive_hover2": "Shoes/AJ1/Reverse Olive/Reverse Olive_hover2.png"
+    "1_Reverse Olive_hover2": "Shoes/AJ1/Reverse Olive/Reverse Olive_hover2.png",
+    "4_Fire Red_spin_01": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_01.png",
+    "4_Fire Red_spin_02": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_02.png",
+    "4_Fire Red_spin_03": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_03.png",
+    "4_Fire Red_spin_04": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_04.png",
+    "4_Fire Red_spin_05": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_05.png",
+    "4_Fire Red_spin_06": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_06.png",
+    "4_Fire Red_spin_07": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_07.png",
+    "4_Fire Red_spin_08": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_08.png",
+    "4_Fire Red_spin_09": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_09.png",
+    "4_Fire Red_spin_10": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_10.png",
+    "4_Fire Red_spin_11": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_11.png",
+    "4_Fire Red_spin_12": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_12.png",
+    "4_Fire Red_spin_13": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_13.png",
+    "4_Fire Red_spin_14": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_14.png",
+    "4_Fire Red_spin_15": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_15.png",
+    "4_Fire Red_spin_16": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_16.png",
+    "4_Fire Red_spin_17": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_17.png",
+    "4_Fire Red_spin_18": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_18.png",
+    "4_Fire Red_spin_19": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_19.png",
+    "4_Fire Red_spin_20": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_20.png",
+    "4_Fire Red_spin_21": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_21.png",
+    "4_Fire Red_spin_22": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_22.png",
+    "4_Fire Red_spin_23": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_23.png",
+    "4_Fire Red_spin_24": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_24.png",
+    "4_Fire Red_spin_25": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_25.png",
+    "4_Fire Red_spin_26": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_26.png",
+    "4_Fire Red_spin_27": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_27.png",
+    "4_Fire Red_spin_28": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_28.png",
+    "4_Fire Red_spin_29": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_29.png",
+    "4_Fire Red_spin_30": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_30.png",
+    "4_Fire Red_spin_31": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_31.png",
+    "4_Fire Red_spin_32": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_32.png",
+    "4_Fire Red_spin_33": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_33.png",
+    "4_Fire Red_spin_34": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_34.png",
+    "4_Fire Red_spin_35": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_35.png",
+    "4_Fire Red_spin_36": "Shoes/AJ4/Fire Red/spin/Fire Red_spin_36.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -2515,5 +2551,5 @@
     "colorway": "White Cement Reimagined",
     "date": "2026-08-01"
   },
-  "builtAt": "2026-08-01T12:22:53.297663Z"
+  "builtAt": "2026-08-01T19:45:28.332304Z"
 }
