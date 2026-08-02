@@ -3073,22 +3073,22 @@ Loading…</div>
     }
 
     // ════════════════════════════════════════════════════════════════════
-    //  HALL OF FAME - diamond tier 360 spin pedestals on the left sideline
+    //  SPIN PEDESTAL - featured 360 shoe on the left sideline
     // ════════════════════════════════════════════════════════════════════
-    // Each diamond-tier shoe that has a spin image set (images with
-    // _spin_01 through _spin_NN keys) gets a pedestal along the left
-    // sideline wall (X = -9). The user walks past (or around, if pulled
-    // away from the wall) and the shoe photo updates based on the camera's
-    // angle relative to the pedestal - a pseudo-360 view from real photos.
+    // A single pedestal on the left sideline wall shows a shoe with the
+    // 36-image spin view. The shoe is chosen by priority:
+    //   1. On Feet Today (if it has a spin set)
+    //   2. Sneaker of the Day - deterministic daily pick from spin shoes
+    //   3. Random spin shoe fallback
+    // The user walks around the pedestal and the shoe texture swaps based
+    // on the camera's angle - a pseudo-360 view from real photos.
     {
-      // Discover diamond shoes with spin sets in the data
-      const hofEntries = [];
+      // ── Discover all shoes with spin sets ─────────────────────────
+      const spinShoes = [];
       for (const shoe of inventory) {
         for (const cw of (data.colorways?.[shoe.shortName] || [])) {
           const key = `${shoe.id}_${cw}`;
-          if ((tierMeta[key] || "silver") !== "diamond") continue;
           if (colorwayOwned[key] === false) continue;
-          // Count spin frames
           const spinKeys = [];
           for (let i = 1; i <= 99; i++) {
             const sk = `${key}_spin_${String(i).padStart(2, "0")}`;
@@ -3096,173 +3096,169 @@ Loading…</div>
             else break;
           }
           if (spinKeys.length === 0) continue;
-          hofEntries.push({
+          spinShoes.push({
             key, shoeName: shoe.name, shortName: shoe.shortName,
             colorway: cw, spinKeys,
-            tier: "diamond",
+            tier: tierMeta[key] || "silver",
           });
         }
       }
 
-      log(`Hall of Fame: ${hofEntries.length} diamond shoes with spin sets`, hofEntries.length > 0 ? "ok" : "dim");
+      log(`Spin pedestal: ${spinShoes.length} shoes with spin sets`, spinShoes.length > 0 ? "ok" : "dim");
 
-      if (hofEntries.length > 0) {
+      if (spinShoes.length > 0) {
+
+        // ── Pick the featured shoe ──────────────────────────────────
+        // Priority: OFT > Sneaker of the Day > random fallback
+        let featured = null;
+
+        // 1. On Feet Today
+        const oftPrecomp = data.precomputedOnFeetToday;
+        const _td = new Date();
+        const todayStr = _td.getFullYear() + "-" + String(_td.getMonth() + 1).padStart(2, "0") + "-" + String(_td.getDate()).padStart(2, "0");
+        if (oftPrecomp && oftPrecomp.date === todayStr) {
+          featured = spinShoes.find(s => s.key === oftPrecomp.key) || null;
+          if (featured) log(`Spin pedestal: On Feet Today → ${featured.shoeName} ${featured.colorway}`, "ok");
+        }
+
+        // 2. Sneaker of the Day - deterministic daily pick using date as seed
+        if (!featured) {
+          // Simple hash of the date string to get a stable daily index.
+          // Same shoe all day, different shoe tomorrow.
+          let hash = 0;
+          for (let i = 0; i < todayStr.length; i++) {
+            hash = ((hash << 5) - hash + todayStr.charCodeAt(i)) | 0;
+          }
+          const dayIdx = ((hash % spinShoes.length) + spinShoes.length) % spinShoes.length;
+          featured = spinShoes[dayIdx];
+          log(`Spin pedestal: Sneaker of the Day → ${featured.shoeName} ${featured.colorway}`, "ok");
+        }
 
         // ── Layout constants ────────────────────────────────────────
-        const HOF_WALL_X    = -9;          // left sideline wall
-        const HOF_PED_X     = -7.0;        // pulled 2m from wall so user can circle
-        const HOF_PED_Y     = 0;           // floor level
-        const HOF_COL_H     = 1.05;        // column height, matching the existing pedestal
-        const HOF_CAP_TOP   = HOF_COL_H + 0.04;
-        const HOF_SHOE_W    = 0.55;        // shoe plane fit box
-        const HOF_SHOE_H    = 0.45;
-        const HOF_SHOE_Y    = HOF_CAP_TOP + HOF_SHOE_H / 2 - 0.02;  // sit on cap, sink 2cm
+        const SP_PED_X     = -7.0;        // pulled 2m from left wall for walk-around
+        const SP_PED_Z     = 0;           // centered on the sideline
+        const SP_COL_H     = 1.05;        // column height
+        const SP_CAP_TOP   = SP_COL_H + 0.04;
+        const SP_SHOE_W    = 0.55;        // shoe plane fit box
+        const SP_SHOE_H    = 0.45;
+        const SP_SHOE_Y    = SP_CAP_TOP + SP_SHOE_H / 2 - 0.02;
 
-        // Spread pedestals evenly along the Z axis (court is -9 to +9)
-        // With 4 shoes, spacing of ~4m gives a nice gallery feel.
-        const hofSpacing = 16 / Math.max(1, hofEntries.length);
-        const hofStartZ  = -(hofEntries.length - 1) / 2 * hofSpacing;
+        // ── Pedestal geometry ───────────────────────────────────────
+        const pedGroup = new THREE.Group();
+        pedGroup.position.set(SP_PED_X, 0, SP_PED_Z);
 
-        // ── Per-frame update list ───────────────────────────────────
-        const hofPedestals = [];
+        const colGeom = new THREE.CylinderGeometry(0.16, 0.20, SP_COL_H, 32);
+        const colMat  = new THREE.MeshBasicMaterial({
+          color: 0x111111, transparent: true, opacity: 0.55,
+        });
+        const column = new THREE.Mesh(colGeom, colMat);
+        column.position.y = SP_COL_H / 2;
+        pedGroup.add(column);
 
-        hofEntries.forEach((entry, idx) => {
-          const pedZ = hofStartZ + idx * hofSpacing;
+        const colEdges = new THREE.LineSegments(
+          new THREE.EdgesGeometry(colGeom),
+          new THREE.LineBasicMaterial({ color: 0xcccccc, transparent: true, opacity: 0.6 })
+        );
+        colEdges.position.y = SP_COL_H / 2;
+        pedGroup.add(colEdges);
 
-          // ── Pedestal geometry (same vocabulary as the main pedestal) ──
-          const pedGroup = new THREE.Group();
-          pedGroup.position.set(HOF_PED_X, HOF_PED_Y, pedZ);
+        const capGeom = new THREE.CylinderGeometry(0.24, 0.24, 0.04, 32);
+        const cap = new THREE.Mesh(capGeom, colMat);
+        cap.position.y = SP_COL_H + 0.02;
+        pedGroup.add(cap);
 
-          const colGeom = new THREE.CylinderGeometry(0.16, 0.20, HOF_COL_H, 32);
-          const colMat  = new THREE.MeshBasicMaterial({
-            color: 0x111111, transparent: true, opacity: 0.55,
-          });
-          const column = new THREE.Mesh(colGeom, colMat);
-          column.position.y = HOF_COL_H / 2;
-          pedGroup.add(column);
+        scene.add(pedGroup);
 
-          const colEdges = new THREE.LineSegments(
-            new THREE.EdgesGeometry(colGeom),
-            new THREE.LineBasicMaterial({ color: 0xcccccc, transparent: true, opacity: 0.6 })
-          );
-          colEdges.position.y = HOF_COL_H / 2;
-          pedGroup.add(colEdges);
+        // ── Shoe photo plane ────────────────────────────────────────
+        const shoePlane = new THREE.Mesh(
+          new THREE.PlaneGeometry(SP_SHOE_W, SP_SHOE_H),
+          new THREE.MeshBasicMaterial({
+            color: 0xffffff, side: THREE.DoubleSide,
+            transparent: true, alphaTest: 0.01,
+          })
+        );
+        shoePlane.position.set(SP_PED_X, SP_SHOE_Y, SP_PED_Z);
+        scene.add(shoePlane);
 
-          const capGeom = new THREE.CylinderGeometry(0.24, 0.24, 0.04, 32);
-          const cap = new THREE.Mesh(capGeom, colMat);
-          cap.position.y = HOF_COL_H + 0.02;
-          pedGroup.add(cap);
+        // ── Contact shadow ──────────────────────────────────────────
+        const spShadow = new THREE.Mesh(
+          new THREE.PlaneGeometry(1, 1),
+          new THREE.MeshBasicMaterial({
+            map: shadowTex, transparent: true, depthWrite: false, opacity: 0.5,
+          })
+        );
+        spShadow.rotation.x = -Math.PI / 2;
+        spShadow.position.set(SP_PED_X, SP_CAP_TOP + 0.003, SP_PED_Z);
+        spShadow.scale.set(SP_SHOE_W * 1.25, SP_SHOE_W * 0.5, 1);
+        scene.add(spShadow);
 
-          scene.add(pedGroup);
+        // ── Name plaque ─────────────────────────────────────────────
+        const plaqueCanvas = document.createElement("canvas");
+        plaqueCanvas.width = 512; plaqueCanvas.height = 128;
+        const pctx = plaqueCanvas.getContext("2d");
+        pctx.fillStyle = "#111111";
+        pctx.fillRect(0, 0, 512, 128);
+        pctx.strokeStyle = "#cccccc";
+        pctx.lineWidth = 2;
+        pctx.strokeRect(4, 4, 504, 120);
+        pctx.fillStyle = "#ffffff";
+        pctx.font = "bold 36px -apple-system, BlinkMacSystemFont, sans-serif";
+        pctx.textAlign = "center"; pctx.textBaseline = "middle";
+        pctx.fillText(featured.shoeName, 256, 46);
+        pctx.fillStyle = "rgba(255,255,255,0.5)";
+        pctx.font = "22px -apple-system, BlinkMacSystemFont, sans-serif";
+        pctx.fillText(featured.colorway, 256, 88);
 
-          // ── Shoe photo plane ──────────────────────────────────────
-          const shoePlane = new THREE.Mesh(
-            new THREE.PlaneGeometry(HOF_SHOE_W, HOF_SHOE_H),
-            new THREE.MeshBasicMaterial({
-              color: 0xffffff, side: THREE.DoubleSide,
-              transparent: true, alphaTest: 0.01,
-            })
-          );
-          shoePlane.position.set(HOF_PED_X, HOF_SHOE_Y, pedZ);
-          scene.add(shoePlane);
+        const plaqueTex = new THREE.CanvasTexture(plaqueCanvas);
+        plaqueTex.colorSpace = THREE.SRGBColorSpace;
+        const plaque = new THREE.Mesh(
+          new THREE.PlaneGeometry(0.55, 0.14),
+          new THREE.MeshBasicMaterial({ map: plaqueTex, transparent: true })
+        );
+        plaque.position.set(SP_PED_X, 0.40, SP_PED_Z);
+        plaque.rotation.y = Math.PI / 2;  // face +X (toward the court)
+        scene.add(plaque);
 
-          // ── Contact shadow ────────────────────────────────────────
-          const shadow = new THREE.Mesh(
-            new THREE.PlaneGeometry(1, 1),
-            new THREE.MeshBasicMaterial({
-              map: shadowTex, transparent: true, depthWrite: false, opacity: 0.5,
-            })
-          );
-          shadow.rotation.x = -Math.PI / 2;
-          shadow.position.set(HOF_PED_X, HOF_CAP_TOP + 0.003, pedZ);
-          shadow.scale.set(HOF_SHOE_W * 1.25, HOF_SHOE_W * 0.5, 1);
-          scene.add(shadow);
+        // ── Preload spin textures ───────────────────────────────────
+        const spinTextures = new Array(featured.spinKeys.length).fill(null);
+        const frameCount = featured.spinKeys.length;
+        let spCurrentFrame = -1;
 
-          // ── Name plaque ───────────────────────────────────────────
-          const plaqueCanvas = document.createElement("canvas");
-          plaqueCanvas.width = 512; plaqueCanvas.height = 128;
-          const pctx = plaqueCanvas.getContext("2d");
-          pctx.fillStyle = "#111111";
-          pctx.fillRect(0, 0, 512, 128);
-          pctx.strokeStyle = "#cccccc";
-          pctx.lineWidth = 2;
-          pctx.strokeRect(4, 4, 504, 120);
-          pctx.fillStyle = "#ffffff";
-          pctx.font = "bold 36px -apple-system, BlinkMacSystemFont, sans-serif";
-          pctx.textAlign = "center"; pctx.textBaseline = "middle";
-          pctx.fillText(entry.shoeName, 256, 46);
-          pctx.fillStyle = "rgba(255,255,255,0.5)";
-          pctx.font = "22px -apple-system, BlinkMacSystemFont, sans-serif";
-          pctx.fillText(entry.colorway, 256, 88);
-
-          const plaqueTex = new THREE.CanvasTexture(plaqueCanvas);
-          plaqueTex.colorSpace = THREE.SRGBColorSpace;
-          const plaque = new THREE.Mesh(
-            new THREE.PlaneGeometry(0.55, 0.14),
-            new THREE.MeshBasicMaterial({ map: plaqueTex, transparent: true })
-          );
-          plaque.position.set(HOF_PED_X, 0.40, pedZ);
-          plaque.rotation.y = Math.PI / 2;  // face +X (toward the court)
-          scene.add(plaque);
-
-          // ── Preload spin textures ─────────────────────────────────
-          const spinTextures = new Array(entry.spinKeys.length).fill(null);
-          let loadedCount = 0;
-          let firstAspect = 800 / 533; // fallback, updated on first load
-
-          entry.spinKeys.forEach((sk, frameIdx) => {
-            const path = "../" + images[sk];
-            loader.load(path, (texture) => {
-              texture.colorSpace = THREE.SRGBColorSpace;
-              spinTextures[frameIdx] = texture;
-              loadedCount++;
-              if (frameIdx === 0) {
-                firstAspect = texture.image.width / texture.image.height;
-                fitPlaneToBox(shoePlane, firstAspect, HOF_SHOE_W, HOF_SHOE_H);
-                shoePlane.material.map = texture;
-                shoePlane.material.needsUpdate = true;
-                // Update shadow to match fitted shoe width
-                const sw = shoePlane.scale.x * HOF_SHOE_W;
-                shadow.scale.set(sw * 1.25, sw * 0.5, 1);
-              }
-            }, undefined, (err) => {
-              log(`HOF spin load failed: ${sk}: ${err?.message || err}`, "err");
-            });
-          });
-
-          hofPedestals.push({
-            entry, pedX: HOF_PED_X, pedZ, shoePlane,
-            spinTextures, frameCount: entry.spinKeys.length,
-            currentFrame: -1,    // force first update
-            rotationOffset: 0,   // tune per-shoe if frame 0 isn't "front"
+        featured.spinKeys.forEach((sk, frameIdx) => {
+          const path = "../" + images[sk];
+          loader.load(path, (texture) => {
+            texture.colorSpace = THREE.SRGBColorSpace;
+            spinTextures[frameIdx] = texture;
+            if (frameIdx === 0) {
+              const aspect = texture.image.width / texture.image.height;
+              fitPlaneToBox(shoePlane, aspect, SP_SHOE_W, SP_SHOE_H);
+              shoePlane.material.map = texture;
+              shoePlane.material.needsUpdate = true;
+            }
+          }, undefined, (err) => {
+            log(`Spin load failed: ${sk}: ${err?.message || err}`, "err");
           });
         });
 
-        // ── HOF per-frame angle update ──────────────────────────────
-        // Exposed as a callable for the render loop.
-        const _hofCamPos = new THREE.Vector3();
+        // ── Per-frame angle update ──────────────────────────────────
+        const _spCamPos = new THREE.Vector3();
         window._hofUpdate = () => {
-          camera.getWorldPosition(_hofCamPos);
-          for (const ped of hofPedestals) {
-            const dx = _hofCamPos.x - ped.pedX;
-            const dz = _hofCamPos.z - ped.pedZ;
-            // atan2 gives the angle from the pedestal to the camera.
-            // Offset so frame 0 = the view from the default spawn (+Z
-            // side, looking -Z). Adjust rotationOffset per shoe if needed.
-            let angle = Math.atan2(dx, dz) + ped.rotationOffset;
-            // Normalize to 0..2PI
-            angle = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-            const frameIdx = Math.round(angle / (Math.PI * 2 / ped.frameCount)) % ped.frameCount;
-            if (frameIdx !== ped.currentFrame && ped.spinTextures[frameIdx]) {
-              ped.currentFrame = frameIdx;
-              ped.shoePlane.material.map = ped.spinTextures[frameIdx];
-              ped.shoePlane.material.needsUpdate = true;
-            }
-            // Billboard yaw only: rotate to face the camera horizontally
-            // but stay perfectly upright. Using dx/dz ignores height
-            // difference so the plane never tilts toward the viewer.
-            ped.shoePlane.rotation.set(0, Math.atan2(dx, dz), 0);
+          camera.getWorldPosition(_spCamPos);
+          const dx = _spCamPos.x - SP_PED_X;
+          const dz = _spCamPos.z - SP_PED_Z;
+
+          // Map camera angle to spin frame
+          let angle = Math.atan2(dx, dz);
+          angle = ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+          const frameIdx = Math.round(angle / (Math.PI * 2 / frameCount)) % frameCount;
+          if (frameIdx !== spCurrentFrame && spinTextures[frameIdx]) {
+            spCurrentFrame = frameIdx;
+            shoePlane.material.map = spinTextures[frameIdx];
+            shoePlane.material.needsUpdate = true;
           }
+
+          // Billboard yaw only - face the camera, stay upright
+          shoePlane.rotation.set(0, Math.atan2(dx, dz), 0);
         };
       }
     }
