@@ -3192,19 +3192,16 @@ Loading…</div>
         spShadow.scale.set(SP_SHOE_W * 1.25, SP_SHOE_W * 0.5, 1);
         scene.add(spShadow);
 
-        // ── Name plaque ─────────────────────────────────────────────
+        // ── Floating name label (above the shoe, faces the user) ────
         const plaqueCanvas = document.createElement("canvas");
         plaqueCanvas.width = 512; plaqueCanvas.height = 128;
         const pctx = plaqueCanvas.getContext("2d");
-        pctx.fillStyle = "#111111";
-        pctx.fillRect(0, 0, 512, 128);
-        pctx.strokeStyle = "#cccccc";
-        pctx.lineWidth = 2;
-        pctx.strokeRect(4, 4, 504, 120);
+        // Transparent background - no black box
+        pctx.clearRect(0, 0, 512, 128);
         pctx.fillStyle = "#ffffff";
         pctx.font = "bold 36px -apple-system, BlinkMacSystemFont, sans-serif";
         pctx.textAlign = "center"; pctx.textBaseline = "middle";
-        pctx.fillText(featured.shoeName, 256, 46);
+        pctx.fillText(featured.shoeName, 256, 40);
         pctx.fillStyle = "rgba(255,255,255,0.5)";
         pctx.font = "22px -apple-system, BlinkMacSystemFont, sans-serif";
         pctx.fillText(featured.colorway, 256, 88);
@@ -3212,11 +3209,12 @@ Loading…</div>
         const plaqueTex = new THREE.CanvasTexture(plaqueCanvas);
         plaqueTex.colorSpace = THREE.SRGBColorSpace;
         const plaque = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.55, 0.14),
-          new THREE.MeshBasicMaterial({ map: plaqueTex, transparent: true })
+          new THREE.PlaneGeometry(0.65, 0.16),
+          new THREE.MeshBasicMaterial({ map: plaqueTex, transparent: true, depthWrite: false })
         );
-        plaque.position.set(SP_PED_X, 0.40, SP_PED_Z);
-        plaque.rotation.y = Math.PI / 2;  // face +X (toward the court)
+        // Float above the shoe
+        const SP_LABEL_Y = SP_SHOE_Y + SP_SHOE_H / 2 + 0.12;
+        plaque.position.set(SP_PED_X, SP_LABEL_Y, SP_PED_Z);
         scene.add(plaque);
 
         // ── Preload spin textures ───────────────────────────────────
@@ -3259,6 +3257,7 @@ Loading…</div>
 
           // Billboard yaw only - face the camera, stay upright
           shoePlane.rotation.set(0, Math.atan2(dx, dz), 0);
+          plaque.rotation.set(0, Math.atan2(dx, dz), 0);
         };
       }
     }

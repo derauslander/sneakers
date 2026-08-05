@@ -266,6 +266,10 @@
       {
         "date": "2026-08-01",
         "colorway": "White Cement Reimagined"
+      },
+      {
+        "date": "2026-08-05",
+        "colorway": "A Ma Maniere WYWS"
       }
     ],
     "4": [
@@ -2758,12 +2762,12 @@
         "lastWorn": "2025-11-28"
       },
       {
-        "shoeId": 13,
-        "shoeName": "Air Jordan 14",
-        "shortName": "AJ14",
-        "colorway": "Flint Grey",
+        "shoeId": 3,
+        "shoeName": "Air Jordan 3",
+        "shortName": "AJ3",
+        "colorway": "A Ma Maniere WYWS",
         "count": 4,
-        "lastWorn": "2026-06-05"
+        "lastWorn": "2026-08-05"
       }
     ],
     "priceRanked": [
@@ -2893,11 +2897,11 @@
         "wears": 4
       },
       {
-        "shoeId": 15,
-        "shoeName": "Air Tech Challenge 2",
-        "shortName": "ATC2",
-        "colorway": "Pixel Court",
-        "wears": 2
+        "shoeId": 3,
+        "shoeName": "Air Jordan 3",
+        "shortName": "AJ3",
+        "colorway": "A Ma Maniere WYWS",
+        "wears": 4
       }
     ],
     "iceRanked": [
@@ -3096,20 +3100,20 @@
     ]
   },
   "precomputedLastWorn": {
+    "key": "3_A Ma Maniere WYWS",
+    "shoeId": 3,
+    "shoeName": "Air Jordan 3",
+    "shortName": "AJ3",
+    "colorway": "A Ma Maniere WYWS",
+    "date": "2026-08-05"
+  },
+  "precomputedPreviousWorn": {
     "key": "3_White Cement Reimagined",
     "shoeId": 3,
     "shoeName": "Air Jordan 3",
     "shortName": "AJ3",
     "colorway": "White Cement Reimagined",
     "date": "2026-08-01"
-  },
-  "precomputedPreviousWorn": {
-    "key": "5_Black Tongue",
-    "shoeId": 5,
-    "shoeName": "Air Jordan 5",
-    "shortName": "AJ5",
-    "colorway": "Black Tongue",
-    "date": "2026-07-24"
   },
   "precomputedUpNext": {
     "key": "5_Grape",
@@ -3119,6 +3123,13 @@
     "colorway": "Grape",
     "date": "2025-10-10"
   },
-  "precomputedOnFeetToday": null,
-  "builtAt": "2026-08-02T19:32:19.529632Z"
+  "precomputedOnFeetToday": {
+    "key": "3_A Ma Maniere WYWS",
+    "shoeId": 3,
+    "shoeName": "Air Jordan 3",
+    "shortName": "AJ3",
+    "colorway": "A Ma Maniere WYWS",
+    "date": "2026-08-05"
+  },
+  "builtAt": "2026-08-05T16:16:43.070262Z"
 }
