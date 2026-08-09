@@ -49,6 +49,7 @@ Loading…</div>
     import * as THREE from "three";
     import { VRButton } from "three/addons/webxr/VRButton.js";
     import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
+    import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
     // ════════════════════════════════════════════════════════════════════
     //  TEST MODE - ?test in the URL enables desktop preview with
@@ -424,15 +425,34 @@ Loading…</div>
       );
     };
 
-    // Resize a photo plane to fit (w × h) while preserving the texture's
-    // aspect ratio (letterbox fit). Shared by the initial load and by the
-    // image swap on pull-forward so sizing has one source of truth.
-    const fitPlaneToBox = (plane, aspect, w, h) => {
-      plane.geometry.dispose();
+    // Letterbox-fit math: the (pw × ph) that fits a texture of the given
+    // aspect inside a (w × h) box. One source of truth for all photo sizing.
+    const letterboxFit = (aspect, w, h) => {
       const boxAspect = w / h;
-      let pw, ph;
-      if (aspect >= boxAspect) { pw = w; ph = w / aspect; }
-      else                     { ph = h; pw = h * aspect; }
+      if (aspect >= boxAspect) return { pw: w, ph: w / aspect };
+      return { pw: h * aspect, ph: h };
+    };
+
+    // All photo planes share ONE unit (1×1) geometry and are sized via
+    // mesh.scale instead of rebuilding a PlaneGeometry per texture load /
+    // image swap. This removes ~80 GPU geometry buffers and all the
+    // dispose/allocate churn on click. Only safe for meshes whose .scale
+    // isn't otherwise animated (wall photos, spin plane).
+    const sharedPhotoGeometry = new THREE.PlaneGeometry(1, 1);
+    const fitPlaneToBox = (plane, aspect, w, h) => {
+      const { pw, ph } = letterboxFit(aspect, w, h);
+      plane.scale.set(pw, ph, 1);
+      plane.userData.fitW = pw;
+      plane.userData.fitH = ph;
+    };
+
+    // Geometry-rebuild variant for the stage shoe ONLY: its .scale carries
+    // the fly-out/return animation (setScalar per frame), so its fitted
+    // size must live in the geometry. It's one reusable mesh resized once
+    // per pedestal launch, so the rebuild cost is negligible.
+    const fitPlaneGeometry = (plane, aspect, w, h) => {
+      plane.geometry.dispose();
+      const { pw, ph } = letterboxFit(aspect, w, h);
       plane.geometry = new THREE.PlaneGeometry(pw, ph);
     };
 
@@ -446,6 +466,11 @@ Loading…</div>
     // what gets translated/scaled/rotated during pull-forward, so the box
     // and its photo move as one object.
     const allCases = [];
+
+    // Raycast targets: one InstancedMesh of box shells per wall (built in
+    // buildWall). Hits resolve to a caseRef via userData.caseRefs[instanceId]
+    // - null for empty cells, which count as an empty-space click.
+    const caseShellMeshes = [];
 
     // Shared geometries and materials - every box uses these.
     // Shared materials too: every filled box gets the same shell material
@@ -579,43 +604,65 @@ Loading…</div>
         wallGroup.add(titlePanel);
       }
 
-      for (const cell of cellArr) {
+      // Every cell - filled or empty - gets a real box. Empty boxes have
+      // no photo inside, but the shell + edges are identical to filled
+      // ones. Since no case group ever moves at runtime any more (clicks
+      // send the shoe to the pedestal on a separate stage mesh; the box
+      // stays put), ALL shells and edges are static. So instead of one
+      // Mesh + one LineSegments per cell (~4 draw calls per cell across
+      // two walls), each wall gets:
+      //   - one InstancedMesh for all its shells (1 draw call)
+      //   - one merged LineSegments for all its edges (1 draw call)
+      // renderOrder 1 keeps the glass drawing after the photos, so the
+      // front face still tints over the shoe; photos write depth, so the
+      // box's back face is correctly hidden behind them.
+      const shellMesh = new THREE.InstancedMesh(
+        sharedBoxGeometry, sharedShellMaterial, cellArr.length
+      );
+      shellMesh.renderOrder = 1;
+      shellMesh.userData.caseRefs = new Array(cellArr.length).fill(null);
+      wallGroup.add(shellMesh);
+      caseShellMeshes.push(shellMesh);
+
+      const _instMat = new THREE.Matrix4();
+      const edgeGeoms = [];
+
+      cellArr.forEach((cell, i) => {
         const pos = cellPosition(cell.row, cell.col); // local coords, z=0
 
-        // Every cell - filled or empty - gets a real box. Empty boxes have
-        // no photo inside, but the shell + edges are identical to filled
-        // ones. This makes the wall read as a complete shelf, with the
-        // gaps being "an empty shoebox," not "missing data."
+        _instMat.makeTranslation(pos.x, pos.y, pos.z);
+        shellMesh.setMatrixAt(i, _instMat);
+
+        const eg = sharedEdgesGeometry.clone();
+        eg.translate(pos.x, pos.y, pos.z);
+        edgeGeoms.push(eg);
+
+        if (cell.empty) {
+          // No photo, no caseRef - just a visible empty box. Done.
+          return;
+        }
+
+        // Filled cell: photo plane inside the box, centred (per the
+        // owner's preference) rather than against the back wall. The
+        // group is kept as the plane's parent so world-position lookups
+        // (launchToPedestal) and the caseRef API stay unchanged.
         const group = new THREE.Group();
         group.position.copy(pos);
         wallGroup.add(group);
 
-        const shell = new THREE.Mesh(sharedBoxGeometry, sharedShellMaterial);
-        group.add(shell);
-
-        const edges = new THREE.LineSegments(sharedEdgesGeometry, sharedEdgesMaterial);
-        group.add(edges);
-
-        if (cell.empty) {
-          // No photo, no caseRef - just a visible empty box. Done.
-          continue;
-        }
-
-        // Filled cell: photo plane inside the box, centred (per the
-        // owner's preference) rather than against the back wall.
-        const photoGeometry = new THREE.PlaneGeometry(BOX_W * 0.9, BOX_H * 0.9);
         const photoMaterial = new THREE.MeshBasicMaterial({
           color: 0x222222,
           side: THREE.DoubleSide,
           transparent: true,
           alphaTest: 0.01,
         });
-        const plane = new THREE.Mesh(photoGeometry, photoMaterial);
-        plane.position.set(0, 0, 0); // centre of box
+        const plane = new THREE.Mesh(sharedPhotoGeometry, photoMaterial);
+        plane.position.set(0, 0, 0);                  // centre of box
+        plane.scale.set(BOX_W * 0.9, BOX_H * 0.9, 1); // placeholder size until the texture lands
         group.add(plane);
 
         const caseRef = {
-          entry: cell.entry, plane, group, shell,
+          entry: cell.entry, plane, group,
           homePosition: pos.clone(),       // local to wallGroup
           homeRotation: group.rotation.clone(),
           viewPosWorld,                    // world-space target for this wall's pulls
@@ -635,7 +682,7 @@ Loading…</div>
           // dream included, rather than pulling the whole case forward.
           usePedestal: !!usePedestal,
         };
-        shell.userData.caseRef = caseRef;
+        shellMesh.userData.caseRefs[i] = caseRef;
         allCases.push(caseRef);
 
         // Resting image on the wall is image 3 (_hover2). Cache its texture +
@@ -646,7 +693,23 @@ Loading…</div>
           caseRef.restTexture = plane.material.map;
           caseRef.restAspect  = aspect;
         });
-      }
+      });
+
+      shellMesh.instanceMatrix.needsUpdate = true;
+      // Compute a bounds that covers all instances - without this, frustum
+      // culling and raycasting use the single-box bounds at the origin and
+      // most of the wall would vanish / miss clicks.
+      shellMesh.computeBoundingSphere();
+
+      // All 40 edge overlays merged into one static LineSegments.
+      const edgesMesh = new THREE.LineSegments(
+        mergeGeometries(edgeGeoms), sharedEdgesMaterial
+      );
+      edgesMesh.renderOrder = 1;
+      wallGroup.add(edgesMesh);
+      // The translated clones were only merge inputs - never rendered, so
+      // there's nothing on the GPU, but drop the references for GC.
+      edgeGeoms.length = 0;
     };
 
     // Both cases now stand on the −Z baseline flanking the hoop: office to the
@@ -1998,7 +2061,7 @@ Loading…</div>
         stageShoe.material.map = texture;
         stageShoe.material.color.set(0xffffff);
         stageShoe.material.needsUpdate = true;
-        fitPlaneToBox(stageShoe, aspect, PED_FIT_W, PED_FIT_H);
+        fitPlaneGeometry(stageShoe, aspect, PED_FIT_W, PED_FIT_H);
         // Sit the shoe's base on the cap: anchor by the bottom edge (at full
         // scale) so wide and tall shoes share a ground line, tucked slightly
         // into the cap. Resting pos is per-shoe; the travel lerps toward it.
@@ -2116,10 +2179,10 @@ Loading…</div>
 
       // Hit-test the box shells, not the inner photo planes - the shell
       // is the visible "object" the user is pointing at, and the photo
-      // sits inside (partially obscured by the shell). userData.caseRef
-      // is now set on shell, not plane.
-      const targets = allCases.map((c) => c.shell);
-      const intersects = raycaster.intersectObjects(targets, false);
+      // sits inside (partially obscured by the shell). Shells live in one
+      // InstancedMesh per wall; the hit's instanceId maps to a caseRef
+      // (or null for an empty box, which counts as an empty-space click).
+      const intersects = raycaster.intersectObjects(caseShellMeshes, false);
 
       // Clear an active dream-wall pull (return the case + restore image 3).
       const clearDreamFocus = () => {
@@ -2130,15 +2193,19 @@ Loading…</div>
         }
       };
 
-      if (intersects.length === 0) {
-        // Empty space - dismiss whatever is active (at most one of these).
+      const hit = intersects[0];
+      const caseRef = hit
+        ? (hit.object.userData.caseRefs[hit.instanceId] || null)
+        : null;
+
+      if (!caseRef) {
+        // Empty space OR an empty box - dismiss whatever is active (at most
+        // one of these). Empty boxes previously swallowed the click; now
+        // they behave like the empty space they visually represent.
         if (stage.active) dismissPedestal(now);
         if (focusedCase) { clearDreamFocus(); hideStory(); }
         return;
       }
-
-      const caseRef = intersects[0].object.userData.caseRef;
-      if (!caseRef) return;
 
       if (caseRef.usePedestal) {
         // Office wall → pedestal.
@@ -3170,13 +3237,16 @@ Loading…</div>
         scene.add(pedGroup);
 
         // ── Shoe photo plane ────────────────────────────────────────
+        // Shared unit geometry, sized via scale (fitPlaneToBox). Safe here:
+        // only the plane's rotation animates (billboard yaw in _hofUpdate).
         const shoePlane = new THREE.Mesh(
-          new THREE.PlaneGeometry(SP_SHOE_W, SP_SHOE_H),
+          sharedPhotoGeometry,
           new THREE.MeshBasicMaterial({
             color: 0xffffff, side: THREE.DoubleSide,
             transparent: true, alphaTest: 0.01,
           })
         );
+        shoePlane.scale.set(SP_SHOE_W, SP_SHOE_H, 1);
         shoePlane.position.set(SP_PED_X, SP_SHOE_Y, SP_PED_Z);
         scene.add(shoePlane);
 
@@ -4131,19 +4201,53 @@ Loading…</div>
         }
       }
 
-      // - Horizon: a distant silhouette skyline, foreground bare trees,
+      // - Shared foliage kit -
+      // Used by the horizon trees below AND the wall shrubs further down,
+      // so everything green in the yard reads as the same species of night
+      // vegetation. Shading is baked per-vertex (no lights): deep shadow
+      // green underneath grading to pale moonlit sage on top; bark in dark
+      // browns, lighter toward the moonlit outer twigs.
+      const BARK_DARK = new THREE.Color(0x1a140f);   // trunk base
+      const BARK_LIT  = new THREE.Color(0x3b3630);   // moonlit outer twigs
+      const LEAF_DARK = new THREE.Color(0x111b13);   // canopy underside
+      const LEAF_LIT  = new THREE.Color(0x415744);   // canopy moonlit top
+      const tCol      = new THREE.Color();           // scratch
+
+      // Strip normals/uvs (MeshBasicMaterial + vertexColors needs neither;
+      // merge requires identical attribute sets) and bake a colour per
+      // vertex: uniform (colTop === colBottom) for bark segments, a
+      // vertical gradient in the geometry's local space for foliage.
+      const paintGeom = (geo, colBottom, colTop) => {
+        geo.deleteAttribute("normal");
+        geo.deleteAttribute("uv");
+        const pos = geo.attributes.position;
+        const colors = new Float32Array(pos.count * 3);
+        geo.computeBoundingBox();
+        const y0 = geo.boundingBox.min.y, y1 = geo.boundingBox.max.y;
+        for (let i = 0; i < pos.count; i++) {
+          const t = y1 > y0 ? (pos.getY(i) - y0) / (y1 - y0) : 0.5;
+          tCol.lerpColors(colBottom, colTop, Math.pow(t, 1.4));
+          colors[i * 3]     = tCol.r;
+          colors[i * 3 + 1] = tCol.g;
+          colors[i * 3 + 2] = tCol.b;
+        }
+        geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      };
+
+      // - Horizon: a distant silhouette skyline, foreground leafy trees,
       //   and haze along the seam where ground meets sky. -
       //
       // Design intent: make the yard read as far bigger than you can walk,
-      // without walling the sky back in. Everything here is a black-on-
-      // transparent cutout (unlit at night anyway), so it is cheap, and it is
+      // without walling the sky back in. Everything here is a dark-on-
+      // transparent cutout (moonlit turf greens over near-black), cheap, and
       // kept LOW and RAGGED so open sky always shows above it. A jagged
       // horizon is what sells distance; a solid treeline would undo the 50m
       // of depth we opened up. A gap is left around the moon so it stays
       // framed by branches rather than blocked.
       {
         // Draw one ragged skyline strip: bare tree crowns, the odd hill, a
-        // far spire. Black shapes on a transparent canvas. gapCentre/gapHalf
+        // far spire, moonlit turf hill, headstones. Dark shapes on a
+        // transparent canvas. gapCentre/gapHalf
         // (in 0..1 across the strip) leave a hole. cutHill controls whether
         // the gap clears only trees (false, e.g. the moon gap - hill can stay)
         // or cuts all the way to the ground (true, e.g. the portal - the way
@@ -4161,23 +4265,130 @@ Loading…</div>
           // (and its variation gentle enough) that the solid fill never dips
           // to the strip's bottom edge - otherwise sky shows through under
           // the trees at the corners where two strips meet at 90 degrees.
+          // hillY(u) is the ground line at any u - shared by the fill, the
+          // trees, and the headstones so everything roots on the real
+          // ground. (Trees used to plant at a fixed hillBase + 4%, but the
+          // hill's swing is ±7.5%, so trunks floated wherever it dipped.)
+          const hillBase = h * 0.60;
+          const hillY = (u) =>
+            hillBase + Math.sin(u * 7 + seed) * h * 0.05 + Math.sin(u * 19) * h * 0.025;
+
+          // Back ridge - a second, darker hill behind the main one with its
+          // own phase. It shows wherever the front hill dips, so the horizon
+          // reads as two planes of depth instead of one cutout.
+          g.fillStyle = "#0d100b";
           g.beginPath();
           g.moveTo(0, h);
-          const hillBase = h * 0.60;
           for (let x = 0; x <= w; x += w / 24) {
             const u = x / w;
-            const y = hillBase + Math.sin(u * 7 + seed) * h * 0.05 + Math.sin(u * 19) * h * 0.025;
-            g.lineTo(x, y);
+            g.lineTo(x, hillBase - h * 0.055
+                        + Math.sin(u * 5 + seed * 1.7) * h * 0.06
+                        + Math.sin(u * 13 + 2) * h * 0.02);
           }
           g.lineTo(w, h); g.closePath(); g.fill();
 
-          // A bare tree: trunk plus a few forking branch strokes. Drawn as
-          // strokes so it stays a thin, twiggy silhouette.
+          // Main hill - moonlit turf instead of flat black. Build the hill
+          // path once, then clip to it so the gradient and mottling stay
+          // inside the slope.
+          const hillPath = () => {
+            g.beginPath();
+            g.moveTo(0, h);
+            for (let x = 0; x <= w; x += w / 24) {
+              g.lineTo(x, hillY(x / w));
+            }
+            g.lineTo(w, h); g.closePath();
+          };
+          // Vertical gradient: muted green at the crest where the moon
+          // catches it, falling to near-black at the strip base so the hill
+          // still melts into the dark ground plane at the seam. Palette
+          // matches the ground texture's grass tufts.
+          const hillGrad = g.createLinearGradient(0, hillBase - h * 0.08, 0, h);
+          hillGrad.addColorStop(0,    "#26311c");
+          hillGrad.addColorStop(0.35, "#161d10");
+          hillGrad.addColorStop(1,    "#07090a");
+          hillPath();
+          g.save();
+          g.clip();
+          g.fillStyle = hillGrad;
+          g.fillRect(0, 0, w, h);
+          // Mottled patches - subtle tonal variation so the slope reads as
+          // turf rather than a smooth ramp. Clipped, so none float above
+          // the crest.
+          for (let i = 0; i < 26; i++) {
+            const u = rnd();
+            const hy = hillY(u);
+            const py = hy + (h - hy) * (0.1 + rnd() * 0.6);
+            g.fillStyle = rnd() < 0.5 ? "rgba(8,11,6,0.30)" : "rgba(52,68,36,0.14)";
+            g.beginPath();
+            g.ellipse(u * w, py, 20 + rnd() * 55, 5 + rnd() * 12, 0, 0, Math.PI * 2);
+            g.fill();
+          }
+          g.restore();
+
+          // Moonlit rim along the crest, then a fringe of grass tufts so
+          // the ridge line is soft and grassy, not a razor cut.
+          g.strokeStyle = "#31401f";
+          g.lineWidth = 2;
+          g.beginPath();
+          for (let x = 0; x <= w; x += w / 48) {
+            const y = hillY(x / w);
+            if (x === 0) g.moveTo(x, y); else g.lineTo(x, y);
+          }
+          g.stroke();
+          g.lineWidth = 1.5;
+          const tufts = Math.round(w / 6);
+          for (let i = 0; i < tufts; i++) {
+            const u = rnd();
+            const bx = u * w, by = hillY(u) + 1;
+            g.strokeStyle = `hsl(${100 + rnd() * 40}, ${30 + rnd() * 25}%, ${13 + rnd() * 10}%)`;
+            g.beginPath();
+            g.moveTo(bx, by);
+            g.lineTo(bx + (rnd() - 0.5) * 3, by - (2 + rnd() * 5));
+            g.stroke();
+          }
+
+          // Distant headstones scattered along the hill line, so the yard
+          // reads as continuing past the wall to the horizon. Same arched-
+          // top silhouette as the real tombstones in the plot, the odd
+          // cross, most leaning a little the way neglected stones do.
+          // Drawn before the trees so canopies naturally overlap them.
+          g.fillStyle = "#000000";
+          const stoneCount = Math.round(w / 55);
+          for (let i = 0; i < stoneCount; i++) {
+            const u = (i + 0.5) / stoneCount + (rnd() - 0.5) * 0.6 / stoneCount;
+            if (inGap(u, 0.015)) continue;
+            const gy = hillY(u) + h * 0.015;         // rooted just into the fill
+            const th = h * (0.045 + rnd() * 0.05);   // ~0.5-1m at skyline distance
+            const tw = th * (0.55 + rnd() * 0.25);
+            g.save();
+            g.translate(u * w, gy);
+            g.rotate((rnd() - 0.5) * 0.3);           // lean
+            if (rnd() < 0.2) {
+              // Cross marker.
+              const bar = tw * 0.3;
+              g.fillRect(-bar / 2, -th, bar, th);
+              g.fillRect(-tw * 0.7, -th * 0.72, tw * 1.4, bar);
+            } else {
+              // Arched headstone: rect body + half-disc dome on top.
+              g.fillRect(-tw / 2, -th + tw / 2, tw, th - tw / 2);
+              g.beginPath();
+              g.arc(0, -th + tw / 2, tw / 2, Math.PI, 0);
+              g.fill();
+            }
+            g.restore();
+          }
+
+          // A tree: trunk plus a few forking branch strokes, with dark
+          // moss-green leaf clusters at the branch tips so the crowns read
+          // full and alive rather than skeletal. Still silhouette-dark -
+          // the green is just barely above black, the way foliage reads
+          // against a night sky.
           const tree = (cx, groundY, scale) => {
             g.strokeStyle = "#000000";
             g.lineCap = "round";
+            const tips = [];
             const branch = (x, y, ang, len, wdt, depth) => {
-              if (depth <= 0 || len < 2) return;
+              if (depth <= 0 || len < 2) { tips.push([x, y]); return; }
               const x2 = x + Math.cos(ang) * len;
               const y2 = y + Math.sin(ang) * len;
               g.lineWidth = wdt;
@@ -4190,19 +4401,43 @@ Loading…</div>
             };
             branch(cx, groundY, -Math.PI / 2 + (rnd() - 0.5) * 0.2,
                    groundY * 0.30 * scale, 5 * scale, 5);
+            // Canopy: overlapping ellipses on a subset of the twig tips.
+            // Following the actual tips keeps each crown's shape unique
+            // (a fixed crown ellipse would make every tree a lollipop).
+            const crownCols = ["#0c120d", "#101a12", "#0e1710"];
+            for (let i = 0; i < tips.length; i += 2) {
+              const [tx, ty] = tips[i];
+              const r = (4 + rnd() * 7) * scale;
+              g.fillStyle = crownCols[(rnd() * crownCols.length) | 0];
+              g.beginPath();
+              g.ellipse(tx, ty, r * (1 + rnd() * 0.5), r, 0, 0, Math.PI * 2);
+              g.fill();
+              // Faint moonlit sheen on the top of the occasional cluster.
+              if (i % 6 === 0) {
+                g.fillStyle = "#1e2c1f";
+                g.beginPath();
+                g.ellipse(tx, ty - r * 0.45, r * 0.55, r * 0.4, 0, 0, Math.PI * 2);
+                g.fill();
+              }
+            }
           };
 
           // Scatter trees across the strip, skipping the moon gap and giving
           // the ends a couple of taller ones so the corners are not bald.
+          // Each plants on hillY(u) + a small overlap: rooted into the fill
+          // even where the hill dips (the old fixed height floated there),
+          // with slack for the fill polyline's w/24 sampling.
           const count = treeCount || Math.round(w / 130);
           for (let i = 0; i < count; i++) {
             const u = (i + 0.5) / count + (rnd() - 0.5) * 0.03;
             if (inGap(u, 0.03)) continue;
             const scale = 0.68 + rnd() * 0.55;
-            tree(u * w, hillBase + h * 0.04, scale);
+            tree(u * w, hillY(u) + h * 0.03, scale);
           }
           // A distant spire, off to one side, only if it misses the gap.
+          // (Reset fill to black - the tree canopies leave it green.)
           if (!inGap(0.22, 0.04)) {
+            g.fillStyle = "#000000";
             const sx = w * 0.22, sy = hillBase - h * 0.16;
             g.fillRect(sx - 3, sy, 6, h - sy);
             g.beginPath(); g.moveTo(sx - 5, sy); g.lineTo(sx, sy - h * 0.10);
@@ -4259,26 +4494,54 @@ Loading…</div>
           scene.add(cyl);
         }
 
-        // A few real bare trees just outside the perimeter wall, close enough
+        // A few real trees just outside the perimeter wall, close enough
         // to catch parallax as you move. These give the yard a foreground
         // edge the flat strips cannot. Sparse and gappy, so they frame the
         // view rather than enclose it.
-        const treeMat = new THREE.MeshBasicMaterial({ color: 0x0a0a0c });
+        //
+        // Two changes from the original bare-black version:
+        //  1. LOOK - trunks are dark bark (twigs slightly moonlit) and the
+        //     twig tips carry low-poly canopy blobs in desaturated night
+        //     greens, shaded by a baked vertex-colour gradient (deep shadow
+        //     below, pale moonlit sage on top). Alive, but still nocturnal -
+        //     no lights involved, so it costs nothing per frame.
+        //  2. COST - every limb used to be its own Mesh with its own
+        //     geometry (~60 per tree, ~300 draw calls across the yard).
+        //     All branches and canopies of all trees now merge into ONE
+        //     vertex-coloured mesh: a single draw call.
+        // Colours + paintGeom live in the shared foliage kit above (also
+        // used by the wall shrubs).
+        const treeGeoms = [];
+        const tQuat = new THREE.Quaternion();
+        const tMat  = new THREE.Matrix4();
+        const tUp   = new THREE.Vector3(0, 1, 0);
+        const tDir  = new THREE.Vector3();
+        const tMid  = new THREE.Vector3();
+        const tOne  = new THREE.Vector3(1, 1, 1);
+
         const makeTree = (x, z, scale) => {
-          const grp = new THREE.Group();
+          const tips = [];
           const limb = (x0, y0, z0, ang, tilt, len, rad, depth) => {
-            if (depth <= 0 || len < 0.15) return;
+            if (depth <= 0 || len < 0.15) {
+              tips.push(new THREE.Vector3(x0, y0, z0));   // twig end
+              return;
+            }
             const x1 = x0 + Math.cos(ang) * Math.cos(tilt) * len;
             const y1 = y0 + Math.sin(tilt) * len;
             const z1 = z0 + Math.sin(ang) * Math.cos(tilt) * len;
-            const geo = new THREE.CylinderGeometry(rad * 0.7, rad, len, 5);
-            const seg = new THREE.Mesh(geo, treeMat);
-            seg.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
-            seg.quaternion.setFromUnitVectors(
-              new THREE.Vector3(0, 1, 0),
-              new THREE.Vector3(x1 - x0, y1 - y0, z1 - z0).normalize()
-            );
-            grp.add(seg);
+            // toNonIndexed: CylinderGeometry is indexed but IcosahedronGeometry
+            // is not, and mergeGeometries refuses to mix the two. De-index the
+            // cylinders so branches and canopy blobs can merge into one mesh.
+            const geo = new THREE.CylinderGeometry(rad * 0.7, rad, len, 5).toNonIndexed();
+            // Thinner limbs sit higher and catch more moon: lighten by depth.
+            tCol.lerpColors(BARK_LIT, BARK_DARK, depth / 5);
+            paintGeom(geo, tCol.clone(), tCol.clone());
+            tDir.set(x1 - x0, y1 - y0, z1 - z0).normalize();
+            tQuat.setFromUnitVectors(tUp, tDir);
+            tMid.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+            tMat.compose(tMid, tQuat, tOne);
+            geo.applyMatrix4(tMat);
+            treeGeoms.push(geo);
             const n = 2 + Math.floor(Math.random() * 2);
             for (let i = 0; i < n; i++) {
               limb(x1, y1, z1,
@@ -4288,10 +4551,39 @@ Loading…</div>
                    rad * 0.68, depth - 1);
             }
           };
-          limb(0, 0, 0, Math.random() * 6.28, Math.PI / 2 - 0.1,
+          // Build in world coords directly (no per-tree Group any more).
+          limb(x, 0, z, Math.random() * 6.28, Math.PI / 2 - 0.1,
                1.6 * scale, 0.16 * scale, 5);
-          grp.position.set(x, 0, z);
-          scene.add(grp);
+
+          // Canopy blobs on a subset of the twig tips, skipping any low
+          // stubs so the trunk stays visible under the crown. Following
+          // the real tips keeps every crown's shape unique.
+          const crownTips = tips.filter((p) => p.y > 1.5 * scale);
+          let cx = 0, cy = 0, cz = 0;
+          for (const p of crownTips) { cx += p.x; cy += p.y; cz += p.z; }
+          for (let i = 0; i < crownTips.length; i += 2) {
+            const p = crownTips[i];
+            const r = (0.24 + Math.random() * 0.16) * scale;
+            const blob = new THREE.IcosahedronGeometry(r, 1);
+            blob.scale(1 + Math.random() * 0.4,
+                       0.7 + Math.random() * 0.25,
+                       1 + Math.random() * 0.4);
+            // Slight per-blob tone variation so the crown isn't one flat mass.
+            const lit = LEAF_LIT.clone().offsetHSL(0, 0, (Math.random() - 0.5) * 0.05);
+            paintGeom(blob, LEAF_DARK, lit);
+            blob.translate(p.x, p.y, p.z);
+            treeGeoms.push(blob);
+          }
+          // One larger central mass at the crown centroid ties the clusters
+          // into a canopy instead of scattered pom-poms.
+          if (crownTips.length > 0) {
+            const n = crownTips.length;
+            const core = new THREE.IcosahedronGeometry(0.55 * scale, 1);
+            core.scale(1.25, 0.8, 1.25);
+            paintGeom(core, LEAF_DARK, LEAF_LIT);
+            core.translate(cx / n, cy / n + 0.1 * scale, cz / n);
+            treeGeoms.push(core);
+          }
         };
         // Placed outside the walls (x > perimeter, or |z| > half width), never
         // in the walkable plot, and clear of the portal sightline.
@@ -4300,6 +4592,14 @@ Loading…</div>
         makeTree(GY_PLOT_X1 + 9.0, -1.5, 1.25);
         makeTree(14, GY_FAR_HW * 0 + 12.5, 1.0);
         makeTree(20, -12.5, 0.85);
+
+        // All five trees - trunks, limbs, canopies - as one mesh.
+        const treesMesh = new THREE.Mesh(
+          mergeGeometries(treeGeoms),
+          new THREE.MeshBasicMaterial({ vertexColors: true })
+        );
+        scene.add(treesMesh);
+        treeGeoms.length = 0;   // merge inputs, never uploaded - free for GC
 
         // Seam haze: blurs the hard ground-to-sky cut and ties the silhouette
         // into the fog. Follows the skyline as a slightly smaller half-
@@ -4731,40 +5031,46 @@ Loading…</div>
         // (those are sections 2 and 4) and not the door (section 3), which
         // are all left untouched.
         {
-          const shrubMat  = new THREE.MeshBasicMaterial({ color: 0x1c2c16 });
-          const shrubMatB = new THREE.MeshBasicMaterial({ color: 0x243a1c });
-          const trunkMat  = new THREE.MeshBasicMaterial({ color: 0x2a2018 });
+          // Same foliage style as the trees: icosahedron blobs shaded by the
+          // shared vertex-colour gradient (LEAF_DARK underside → moonlit
+          // LEAF_LIT top, slight per-blob jitter), woody trunk in the shared
+          // bark tones. And the same cost treatment - each shrub used to be
+          // 6-8 separate meshes (~70 draw calls along the two walls); every
+          // trunk and blob of every shrub now merges into ONE mesh.
+          const shrubGeoms = [];
           const plantShrub = (x, z, scale) => {
-            const grp = new THREE.Group();
             // Short woody trunk anchoring the shrub to the ground, so the
             // foliage does not float. Foliage clusters just above its top.
+            // (toNonIndexed: cylinders are indexed, icosahedrons are not,
+            // and mergeGeometries refuses to mix the two.)
             const trunkH = (0.45 + Math.random() * 0.25) * scale;
-            const trunk = new THREE.Mesh(
-              new THREE.CylinderGeometry(0.05 * scale, 0.08 * scale, trunkH, 5),
-              trunkMat
-            );
-            trunk.position.y = trunkH / 2;
-            grp.add(trunk);
+            const trunk = new THREE.CylinderGeometry(
+              0.05 * scale, 0.08 * scale, trunkH, 5
+            ).toNonIndexed();
+            // Slight vertical gradient so the trunk top catches a little moon.
+            tCol.lerpColors(BARK_DARK, BARK_LIT, 0.35);
+            paintGeom(trunk, BARK_DARK, tCol.clone());
+            trunk.translate(x, trunkH / 2, z);
+            shrubGeoms.push(trunk);
 
             const blobs = 5 + Math.floor(Math.random() * 3);
             for (let i = 0; i < blobs; i++) {
               const r = (0.34 + Math.random() * 0.24) * scale;
-              const blob = new THREE.Mesh(
-                new THREE.SphereGeometry(r, 6, 5),
-                Math.random() < 0.5 ? shrubMat : shrubMatB
-              );
+              const blob = new THREE.IcosahedronGeometry(r, 1);
+              blob.scale(1 + Math.random() * 0.35,
+                         0.75 + Math.random() * 0.2,
+                         1 + Math.random() * 0.35);
+              const lit = LEAF_LIT.clone().offsetHSL(0, 0, (Math.random() - 0.5) * 0.05);
+              paintGeom(blob, LEAF_DARK, lit);
               // Cluster the foliage around the top of the trunk, overlapping
               // it slightly so the join reads as one plant.
-              blob.position.set(
-                (Math.random() - 0.5) * 0.7 * scale,
+              blob.translate(
+                x + (Math.random() - 0.5) * 0.7 * scale,
                 trunkH + r * 0.4 + Math.random() * 0.25 * scale,
-                (Math.random() - 0.5) * 0.7 * scale
+                z + (Math.random() - 0.5) * 0.7 * scale
               );
-              blob.scale.y = 0.85;
-              grp.add(blob);
+              shrubGeoms.push(blob);
             }
-            grp.position.set(x, 0, z);
-            scene.add(grp);
           };
 
           // Overgrowth along the wing walls. These used to be a dense row
@@ -4782,6 +5088,14 @@ Loading…</div>
               d += 2.6 + Math.random() * 2.6;
             }
           }
+
+          // All shrubs - trunks and foliage - as one mesh.
+          const shrubsMesh = new THREE.Mesh(
+            mergeGeometries(shrubGeoms),
+            new THREE.MeshBasicMaterial({ vertexColors: true })
+          );
+          scene.add(shrubsMesh);
+          shrubGeoms.length = 0;   // merge inputs, never uploaded - free for GC
         }
       }
     } // end graveyard block
