@@ -3933,6 +3933,10 @@ Loading…</div>
         g.globalAlpha = 1.0;
         const skyTex = new THREE.CanvasTexture(skyCv);
         skyTex.colorSpace = THREE.SRGBColorSpace;
+        // The side panels are seen at hard glancing angles from most of the
+        // yard; anisotropy keeps the stars and the gradient's lower shoulder
+        // steady as the view pitches instead of shimmering.
+        skyTex.anisotropy = 8;
         const skyMat = new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.DoubleSide });
 
         // Sky box dimensions - enclose the entire graveyard.
@@ -4112,6 +4116,11 @@ Loading…</div>
         const gndTex = new THREE.CanvasTexture(gndCv);
         gndTex.colorSpace = THREE.SRGBColorSpace;
         gndTex.wrapS = gndTex.wrapT = THREE.RepeatWrapping;
+        // Tiled ~11x13 across 52m and viewed at a glancing angle, so the
+        // grass speckle lives deep in the mip chain; without anisotropy the
+        // tufts pump in and out as the view pitches (same aliasing as the
+        // skyline crest, different texture).
+        gndTex.anisotropy = 8;
         // Ground now runs from the gym wall out to the sky box on all three
         // open sides, so the eye has somewhere to travel past the stone wall.
         // 1m of overshoot past the sky panels hides the ground/sky seam.
@@ -4326,16 +4335,18 @@ Loading…</div>
           g.restore();
 
           // Moonlit rim along the crest, then a fringe of grass tufts so
-          // the ridge line is soft and grassy, not a razor cut.
+          // the ridge line is soft and grassy, not a razor cut. Both drawn
+          // a touch chunky - at viewing distance they minify to under a
+          // pixel, and sub-texel strokes sparkle.
           g.strokeStyle = "#31401f";
-          g.lineWidth = 2;
+          g.lineWidth = 3;
           g.beginPath();
           for (let x = 0; x <= w; x += w / 48) {
             const y = hillY(x / w);
             if (x === 0) g.moveTo(x, y); else g.lineTo(x, y);
           }
           g.stroke();
-          g.lineWidth = 1.5;
+          g.lineWidth = 2;
           const tufts = Math.round(w / 6);
           for (let i = 0; i < tufts; i++) {
             const u = rnd();
@@ -4343,7 +4354,7 @@ Loading…</div>
             g.strokeStyle = `hsl(${100 + rnd() * 40}, ${30 + rnd() * 25}%, ${13 + rnd() * 10}%)`;
             g.beginPath();
             g.moveTo(bx, by);
-            g.lineTo(bx + (rnd() - 0.5) * 3, by - (2 + rnd() * 5));
+            g.lineTo(bx + (rnd() - 0.5) * 3, by - (3 + rnd() * 5));
             g.stroke();
           }
 
@@ -4454,6 +4465,11 @@ Loading…</div>
           }
           const t = new THREE.CanvasTexture(cv);
           t.colorSpace = THREE.SRGBColorSpace;
+          // The strip is viewed at a hard glancing angle (a short band, far
+          // away, near eye level). Anisotropic sampling keeps the crest and
+          // tuft detail stable there instead of shimmering under trilinear.
+          // (4 wasn't quite enough for the tufts in-headset; 8 holds.)
+          t.anisotropy = 8;
           return t;
         };
 
@@ -4488,7 +4504,12 @@ Loading…</div>
                                      false, Math.round(skylineArc / 6));
           const cyl = new THREE.Mesh(
             new THREE.CylinderGeometry(SKYLINE_R, SKYLINE_R, bandH, 96, 1, true, 0, Math.PI),
-            new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.5, side: THREE.BackSide, depthWrite: false })
+            // alphaTest 0.02, not 0.5: the crest is a hard alpha edge, and a
+            // mid cutoff on mip-averaged alpha makes it crawl/flicker as the
+            // view tilts. The material already blends (transparent, no depth
+            // write), so let the mip-softened edge blend; the tiny cutoff
+            // just skips fully-clear sky fragments.
+            new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.02, side: THREE.BackSide, depthWrite: false })
           );
           cyl.position.set(GY_X, bandY, GY_Z_CENTRE);
           scene.add(cyl);

@@ -270,6 +270,10 @@
       {
         "date": "2026-08-05",
         "colorway": "A Ma Maniere WYWS"
+      },
+      {
+        "date": "2026-08-14",
+        "colorway": "Black Cement"
       }
     ],
     "4": [
@@ -3104,30 +3108,14 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "5_Grape",
-    "shoeId": 5,
-    "shoeName": "Air Jordan 5",
-    "shortName": "AJ5",
-    "colorway": "Grape",
-    "date": "2026-08-07"
-  },
-  "precomputedPreviousWorn": {
-    "key": "3_A Ma Maniere WYWS",
-    "shoeId": 3,
-    "shoeName": "Air Jordan 3",
-    "shortName": "AJ3",
-    "colorway": "A Ma Maniere WYWS",
-    "date": "2026-08-05"
-  },
-  "precomputedUpNext": {
     "key": "3_Black Cement",
     "shoeId": 3,
     "shoeName": "Air Jordan 3",
     "shortName": "AJ3",
     "colorway": "Black Cement",
-    "date": "2025-10-31"
+    "date": "2026-08-14"
   },
-  "precomputedOnFeetToday": {
+  "precomputedPreviousWorn": {
     "key": "5_Grape",
     "shoeId": 5,
     "shoeName": "Air Jordan 5",
@@ -3135,5 +3123,21 @@
     "colorway": "Grape",
     "date": "2026-08-07"
   },
-  "builtAt": "2026-08-07T10:27:57.801576Z"
+  "precomputedUpNext": {
+    "key": "14_Chicago",
+    "shoeId": 14,
+    "shoeName": "Air Jordan 40",
+    "shortName": "AJ40",
+    "colorway": "Chicago",
+    "date": "2025-11-07"
+  },
+  "precomputedOnFeetToday": {
+    "key": "3_Black Cement",
+    "shoeId": 3,
+    "shoeName": "Air Jordan 3",
+    "shortName": "AJ3",
+    "colorway": "Black Cement",
+    "date": "2026-08-14"
+  },
+  "builtAt": "2026-08-14T10:15:49.895205Z"
 }
