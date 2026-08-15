@@ -124,6 +124,10 @@
     }
     /* Final card reveal - gentle fade-and-rise so the three-image card
        doesn't pop in jarringly after the flythrough sequence. */
+    @keyframes graveyardPulse {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 0.8; }
+    }
     @keyframes heroCardReveal {
       from { opacity: 0; transform: translateY(12px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -294,12 +298,13 @@
     silver: { label: "\u2B25 SILVER \u2B25", color: "#aaaaaa", glowRgba: "rgba(192,192,192,0.6)", ripLabel: "\u2B25 R.I.P. \u2B25" },
     bronze: { label: "\u2B25 BUYER'S REMORSE \u2B25", color: "#CD7F32", glowRgba: null, ripLabel: "\u2B25 R.I.P. \u2B25" },
     iron: { label: "\u{1F480} BEATER \u{1F480}", color: "#71797E", glowRgba: "rgba(180,80,20,0.8)", ripLabel: "\u{1F480} R.I.P. \u{1F480}" },
-    phantom: { label: "\u{1F47B} PHANTOM \u{1F47B}", color: "#8b7fc7", glowRgba: "rgba(139,127,199,0.6)", ripLabel: "\u{1F47B} R.I.P. \u{1F47B}" }
+    phantom: { label: "\u{1F47B} PHANTOM \u{1F47B}", color: "#8b7fc7", glowRgba: "rgba(139,127,199,0.6)", ripLabel: "\u{1F47B} R.I.P. \u{1F47B}" },
+    f: { label: "\u2B25 F TIER \u2B25", color: "#ff4444", glowRgba: null, ripLabel: "\u2B25 R.I.P. \u2B25" }
   };
   const TIER_OPTIONS = ["diamond", "platinum", "gold", "silver", "bronze", "iron"];
   const tierOf = (tierMeta, key) => tierMeta[key] || "silver";
   const tierHasCrossfade = (tier) => tier === "diamond" || tier === "platinum" || tier === "gold" || tier === "silver";
-  const tierExcludedFromRotation = (tier) => tier === "iron" || tier === "phantom";
+  const tierExcludedFromRotation = (tier) => tier === "iron" || tier === "phantom" || tier === "f";
   const tierAnniversaryColor = (tier) => tier === "diamond" ? "var(--tier-diamond)" : tier === "platinum" ? "var(--tier-platinum)" : tier === "gold" ? "var(--tier-gold)" : tier === "bronze" ? "#CD7F32" : tier === "iron" ? "#71797E" : tier === "phantom" ? "#8b7fc7" : "#aaa";
   const _preloadedAudio = { glow: null, break: null, whoosh: null };
   setTimeout(() => {
@@ -831,8 +836,6 @@
     const cardW = isMobilePublic ? "140px" : "200px";
     const imgW = isMobilePublic ? "108px" : "168px";
     const imgH = isMobilePublic ? "68px" : "105px";
-    const ghostFilter = "none";
-    const normalFilter = "none";
     const stoneW = isMobilePublic ? 180 : 260;
     const stoneH = isMobilePublic ? entry.story ? 280 : 220 : entry.story ? 400 : 320;
     const archR = stoneW / 2;
@@ -1695,6 +1698,10 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       }
       return Array.from({ length: 8 }, () => Array.from({ length: 5 }, () => ({ code: "", colorway: "" })));
     });
+    const [tierListOrder, setTierListOrder] = useState(() => ADMIN_MODE ? load("vault_tier_list_order", {}) : {});
+    const [tlDragKey, setTlDragKey] = useState(null);
+    const [tlDragOverTier, setTlDragOverTier] = useState(null);
+    const [tlDragOverIdx, setTlDragOverIdx] = useState(null);
     const [displayMode, setDisplayMode] = useState("my");
     const [editingCell, setEditingCell] = useState(null);
     const [editShoe, setEditShoe] = useState("");
@@ -1795,6 +1802,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       setWishlistOrder(publicData.wishlistOrder || []);
       setDisplayLayout(publicData.displayLayout || []);
       setDreamLayout(publicData.dreamLayout || []);
+      setTierListOrder(publicData.tierListOrder || {});
     }, [publicData]);
     useEffect(() => save("vault_inventory", inventory), [inventory]);
     useEffect(() => save("vault_wearlog_v3", wearLog), [wearLog]);
@@ -1808,6 +1816,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
     useEffect(() => save("vault_wishlist_order", wishlistOrder), [wishlistOrder]);
     useEffect(() => save("vault_display_layout", displayLayout), [displayLayout]);
     useEffect(() => save("vault_dream_layout", dreamLayout), [dreamLayout]);
+    useEffect(() => save("vault_tier_list_order", tierListOrder), [tierListOrder]);
     useEffect(() => {
       if (!ADMIN_MODE) return;
       const handler = (e) => {
@@ -2268,7 +2277,7 @@ Make sure server.py is running, then try again.`);
       setDreamLayout((l) => clearLayout(l));
     };
     const exportJSON = () => {
-      const data = { inventory, wearLog, images, colorwayMeta, tierMeta, glowMeta, graveyardMeta, colorways, colorwayOwned, wishlistOrder, displayLayout, dreamLayout, exportedAt: (/* @__PURE__ */ new Date()).toISOString() };
+      const data = { inventory, wearLog, images, colorwayMeta, tierMeta, glowMeta, graveyardMeta, colorways, colorwayOwned, wishlistOrder, displayLayout, dreamLayout, tierListOrder, exportedAt: (/* @__PURE__ */ new Date()).toISOString() };
       const json = JSON.stringify(data, null, 2);
       if (ADMIN_MODE) {
         fetch("/backup", {
@@ -2354,6 +2363,10 @@ Make sure server.py is running, then try again.`);
             setDreamLayout(data.dreamLayout);
             save("vault_dream_layout", data.dreamLayout);
           }
+          if (data.tierListOrder) {
+            setTierListOrder(data.tierListOrder);
+            save("vault_tier_list_order", data.tierListOrder);
+          }
           setImportMsg({ type: "success", text: "Backup restored successfully!" });
         } catch (e2) {
           setImportMsg({ type: "error", text: "Invalid backup file. Please use a Vault JSON backup." });
@@ -2412,7 +2425,7 @@ Make sure server.py is running, then try again.`);
           e.target.value = "";
         }
       }
-    )))), ADMIN_MODE && importMsg && /* @__PURE__ */ React.createElement("div", { style: { background: importMsg.type === "success" ? "#0a2a0a" : "#2a0a0a", borderBottom: `1px solid var(--vault-red)`, padding: "12px 32px", fontSize: "11px", letterSpacing: "2px", color: "var(--vault-red)", textAlign: "center" } }, importMsg.text), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", borderBottom: isMobilePublic ? `1px solid ${T.border}` : "none", background: T.navBg, alignItems: "center" } }, (ADMIN_MODE ? ["collection", "display", "wishlist", "graveyard", "history", "stats", "review", "about", "vr"] : ["collection", ...!isMobile ? ["display"] : [], "wishlist", ...Object.keys(graveyardMeta).length > 0 ? ["graveyard"] : [], "stats", ...(/* @__PURE__ */ new Date()).getMonth() === 0 ? ["review"] : [], "about"]).map((v) => /* @__PURE__ */ React.createElement("button", { key: v, onClick: () => v === "vr" ? window.open("vr/", "_blank") : setView(v), style: {
+    )))), ADMIN_MODE && importMsg && /* @__PURE__ */ React.createElement("div", { style: { background: importMsg.type === "success" ? "#0a2a0a" : "#2a0a0a", borderBottom: `1px solid var(--vault-red)`, padding: "12px 32px", fontSize: "11px", letterSpacing: "2px", color: "var(--vault-red)", textAlign: "center" } }, importMsg.text), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", borderBottom: isMobilePublic ? `1px solid ${T.border}` : "none", background: T.navBg, alignItems: "center" } }, (ADMIN_MODE ? ["collection", "display", "wishlist", "graveyard", "history", "stats", "tierlist", "review", "about", "vr"] : ["collection", ...!isMobile ? ["display"] : [], "wishlist", ...Object.keys(graveyardMeta).length > 0 ? ["graveyard"] : [], "stats", "tierlist", ...(/* @__PURE__ */ new Date()).getMonth() === 0 ? ["review"] : [], "about"]).map((v) => /* @__PURE__ */ React.createElement("button", { key: v, onClick: () => v === "vr" ? window.open("vr/", "_blank") : setView(v), style: {
       padding: isMobilePublic ? "12px 0" : "14px 28px",
       flex: isMobilePublic ? "1 1 0" : void 0,
       background: view === v ? "var(--vault-red)" : "transparent",
@@ -2426,7 +2439,7 @@ Make sure server.py is running, then try again.`);
       textAlign: isMobilePublic ? "center" : void 0,
       whiteSpace: "nowrap",
       animation: v === "wishlist" && wishlistHasSale && view !== "wishlist" ? "saleGlow 1.5s ease-in-out infinite" : "none"
-    } }, v === "stats" ? "top 10" : v === "review" ? `${(/* @__PURE__ */ new Date()).getFullYear() - 1} review` : v === "vr" ? "\u{1F97D} VR" : v)), !isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { marginLeft: "auto", display: "flex", alignItems: "center", gap: "20px", padding: "0 20px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "16px", alignItems: "center" } }, (ADMIN_MODE ? [["PAIRS", total], ["OPEN BOXES", empty], ["WISHLIST", wishlistCount]] : [["PAIRS", total], ["WISHLIST", wishlistCount]]).map(([label, val]) => /* @__PURE__ */ React.createElement("div", { key: label, style: { display: "flex", alignItems: "center", gap: "6px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "14px", fontWeight: "bold", color: "var(--vault-red)" } }, val), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "9px", letterSpacing: "2px", color: T.text5 } }, label)))), /* @__PURE__ */ React.createElement("button", { onClick: () => setDark((d) => !d), style: { background: "transparent", border: "none", color: T.text4, cursor: "pointer", fontSize: "16px", padding: "0", lineHeight: 1 }, title: dark ? "Switch to light mode" : "Switch to dark mode" }, dark ? "\u2600" : "\u263E"))), !isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { borderBottom: `1px solid ${T.border}` } }), isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", alignItems: "center", gap: "20px", padding: "8px 16px", background: T.navBg, borderBottom: `1px solid ${T.border}` } }, [["PAIRS", total], ["WISHLIST", wishlistCount]].map(([label, val]) => /* @__PURE__ */ React.createElement("div", { key: label, style: { display: "flex", alignItems: "center", gap: "5px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "12px", fontWeight: "bold", color: "var(--vault-red)" } }, val), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "8px", letterSpacing: "2px", color: T.text5 } }, label))), /* @__PURE__ */ React.createElement("button", { onClick: () => setDark((d) => !d), style: { background: "transparent", border: "none", color: T.text4, cursor: "pointer", fontSize: "14px", padding: "0", lineHeight: 1 }, title: dark ? "Switch to light mode" : "Switch to dark mode" }, dark ? "\u2600" : "\u263E")), /* @__PURE__ */ React.createElement("div", { style: { padding: isMobilePublic ? "16px" : "32px" } }, view === "collection" && /* @__PURE__ */ React.createElement("div", null, timeTravelDate && /* @__PURE__ */ React.createElement("div", { style: { background: dark ? "linear-gradient(90deg,#1a1a2a,#111122)" : "linear-gradient(90deg,#f0f8ff,#e8f4ff)", border: "1px solid var(--tier-diamond)", padding: "16px 24px", marginBottom: "24px", display: "flex", alignItems: "center", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "16px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px" } }, "\u23F3"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "4px", color: "var(--tier-diamond)", marginBottom: "4px" } }, "TIME MACHINE"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: isMobilePublic ? "13px" : "16px", fontWeight: "bold", color: T.text } }, "The Vault on ", formatDate(timeTravelDate)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "10px", color: T.text3, marginTop: "2px" } }, (() => {
+    } }, v === "stats" ? "top 10" : v === "tierlist" ? "tier list" : v === "review" ? `${(/* @__PURE__ */ new Date()).getFullYear() - 1} review` : v === "vr" ? "\u{1F97D} VR" : v)), !isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { marginLeft: "auto", display: "flex", alignItems: "center", gap: "20px", padding: "0 20px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "16px", alignItems: "center" } }, (ADMIN_MODE ? [["PAIRS", total], ["OPEN BOXES", empty], ["WISHLIST", wishlistCount]] : [["PAIRS", total], ["WISHLIST", wishlistCount]]).map(([label, val]) => /* @__PURE__ */ React.createElement("div", { key: label, style: { display: "flex", alignItems: "center", gap: "6px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "14px", fontWeight: "bold", color: "var(--vault-red)" } }, val), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "9px", letterSpacing: "2px", color: T.text5 } }, label)))), /* @__PURE__ */ React.createElement("button", { onClick: () => setDark((d) => !d), style: { background: "transparent", border: "none", color: T.text4, cursor: "pointer", fontSize: "16px", padding: "0", lineHeight: 1 }, title: dark ? "Switch to light mode" : "Switch to dark mode" }, dark ? "\u2600" : "\u263E"))), !isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { borderBottom: `1px solid ${T.border}` } }), isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", alignItems: "center", gap: "20px", padding: "8px 16px", background: T.navBg, borderBottom: `1px solid ${T.border}` } }, [["PAIRS", total], ["WISHLIST", wishlistCount]].map(([label, val]) => /* @__PURE__ */ React.createElement("div", { key: label, style: { display: "flex", alignItems: "center", gap: "5px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "12px", fontWeight: "bold", color: "var(--vault-red)" } }, val), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "8px", letterSpacing: "2px", color: T.text5 } }, label))), /* @__PURE__ */ React.createElement("button", { onClick: () => setDark((d) => !d), style: { background: "transparent", border: "none", color: T.text4, cursor: "pointer", fontSize: "14px", padding: "0", lineHeight: 1 }, title: dark ? "Switch to light mode" : "Switch to dark mode" }, dark ? "\u2600" : "\u263E")), /* @__PURE__ */ React.createElement("div", { style: { padding: isMobilePublic ? "16px" : "32px" } }, view === "collection" && /* @__PURE__ */ React.createElement("div", null, timeTravelDate && /* @__PURE__ */ React.createElement("div", { style: { background: dark ? "linear-gradient(90deg,#1a1a2a,#111122)" : "linear-gradient(90deg,#f0f8ff,#e8f4ff)", border: "1px solid var(--tier-diamond)", padding: "16px 24px", marginBottom: "24px", display: "flex", alignItems: "center", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "16px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px" } }, "\u23F3"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "4px", color: "var(--tier-diamond)", marginBottom: "4px" } }, "TIME MACHINE"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: isMobilePublic ? "13px" : "16px", fontWeight: "bold", color: T.text } }, "The Vault on ", formatDate(timeTravelDate)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "10px", color: T.text3, marginTop: "2px" } }, (() => {
       const allPD = [];
       inventory.forEach((shoe) => {
         (colorways[shoe.shortName] || []).forEach((cw) => {
@@ -3452,8 +3465,6 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
         if (!entry) return null;
         const metaKey = `${entry.shoe.id}_${entry.colorway}`;
         const podiumImg = images[`${metaKey}_hover`] || images[metaKey] || null;
-        const entryTier = tierOf(tierMeta, metaKey);
-        const entryTierInfo = TIERS[entryTier] || TIERS.silver;
         const color = podiumColors[pi];
         const h = isMobilePublic ? Math.round(podiumHeights[pi] * 0.7) : podiumHeights[pi];
         const sub = subtitle(entry);
@@ -3461,8 +3472,6 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
       })), podium.length > 0 && podium.length < 3 && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: isMobilePublic ? "1fr" : "1fr 1fr", gap: "12px", marginBottom: "24px" } }, podium.map((entry, i) => {
         const metaKey = `${entry.shoe.id}_${entry.colorway}`;
         const img = images[metaKey] || null;
-        const entryTier = tierOf(tierMeta, metaKey);
-        const entryTierInfo = TIERS[entryTier] || TIERS.silver;
         const color = i === 0 ? "var(--tier-gold)" : i === 1 ? "var(--tier-platinum)" : "#CD7F32";
         const sub = subtitle(entry);
         return /* @__PURE__ */ React.createElement("div", { key: metaKey, style: { background: T.cardBg, border: `1px solid ${color}`, padding: "16px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "16px", marginBottom: "10px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "24px", fontWeight: "bold", color, minWidth: "36px", textAlign: "center", flexShrink: 0 } }, i + 1), img ? /* @__PURE__ */ React.createElement("div", { style: { width: imgW, height: imgH, overflow: "hidden", background: dark ? "#222222" : "#ffffff", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("img", { src: img, alt: entry.colorway, style: { width: imgW, height: imgH, objectFit: "contain", display: "block" } })) : /* @__PURE__ */ React.createElement("div", { style: { width: imgW, height: imgH, background: T.bg3, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "11px", color: T.text6, letterSpacing: "2px" } }, "NO IMG"))), /* @__PURE__ */ React.createElement("div", { style: { paddingLeft: "52px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", fontWeight: "bold", color: T.text } }, entry.shoe.name, " - ", entry.colorway), sub && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "10px", color: T.text4, marginTop: "4px", letterSpacing: "1px" } }, sub)));
@@ -3673,6 +3682,197 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
       const SectionHeader = ({ label, color }) => /* @__PURE__ */ React.createElement("div", { style: { fontSize: "10px", letterSpacing: "4px", color, marginBottom: "16px", marginTop: "8px" } }, label);
       const renderSection = (items, label, color) => items.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: "32px" } }, /* @__PURE__ */ React.createElement(SectionHeader, { label, color }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: "12px" } }, items.map(([k, e]) => /* @__PURE__ */ React.createElement(GraveyardCard, { key: k, entryKey: k, entry: e, T, CT, dark, setColorways, setGraveyardMeta, setColorwayOwned, setTierMeta, isMobilePublic }))));
       return /* @__PURE__ */ React.createElement("div", null, entries.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "4px", color: T.text5 } }, "\u{1FAA6} THE GRAVEYARD IS EMPTY") : /* @__PURE__ */ React.createElement(React.Fragment, null, renderSection(diamonds, "\u2726 RETIRED DIAMOND \u2726", "var(--tier-diamond)"), renderSection(platinums, "\u2726 RETIRED PLATINUM \u2726", "var(--tier-platinum)"), renderSection(golds, "\u2726 RETIRED GOLD \u2726", "var(--tier-gold)"), renderSection(silvers, "\u2B25 RETIRED SILVER \u2B25", T.text4), renderSection(bronzes, "\u2B25 RETIRED BRONZE \u2B25", "#CD7F32"), renderSection(irons, "\u{1F480} RETIRED IRON \u{1F480}", "#71797E"), renderSection(phantoms, "\u{1F47B} PHANTOM \u{1F47B}", "#8b7fc7")));
+    })(), view === "tierlist" && (() => {
+      const TIER_LIST_TIERS = ["diamond", "platinum", "gold", "silver", "bronze", "f"];
+      const TIER_LIST_COLORS = {
+        diamond: { bg: "#ff7f7f", letter: "S" },
+        platinum: { bg: "#ffbf7f", letter: "A" },
+        gold: { bg: "#ffdf7f", letter: "B" },
+        silver: { bg: "#ffff7f", letter: "C" },
+        bronze: { bg: "#bfff7f", letter: "D" },
+        f: { bg: "#ff4444", letter: "F" }
+      };
+      const allKeys = Object.keys(tierMeta).filter((k) => {
+        const t = tierMeta[k];
+        if (t === "iron" || t === "phantom") return false;
+        if (wishlistOrder.includes(k)) return false;
+        if (colorwayOwned[k] === false) return false;
+        return true;
+      });
+      const getOrderedKeys = (tier) => {
+        const keysInTier = allKeys.filter((k) => (tierMeta[k] || "silver") === tier);
+        const savedOrder = tierListOrder[tier] || [];
+        const ordered = [];
+        savedOrder.forEach((k) => {
+          if (keysInTier.includes(k)) ordered.push(k);
+        });
+        keysInTier.forEach((k) => {
+          if (!ordered.includes(k)) ordered.push(k);
+        });
+        return ordered;
+      };
+      const getName = (key) => {
+        const uscore = key.indexOf("_");
+        const id = uscore > -1 ? key.substring(0, uscore) : key;
+        const colorway = uscore > -1 ? key.substring(uscore + 1) : "";
+        const shoe = inventory.find((s) => String(s.id) === id);
+        return { name: shoe ? shoe.name : id, colorway };
+      };
+      const dragKey = tlDragKey, setDragKey = setTlDragKey;
+      const dragOverTier = tlDragOverTier, setDragOverTier = setTlDragOverTier;
+      const dragOverIdx = tlDragOverIdx, setDragOverIdx = setTlDragOverIdx;
+      const handleDragStart = (e, key) => {
+        if (!ADMIN_MODE) return;
+        setDragKey(key);
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", key);
+      };
+      const handleDragOver = (e, tier, idx) => {
+        if (!ADMIN_MODE) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        setDragOverTier(tier);
+        setDragOverIdx(idx);
+      };
+      const handleDragOverRow = (e, tier) => {
+        if (!ADMIN_MODE) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        setDragOverTier(tier);
+        const keys = getOrderedKeys(tier);
+        setDragOverIdx(keys.length);
+      };
+      const handleDrop = (e, targetTier, targetIdx) => {
+        if (!ADMIN_MODE || !dragKey) return;
+        e.preventDefault();
+        const sourceTier = tierMeta[dragKey];
+        const isCrossTier = sourceTier !== targetTier;
+        if (isCrossTier) {
+          setTierMeta((prev) => ({ ...prev, [dragKey]: targetTier }));
+        }
+        setTierListOrder((prev) => {
+          const next = { ...prev };
+          const sourceOrder = getOrderedKeys(sourceTier).filter((k) => k !== dragKey);
+          next[sourceTier] = sourceOrder;
+          const targetOrder = isCrossTier ? getOrderedKeys(targetTier) : getOrderedKeys(targetTier).filter((k) => k !== dragKey);
+          const insertAt = Math.min(targetIdx, targetOrder.length);
+          targetOrder.splice(insertAt, 0, dragKey);
+          next[targetTier] = targetOrder;
+          return next;
+        });
+        setDragKey(null);
+        setDragOverTier(null);
+        setDragOverIdx(null);
+      };
+      const handleDragEnd = () => {
+        setDragKey(null);
+        setDragOverTier(null);
+        setDragOverIdx(null);
+      };
+      const cardW = isMobilePublic ? 80 : 100;
+      const cardImgH = isMobilePublic ? 50 : 62;
+      return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "4px", color: "var(--vault-red)", marginBottom: "24px" } }, "TIER LIST"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: "2px" } }, TIER_LIST_TIERS.map((tier) => {
+        const tc = TIER_LIST_COLORS[tier];
+        const keys = getOrderedKeys(tier);
+        const tierInfo = TIERS[tier];
+        return /* @__PURE__ */ React.createElement("div", { key: tier, style: { display: "flex", minHeight: "90px" } }, /* @__PURE__ */ React.createElement("div", { style: {
+          width: isMobilePublic ? "60px" : "80px",
+          flexShrink: 0,
+          background: tc.bg,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRight: `2px solid ${dark ? "#333" : "#555"}`
+        } }, /* @__PURE__ */ React.createElement("div", { style: {
+          fontSize: isMobilePublic ? "22px" : "28px",
+          fontWeight: "bold",
+          color: "#111",
+          textAlign: "center",
+          fontFamily: "'Aptos','Segoe UI',sans-serif"
+        } }, tc.letter)), /* @__PURE__ */ React.createElement(
+          "div",
+          {
+            style: {
+              flex: 1,
+              background: dark ? "#111" : "#222",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "flex-start",
+              alignContent: "flex-start",
+              padding: "6px",
+              gap: "4px",
+              minHeight: "90px",
+              position: "relative",
+              outline: dragOverTier === tier && dragKey && tierMeta[dragKey] !== tier ? `2px dashed ${tc.bg}` : "none"
+            },
+            onDragOver: (e) => handleDragOverRow(e, tier),
+            onDrop: (e) => handleDrop(e, tier, getOrderedKeys(tier).length)
+          },
+          keys.length === 0 && !dragKey && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#555", alignSelf: "center", padding: "0 8px" } }, "EMPTY"),
+          keys.map((key, idx) => {
+            const { name, colorway } = getName(key);
+            const img = images[key] || null;
+            const isGraveyard = key in graveyardMeta;
+            const isDragging = dragKey === key;
+            const showDropBefore = dragOverTier === tier && dragOverIdx === idx && dragKey && dragKey !== key;
+            return /* @__PURE__ */ React.createElement(React.Fragment, { key }, showDropBefore && /* @__PURE__ */ React.createElement("div", { style: { width: "3px", alignSelf: "stretch", background: "var(--vault-red)", borderRadius: "2px", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
+              "div",
+              {
+                draggable: ADMIN_MODE,
+                onDragStart: (e) => handleDragStart(e, key),
+                onDragEnd: handleDragEnd,
+                onDragOver: (e) => handleDragOver(e, tier, idx),
+                onDrop: (e) => {
+                  e.stopPropagation();
+                  handleDrop(e, tier, idx);
+                },
+                style: {
+                  width: cardW + "px",
+                  cursor: ADMIN_MODE ? "grab" : "default",
+                  opacity: isDragging ? 0.3 : 1,
+                  transition: "opacity 0.15s",
+                  textAlign: "center"
+                }
+              },
+              /* @__PURE__ */ React.createElement("div", { style: {
+                width: cardW + "px",
+                height: cardImgH + "px",
+                background: dark ? "#1a1a1a" : "#2a2a2a",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+                animation: isGraveyard ? "graveyardPulse 2.5s ease-in-out infinite" : "none"
+              } }, img ? /* @__PURE__ */ React.createElement("img", { src: img, alt: colorway, style: {
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+                filter: isGraveyard ? "grayscale(0.5)" : "none"
+              } }) : /* @__PURE__ */ React.createElement("div", { style: { fontSize: "8px", color: "#555", letterSpacing: "1px" } }, "NO IMG")),
+              /* @__PURE__ */ React.createElement("div", { style: {
+                fontSize: isMobilePublic ? "7px" : "8px",
+                letterSpacing: "1px",
+                color: isGraveyard ? "#666" : dark ? "#ccc" : "#ddd",
+                marginTop: "3px",
+                lineHeight: "1.3",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+              } }, name),
+              /* @__PURE__ */ React.createElement("div", { style: {
+                fontSize: isMobilePublic ? "6px" : "7px",
+                letterSpacing: "1px",
+                color: isGraveyard ? "#555" : dark ? "#888" : "#999",
+                lineHeight: "1.3",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+              } }, colorway, isGraveyard ? " \u{1FAA6}" : "")
+            ));
+          }),
+          dragOverTier === tier && dragOverIdx === keys.length && dragKey && /* @__PURE__ */ React.createElement("div", { style: { width: "3px", alignSelf: "stretch", background: "var(--vault-red)", borderRadius: "2px", flexShrink: 0 } })
+        ));
+      })));
     })(), storySlideshow && ReactDOM.createPortal(
       (() => {
         const { index, entries } = storySlideshow;
