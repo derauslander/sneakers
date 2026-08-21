@@ -298,13 +298,12 @@
     silver: { label: "\u2B25 SILVER \u2B25", color: "#aaaaaa", glowRgba: "rgba(192,192,192,0.6)", ripLabel: "\u2B25 R.I.P. \u2B25" },
     bronze: { label: "\u2B25 BUYER'S REMORSE \u2B25", color: "#CD7F32", glowRgba: null, ripLabel: "\u2B25 R.I.P. \u2B25" },
     iron: { label: "\u{1F480} BEATER \u{1F480}", color: "#71797E", glowRgba: "rgba(180,80,20,0.8)", ripLabel: "\u{1F480} R.I.P. \u{1F480}" },
-    phantom: { label: "\u{1F47B} PHANTOM \u{1F47B}", color: "#8b7fc7", glowRgba: "rgba(139,127,199,0.6)", ripLabel: "\u{1F47B} R.I.P. \u{1F47B}" },
-    f: { label: "\u2B25 F TIER \u2B25", color: "#ff4444", glowRgba: null, ripLabel: "\u2B25 R.I.P. \u2B25" }
+    phantom: { label: "\u{1F47B} PHANTOM \u{1F47B}", color: "#8b7fc7", glowRgba: "rgba(139,127,199,0.6)", ripLabel: "\u{1F47B} R.I.P. \u{1F47B}" }
   };
   const TIER_OPTIONS = ["diamond", "platinum", "gold", "silver", "bronze", "iron"];
   const tierOf = (tierMeta, key) => tierMeta[key] || "silver";
   const tierHasCrossfade = (tier) => tier === "diamond" || tier === "platinum" || tier === "gold" || tier === "silver";
-  const tierExcludedFromRotation = (tier) => tier === "iron" || tier === "phantom" || tier === "f";
+  const tierExcludedFromRotation = (tier) => tier === "iron" || tier === "phantom";
   const tierAnniversaryColor = (tier) => tier === "diamond" ? "var(--tier-diamond)" : tier === "platinum" ? "var(--tier-platinum)" : tier === "gold" ? "var(--tier-gold)" : tier === "bronze" ? "#CD7F32" : tier === "iron" ? "#71797E" : tier === "phantom" ? "#8b7fc7" : "#aaa";
   const _preloadedAudio = { glow: null, break: null, whoosh: null };
   setTimeout(() => {
@@ -3670,15 +3669,16 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
       const renderSection = (items, label, color) => items.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: "32px" } }, /* @__PURE__ */ React.createElement(SectionHeader, { label, color }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: "12px" } }, items.map(([k, e]) => /* @__PURE__ */ React.createElement(GraveyardCard, { key: k, entryKey: k, entry: e, T, CT, dark, setColorways, setGraveyardMeta, setColorwayOwned, setTierMeta, isMobilePublic }))));
       return /* @__PURE__ */ React.createElement("div", null, entries.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "4px", color: T.text5 } }, "\u{1FAA6} THE GRAVEYARD IS EMPTY") : /* @__PURE__ */ React.createElement(React.Fragment, null, renderSection(diamonds, "\u2726 RETIRED DIAMOND \u2726", "var(--tier-diamond)"), renderSection(platinums, "\u2726 RETIRED PLATINUM \u2726", "var(--tier-platinum)"), renderSection(golds, "\u2726 RETIRED GOLD \u2726", "var(--tier-gold)"), renderSection(silvers, "\u2B25 RETIRED SILVER \u2B25", T.text4), renderSection(bronzes, "\u2B25 RETIRED BRONZE \u2B25", "#CD7F32"), renderSection(irons, "\u{1F480} RETIRED IRON \u{1F480}", "#71797E"), renderSection(phantoms, "\u{1F47B} PHANTOM \u{1F47B}", "#8b7fc7")));
     })(), view === "tierlist" && (() => {
-      const TIER_LIST_TIERS = ["diamond", "platinum", "gold", "silver", "bronze", "f"];
-      const TIER_LIST_COLORS = {
-        diamond: { bg: "#ff7f7f", letter: "S" },
-        platinum: { bg: "#ffbf7f", letter: "A" },
-        gold: { bg: "#ffdf7f", letter: "B" },
-        silver: { bg: "#ffff7f", letter: "C" },
-        bronze: { bg: "#bfff7f", letter: "D" },
+      const TL_TIERS = ["s", "a", "b", "c", "d", "f"];
+      const TL_COLORS = {
+        s: { bg: "#ff7f7f", letter: "S" },
+        a: { bg: "#ffbf7f", letter: "A" },
+        b: { bg: "#ffdf7f", letter: "B" },
+        c: { bg: "#ffff7f", letter: "C" },
+        d: { bg: "#bfff7f", letter: "D" },
         f: { bg: "#ff4444", letter: "F" }
       };
+      const TIER_TO_LETTER = { diamond: "s", platinum: "a", gold: "b", silver: "c", bronze: "d" };
       const allKeys = Object.keys(tierMeta).filter((k) => {
         const t = tierMeta[k];
         if (t === "iron" || t === "phantom") return false;
@@ -3686,17 +3686,12 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
         if (colorwayOwned[k] === false) return false;
         return true;
       });
-      const getOrderedKeys = (tier) => {
-        const keysInTier = allKeys.filter((k) => (tierMeta[k] || "silver") === tier);
-        const savedOrder = tierListOrder[tier] || [];
-        const ordered = [];
-        savedOrder.forEach((k) => {
-          if (keysInTier.includes(k)) ordered.push(k);
-        });
-        keysInTier.forEach((k) => {
-          if (!ordered.includes(k)) ordered.push(k);
-        });
-        return ordered;
+      const placedKeys = /* @__PURE__ */ new Set();
+      TL_TIERS.forEach((letter) => (tierListOrder[letter] || []).forEach((k) => placedKeys.add(k)));
+      const getOrderedKeys = (letter) => {
+        const saved = (tierListOrder[letter] || []).filter((k) => allKeys.includes(k));
+        const unplaced = allKeys.filter((k) => !placedKeys.has(k) && (TIER_TO_LETTER[tierMeta[k]] || "c") === letter);
+        return [...saved, ...unplaced];
       };
       const getName = (key) => {
         const uscore = key.indexOf("_");
@@ -3708,43 +3703,43 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
       const dragKey = tlDragKey, setDragKey = setTlDragKey;
       const dragOverTier = tlDragOverTier, setDragOverTier = setTlDragOverTier;
       const dragOverIdx = tlDragOverIdx, setDragOverIdx = setTlDragOverIdx;
+      const findKeyLetter = (key) => {
+        for (const letter of TL_TIERS) {
+          if (getOrderedKeys(letter).includes(key)) return letter;
+        }
+        return TIER_TO_LETTER[tierMeta[key]] || "c";
+      };
       const handleDragStart = (e, key) => {
         if (!ADMIN_MODE) return;
         setDragKey(key);
         e.dataTransfer.effectAllowed = "move";
         e.dataTransfer.setData("text/plain", key);
       };
-      const handleDragOver = (e, tier, idx) => {
+      const handleDragOver = (e, letter, idx) => {
         if (!ADMIN_MODE) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
-        setDragOverTier(tier);
+        setDragOverTier(letter);
         setDragOverIdx(idx);
       };
-      const handleDragOverRow = (e, tier) => {
+      const handleDragOverRow = (e, letter) => {
         if (!ADMIN_MODE) return;
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
-        setDragOverTier(tier);
-        const keys = getOrderedKeys(tier);
-        setDragOverIdx(keys.length);
+        setDragOverTier(letter);
+        setDragOverIdx(getOrderedKeys(letter).length);
       };
-      const handleDrop = (e, targetTier, targetIdx) => {
+      const handleDrop = (e, targetLetter, targetIdx) => {
         if (!ADMIN_MODE || !dragKey) return;
         e.preventDefault();
-        const sourceTier = tierMeta[dragKey];
-        const isCrossTier = sourceTier !== targetTier;
-        if (isCrossTier) {
-          setTierMeta((prev) => ({ ...prev, [dragKey]: targetTier }));
-        }
+        const sourceLetter = findKeyLetter(dragKey);
         setTierListOrder((prev) => {
           const next = { ...prev };
-          const sourceOrder = getOrderedKeys(sourceTier).filter((k) => k !== dragKey);
-          next[sourceTier] = sourceOrder;
-          const targetOrder = isCrossTier ? getOrderedKeys(targetTier) : getOrderedKeys(targetTier).filter((k) => k !== dragKey);
+          next[sourceLetter] = getOrderedKeys(sourceLetter).filter((k) => k !== dragKey);
+          const targetOrder = sourceLetter === targetLetter ? getOrderedKeys(targetLetter).filter((k) => k !== dragKey) : [...getOrderedKeys(targetLetter)];
           const insertAt = Math.min(targetIdx, targetOrder.length);
           targetOrder.splice(insertAt, 0, dragKey);
-          next[targetTier] = targetOrder;
+          next[targetLetter] = targetOrder;
           return next;
         });
         setDragKey(null);
@@ -3758,11 +3753,10 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
       };
       const cardW = isMobilePublic ? 80 : 100;
       const cardImgH = isMobilePublic ? 50 : 62;
-      return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "4px", color: "var(--vault-red)", marginBottom: "24px" } }, "TIER LIST"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: "2px" } }, TIER_LIST_TIERS.map((tier) => {
-        const tc = TIER_LIST_COLORS[tier];
-        const keys = getOrderedKeys(tier);
-        const tierInfo = TIERS[tier];
-        return /* @__PURE__ */ React.createElement("div", { key: tier, style: { display: "flex", minHeight: "90px" } }, /* @__PURE__ */ React.createElement("div", { style: {
+      return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "4px", color: "var(--vault-red)", marginBottom: "24px" } }, "TIER LIST"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: "2px" } }, TL_TIERS.map((letter) => {
+        const tc = TL_COLORS[letter];
+        const keys = getOrderedKeys(letter);
+        return /* @__PURE__ */ React.createElement("div", { key: letter, style: { display: "flex", minHeight: "90px" } }, /* @__PURE__ */ React.createElement("div", { style: {
           width: isMobilePublic ? "60px" : "80px",
           flexShrink: 0,
           background: tc.bg,
@@ -3790,10 +3784,10 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
               gap: "4px",
               minHeight: "90px",
               position: "relative",
-              outline: dragOverTier === tier && dragKey && tierMeta[dragKey] !== tier ? `2px dashed ${tc.bg}` : "none"
+              outline: dragOverTier === letter && dragKey && findKeyLetter(dragKey) !== letter ? `2px dashed ${tc.bg}` : "none"
             },
-            onDragOver: (e) => handleDragOverRow(e, tier),
-            onDrop: (e) => handleDrop(e, tier, getOrderedKeys(tier).length)
+            onDragOver: (e) => handleDragOverRow(e, letter),
+            onDrop: (e) => handleDrop(e, letter, getOrderedKeys(letter).length)
           },
           keys.length === 0 && !dragKey && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#555", alignSelf: "center", padding: "0 8px" } }, "EMPTY"),
           keys.map((key, idx) => {
@@ -3801,17 +3795,17 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
             const img = images[key] || null;
             const isGraveyard = key in graveyardMeta;
             const isDragging = dragKey === key;
-            const showDropBefore = dragOverTier === tier && dragOverIdx === idx && dragKey && dragKey !== key;
+            const showDropBefore = dragOverTier === letter && dragOverIdx === idx && dragKey && dragKey !== key;
             return /* @__PURE__ */ React.createElement(React.Fragment, { key }, showDropBefore && /* @__PURE__ */ React.createElement("div", { style: { width: "3px", alignSelf: "stretch", background: "var(--vault-red)", borderRadius: "2px", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
               "div",
               {
                 draggable: ADMIN_MODE,
                 onDragStart: (e) => handleDragStart(e, key),
                 onDragEnd: handleDragEnd,
-                onDragOver: (e) => handleDragOver(e, tier, idx),
+                onDragOver: (e) => handleDragOver(e, letter, idx),
                 onDrop: (e) => {
                   e.stopPropagation();
-                  handleDrop(e, tier, idx);
+                  handleDrop(e, letter, idx);
                 },
                 style: {
                   width: cardW + "px",
@@ -3857,7 +3851,7 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
               } }, colorway, isGraveyard ? " \u{1FAA6}" : "")
             ));
           }),
-          dragOverTier === tier && dragOverIdx === keys.length && dragKey && /* @__PURE__ */ React.createElement("div", { style: { width: "3px", alignSelf: "stretch", background: "var(--vault-red)", borderRadius: "2px", flexShrink: 0 } })
+          dragOverTier === letter && dragOverIdx === keys.length && dragKey && /* @__PURE__ */ React.createElement("div", { style: { width: "3px", alignSelf: "stretch", background: "var(--vault-red)", borderRadius: "2px", flexShrink: 0 } })
         ));
       })));
     })(), storySlideshow && ReactDOM.createPortal(

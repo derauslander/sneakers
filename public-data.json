@@ -392,6 +392,10 @@
       {
         "date": "2026-07-16",
         "colorway": "Military Blue"
+      },
+      {
+        "date": "2026-08-21",
+        "colorway": "A Ma Maniere WYWS"
       }
     ],
     "5": [
@@ -2083,7 +2087,7 @@
     "4_Military Blue": "platinum",
     "4_What the 4": "gold",
     "4_A Ma Maniere": "silver",
-    "4_A Ma Maniere WYWS": "f",
+    "4_A Ma Maniere WYWS": "bronze",
     "4_Cave Stone": "silver",
     "4_Red Cement": "iron",
     "5_Black Tongue": "platinum",
@@ -2103,7 +2107,7 @@
     "14_Chicago": "gold",
     "15_Hot Lava": "diamond",
     "15_Stone Blue": "gold",
-    "15_Pixel Court": "f",
+    "15_Pixel Court": "bronze",
     "16_Volt": "diamond",
     "17_Air Max Day (Royal Volt)": "gold",
     "18_Space Jam": "gold",
@@ -2696,49 +2700,48 @@
     ]
   ],
   "tierListOrder": {
-    "platinum": [
+    "d": [
+      "3_Rare Air",
+      "3_A Ma Maniere WYWS",
+      "6_Reverse Infrared"
+    ],
+    "f": [
+      "4_A Ma Maniere WYWS",
+      "15_Pixel Court"
+    ],
+    "c": [
+      "4_A Ma Maniere",
+      "5_A Ma Maniere Dawn",
+      "3_A Ma Maniere",
+      "4_Cave Stone",
+      "13_Flint Grey",
+      "7_Cardinal"
+    ],
+    "a": [
       "5_Black Tongue",
-      "5_Black Metallic Reimagined",
-      "1774096319133_Billy Hoyle",
       "21_Purple",
-      "3_White Cement Reimagined",
-      "3_Black Cement",
-      "4_White Cement",
+      "1774096319133_Billy Hoyle",
       "8_Playoffs",
       "10_Steel",
+      "4_White Cement",
+      "3_White Cement Reimagined",
+      "5_Black Metallic Reimagined",
+      "3_Black Cement",
       "5_Fire Red",
       "4_Military Blue",
       "5_Grape",
       "6_Infrared"
     ],
-    "gold": [
+    "b": [
       "14_Chicago",
       "1_Royal Reimagined",
+      "11_Flu Game",
       "2_Black Cement",
       "4_What the 4",
-      "11_Flu Game",
       "9_Olive",
       "12_Black Flint",
-      "17_Air Max Day (Royal Volt)",
-      "15_Stone Blue"
-    ],
-    "silver": [
-      "4_A Ma Maniere",
-      "3_A Ma Maniere",
-      "5_A Ma Maniere Dawn",
-      "4_Cave Stone",
-      "7_Cardinal",
-      "13_Flint Grey"
-    ],
-    "bronze": [
-      "3_A Ma Maniere WYWS",
-      "3_Rare Air",
-      "6_Reverse Infrared",
-      "4_White Thunder"
-    ],
-    "f": [
-      "15_Pixel Court",
-      "4_A Ma Maniere WYWS"
+      "15_Stone Blue",
+      "17_Air Max Day (Royal Volt)"
     ]
   },
   "precomputedRankings": {
@@ -2987,6 +2990,15 @@
         "firstWorn": "2025-07-24"
       },
       {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "A Ma Maniere WYWS",
+        "daysOnIce": 169,
+        "purchaseDate": "2024-09-26",
+        "firstWorn": "2025-03-14"
+      },
+      {
         "shoeId": 5,
         "shoeName": "Air Jordan 5",
         "shortName": "AJ5",
@@ -3039,15 +3051,6 @@
         "daysOnIce": 72,
         "purchaseDate": "2025-06-04",
         "firstWorn": "2025-08-15"
-      },
-      {
-        "shoeId": 17,
-        "shoeName": "Air Max 86",
-        "shortName": "AM86",
-        "colorway": "Air Max Day (Royal Volt)",
-        "daysOnIce": 65,
-        "purchaseDate": "2024-03-26",
-        "firstWorn": "2024-05-30"
       }
     ],
     "gapRanked": [
@@ -3154,20 +3157,20 @@
     ]
   },
   "precomputedLastWorn": {
+    "key": "4_A Ma Maniere WYWS",
+    "shoeId": 4,
+    "shoeName": "Air Jordan 4",
+    "shortName": "AJ4",
+    "colorway": "A Ma Maniere WYWS",
+    "date": "2026-08-21"
+  },
+  "precomputedPreviousWorn": {
     "key": "3_Black Cement",
     "shoeId": 3,
     "shoeName": "Air Jordan 3",
     "shortName": "AJ3",
     "colorway": "Black Cement",
     "date": "2026-08-14"
-  },
-  "precomputedPreviousWorn": {
-    "key": "5_Grape",
-    "shoeId": 5,
-    "shoeName": "Air Jordan 5",
-    "shortName": "AJ5",
-    "colorway": "Grape",
-    "date": "2026-08-07"
   },
   "precomputedUpNext": {
     "key": "14_Chicago",
@@ -3177,6 +3180,13 @@
     "colorway": "Chicago",
     "date": "2025-11-07"
   },
-  "precomputedOnFeetToday": null,
-  "builtAt": "2026-08-16T13:04:47.622007Z"
+  "precomputedOnFeetToday": {
+    "key": "4_A Ma Maniere WYWS",
+    "shoeId": 4,
+    "shoeName": "Air Jordan 4",
+    "shortName": "AJ4",
+    "colorway": "A Ma Maniere WYWS",
+    "date": "2026-08-21"
+  },
+  "builtAt": "2026-08-21T10:17:29.348889Z"
 }
