@@ -9,3 +9,4 @@ vault-data.json
 backups/
 _tmp_*
 esbuild.exe
+spin-checker.html
