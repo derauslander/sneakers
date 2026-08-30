@@ -3184,13 +3184,6 @@
     "colorway": "A Ma Maniere",
     "date": "2025-11-14"
   },
-  "precomputedOnFeetToday": {
-    "key": "14_Chicago",
-    "shoeId": 14,
-    "shoeName": "Air Jordan 40",
-    "shortName": "AJ40",
-    "colorway": "Chicago",
-    "date": "2026-08-28"
-  },
-  "builtAt": "2026-08-28T10:36:21.201786Z"
+  "precomputedOnFeetToday": null,
+  "builtAt": "2026-08-30T13:06:40.236696Z"
 }
