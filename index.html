@@ -73,6 +73,14 @@
       from { transform: translateY(100%); }
       to   { transform: translateY(0); }
     }
+    @keyframes panelReveal {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes panelHide {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(-8px); }
+    }
     @keyframes storyFadeIn {
       from { opacity: 0; transform: translateY(16px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -158,6 +166,9 @@
   <script>
 (() => {
   const ADMIN_MODE = false;
+  const GRID_CARD_W = 152;
+  const GRID_GAP = 12;
+  const GRID_MAX_COLS = 10;
   const { useState, useEffect, useRef } = React;
   const LIGHT = {
     bg: "#faf8f5",
@@ -329,7 +340,7 @@
     const secs = Math.floor(diff % 6e4 / 1e3);
     return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "3px", color: "#e6b800", marginBottom: "2px" } }, "DROPS IN"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "6px", alignItems: "baseline" } }, days > 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "16px", fontWeight: "bold", color: "#e6b800", fontVariantNumeric: "tabular-nums" } }, days), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "7px", letterSpacing: "1px", color: "#999" } }, "DAY", days !== 1 ? "S" : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "16px", fontWeight: "bold", color: "#e6b800", fontVariantNumeric: "tabular-nums" } }, String(hrs).padStart(2, "0")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "7px", letterSpacing: "1px", color: "#999" } }, "HR")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "16px", fontWeight: "bold", color: "#e6b800", fontVariantNumeric: "tabular-nums" } }, String(mins).padStart(2, "0")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "7px", letterSpacing: "1px", color: "#999" } }, "MIN")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "16px", fontWeight: "bold", color: "#e6b800", fontVariantNumeric: "tabular-nums" } }, String(secs).padStart(2, "0")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "7px", letterSpacing: "1px", color: "#999" } }, "SEC"))));
   }
-  function ImageSlot({ img, hoverImg, img3, label, accent, bg, onUpload, onClear, width = 96, height = 60, wearDates = [], tier = "silver", purchaseDate = null, size = null, ogYear = null, story = null, isOnIce = false, dark = false, shoeName = null, isMobilePublic = false, isNewPickup = false, onfootImg = null, retailer = null, releaseYear = null, comfortRating = null, purchasePrice = null }) {
+  function ImageSlot({ img, hoverImg, img3, label, accent, bg, onUpload, onClear, width = 96, height = 60, wearDates = [], tier = "silver", purchaseDate = null, size = null, ogYear = null, story = null, isOnIce = false, dark = false, shoeName = null, isMobilePublic = false, isNewPickup = false, onfootImg = null, retailer = null, releaseYear = null, comfortRating = null, purchasePrice = null, hideLabel = false }) {
     const fileRef = useRef();
     const [hovered, setHovered] = useState(false);
     const [showHover, setShowHover] = useState(false);
@@ -592,7 +603,7 @@
       height: "180px",
       objectFit: "contain",
       filter: "drop-shadow(0 0 12px rgba(184,240,255,0.6))"
-    } })))), hasTriptych && /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", right: "calc(50% + 20vw)", top: "50%", transform: triptychVisible ? "translateY(-50%)" : "translateY(-50%) translateX(-80px)", opacity: triptychVisible ? 1 : 0, transition: "opacity 3s ease-out 0.05s, transform 3s ease-out 0.05s", pointerEvents: "none" } }, /* @__PURE__ */ React.createElement("img", { src: img, alt: label, style: { maxWidth: "25vw", maxHeight: "35vh", objectFit: "contain", animation: triptychVisible ? "prismaticGlow 2.5s ease-in-out -1s infinite" : "none", display: "block" } })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("img", { src: img, alt: label, style: { maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight: "40vh", objectFit: "contain", filter: mainGlowFilter, display: "block", opacity: tier === "diamond" && (diamondShatter === "hidden" || diamondShatter === "visible") ? 0 : shouldCrossfade && (showHover || showImg3) ? 0 : 1, transition: `opacity ${crossfadeDuration} ease-in-out, filter 3s ease-in-out` } }), hasTripleFade && img3 && /* @__PURE__ */ React.createElement("img", { src: img3, alt: label, style: { position: "absolute", top: 0, left: "50%", transform: showImg3 ? crossfadeTransformEnd : crossfadeTransformStart, maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight: "40vh", objectFit: "contain", filter: crossfadeGlow, opacity: showImg3 && !showHover ? 1 : 0, transition: `opacity ${crossfadeDuration} ease-in-out, transform ${crossfadeDuration} ease-in-out` } }), shouldCrossfade && /* @__PURE__ */ React.createElement("img", { src: hoverImg, alt: label, style: { position: "absolute", top: 0, left: "50%", transform: showHover ? crossfadeTransformEnd : crossfadeTransformStart, maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight: "40vh", objectFit: "contain", filter: tier !== "diamond" ? crossfadeGlow : void 0, animation: tier === "diamond" && showHover ? "diamondReveal 2s ease-out forwards, prismaticGlow 2.5s ease-in-out 2s infinite" : "none", opacity: showHover ? 1 : 0, transition: `opacity ${crossfadeDuration} ease-in-out, transform ${crossfadeDuration} ease-in-out` } })), hasTriptych && /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: "calc(50% + 20vw)", top: "50%", transform: triptychVisible ? "translateY(-50%)" : "translateY(-50%) translateX(80px)", opacity: triptychVisible ? 1 : 0, transition: "opacity 3s ease-out 0.05s, transform 3s ease-out 0.05s", pointerEvents: "none" } }, /* @__PURE__ */ React.createElement("img", { src: img3, alt: label, style: { maxWidth: "25vw", maxHeight: "35vh", objectFit: "contain", animation: triptychVisible ? "prismaticGlow 2.5s ease-in-out -1s infinite" : "none", display: "block" } }))), /* @__PURE__ */ React.createElement("div", { style: { height: "120px", width: "100%", textAlign: "center", position: "relative" } }, /* @__PURE__ */ React.createElement("div", null, tierInfo.label && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "6px", color: tierInfo.color, opacity: tierReveal ? 1 : 0, transition: "opacity 3s ease-in-out" } }, tierInfo.label), isOnIce && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "6px", color: "#64c8ff", marginTop: "6px", opacity: iceGlow ? 1 : 0, transition: "opacity 3s ease-in-out" } }, "\u2744\uFE0F ON ICE \u2744\uFE0F"), anniversaryGlow && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "6px", color: tierAnniversaryColor(tier), marginTop: "6px", opacity: showHover ? 1 : 0, transition: "opacity 3s ease-in-out" } }, "\u2726 ANNIVERSARY \u2726"), isNewPickup && tier === "silver" && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "6px", color: "var(--tier-gold)", marginTop: "6px" } }, "\u2726 NEW PICKUP \u2726"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: tierInfo.label || isOnIce || anniversaryGlow || isNewPickup ? "6px" : "0", fontSize: "13px", letterSpacing: "3px", color: nameColor, transition: "color 3s ease-in-out" } }, shoeName ? `${shoeName} - ${label}` : label)), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 0, right: 0, opacity: showStory ? 0 : 1, transition: "opacity 1s ease-in-out" } }, ogYear && /* @__PURE__ */ React.createElement("div", { style: { marginTop: "4px", fontSize: "10px", color: "#fff", letterSpacing: "1px" } }, "Originally Owned in ", ogYear), purchaseDate && /* @__PURE__ */ React.createElement("div", { style: { marginTop: "8px", fontSize: "10px", color: dark ? "#777" : "#aaa", letterSpacing: "1px" } }, "Purchase Date: ", formatDate(purchaseDate)), size && /* @__PURE__ */ React.createElement("div", { style: { marginTop: "4px", fontSize: "10px", color: dark ? "#777" : "#aaa", letterSpacing: "1px" } }, "Size: ", size), sortedDates.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: "4px", fontSize: "10px", color: dark ? "#777" : "#aaa", letterSpacing: "1px" } }, "Last Worn: ", formatDate(sortedDates[0])), isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { marginTop: "16px", fontSize: "10px", color: "#666", letterSpacing: "2px" } }, "TAP TO CLOSE")), story && /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 0, right: 0, opacity: showStory ? 1 : 0, transition: "opacity 2s ease-in-out" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "13px", color: "#fff", lineHeight: "1.8", letterSpacing: "0.5px", maxWidth: "600px", margin: "0 auto" } }, story)))), /* @__PURE__ */ React.createElement("div", { onClick: (e) => {
+    } })))), hasTriptych && /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", right: "calc(50% + 20vw)", top: "50%", transform: triptychVisible ? "translateY(-50%)" : "translateY(-50%) translateX(-80px)", opacity: triptychVisible ? 1 : 0, transition: "opacity 3s ease-out 0.05s, transform 3s ease-out 0.05s", pointerEvents: "none" } }, /* @__PURE__ */ React.createElement("img", { src: img, alt: label, style: { maxWidth: "25vw", maxHeight: "35vh", objectFit: "contain", animation: triptychVisible ? "prismaticGlow 2.5s ease-in-out -1s infinite" : "none", display: "block" } })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("img", { src: img, alt: label, style: { maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight: "40vh", objectFit: "contain", filter: mainGlowFilter, display: "block", opacity: tier === "diamond" && (diamondShatter === "hidden" || diamondShatter === "visible") ? 0 : shouldCrossfade && (showHover || showImg3) ? 0 : 1, transition: `opacity ${crossfadeDuration} ease-in-out, filter 3s ease-in-out` } }), hasTripleFade && img3 && /* @__PURE__ */ React.createElement("img", { src: img3, alt: label, style: { position: "absolute", top: 0, left: "50%", transform: showImg3 ? crossfadeTransformEnd : crossfadeTransformStart, maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight: "40vh", objectFit: "contain", filter: crossfadeGlow, opacity: showImg3 && !showHover ? 1 : 0, transition: `opacity ${crossfadeDuration} ease-in-out, transform ${crossfadeDuration} ease-in-out` } }), shouldCrossfade && /* @__PURE__ */ React.createElement("img", { src: hoverImg, alt: label, style: { position: "absolute", top: 0, left: "50%", transform: showHover ? crossfadeTransformEnd : crossfadeTransformStart, maxWidth: isMobilePublic ? "90vw" : "50vw", maxHeight: "40vh", objectFit: "contain", filter: tier !== "diamond" ? crossfadeGlow : void 0, animation: tier === "diamond" && showHover ? "diamondReveal 2s ease-out forwards, prismaticGlow 2.5s ease-in-out 2s infinite" : "none", opacity: showHover ? 1 : 0, transition: `opacity ${crossfadeDuration} ease-in-out, transform ${crossfadeDuration} ease-in-out` } })), hasTriptych && /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: "calc(50% + 20vw)", top: "50%", transform: triptychVisible ? "translateY(-50%)" : "translateY(-50%) translateX(80px)", opacity: triptychVisible ? 1 : 0, transition: "opacity 3s ease-out 0.05s, transform 3s ease-out 0.05s", pointerEvents: "none" } }, /* @__PURE__ */ React.createElement("img", { src: img3, alt: label, style: { maxWidth: "25vw", maxHeight: "35vh", objectFit: "contain", animation: triptychVisible ? "prismaticGlow 2.5s ease-in-out -1s infinite" : "none", display: "block" } }))), /* @__PURE__ */ React.createElement("div", { style: { height: "120px", width: "100%", textAlign: "center", position: "relative" } }, /* @__PURE__ */ React.createElement("div", null, tierInfo.label && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "6px", color: tierInfo.color, opacity: tierReveal ? 1 : 0, transition: "opacity 3s ease-in-out" } }, tierInfo.label), isOnIce && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "6px", color: "#64c8ff", marginTop: "6px", opacity: iceGlow ? 1 : 0, transition: "opacity 3s ease-in-out" } }, "\u2744\uFE0F ON ICE \u2744\uFE0F"), anniversaryGlow && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "6px", color: tierAnniversaryColor(tier), marginTop: "6px", opacity: showHover ? 1 : 0, transition: "opacity 3s ease-in-out" } }, "\u2726 ANNIVERSARY \u2726"), isNewPickup && tier === "silver" && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "6px", color: "var(--tier-gold)", marginTop: "6px" } }, "\u2726 NEW PICKUP \u2726"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: tierInfo.label || isOnIce || anniversaryGlow || isNewPickup ? "6px" : "0", fontSize: "13px", letterSpacing: "3px", color: nameColor, transition: "color 3s ease-in-out" } }, shoeName ? `${shoeName} - ${label}` : label)), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 0, right: 0, opacity: showStory ? 0 : 1, transition: "opacity 1s ease-in-out" } }, ogYear && /* @__PURE__ */ React.createElement("div", { style: { marginTop: "4px", fontSize: "10px", color: "#fff", letterSpacing: "1px" } }, "Originally Owned in ", ogYear), purchaseDate && /* @__PURE__ */ React.createElement("div", { style: { marginTop: "8px", fontSize: "10px", color: dark ? "#777" : "#aaa", letterSpacing: "1px" } }, "Purchase Date: ", formatDate(purchaseDate)), size && /* @__PURE__ */ React.createElement("div", { style: { marginTop: "4px", fontSize: "10px", color: dark ? "#777" : "#aaa", letterSpacing: "1px" } }, "Size: ", size), sortedDates.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: "4px", fontSize: "12px", color: dark ? "#777" : "#aaa", letterSpacing: "1px" } }, "Last Worn: ", formatDate(sortedDates[0])), isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { marginTop: "16px", fontSize: "10px", color: "#666", letterSpacing: "2px" } }, "TAP TO CLOSE")), story && /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", left: 0, right: 0, opacity: showStory ? 1 : 0, transition: "opacity 2s ease-in-out" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "13px", color: "#fff", lineHeight: "1.8", letterSpacing: "0.5px", maxWidth: "600px", margin: "0 auto" } }, story)))), /* @__PURE__ */ React.createElement("div", { onClick: (e) => {
       e.stopPropagation();
       if (showStats) setShowStats(false);
     }, style: { position: "absolute", bottom: isMobilePublic ? "16px" : "28px", right: isMobilePublic ? "16px" : "28px", zIndex: 20 } }, /* @__PURE__ */ React.createElement("button", { onClick: (e) => {
@@ -622,7 +633,7 @@
       overflowY: "auto",
       padding: isMobilePublic ? "20px 16px 80px" : "28px 32px 80px",
       animation: "drawerSlideUp 0.3s ease-out"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: "800px", margin: "0 auto", display: isMobilePublic || !onfootImg ? "block" : "flex", gap: "32px", alignItems: "flex-start" } }, onfootImg && /* @__PURE__ */ React.createElement("div", { style: { flex: isMobilePublic ? void 0 : "0 0 45%", textAlign: "center", marginBottom: isMobilePublic ? "20px" : 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "3px", color: "var(--vault-red)", marginBottom: "10px" } }, "ON FEET"), /* @__PURE__ */ React.createElement("img", { src: onfootImg, alt: "On feet", style: { width: "100%", maxHeight: isMobilePublic ? "250px" : "38vh", objectFit: "contain" } })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "3px", color: "var(--vault-red)", marginBottom: "10px" } }, "DETAILS"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 20px", marginBottom: "20px" } }, purchaseDate && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "8px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "PURCHASED"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#ccc" } }, formatDate(purchaseDate))), ADMIN_MODE && purchasePrice && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "8px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "PRICE"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#ccc" } }, purchasePrice)), ADMIN_MODE && retailer && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "8px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "RETAILER"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#ccc" } }, retailer)), size && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "8px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "SIZE"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#ccc" } }, size)), ogYear && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "8px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "OG YEAR"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#ccc" } }, ogYear)), releaseYear && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "8px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "RELEASE"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#ccc" } }, releaseYear)), comfortRating && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "8px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "COMFORT"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#ccc" } }, comfortRating, "/10")), sortedDates.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "8px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "TOTAL WEARS"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#ccc" } }, sortedDates.length))), sortedDates.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "3px", color: "var(--vault-red)", marginBottom: "10px" } }, "WEAR HISTORY"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: isMobilePublic ? "1fr 1fr" : "1fr 1fr 1fr", gap: "4px 16px" } }, [...sortedDates].reverse().map((d, i, arr) => /* @__PURE__ */ React.createElement("div", { key: `${d}-${i}`, style: { fontSize: "11px", color: "#ccc", padding: "3px 0", display: "flex", gap: "6px", fontWeight: i === arr.length - 1 ? "bold" : "normal" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "#555", fontSize: "10px", minWidth: "20px" } }, i + 1), formatDate(d))))), sortedDates.length > 0 && (() => {
+    } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: "800px", margin: "0 auto", display: isMobilePublic || !onfootImg ? "block" : "flex", gap: "32px", alignItems: "flex-start" } }, onfootImg && /* @__PURE__ */ React.createElement("div", { style: { flex: isMobilePublic ? void 0 : "0 0 45%", textAlign: "center", marginBottom: isMobilePublic ? "20px" : 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "3px", color: "var(--vault-red)", marginBottom: "10px" } }, "ON FEET"), /* @__PURE__ */ React.createElement("img", { src: onfootImg, alt: "On feet", style: { width: "100%", maxHeight: isMobilePublic ? "250px" : "38vh", objectFit: "contain" } })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "3px", color: "var(--vault-red)", marginBottom: "10px" } }, "DETAILS"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 20px", marginBottom: "20px" } }, purchaseDate && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "PURCHASED"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: "#ccc" } }, formatDate(purchaseDate))), ADMIN_MODE && purchasePrice && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "PRICE"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: "#ccc" } }, purchasePrice)), ADMIN_MODE && retailer && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "RETAILER"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: "#ccc" } }, retailer)), size && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "SIZE"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: "#ccc" } }, size)), ogYear && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "OG YEAR"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: "#ccc" } }, ogYear)), releaseYear && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "RELEASE"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: "#ccc" } }, releaseYear)), comfortRating && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "COMFORT"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: "#ccc" } }, comfortRating, "/10")), sortedDates.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "2px" } }, "TOTAL WEARS"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: "#ccc" } }, sortedDates.length))), sortedDates.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "3px", color: "var(--vault-red)", marginBottom: "10px" } }, "WEAR HISTORY"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: isMobilePublic ? "1fr 1fr" : "1fr 1fr 1fr", gap: "4px 16px" } }, [...sortedDates].reverse().map((d, i, arr) => /* @__PURE__ */ React.createElement("div", { key: `${d}-${i}`, style: { fontSize: "11px", color: "#ccc", padding: "3px 0", display: "flex", gap: "6px", fontWeight: i === arr.length - 1 ? "bold" : "normal" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "#555", fontSize: "10px", minWidth: "20px" } }, i + 1), formatDate(d))))), sortedDates.length > 0 && (() => {
       const asc = [...sortedDates].reverse();
       const today = /* @__PURE__ */ new Date();
       today.setHours(0, 0, 0, 0);
@@ -653,7 +664,7 @@
         color: "#000",
         boxShadow: `0 0 8px ${medalColors[Math.min(yr - 1, medalColors.length - 1)]}66`
       } }, yr), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "7px", letterSpacing: "1px", color: "#666", textAlign: "center", lineHeight: "1.2" } }, yr, " ", yr === 1 ? "YEAR" : "YEARS")))));
-    })()))))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#666", marginTop: "4px", maxWidth: width, textAlign: "center", lineHeight: "1.3", wordBreak: "break-word" } }, label, isNewPickup && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "9px", letterSpacing: "2px", color: "var(--tier-gold)", fontWeight: "bold", marginLeft: "5px" } }, "NEW"))) : /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { onClick: () => fileRef.current.click(), title: `Upload: ${label}`, style: {
+    })()))))), !hideLabel && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#666", marginTop: "4px", maxWidth: width, textAlign: "center", lineHeight: "1.3", wordBreak: "break-word" } }, label, isNewPickup && /* @__PURE__ */ React.createElement("span", { style: { fontSize: "9px", letterSpacing: "2px", color: "var(--tier-gold)", fontWeight: "bold", marginLeft: "5px" } }, "NEW"))) : /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { onClick: () => fileRef.current.click(), title: `Upload: ${label}`, style: {
       width,
       height,
       background: bg,
@@ -663,7 +674,7 @@
       alignItems: "center",
       justifyContent: "center",
       cursor: "pointer"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px", color: accent, lineHeight: 1 } }, "+")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#666", marginTop: "4px", maxWidth: width, textAlign: "center", lineHeight: "1.3", wordBreak: "break-word" } }, label)), /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px", color: accent, lineHeight: 1 } }, "+")), !hideLabel && /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", color: "#666", marginTop: "4px", maxWidth: width, textAlign: "center", lineHeight: "1.3", wordBreak: "break-word" } }, label)), /* @__PURE__ */ React.createElement(
       "input",
       {
         ref: fileRef,
@@ -909,6 +920,181 @@
         if (entryTier && entryTier !== "silver") setTierMeta((tm) => ({ ...tm, [restoreKey]: entryTier }));
       }
     }, style: { marginTop: "10px", background: "transparent", border: `1px solid ${T.border2}`, color: T.text5, padding: "3px 8px", cursor: "pointer", fontSize: "8px", letterSpacing: "2px", fontFamily: "'Aptos','Segoe UI',sans-serif" } }, "RESTORE"));
+  }
+  function CyclingCard({ shoe, shoeColorways, images, colorwayMeta, tierMeta, wearLog, timeTravelDate, T, CT, dark, onClick, imgW = 120, staggerMs = 0, paused = false, highlighted = false }) {
+    const CYCLE_MS = 7500;
+    const FADE_MS = 2e3;
+    const [activeIdx, setActiveIdx] = useState(0);
+    const [fading, setFading] = useState(false);
+    const timerRef = useRef(null);
+    const fadeRef = useRef(null);
+    const periodRef = useRef(CYCLE_MS + Math.round((Math.random() * 2 - 1) * CYCLE_MS * 0.1));
+    const imgH = Math.round(imgW * 0.625);
+    const n = shoeColorways.length;
+    useEffect(() => {
+      if (paused) {
+        setFading(false);
+        return;
+      }
+      if (n <= 1) return;
+      const period = periodRef.current;
+      const startDelay = setTimeout(() => {
+        const cycle = () => {
+          setFading(true);
+          fadeRef.current = setTimeout(() => {
+            setActiveIdx((i) => (i + 1) % n);
+            setFading(false);
+          }, FADE_MS);
+        };
+        cycle();
+        timerRef.current = setInterval(cycle, period);
+      }, staggerMs % period);
+      return () => {
+        clearTimeout(startDelay);
+        clearInterval(timerRef.current);
+        clearTimeout(fadeRef.current);
+      };
+    }, [n, staggerMs, paused]);
+    const cw = shoeColorways[activeIdx];
+    const incomingIdx = (activeIdx + 1) % n;
+    const incomingCw = n > 1 ? shoeColorways[incomingIdx] : null;
+    const metaKey = `${shoe.id}_${cw}`;
+    const incomingMetaKey = incomingCw !== null ? `${shoe.id}_${incomingCw}` : null;
+    const imgSrc = images[metaKey] || null;
+    const incomingImgSrc = incomingMetaKey ? images[incomingMetaKey] || null : null;
+    const fadeTransition = fading ? `opacity ${FADE_MS}ms ease-in-out` : "none";
+    return /* @__PURE__ */ React.createElement("div", { onClick, style: { background: T.cardBg, border: `1px solid ${highlighted ? "var(--vault-red)" : T.border}`, width: imgW + 32, cursor: "pointer", position: "relative", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 16px 4px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "12px", color: CT.text, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "center" } }, shoe.name)), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 16px 6px 16px", height: imgH + 24, position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative", width: imgW, height: imgH } }, imgSrc ? /* @__PURE__ */ React.createElement("img", { src: imgSrc, alt: cw, style: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: imgW,
+      height: imgH,
+      objectFit: "contain"
+    } }) : /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", top: 0, left: 0, width: imgW, height: imgH, background: T.bg3, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", color: T.text6 } }, "\u2014"), incomingCw !== null && (incomingImgSrc ? /* @__PURE__ */ React.createElement("img", { src: incomingImgSrc, alt: incomingCw, style: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: imgW,
+      height: imgH,
+      objectFit: "contain",
+      transition: fadeTransition,
+      opacity: fading ? 1 : 0
+    } }) : /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", top: 0, left: 0, width: imgW, height: imgH, background: T.bg3, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", color: T.text6, transition: fadeTransition, opacity: fading ? 1 : 0 } }, "\u2014"))), /* @__PURE__ */ React.createElement("div", { style: { position: "relative", height: 16, marginTop: "4px" } }, /* @__PURE__ */ React.createElement("div", { style: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      fontSize: "8px",
+      color: CT.text5,
+      letterSpacing: "0.5px",
+      textAlign: "center",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      transition: fadeTransition,
+      opacity: fading ? 0 : 1
+    } }, cw), incomingCw !== null && /* @__PURE__ */ React.createElement("div", { style: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      fontSize: "8px",
+      color: CT.text5,
+      letterSpacing: "0.5px",
+      textAlign: "center",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      transition: fadeTransition,
+      opacity: fading ? 1 : 0
+    } }, incomingCw))), shoeColorways.length > 1 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", gap: "4px", padding: "0 8px 8px 8px" } }, shoeColorways.map((_, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
+      width: 5,
+      height: 5,
+      borderRadius: "50%",
+      background: i === (fading ? incomingIdx : activeIdx) ? "var(--vault-red)" : T.border2,
+      transition: "background 0.6s"
+    } }))));
+  }
+  function ColorwayOverlay({ shoe, shoeColorways, images, colorwayMeta, tierMeta, wearLog, timeTravelDate, T, CT, dark, isMobilePublic, onClose, categoryStyle, colorwayOwned, isColorwayOwned, matchesFilter, handleImageUpload, setImages, editingMeta, setEditingMeta, metaForm, setMetaForm, setColorwayMeta, setTierMeta, setGlowMeta, glowMeta, handleEdit, setContextMenu, setInventory, retiringMeta, setRetiringMeta, retireForm, setRetireForm, IS, inventory, setColorwayOwned, graveyardMeta, setGraveyardMeta, wearLog: wearLogFull, setWearLog, colorways, setColorways, inline = false }) {
+    const imgW = isMobilePublic ? 72 : 120;
+    const imgH = Math.round(imgW * 0.625);
+    const col = categoryStyle;
+    useEffect(() => {
+      const handleKey = (e) => {
+        if (e.key !== "Escape") return;
+        if (ADMIN_MODE && editingMeta && editingMeta.shoeId === shoe.id) {
+          setEditingMeta(null);
+          return;
+        }
+        onClose();
+      };
+      window.addEventListener("keydown", handleKey);
+      return () => window.removeEventListener("keydown", handleKey);
+    }, [onClose, editingMeta, shoe.id, setEditingMeta]);
+    const content = /* @__PURE__ */ React.createElement("div", { onClick: inline ? void 0 : ((e) => e.stopPropagation()), style: {
+      background: T.cardBg,
+      border: `1px solid ${T.border}`,
+      ...inline ? { width: "100%" } : { maxWidth: "90vw", maxHeight: "85vh", overflow: "auto" },
+      position: "relative"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 16px 0 16px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "8px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: CT.text, fontWeight: "bold" } }, shoe.name), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "6px", flexShrink: 0, marginLeft: "12px", alignItems: "center" } }, ADMIN_MODE && !timeTravelDate && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { onClick: () => handleEdit(shoe), style: { background: "transparent", border: `1px solid ${T.border2}`, color: T.text5, padding: "3px 8px", cursor: "pointer", fontSize: "8px", letterSpacing: "2px", fontFamily: "'Aptos','Segoe UI',sans-serif" } }, "EDIT")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: { background: "transparent", border: "none", color: T.text5, cursor: "pointer", fontSize: "18px", lineHeight: 1, padding: "0 4px" } }, "\u2715"))), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 16px 16px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: "8px" } }, shoeColorways.map((cw) => {
+      const metaKey = `${shoe.id}_${cw}`;
+      const cwWears = timeTravelDate ? (wearLog[shoe.id] || []).filter((e) => e.colorway === cw && e.date <= timeTravelDate) : (wearLog[shoe.id] || []).filter((e) => e.colorway === cw);
+      return /* @__PURE__ */ React.createElement("div", { key: cw, onContextMenu: ADMIN_MODE && !timeTravelDate ? (e) => {
+        e.preventDefault();
+        setContextMenu({ x: e.clientX, y: e.clientY, shoeId: shoe.id, colorway: cw, shortName: shoe.shortName, shoeName: shoe.name, shoeCategory: shoe.category });
+      } : void 0 }, /* @__PURE__ */ React.createElement(
+        ImageSlot,
+        {
+          img: images[metaKey] || null,
+          hoverImg: images[`${metaKey}_hover`] || null,
+          img3: images[`${metaKey}_hover2`] || null,
+          label: cw,
+          accent: col.accent,
+          bg: col.bg,
+          width: imgW,
+          height: imgH,
+          wearDates: cwWears.map((e) => e.date),
+          tier: tierOf(tierMeta, metaKey),
+          isOnIce: cwWears.length === 0 && !tierExcludedFromRotation(tierOf(tierMeta, metaKey)) && colorwayOwned[metaKey] !== false && !isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate),
+          isNewPickup: !timeTravelDate && isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate),
+          shoeName: shoe.name,
+          dark,
+          isMobilePublic,
+          purchaseDate: (colorwayMeta[metaKey] || {}).purchaseDate || null,
+          size: (colorwayMeta[metaKey] || {}).size || null,
+          ogYear: (colorwayMeta[metaKey] || {}).ogYear || null,
+          story: (colorwayMeta[metaKey] || {}).story || null,
+          onfootImg: images[`${metaKey}_onfoot`] || null,
+          retailer: (colorwayMeta[metaKey] || {}).retailer || null,
+          releaseYear: (colorwayMeta[metaKey] || {}).releaseYear || null,
+          comfortRating: (colorwayMeta[metaKey] || {}).comfortRating || null,
+          purchasePrice: (colorwayMeta[metaKey] || {}).purchasePrice || null,
+          onUpload: (file) => handleImageUpload(shoe.id, cw, file),
+          onClear: () => setImages((imgs) => {
+            const n = { ...imgs };
+            delete n[metaKey];
+            return n;
+          })
+        }
+      ));
+    }))), ADMIN_MODE && !timeTravelDate && editingMeta && editingMeta.shoeId === shoe.id && /* @__PURE__ */ React.createElement("div", { style: { padding: "0 16px 16px 16px" } }, /* @__PURE__ */ React.createElement(MetaEditForm, { editingMeta, metaForm, setMetaForm, setColorwayMeta, setEditingMeta, tierMeta, setTierMeta, setGlowMeta, glowMeta, setImages, images, handleImageUpload, setRetiringMeta, setRetireForm, IS, CT, T, dark, colorwayOwned, setColorwayOwned })));
+    if (inline) return content;
+    return ReactDOM.createPortal(
+      /* @__PURE__ */ React.createElement("div", { onClick: onClose, style: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: "rgba(0,0,0,0.7)",
+        zIndex: 9998,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "20px"
+      } }, content),
+      document.body
+    );
   }
   function CollectionGrowthChart({ points, dark, T, isMobilePublic }) {
     const [selected, setSelected] = useState(null);
@@ -1710,6 +1896,39 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
     const [editColorways, setEditColorways] = useState([]);
     const [newColorway, setNewColorway] = useState("");
     const [renamingColorwayIdx, setRenamingColorwayIdx] = useState(null);
+    const [expandedShoe, setExpandedShoe] = useState(null);
+    const collectionGridRef = useRef(null);
+    const [collectionCols, setCollectionCols] = useState(GRID_MAX_COLS);
+    const [panelClosing, setPanelClosing] = useState(false);
+    const panelCloseTimer = useRef(null);
+    const closePanel = () => {
+      if (panelCloseTimer.current) return;
+      setPanelClosing(true);
+      panelCloseTimer.current = setTimeout(() => {
+        panelCloseTimer.current = null;
+        setPanelClosing(false);
+        setExpandedShoe(null);
+      }, 180);
+    };
+    const openPanel = (id) => {
+      if (panelCloseTimer.current) {
+        clearTimeout(panelCloseTimer.current);
+        panelCloseTimer.current = null;
+      }
+      setPanelClosing(false);
+      setExpandedShoe(id);
+    };
+    useEffect(() => {
+      const measure = () => {
+        const el = collectionGridRef.current;
+        if (!el) return;
+        const cols = Math.max(1, Math.min(GRID_MAX_COLS, Math.floor((el.clientWidth + GRID_GAP) / (GRID_CARD_W + GRID_GAP))));
+        setCollectionCols((c) => c === cols ? c : cols);
+      };
+      measure();
+      window.addEventListener("resize", measure);
+      return () => window.removeEventListener("resize", measure);
+    });
     const [retiringMeta, setRetiringMeta] = useState(null);
     const [retireForm, setRetireForm] = useState({ reason: "Sold", dateRetired: "", story: "" });
     const [loggingId, setLoggingId] = useState(null);
@@ -2995,110 +3214,202 @@ Make sure server.py is running, then try again.`);
         fontSize: "9px",
         letterSpacing: "2px",
         fontFamily: "'Aptos','Segoe UI',sans-serif"
-      } }, "BACK TO PRESENT"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "flex-start" } }, inventory.map((shoe) => {
-        const col = categoryStyle;
-        const allShoeColorways = colorways[shoe.shortName] || [];
-        const filteredColorways = allShoeColorways.filter((cw) => isColorwayOwned(shoe.id, cw) && matchesFilter(shoe.id, cw));
-        if (filteredColorways.length === 0) return null;
-        const shoeColorways = filteredColorways;
-        const forceOwnRow = !isMobilePublic && shoeColorways.length > 5;
-        const perRow = isMobilePublic ? shoeColorways.length : forceOwnRow ? shoeColorways.length : Math.min(shoeColorways.length, 5);
-        const imgW = isMobilePublic ? 72 : 120;
-        const imgH = Math.round(imgW * 0.625);
-        const cardMinW = isMobilePublic ? "100%" : Math.max(240, perRow * (imgW + 16) + 32);
-        return /* @__PURE__ */ React.createElement(React.Fragment, { key: shoe.id }, forceOwnRow && !isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { width: "100%", height: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { background: T.cardBg, border: `1px solid ${T.border}`, minWidth: cardMinW, maxWidth: isMobilePublic ? "100%" : void 0, flex: isMobilePublic ? "1 1 100%" : "0 1 auto", position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: isMobilePublic ? "16px" : "16px 16px 0 16px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: isMobilePublic ? "0" : "8px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: CT.text, fontWeight: "bold", whiteSpace: isMobilePublic ? "normal" : "nowrap" } }, shoe.name), ADMIN_MODE && !timeTravelDate && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "6px", flexShrink: 0, marginLeft: "12px" } }, /* @__PURE__ */ React.createElement(Btn, { label: "EDIT", onClick: () => handleEdit(shoe), color: "#888" }), /* @__PURE__ */ React.createElement(Btn, { label: "X", onClick: () => {
-          if (window.confirm(`Remove ${shoe.name} from your collection? This cannot be undone.`)) setInventory((inv) => inv.filter((s) => s.id !== shoe.id));
-        }, color: "#bbb" }))), /* @__PURE__ */ React.createElement("div", { style: { padding: isMobilePublic ? "0 16px 16px 16px" : "0 16px 16px 16px", height: isMobilePublic ? "auto" : Math.ceil(shoeColorways.length / perRow) * (imgH + 30) + 40 + "px", overflow: isMobilePublic ? "visible" : "hidden", position: "relative" } }, ADMIN_MODE && !timeTravelDate && /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", bottom: "6px", right: "6px", display: "flex", flexDirection: "column", gap: "1px" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => reorderShoe(shoe.id, -1), style: { background: "transparent", border: "none", color: CT.text8, cursor: "pointer", fontSize: "9px", padding: "1px 3px", lineHeight: 1 } }, "\u25B2"), /* @__PURE__ */ React.createElement("button", { onClick: () => reorderShoe(shoe.id, 1), style: { background: "transparent", border: "none", color: CT.text8, cursor: "pointer", fontSize: "9px", padding: "1px 3px", lineHeight: 1 } }, "\u25BC")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: "8px", maxWidth: isMobilePublic ? "100%" : perRow * (imgW + 8) + "px" } }, shoeColorways.map((cw) => {
-          const metaKey = `${shoe.id}_${cw}`;
-          const meta = colorwayMeta[metaKey] || {};
-          const isEditingThis = editingMeta && editingMeta.shoeId === shoe.id && editingMeta.colorway === cw;
-          const cwWears = timeTravelDate ? (wearLog[shoe.id] || []).filter((e) => e.colorway === cw && e.date <= timeTravelDate) : (wearLog[shoe.id] || []).filter((e) => e.colorway === cw);
-          return /* @__PURE__ */ React.createElement("div", { key: cw, onContextMenu: ADMIN_MODE && !timeTravelDate ? (e) => {
-            e.preventDefault();
-            setContextMenu({ x: e.clientX, y: e.clientY, shoeId: shoe.id, colorway: cw, shortName: shoe.shortName, shoeName: shoe.name, shoeCategory: shoe.category });
-          } : void 0 }, /* @__PURE__ */ React.createElement(
-            ImageSlot,
-            {
-              img: images[metaKey] || null,
-              hoverImg: images[`${metaKey}_hover`] || null,
-              img3: images[`${metaKey}_hover2`] || null,
-              label: cw,
-              accent: col.accent,
-              bg: col.bg,
-              width: imgW,
-              height: imgH,
-              wearDates: cwWears.map((e) => e.date),
-              tier: tierOf(tierMeta, metaKey),
-              isOnIce: cwWears.length === 0 && !tierExcludedFromRotation(tierOf(tierMeta, metaKey)) && colorwayOwned[metaKey] !== false && !isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate),
-              isNewPickup: !timeTravelDate && isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate),
-              shoeName: shoe.name,
-              dark,
-              isMobilePublic,
-              purchaseDate: (colorwayMeta[metaKey] || {}).purchaseDate || null,
-              size: (colorwayMeta[metaKey] || {}).size || null,
-              ogYear: (colorwayMeta[metaKey] || {}).ogYear || null,
-              story: (colorwayMeta[metaKey] || {}).story || null,
-              onfootImg: images[`${metaKey}_onfoot`] || null,
-              retailer: (colorwayMeta[metaKey] || {}).retailer || null,
-              releaseYear: (colorwayMeta[metaKey] || {}).releaseYear || null,
-              comfortRating: (colorwayMeta[metaKey] || {}).comfortRating || null,
-              purchasePrice: (colorwayMeta[metaKey] || {}).purchasePrice || null,
-              onUpload: (file) => handleImageUpload(shoe.id, cw, file),
-              onClear: () => setImages((imgs) => {
-                const n = { ...imgs };
-                delete n[metaKey];
-                return n;
-              })
-            }
-          ), ADMIN_MODE && !timeTravelDate && /* @__PURE__ */ React.createElement(
-            "div",
-            {
-              onClick: () => {
-                setEditingMeta({ shoeId: shoe.id, colorway: cw, shortName: shoe.shortName });
-                setMetaForm({ purchaseDate: meta.purchaseDate || "", purchasePrice: meta.purchasePrice || "", retailer: meta.retailer || "", size: meta.size || "", notes: meta.notes || "", ogYear: meta.ogYear || "", story: meta.story || "", saleDate: meta.saleDate || "", saleTime: meta.saleTime || "", comfortRating: meta.comfortRating || "", releaseYear: meta.releaseYear || "" });
-              },
-              title: "Edit details",
-              style: { fontSize: "9px", color: isEditingThis ? "var(--vault-red)" : meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer ? T.text3 : T.text6, marginTop: "3px", textAlign: "center", cursor: "pointer", maxWidth: imgW, overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis", textDecoration: "underline", letterSpacing: "1px" }
-            },
-            meta.purchaseDate && meta.purchasePrice && meta.size && meta.retailer ? `sz ${meta.size}` : "\xB7 \xB7 \xB7"
-          ));
-        }))), ADMIN_MODE && !timeTravelDate && editingMeta && editingMeta.shoeId === shoe.id && /* @__PURE__ */ React.createElement("div", { style: { padding: "0 16px 16px 16px" } }, /* @__PURE__ */ React.createElement(MetaEditForm, { editingMeta, metaForm, setMetaForm, setColorwayMeta, setEditingMeta, tierMeta, setTierMeta, setGlowMeta, glowMeta, setImages, images, handleImageUpload, setRetiringMeta, setRetireForm, IS, CT, T, dark, colorwayOwned, setColorwayOwned })), ADMIN_MODE && !timeTravelDate && retiringMeta && retiringMeta.shoeId === shoe.id && /* @__PURE__ */ React.createElement("div", { style: { background: T.bg4, border: "1px solid #888", padding: "12px", marginTop: "8px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "3px", color: "#888", marginBottom: "10px" } }, "\u{1FAA6} RETIRE - ", retiringMeta.colorway), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "10px" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: "0 0 120px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: CT.text5, marginBottom: "4px" } }, "REASON"), /* @__PURE__ */ React.createElement("select", { value: retireForm.reason, onChange: (e) => setRetireForm((f) => ({ ...f, reason: e.target.value })), style: { ...IS, fontSize: "11px", padding: "5px" } }, /* @__PURE__ */ React.createElement("option", null, "Sold"), /* @__PURE__ */ React.createElement("option", null, "Worn Out"), /* @__PURE__ */ React.createElement("option", null, "Donated"), /* @__PURE__ */ React.createElement("option", null, "Other"))), /* @__PURE__ */ React.createElement("div", { style: { flex: "0 0 140px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: CT.text5, marginBottom: "4px" } }, "DATE RETIRED"), /* @__PURE__ */ React.createElement("input", { type: "date", value: retireForm.dateRetired, onChange: (e) => setRetireForm((f) => ({ ...f, dateRetired: e.target.value })), style: { ...IS, fontSize: "11px", padding: "5px" } }))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: "10px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: CT.text5, marginBottom: "4px" } }, "FAREWELL STORY"), /* @__PURE__ */ React.createElement(
-          "textarea",
+      } }, "BACK TO PRESENT"))), (() => {
+        const entries = [];
+        inventory.forEach((shoe, shoeIdx) => {
+          const allShoeColorways = colorways[shoe.shortName] || [];
+          const filteredColorways = allShoeColorways.filter((cw) => isColorwayOwned(shoe.id, cw) && matchesFilter(shoe.id, cw));
+          if (filteredColorways.length > 0) entries.push({ shoe, shoeIdx, shoeColorways: filteredColorways });
+        });
+        const cells = entries.map(({ shoe, shoeIdx, shoeColorways }) => {
+          const col = categoryStyle;
+          const imgW = isMobilePublic ? 72 : 120;
+          const imgH = Math.round(imgW * 0.625);
           {
-            placeholder: "Tell the story of this shoe's retirement...",
-            value: retireForm.story,
-            onChange: (e) => setRetireForm((f) => ({ ...f, story: e.target.value })),
-            style: { ...IS, fontSize: "11px", padding: "5px", minHeight: "60px", resize: "vertical", width: "100%" }
           }
-        )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "8px" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => {
-          const rShoeId = retiringMeta.shoeId;
-          const rCw = retiringMeta.colorway;
-          const rShoe = inventory.find((s) => s.id === rShoeId);
-          if (!rShoe) return;
-          if (!window.confirm(`Retire ${rShoe.name} - ${rCw}? This will move it to the Graveyard.`)) return;
-          const key = `${rShoeId}_${rCw}`;
-          const meta = colorwayMeta[key] || {};
-          const wears = (wearLog[rShoeId] || []).filter((e) => e.colorway === rCw);
-          const lastWorn = wears.length ? [...wears].sort((a, b) => b.date > a.date ? 1 : -1)[0].date : null;
-          setGraveyardMeta((g) => ({ ...g, [key]: {
-            shoeName: rShoe.name,
-            colorway: rCw,
-            shortName: rShoe.shortName,
-            category: rShoe.category,
-            tier: tierOf(tierMeta, key),
-            purchaseDate: meta.purchaseDate || null,
-            retireDate: retireForm.dateRetired,
-            reason: retireForm.reason,
-            story: retireForm.story,
-            lastWorn,
-            img: images[key] || null,
-            hoverImg: images[`${key}_hover`] || null
-          } }));
-          const newCws = (colorways[rShoe.shortName] || []).filter((c) => c !== rCw);
-          setColorways((cws) => ({ ...cws, [rShoe.shortName]: newCws }));
-          setRetiringMeta(null);
-        }, style: { background: "#888", color: "#fff", border: "none", padding: "6px 14px", cursor: "pointer", fontSize: "10px", letterSpacing: "2px", fontFamily: "'Aptos','Segoe UI',sans-serif", whiteSpace: "nowrap" } }, "\u{1FAA6} CONFIRM RETIREMENT"), /* @__PURE__ */ React.createElement("button", { onClick: () => setRetiringMeta(null), style: { background: "transparent", border: "1px solid #bbb", color: CT.text7, padding: "6px 14px", cursor: "pointer", fontSize: "10px", letterSpacing: "2px", fontFamily: "'Aptos','Segoe UI',sans-serif", whiteSpace: "nowrap" } }, "CANCEL")))));
-      })));
+          if (shoeColorways.length === 1 && !isMobilePublic) {
+            const cw = shoeColorways[0];
+            const metaKey = `${shoe.id}_${cw}`;
+            const meta = colorwayMeta[metaKey] || {};
+            const cwWears = timeTravelDate ? (wearLog[shoe.id] || []).filter((e) => e.colorway === cw && e.date <= timeTravelDate) : (wearLog[shoe.id] || []).filter((e) => e.colorway === cw);
+            return /* @__PURE__ */ React.createElement("div", { key: shoe.id, style: { background: T.cardBg, border: `1px solid ${expandedShoe === shoe.id ? "var(--vault-red)" : T.border}`, width: imgW + 32, position: "relative", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 16px 4px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "12px", color: CT.text, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "center" } }, shoe.name)), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 16px 6px 16px", height: imgH + 24, position: "relative" }, onContextMenu: ADMIN_MODE && !timeTravelDate ? (e) => {
+              e.preventDefault();
+              setContextMenu({ x: e.clientX, y: e.clientY, shoeId: shoe.id, colorway: cw, shortName: shoe.shortName, shoeName: shoe.name, shoeCategory: shoe.category });
+            } : void 0 }, /* @__PURE__ */ React.createElement(
+              ImageSlot,
+              {
+                img: images[metaKey] || null,
+                hoverImg: images[`${metaKey}_hover`] || null,
+                img3: images[`${metaKey}_hover2`] || null,
+                label: cw,
+                accent: col.accent,
+                bg: col.bg,
+                width: imgW,
+                height: imgH,
+                wearDates: cwWears.map((e) => e.date),
+                tier: tierOf(tierMeta, metaKey),
+                isOnIce: cwWears.length === 0 && !tierExcludedFromRotation(tierOf(tierMeta, metaKey)) && colorwayOwned[metaKey] !== false && !isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate),
+                isNewPickup: !timeTravelDate && isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate),
+                shoeName: shoe.name,
+                dark,
+                isMobilePublic,
+                purchaseDate: (colorwayMeta[metaKey] || {}).purchaseDate || null,
+                size: (colorwayMeta[metaKey] || {}).size || null,
+                ogYear: (colorwayMeta[metaKey] || {}).ogYear || null,
+                story: (colorwayMeta[metaKey] || {}).story || null,
+                onfootImg: images[`${metaKey}_onfoot`] || null,
+                retailer: (colorwayMeta[metaKey] || {}).retailer || null,
+                releaseYear: (colorwayMeta[metaKey] || {}).releaseYear || null,
+                comfortRating: (colorwayMeta[metaKey] || {}).comfortRating || null,
+                purchasePrice: (colorwayMeta[metaKey] || {}).purchasePrice || null,
+                onUpload: (file) => handleImageUpload(shoe.id, cw, file),
+                onClear: () => setImages((imgs) => {
+                  const n = { ...imgs };
+                  delete n[metaKey];
+                  return n;
+                }),
+                hideLabel: true
+              }
+            ), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "8px", color: CT.text5, letterSpacing: "0.5px", textAlign: "center", marginTop: "4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, cw, !timeTravelDate && isNewPickupCheck(meta.purchaseDate) && /* @__PURE__ */ React.createElement("span", { style: { letterSpacing: "2px", color: "var(--tier-gold)", fontWeight: "bold", marginLeft: "5px" } }, "NEW"))), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 8px 8px 8px", height: 13 } }));
+          }
+          {
+          }
+          if (isMobilePublic) {
+            const perRow = shoeColorways.length;
+            const cardMinW = "100%";
+            return /* @__PURE__ */ React.createElement("div", { key: shoe.id, style: { background: T.cardBg, border: `1px solid ${T.border}`, minWidth: cardMinW, maxWidth: "100%", flex: "1 1 100%", position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "16px", display: "flex", alignItems: "flex-start", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: CT.text, fontWeight: "bold", whiteSpace: "normal" } }, shoe.name)), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 16px 16px 16px", height: "auto", overflow: "visible", position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: "8px", maxWidth: "100%" } }, shoeColorways.map((cw) => {
+              const metaKey = `${shoe.id}_${cw}`;
+              const cwWears = timeTravelDate ? (wearLog[shoe.id] || []).filter((e) => e.colorway === cw && e.date <= timeTravelDate) : (wearLog[shoe.id] || []).filter((e) => e.colorway === cw);
+              return /* @__PURE__ */ React.createElement("div", { key: cw }, /* @__PURE__ */ React.createElement(
+                ImageSlot,
+                {
+                  img: images[metaKey] || null,
+                  hoverImg: images[`${metaKey}_hover`] || null,
+                  img3: images[`${metaKey}_hover2`] || null,
+                  label: cw,
+                  accent: col.accent,
+                  bg: col.bg,
+                  width: imgW,
+                  height: imgH,
+                  wearDates: cwWears.map((e) => e.date),
+                  tier: tierOf(tierMeta, metaKey),
+                  isOnIce: cwWears.length === 0 && !tierExcludedFromRotation(tierOf(tierMeta, metaKey)) && colorwayOwned[metaKey] !== false && !isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate),
+                  isNewPickup: !timeTravelDate && isNewPickupCheck((colorwayMeta[metaKey] || {}).purchaseDate),
+                  shoeName: shoe.name,
+                  dark,
+                  isMobilePublic,
+                  purchaseDate: (colorwayMeta[metaKey] || {}).purchaseDate || null,
+                  size: (colorwayMeta[metaKey] || {}).size || null,
+                  ogYear: (colorwayMeta[metaKey] || {}).ogYear || null,
+                  story: (colorwayMeta[metaKey] || {}).story || null,
+                  onfootImg: images[`${metaKey}_onfoot`] || null,
+                  retailer: (colorwayMeta[metaKey] || {}).retailer || null,
+                  releaseYear: (colorwayMeta[metaKey] || {}).releaseYear || null,
+                  comfortRating: (colorwayMeta[metaKey] || {}).comfortRating || null,
+                  purchasePrice: (colorwayMeta[metaKey] || {}).purchasePrice || null,
+                  onUpload: (file) => handleImageUpload(shoe.id, cw, file),
+                  onClear: () => setImages((imgs) => {
+                    const n = { ...imgs };
+                    delete n[metaKey];
+                    return n;
+                  })
+                }
+              ));
+            }))));
+          }
+          {
+          }
+          return /* @__PURE__ */ React.createElement(
+            CyclingCard,
+            {
+              key: shoe.id,
+              shoe,
+              shoeColorways,
+              images,
+              colorwayMeta,
+              tierMeta,
+              wearLog,
+              timeTravelDate,
+              T,
+              CT,
+              dark,
+              onClick: () => {
+                if (expandedShoe === shoe.id && !panelClosing) closePanel();
+                else openPanel(shoe.id);
+              },
+              staggerMs: shoeIdx * 700,
+              paused: expandedShoe === shoe.id,
+              highlighted: expandedShoe === shoe.id
+            }
+          );
+        });
+        if (!isMobilePublic && expandedShoe) {
+          const visIdx = entries.findIndex((e) => e.shoe.id === expandedShoe);
+          if (visIdx >= 0) {
+            const insertPos = Math.min(cells.length, (Math.floor(visIdx / collectionCols) + 1) * collectionCols);
+            cells.splice(insertPos, 0, /* @__PURE__ */ React.createElement(
+              "div",
+              {
+                key: `__colorway_panel_${expandedShoe}`,
+                ref: (el) => {
+                  if (el && !el.__scrolledIntoView) {
+                    el.__scrolledIntoView = true;
+                    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                  }
+                },
+                style: { gridColumn: "1 / -1", animation: panelClosing ? "panelHide 0.18s ease-in forwards" : "panelReveal 0.25s ease-out" }
+              },
+              /* @__PURE__ */ React.createElement(
+                ColorwayOverlay,
+                {
+                  inline: true,
+                  shoe: entries[visIdx].shoe,
+                  shoeColorways: entries[visIdx].shoeColorways,
+                  images,
+                  colorwayMeta,
+                  tierMeta,
+                  wearLog,
+                  timeTravelDate,
+                  T,
+                  CT,
+                  dark,
+                  isMobilePublic,
+                  onClose: closePanel,
+                  categoryStyle,
+                  colorwayOwned,
+                  isColorwayOwned,
+                  matchesFilter,
+                  handleImageUpload,
+                  setImages,
+                  editingMeta,
+                  setEditingMeta,
+                  metaForm,
+                  setMetaForm,
+                  setColorwayMeta,
+                  setTierMeta,
+                  setGlowMeta,
+                  glowMeta,
+                  handleEdit,
+                  setContextMenu,
+                  setInventory,
+                  retiringMeta,
+                  setRetiringMeta,
+                  retireForm,
+                  setRetireForm,
+                  IS,
+                  inventory,
+                  setColorwayOwned,
+                  graveyardMeta,
+                  setGraveyardMeta,
+                  colorways,
+                  setColorways
+                }
+              )
+            ));
+          }
+        }
+        return isMobilePublic ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "flex-start" } }, cells) : /* @__PURE__ */ React.createElement("div", { ref: collectionGridRef, style: { display: "grid", gridTemplateColumns: `repeat(auto-fill, ${GRID_CARD_W}px)`, gap: GRID_GAP, maxWidth: GRID_MAX_COLS * GRID_CARD_W + (GRID_MAX_COLS - 1) * GRID_GAP, alignItems: "start" } }, cells);
+      })());
     })()), view === "display" && (() => {
       const isDream = displayMode === "dream";
       const activeLayout = isDream ? dreamLayout : displayLayout;
@@ -3960,9 +4271,18 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
             const meta = colorwayMeta[metaKey] || {};
             setEditingMeta({ shoeId, colorway, shortName });
             setMetaForm({ purchaseDate: meta.purchaseDate || "", purchasePrice: meta.purchasePrice || "", retailer: meta.retailer || "", size: meta.size || "", notes: meta.notes || "", ogYear: meta.ogYear || "", story: meta.story || "", saleDate: meta.saleDate || "", saleTime: meta.saleTime || "", comfortRating: meta.comfortRating || "", releaseYear: meta.releaseYear || "" });
+            openPanel(shoeId);
             setContextMenu(null);
           } },
           { label: "CHANGE TIER", icon: "\u2B50", submenu: true },
+          { label: "MOVE LEFT", icon: "\u25C0", action: () => {
+            reorderShoe(shoeId, -1);
+            setContextMenu(null);
+          } },
+          { label: "MOVE RIGHT", icon: "\u25B6", action: () => {
+            reorderShoe(shoeId, 1);
+            setContextMenu(null);
+          } },
           { type: "divider" },
           { label: "MOVE TO GRAVEYARD", icon: "\u{1FAA6}", danger: true, action: () => {
             setRetiringMeta({ shoeId, colorway, shortName });
