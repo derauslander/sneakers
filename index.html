@@ -3215,11 +3215,17 @@ Make sure server.py is running, then try again.`);
         letterSpacing: "2px",
         fontFamily: "'Aptos','Segoe UI',sans-serif"
       } }, "BACK TO PRESENT"))), (() => {
+        const explodeFiltered = !isMobilePublic && collectionFilter !== "all";
         const entries = [];
         inventory.forEach((shoe, shoeIdx) => {
           const allShoeColorways = colorways[shoe.shortName] || [];
           const filteredColorways = allShoeColorways.filter((cw) => isColorwayOwned(shoe.id, cw) && matchesFilter(shoe.id, cw));
-          if (filteredColorways.length > 0) entries.push({ shoe, shoeIdx, shoeColorways: filteredColorways });
+          if (filteredColorways.length === 0) return;
+          if (explodeFiltered) {
+            filteredColorways.forEach((cw) => entries.push({ shoe, shoeIdx, shoeColorways: [cw] }));
+          } else {
+            entries.push({ shoe, shoeIdx, shoeColorways: filteredColorways });
+          }
         });
         const cells = entries.map(({ shoe, shoeIdx, shoeColorways }) => {
           const col = categoryStyle;
@@ -3232,7 +3238,7 @@ Make sure server.py is running, then try again.`);
             const metaKey = `${shoe.id}_${cw}`;
             const meta = colorwayMeta[metaKey] || {};
             const cwWears = timeTravelDate ? (wearLog[shoe.id] || []).filter((e) => e.colorway === cw && e.date <= timeTravelDate) : (wearLog[shoe.id] || []).filter((e) => e.colorway === cw);
-            return /* @__PURE__ */ React.createElement("div", { key: shoe.id, style: { background: T.cardBg, border: `1px solid ${expandedShoe === shoe.id ? "var(--vault-red)" : T.border}`, width: imgW + 32, position: "relative", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 16px 4px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "12px", color: CT.text, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "center" } }, shoe.name)), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 16px 6px 16px", height: imgH + 24, position: "relative" }, onContextMenu: ADMIN_MODE && !timeTravelDate ? (e) => {
+            return /* @__PURE__ */ React.createElement("div", { key: `${shoe.id}_${cw}`, style: { background: T.cardBg, border: `1px solid ${expandedShoe === shoe.id ? "var(--vault-red)" : T.border}`, width: imgW + 32, position: "relative", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "10px 16px 4px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "12px", color: CT.text, fontWeight: "bold", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textAlign: "center" } }, shoe.name)), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 16px 6px 16px", height: imgH + 24, position: "relative" }, onContextMenu: ADMIN_MODE && !timeTravelDate ? (e) => {
               e.preventDefault();
               setContextMenu({ x: e.clientX, y: e.clientY, shoeId: shoe.id, colorway: cw, shortName: shoe.shortName, shoeName: shoe.name, shoeCategory: shoe.category });
             } : void 0 }, /* @__PURE__ */ React.createElement(
@@ -3344,7 +3350,11 @@ Make sure server.py is running, then try again.`);
           );
         });
         if (!isMobilePublic && expandedShoe) {
-          const visIdx = entries.findIndex((e) => e.shoe.id === expandedShoe);
+          let visIdx = -1;
+          if (explodeFiltered && editingMeta && editingMeta.shoeId === expandedShoe) {
+            visIdx = entries.findIndex((e) => e.shoe.id === expandedShoe && e.shoeColorways.includes(editingMeta.colorway));
+          }
+          if (visIdx < 0) visIdx = entries.findIndex((e) => e.shoe.id === expandedShoe);
           if (visIdx >= 0) {
             const insertPos = Math.min(cells.length, (Math.floor(visIdx / collectionCols) + 1) * collectionCols);
             cells.splice(insertPos, 0, /* @__PURE__ */ React.createElement(
