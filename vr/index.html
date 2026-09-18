@@ -549,19 +549,13 @@ Loading…</div>
       return new THREE.Mesh(new THREE.PlaneGeometry(panelW, panelH), material);
     };
 
-    // Build a wall from a cells array. wallZ positions the wall in world
-    // space. If rotateY180 is true, the wall is flipped 180° around the
-    // vertical axis so the box fronts face the opposite direction -
-    // used for the dream wall, which sits behind the user. Note: this
-    // means column 0 of the data ends up on the user's right when they
-    // turn around to face the dream wall (a side-effect of the rotation).
-    //
-    // Each wall has its own world-space view position for pull-forward:
-    // a point 1.5m in front of the user when they're facing this wall,
-    // half a metre to the user's left so the story panel fits on the right.
-    // (For the dream wall, "user's left" is mirrored vs the display wall
-    // because the user has turned around.)
-    const buildWall = (cellArr, wallZ, rotateY180, title, usePedestal, xOffset = 0) => {
+    // Build a wall from a cells array. wallZ / xOffset position the wall in
+    // world space. If rotateY180 is true, the wall is flipped 180° around the
+    // vertical axis so the box fronts face the opposite direction (unused at
+    // present - both walls stand on the −Z baseline - but kept for layouts
+    // that put a wall behind the user; note column 0 then ends up on the
+    // user's right).
+    const buildWall = (cellArr, wallZ, rotateY180, title, xOffset = 0) => {
       const wallGroup = new THREE.Group();
       wallGroup.position.set(xOffset, 0, wallZ);
       if (rotateY180) wallGroup.rotation.y = Math.PI;
@@ -581,17 +575,6 @@ Loading…</div>
         backing.position.set(0, gridCenterY, -BOX_D / 2 + 0.005); // just inside the back of the boxes
         wallGroup.add(backing);
       }
-
-      // World-space view position for pulling cases off this wall. Both walls
-      // now stand on the −Z baseline (office left, dream right) facing the
-      // user, so a pulled case lifts toward the user (+Z) and drifts halfway
-      // in toward centre from the wall's lateral offset.
-      const wallToUserSign = wallZ < 0 ? 1 : -1;
-      const viewPosWorld = new THREE.Vector3(
-        xOffset * 0.5,
-        1.6,
-        wallZ + wallToUserSign * 1.6
-      );
 
       // Title panel - floats above the wall, faces the same direction as
       // the box fronts. Because it lives inside wallGroup, the dream wall's
@@ -663,35 +646,21 @@ Loading…</div>
 
         const caseRef = {
           entry: cell.entry, plane, group,
-          homePosition: pos.clone(),       // local to wallGroup
-          homeRotation: group.rotation.clone(),
-          viewPosWorld,                    // world-space target for this wall's pulls
-          state: "home",
-          stateStart: 0,
           // Pulse flag: only unowned entries on the dream wall pulse.
           // Owned entries (whether on display or dream wall) stay steady.
           pulse: !cell.entry.owned,
-          // Image swap (option A): rest = image 3 on the wall, pop = image 2
-          // when pulled forward. Textures cache on first use; see swapCaseImage.
-          restPath: cell.entry.hover2Path,
+          // Image 2 (_hover) - the shot shown on the pedestal. Lazy-loaded
+          // and cached on first click; see ensurePopTexture.
           popPath:  cell.entry.hoverPath,
-          restTexture: null, restAspect: null,
           popTexture: null,  popAspect: null,
-          showing: "rest",
-          // Cases send their shoe to the pedestal on click - both walls now,
-          // dream included, rather than pulling the whole case forward.
-          usePedestal: !!usePedestal,
         };
         shellMesh.userData.caseRefs[i] = caseRef;
         allCases.push(caseRef);
 
-        // Resting image on the wall is image 3 (_hover2). Cache its texture +
-        // aspect on the case so returning from the popped image 2 is instant
-        // (no reload).
+        // Resting image on the wall is image 3 (_hover2). It never changes:
+        // a click shows image 2 on the separate stage mesh, not here.
         loadTextureFor(cell.entry.hover2Path, plane, (aspect) => {
           fitPlaneToBox(plane, aspect, INNER_W, INNER_H);
-          caseRef.restTexture = plane.material.map;
-          caseRef.restAspect  = aspect;
         });
       });
 
@@ -715,8 +684,8 @@ Loading…</div>
     // Both cases now stand on the −Z baseline flanking the hoop: office to the
     // left, dream to the right, both facing the user. (Previously the dream
     // wall sat behind the user at +Z, rotated 180°.)
-    buildWall(displayCells, CASE_Z, false, "OFFICE DISPLAY", true,  -CASE_X);
-    if (dreamCells.length > 0) buildWall(dreamCells, CASE_Z, false, "DREAM DISPLAY", true, CASE_X);
+    buildWall(displayCells, CASE_Z, false, "OFFICE DISPLAY", -CASE_X);
+    if (dreamCells.length > 0) buildWall(dreamCells, CASE_Z, false, "DREAM DISPLAY", CASE_X);
 
     // ════════════════════════════════════════════════════════════════════
     //  HOOP - regulation dimensions, centred on the baseline
@@ -1204,17 +1173,27 @@ Loading…</div>
       // - Rotating scoreboard on the wall behind the user -
       // Picks two random shoes as HOME and GUEST, shows their owned
       // colorway counts as the score. Rotates every 5 minutes.
-      {
-        // Build list of shoes with their owned colorway counts
+      scoreboard: {
+        // Build list of shoes with their owned colorway counts. Keys follow
+        // the same `${id}_${colorway}` scheme as images / tierMeta /
+        // colorwayOwned everywhere else. (This used shortName + ":" + cw,
+        // which never matched, so every listed colorway counted as owned.)
         const shoeScores = inventory.map(s => {
           const allCW = (data.colorways || {})[s.shortName] || [];
           let owned = 0;
           for (const cw of allCW) {
-            const key = s.shortName + ":" + cw;
+            const key = `${s.id}_${cw}`;
             if (colorwayOwned[key] !== false) owned++;
           }
           return { name: s.name, owned };
         }).filter(s => s.owned > 0);  // only shoes with at least 1 owned colorway
+
+        // A matchup needs two teams. Without this guard the pair-picking
+        // loop below can never find b !== a and hangs the tab at load.
+        if (shoeScores.length < 2) {
+          log("Scoreboard: fewer than 2 shoes with owned colorways - skipped", "dim");
+          break scoreboard;
+        }
 
         const W = 1024, H = 512;
         const cv = document.createElement("canvas");
@@ -1603,7 +1582,7 @@ Loading…</div>
     contactShadow.visible = false;
     scene.add(contactShadow);
 
-    // Stage state machine, independent of the dream wall's pull-forward.
+    // Stage state machine for the shoe travelling to / from the pedestal.
     //   phase "out"  - travelling from the cell to the pedestal
     //   phase "settled" - resting on the pedestal
     //   phase "back" - travelling back to the cell
@@ -1730,7 +1709,7 @@ Loading…</div>
     buildBanner(upNextEntry,    BANNER_X, BANNER_Y, BANNER_Z); // UP NEXT  - right of wordmark
 
     // ════════════════════════════════════════════════════════════════════
-    //  STORY PANEL (canvas-rendered text for the pulled-forward case)
+    //  STORY PANEL (canvas-rendered text for the shoe on the pedestal)
     // ════════════════════════════════════════════════════════════════════
     // Text rendered into a 1024×768 canvas, used as a texture on a 1.2m ×
     // 0.9m plane. Roughly double the previous font sizes; brighter colors
@@ -1822,30 +1801,14 @@ Loading…</div>
       const text     = entry.story || entry.notes || "";
       storyPanel = makeTextPanel(headline, subhead, text);
 
-      // Office cases stage on the pedestal - float the panel directly above
+      // Every case stages on the pedestal - float the panel directly above
       // the shoe, anchored by its bottom edge so longer stories grow upward
       // and never crowd the shoe. Uses the actual rest position and shoe
       // height computed in ensurePopTexture (which runs before this call).
-      if (caseRef.usePedestal) {
-        const panelH  = storyPanel.geometry.parameters.height;
-        const shoeTop = stage.restPos.y + stageShoe.geometry.parameters.height / 2;
-        const bottomY = shoeTop + 0.12;              // small gap above the shoe
-        storyPanel.position.set(PED_X, bottomY + panelH / 2, PED_Z);
-        faceUserUpright(storyPanel);
-        scene.add(storyPanel);
-        return;
-      }
-
-      // Place the panel beside the pulled-forward case (which lands at
-      // caseRef.viewPosWorld). "Beside" means offset to the user's right -
-      // mirror direction depends on which wall the user is facing. The
-      // viewPosWorld already has a 0.5m left-offset baked in; we use its
-      // sign to determine the panel's offset direction.
-      const viewP = caseRef.viewPosWorld;
-      // If viewPosWorld.x is negative (display wall), put panel at +1.2 x.
-      // If positive (dream wall), put panel at -1.2 x. Same offset magnitude.
-      const panelX = viewP.x < 0 ? 1.2 : -1.2;
-      storyPanel.position.set(panelX, 1.6, viewP.z);
+      const panelH  = storyPanel.geometry.parameters.height;
+      const shoeTop = stage.restPos.y + stageShoe.geometry.parameters.height / 2;
+      const bottomY = shoeTop + 0.12;              // small gap above the shoe
+      storyPanel.position.set(PED_X, bottomY + panelH / 2, PED_Z);
       faceUserUpright(storyPanel);
       scene.add(storyPanel);
     };
@@ -1957,54 +1920,11 @@ Loading…</div>
       new THREE.Vector3(0, 0, -5),
     ]);
 
-    let focusedCase = null;
-
-    // beginReturn captures the case's current position/scale before kicking
-    // off the return animation, so the lerp starts from where the case
-    // actually is - not from where it would have been at end-of-pull.
-    // Without this, interrupting a pull mid-flight (rapid clicks) causes a
-    // teleport to the forward position before the return begins.
-    const beginReturn = (c, now) => {
-      c.returnStart = c.group.position.clone();
-      c.returnStartScale = c.group.scale.x;
-      c.state = "returning";
-      c.stateStart = now;
-    };
-
-    // Swap a case between its resting image (image 3, on the wall) and its
-    // popped image (image 2, shown pulled forward). The resting texture is
-    // cached at build; image 2 is lazy-loaded on first pull (deliberately not
-    // counted in the initial "all textures loaded" tally). The showing-guard
-    // stops a slow load from applying after the user has moved on.
-    const swapCaseImage = (caseRef, which) => {
-      caseRef.showing = which;
-      const apply = (texture, aspect) => {
-        if (caseRef.showing !== which) return;
-        caseRef.plane.material.map = texture;
-        caseRef.plane.material.color.set(0xffffff);
-        caseRef.plane.material.needsUpdate = true;
-        fitPlaneToBox(caseRef.plane, aspect, INNER_W, INNER_H);
-      };
-      const cached = which === "rest" ? caseRef.restTexture : caseRef.popTexture;
-      if (cached) {
-        apply(cached, which === "rest" ? caseRef.restAspect : caseRef.popAspect);
-        return;
-      }
-      const path = which === "rest" ? caseRef.restPath : caseRef.popPath;
-      loader.load(path, (texture) => {
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.anisotropy = 8;
-        const aspect = texture.image.width / texture.image.height;
-        if (which === "rest") { caseRef.restTexture = texture; caseRef.restAspect = aspect; }
-        else                  { caseRef.popTexture  = texture; caseRef.popAspect  = aspect; }
-        apply(texture, aspect);
-      }, undefined, (err) => log(`Failed to load ${path}: ${err?.message || err}`, "err"));
-    };
-
-    // ── Pedestal staging (office wall) ──────────────────────────────────
-    // Ensure image 2 is loaded for a case, then run cb(texture, aspect).
-    // Caches on the caseRef (same field swapCaseImage uses, though a given
-    // case is only ever office or dream, never both).
+    // ── Pedestal staging (both walls) ───────────────────────────────────
+    // Ensure image 2 (the "popped" shot shown on the pedestal) is loaded for
+    // a case, then run cb(texture, aspect). Lazy-loaded on first click and
+    // cached on the caseRef; deliberately not counted in the initial "all
+    // textures loaded" tally.
     const ensurePopTexture = (caseRef, cb) => {
       if (caseRef.popTexture) { cb(caseRef.popTexture, caseRef.popAspect); return; }
       loader.load(caseRef.popPath, (texture) => {
@@ -2184,60 +2104,23 @@ Loading…</div>
       // (or null for an empty box, which counts as an empty-space click).
       const intersects = raycaster.intersectObjects(caseShellMeshes, false);
 
-      // Clear an active dream-wall pull (return the case + restore image 3).
-      const clearDreamFocus = () => {
-        if (focusedCase) {
-          beginReturn(focusedCase, now);
-          swapCaseImage(focusedCase, "rest");
-          focusedCase = null;
-        }
-      };
-
       const hit = intersects[0];
       const caseRef = hit
         ? (hit.object.userData.caseRefs[hit.instanceId] || null)
         : null;
 
       if (!caseRef) {
-        // Empty space OR an empty box - dismiss whatever is active (at most
-        // one of these). Empty boxes previously swallowed the click; now
-        // they behave like the empty space they visually represent.
+        // Empty space OR an empty box - send any staged shoe home. Empty
+        // boxes previously swallowed the click; now they behave like the
+        // empty space they visually represent.
         if (stage.active) dismissPedestal(now);
-        if (focusedCase) { clearDreamFocus(); hideStory(); }
         return;
       }
 
-      if (caseRef.usePedestal) {
-        // Office wall → pedestal.
-        if (stage.active && stage.caseRef === caseRef) { dismissPedestal(now); return; } // toggle off
-        clearDreamFocus();                 // a dream pull, if any, returns
-        launchToPedestal(caseRef, now);    // supersedes any other staged shoe
-        return;
-      }
-
-      // Dream wall → pull-forward (unchanged behaviour).
-      if (stage.active) dismissPedestal(now);   // a staged office shoe goes home
-      if (focusedCase === caseRef) {
-        beginReturn(caseRef, now);
-        swapCaseImage(caseRef, "rest");
-        hideStory();
-        focusedCase = null;
-        return;
-      }
-      if (focusedCase) {
-        beginReturn(focusedCase, now);
-        swapCaseImage(focusedCase, "rest");
-      }
-
-      caseRef.state = "pulling";
-      caseRef.stateStart = now;
-      // Per-wall world-space view target → local to this case's parent.
-      // Computed at build time per wall so display/dream pull-forward
-      // targets are each in front of the user when facing that wall.
-      caseRef.viewPositionLocal = caseRef.group.parent.worldToLocal(caseRef.viewPosWorld.clone());
-      focusedCase = caseRef;
-      swapCaseImage(caseRef, "pop");
-      showStoryFor(caseRef);
+      // Office or dream wall → pedestal. Clicking the staged shoe's own case
+      // toggles it off; clicking another case supersedes it.
+      if (stage.active && stage.caseRef === caseRef) { dismissPedestal(now); return; }
+      launchToPedestal(caseRef, now);
     };
 
     if (TEST_MODE) {
@@ -2263,52 +2146,15 @@ Loading…</div>
     }
 
     // ════════════════════════════════════════════════════════════════════
-    //  ANIMATION (pull-forward / return)
+    //  ANIMATION TIMING (pedestal fly-out / return - see updateStage)
     // ════════════════════════════════════════════════════════════════════
     const PULL_DURATION_MS = 400;
-    // Pull-forward target is computed per-wall (see buildWall) - each wall
-    // has its own world-space view position so a case is always pulled
-    // toward where the user is standing relative to that wall.
-    const VIEW_SCALE = 1.5;
     const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
-
-    const updateCases = (now) => {
-      for (const c of allCases) {
-        if (c.state === "home") continue;
-        const elapsed = now - c.stateStart;
-        const t = Math.min(elapsed / PULL_DURATION_MS, 1);
-        const e = easeOutCubic(t);
-
-        if (c.state === "pulling") {
-          c.group.position.lerpVectors(c.homePosition, c.viewPositionLocal, e);
-          c.group.scale.setScalar(1 + (VIEW_SCALE - 1) * e);
-          // lookAt takes a world-space target, so (0, 1.6, 0) is correct
-          // regardless of which wall the case lives on.
-          c.group.lookAt(0, 1.6, 0);
-          if (t >= 1) c.state = "forward";
-        } else if (c.state === "returning") {
-          // Lerp from the position recorded when "returning" began (which
-          // may be mid-pull) back to home. returnStart is set in onSelect.
-          c.group.position.lerpVectors(c.returnStart, c.homePosition, e);
-          // Same for scale - return from whatever scale the case was at.
-          const startScale = c.returnStartScale;
-          c.group.scale.setScalar(startScale + (1 - startScale) * e);
-          if (t >= 1) {
-            c.group.position.copy(c.homePosition);
-            c.group.rotation.copy(c.homeRotation);
-            c.group.scale.setScalar(1);
-            c.state = "home";
-          } else {
-            c.group.lookAt(0, 1.6, 0);
-          }
-        }
-      }
-    };
 
     // Pulse animation: unowned dream-wall entries fade between low and
     // full opacity on a slow cycle, signalling "still on the wishlist."
-    // Only active when the case is at rest (state="home") - during pull-
-    // forward we want full opacity so the user can see the shoe clearly.
+    // (While a shoe is staged on the pedestal its wall plane is hidden, and
+    // the stage shoe has its own material, so no special-casing is needed.)
     const PULSE_PERIOD_MS = 3000;
     const PULSE_MIN = 0.6;
     const PULSE_MAX = 1.0;
@@ -2318,12 +2164,7 @@ Loading…</div>
       const t = (Math.sin(phase * Math.PI * 2) + 1) / 2; // 0→1
       const opacity = PULSE_MIN + (PULSE_MAX - PULSE_MIN) * t;
       for (const c of allCases) {
-        if (!c.pulse) continue;
-        if (c.state !== "home") {
-          c.plane.material.opacity = 1.0;
-          continue;
-        }
-        c.plane.material.opacity = opacity;
+        if (c.pulse) c.plane.material.opacity = opacity;
       }
     };
 
@@ -2649,6 +2490,7 @@ Loading…</div>
           })
         );
         fadeSphere.renderOrder = 998;
+        fadeSphere.visible = false;   // shown only while the sequence runs
         camera.add(fadeSphere);
 
         // World-space anchor for the animation. Everything except the fade
@@ -2758,14 +2600,17 @@ Loading…</div>
         // Helper: Superman credits-style outlined stencil text → plane mesh
         // Uses Granby Elephant (the original Superman '78 font) rendered as
         // outlines only with a soft glow halo for the cinematic credit look.
+        // Each label's paint() is kept in stencilPainters so the labels can be
+        // redrawn once the font has actually loaded (see the fonts.load call
+        // below) instead of blocking on it up front.
+        const stencilPainters = [];
         const makeStencilLabel = (text, fontSize, color, letterSpace) => {
           const LW = 2000, LH = 250;
           const lc = document.createElement("canvas");
           lc.width = LW; lc.height = LH;
           const lg = lc.getContext("2d");
-          lg.clearRect(0, 0, LW, LH);
-          lg.textAlign = "center"; lg.textBaseline = "middle";
-          lg.font = `${fontSize}px "Granby Elephant", "Arial Narrow", "Helvetica Neue", Arial, sans-serif`;
+          const tex = new THREE.CanvasTexture(lc);
+          tex.colorSpace = THREE.SRGBColorSpace;
 
           // Draw helper - letterspaced or centred
           const drawText = (fn) => {
@@ -2785,22 +2630,31 @@ Loading…</div>
             }
           };
 
-          // Pass 1: soft glow halo
-          lg.shadowColor = color;
-          lg.shadowBlur = 30;
-          lg.strokeStyle = color;
-          lg.lineWidth = 4;
-          drawText((t, x, y) => lg.strokeText(t, x, y));
+          // Safe to call repeatedly: clears and resets all context state.
+          const paint = () => {
+            lg.clearRect(0, 0, LW, LH);
+            lg.textAlign = "center"; lg.textBaseline = "middle";
+            lg.font = `${fontSize}px "Granby Elephant", "Arial Narrow", "Helvetica Neue", Arial, sans-serif`;
 
-          // Pass 2: crisp outline (no shadow)
-          lg.shadowColor = "transparent";
-          lg.shadowBlur = 0;
-          lg.strokeStyle = color;
-          lg.lineWidth = 2;
-          drawText((t, x, y) => lg.strokeText(t, x, y));
+            // Pass 1: soft glow halo
+            lg.shadowColor = color;
+            lg.shadowBlur = 30;
+            lg.strokeStyle = color;
+            lg.lineWidth = 4;
+            drawText((t, x, y) => lg.strokeText(t, x, y));
 
-          const tex = new THREE.CanvasTexture(lc);
-          tex.colorSpace = THREE.SRGBColorSpace;
+            // Pass 2: crisp outline (no shadow)
+            lg.shadowColor = "transparent";
+            lg.shadowBlur = 0;
+            lg.strokeStyle = color;
+            lg.lineWidth = 2;
+            drawText((t, x, y) => lg.strokeText(t, x, y));
+
+            tex.needsUpdate = true;
+          };
+          paint();
+          stencilPainters.push(paint);
+
           const h = 0.45, w = h * (LW / LH);
           return new THREE.Mesh(
             new THREE.PlaneGeometry(w, h),
@@ -2811,8 +2665,16 @@ Loading…</div>
           );
         };
 
-        // Ensure Granby Elephant is loaded before rendering stencil labels
-        await document.fonts.load('100px "Granby Elephant"').catch(() => {});
+        // Granby Elephant loads in the background. This used to be a top-level
+        // `await`, which held up everything after this block - spin pedestal,
+        // graveyard and the render loop itself - until the font request
+        // settled. Labels now draw immediately with the fallback stack and
+        // repaint once the font lands (long before anyone can trigger the
+        // sequence in practice). The labels below register their painters in
+        // stencilPainters as they're created.
+        document.fonts.load('100px "Granby Elephant"')
+          .then(() => { for (const paint of stencilPainters) paint(); })
+          .catch(() => {});
 
         // Intro label - "ON FEET TODAY" Superman-style fly-at-camera with ghost trails
         const introGroup = new THREE.Group();
@@ -2955,6 +2817,7 @@ Loading…</div>
         // ── Trigger ─────────────────────────────────────────────────────
         ofd.trigger = (now) => {
           placeOfdAnchor();       // sequence plays out in front of where you're facing now
+          fadeSphere.visible = true;
           ofd.phase = "fadeout";
           ofd.t0 = now;
           ofdDisplay.visible = false;
@@ -3126,6 +2989,7 @@ Loading…</div>
             }
             if (t >= 1) {
               fadeSphere.material.opacity = 0;
+              fadeSphere.visible = false;   // no zero-opacity full-screen draw while idle
               ofd.phase = "done";
               if (ofdDisplay) ofdDisplay.visible = true;
               ofdAudioStop();
@@ -3339,7 +3203,13 @@ Loading…</div>
     // wall. Cycles through every owned shoe in purchase-date order with a
     // city-night-drive background (streaking neon lines). Each shoe shows
     // name, colorway, purchase date, and tier. Tap to exit.
-    {
+    //
+    // Currently switched off: the spin pedestal took over the left sideline.
+    // The code is kept intact, but nothing in this block is built, uploaded
+    // to the GPU, or ticked per frame unless the flag is true. Flip it to
+    // bring Roll Call (and its wall panel) back.
+    const ROLL_CALL_ENABLED = false;
+    if (ROLL_CALL_ENABLED) {
       // Build the collection list sorted by purchase date
       const allEntries = [];
       for (const cell of [...displayCells, ...dreamCells]) {
@@ -3400,6 +3270,7 @@ Loading…</div>
           })
         );
         rcFadeSphere.renderOrder = 996;
+        rcFadeSphere.visible = false;   // shown only while a sequence runs
         camera.add(rcFadeSphere);
 
         // ── City night drive - streaking neon lines ──────────────────
@@ -3595,17 +3466,28 @@ Loading…</div>
         rcTriggerCanvas.width = 800; rcTriggerCanvas.height = 400;
         const rtx = rcTriggerCanvas.getContext("2d");
 
+        // Rounded-rect path via arcTo rather than ctx.roundRect, which older
+        // Safari / Firefox lack. This is top-level module code, so a throw
+        // here would stop everything after it (graveyard, render loop).
+        const rcRoundRect = (x, y, w, h, r) => {
+          rtx.beginPath();
+          rtx.moveTo(x + r, y);
+          rtx.arcTo(x + w, y,     x + w, y + h, r);
+          rtx.arcTo(x + w, y + h, x,     y + h, r);
+          rtx.arcTo(x,     y + h, x,     y,     r);
+          rtx.arcTo(x,     y,     x + w, y,     r);
+          rtx.closePath();
+        };
+
         // Background
         rtx.fillStyle = "#111111";
-        rtx.beginPath();
-        rtx.roundRect(0, 0, 800, 400, 20);
+        rcRoundRect(0, 0, 800, 400, 20);
         rtx.fill();
 
         // Red border
         rtx.strokeStyle = "#e63946";
         rtx.lineWidth = 6;
-        rtx.beginPath();
-        rtx.roundRect(3, 3, 794, 394, 18);
+        rcRoundRect(3, 3, 794, 394, 18);
         rtx.stroke();
 
         // Title
@@ -3631,18 +3513,19 @@ Loading…</div>
           new THREE.PlaneGeometry(1.4, 0.7),
           new THREE.MeshBasicMaterial({ map: rcTriggerTex, transparent: true, side: THREE.DoubleSide })
         );
-        // Left sideline wall (X = -9), facing into the court (+X)
-        // Hidden: the Hall of Fame pedestals now occupy the left sideline.
-        // All Roll Call machinery is kept intact - restore by uncommenting
-        // the scene.add below.
+        // Left sideline wall (X = -9), facing into the court (+X).
+        // Only reached when ROLL_CALL_ENABLED is true (see the top of this
+        // block). Note the spin pedestal now stands in front of this spot,
+        // so the panel may want a new position before re-enabling.
         rcTrigger.position.set(-8.95, 1.5, 0);
         rcTrigger.rotation.y = Math.PI / 2;
         rcTrigger.userData.isRollCall = true;
-        // scene.add(rcTrigger);
+        scene.add(rcTrigger);
 
         // ── Trigger action ───────────────────────────────────────────
         rc.trigger = (now) => {
           if (rc.phase !== "idle") return;
+          rcFadeSphere.visible = true;
           rc.phase = "fadeout";
           rc.t0 = now;
           rc.shoeIdx = 0;
@@ -3748,6 +3631,7 @@ Loading…</div>
             rcFadeSphere.material.opacity = 1 - rcEase(t);
             if (t >= 1) {
               rcFadeSphere.material.opacity = 0;
+              rcFadeSphere.visible = false;   // no zero-opacity full-screen draw while idle
               rc.phase = "idle";   // Can be triggered again (not "done")
             }
           }
@@ -5169,7 +5053,6 @@ Loading…</div>
       if (TEST_MODE) updateFpsMovement(now);
       else updateLocomotion(dt);
       clampToRoom();
-      updateCases(now);
       updatePulse(now);
       updateStage(now);
       ofd.update(now, dt);

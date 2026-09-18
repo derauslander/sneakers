@@ -482,6 +482,10 @@
       {
         "colorway": "Cardinal",
         "date": "2025-12-25"
+      },
+      {
+        "date": "2026-09-18",
+        "colorway": "Cardinal"
       }
     ],
     "8": [
@@ -3165,20 +3169,20 @@
     ]
   },
   "precomputedLastWorn": {
+    "key": "7_Cardinal",
+    "shoeId": 7,
+    "shoeName": "Air Jordan 7",
+    "shortName": "AJ7",
+    "colorway": "Cardinal",
+    "date": "2026-09-18"
+  },
+  "precomputedPreviousWorn": {
     "key": "3_A Ma Maniere",
     "shoeId": 3,
     "shoeName": "Air Jordan 3",
     "shortName": "AJ3",
     "colorway": "A Ma Maniere",
     "date": "2026-09-04"
-  },
-  "precomputedPreviousWorn": {
-    "key": "14_Chicago",
-    "shoeId": 14,
-    "shoeName": "Air Jordan 40",
-    "shortName": "AJ40",
-    "colorway": "Chicago",
-    "date": "2026-08-28"
   },
   "precomputedUpNext": {
     "key": "4_A Ma Maniere",
@@ -3188,6 +3192,13 @@
     "colorway": "A Ma Maniere",
     "date": "2025-11-27"
   },
-  "precomputedOnFeetToday": null,
-  "builtAt": "2026-09-12T23:23:44.631479Z"
+  "precomputedOnFeetToday": {
+    "key": "7_Cardinal",
+    "shoeId": 7,
+    "shoeName": "Air Jordan 7",
+    "shortName": "AJ7",
+    "colorway": "Cardinal",
+    "date": "2026-09-18"
+  },
+  "builtAt": "2026-09-18T10:33:34.699329Z"
 }
