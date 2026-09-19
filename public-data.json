@@ -400,6 +400,10 @@
       {
         "date": "2026-08-21",
         "colorway": "A Ma Maniere WYWS"
+      },
+      {
+        "date": "2026-09-19",
+        "colorway": "A Ma Maniere"
       }
     ],
     "5": [
@@ -2770,6 +2774,14 @@
         "shoeId": 4,
         "shoeName": "Air Jordan 4",
         "shortName": "AJ4",
+        "colorway": "A Ma Maniere",
+        "count": 5,
+        "lastWorn": "2026-09-19"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
         "colorway": "Military Blue",
         "count": 5,
         "lastWorn": "2026-07-16"
@@ -2829,14 +2841,6 @@
         "colorway": "Air Max Day (Royal Volt)",
         "count": 5,
         "lastWorn": "2025-11-28"
-      },
-      {
-        "shoeId": 3,
-        "shoeName": "Air Jordan 3",
-        "shortName": "AJ3",
-        "colorway": "A Ma Maniere WYWS",
-        "count": 4,
-        "lastWorn": "2026-08-05"
       }
     ],
     "priceRanked": [
@@ -3169,30 +3173,14 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "7_Cardinal",
-    "shoeId": 7,
-    "shoeName": "Air Jordan 7",
-    "shortName": "AJ7",
-    "colorway": "Cardinal",
-    "date": "2026-09-18"
-  },
-  "precomputedPreviousWorn": {
-    "key": "3_A Ma Maniere",
-    "shoeId": 3,
-    "shoeName": "Air Jordan 3",
-    "shortName": "AJ3",
-    "colorway": "A Ma Maniere",
-    "date": "2026-09-04"
-  },
-  "precomputedUpNext": {
     "key": "4_A Ma Maniere",
     "shoeId": 4,
     "shoeName": "Air Jordan 4",
     "shortName": "AJ4",
     "colorway": "A Ma Maniere",
-    "date": "2025-11-27"
+    "date": "2026-09-19"
   },
-  "precomputedOnFeetToday": {
+  "precomputedPreviousWorn": {
     "key": "7_Cardinal",
     "shoeId": 7,
     "shoeName": "Air Jordan 7",
@@ -3200,5 +3188,21 @@
     "colorway": "Cardinal",
     "date": "2026-09-18"
   },
-  "builtAt": "2026-09-18T10:33:34.699329Z"
+  "precomputedUpNext": {
+    "key": "17_Air Max Day (Royal Volt)",
+    "shoeId": 17,
+    "shoeName": "Air Max 86",
+    "shortName": "AM86",
+    "colorway": "Air Max Day (Royal Volt)",
+    "date": "2025-11-28"
+  },
+  "precomputedOnFeetToday": {
+    "key": "4_A Ma Maniere",
+    "shoeId": 4,
+    "shoeName": "Air Jordan 4",
+    "shortName": "AJ4",
+    "colorway": "A Ma Maniere",
+    "date": "2026-09-19"
+  },
+  "builtAt": "2026-09-19T09:34:22.243162Z"
 }
