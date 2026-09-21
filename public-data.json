@@ -1486,7 +1486,8 @@
     "21_Purple_spin_33": "Shoes/AFMCB/Purple/spin/Purple_spin_33.png",
     "21_Purple_spin_34": "Shoes/AFMCB/Purple/spin/Purple_spin_34.png",
     "21_Purple_spin_35": "Shoes/AFMCB/Purple/spin/Purple_spin_35.png",
-    "21_Purple_spin_36": "Shoes/AFMCB/Purple/spin/Purple_spin_36.png"
+    "21_Purple_spin_36": "Shoes/AFMCB/Purple/spin/Purple_spin_36.png",
+    "7_Cardinal_onfoot": "Shoes/AJ7/Cardinal/Cardinal_onfoot.png"
   },
   "colorwayMeta": {
     "3_White Cement Reimagined": {
@@ -3196,13 +3197,6 @@
     "colorway": "A Ma Maniere",
     "date": "2025-11-27"
   },
-  "precomputedOnFeetToday": {
-    "key": "4_What the 4",
-    "shoeId": 4,
-    "shoeName": "Air Jordan 4",
-    "shortName": "AJ4",
-    "colorway": "What the 4",
-    "date": "2026-09-19"
-  },
-  "builtAt": "2026-09-19T12:29:35.130351Z"
+  "precomputedOnFeetToday": null,
+  "builtAt": "2026-09-21T11:24:36.985746Z"
 }
