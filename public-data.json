@@ -404,6 +404,10 @@
       {
         "date": "2026-09-19",
         "colorway": "What the 4"
+      },
+      {
+        "date": "2026-09-25",
+        "colorway": "A Ma Maniere"
       }
     ],
     "5": [
@@ -2775,6 +2779,14 @@
         "shoeId": 4,
         "shoeName": "Air Jordan 4",
         "shortName": "AJ4",
+        "colorway": "A Ma Maniere",
+        "count": 5,
+        "lastWorn": "2026-09-25"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
         "colorway": "Military Blue",
         "count": 5,
         "lastWorn": "2026-07-16"
@@ -2834,14 +2846,6 @@
         "colorway": "Air Max Day (Royal Volt)",
         "count": 5,
         "lastWorn": "2025-11-28"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "What the 4",
-        "count": 4,
-        "lastWorn": "2026-09-19"
       }
     ],
     "priceRanked": [
@@ -3174,6 +3178,14 @@
     ]
   },
   "precomputedLastWorn": {
+    "key": "4_A Ma Maniere",
+    "shoeId": 4,
+    "shoeName": "Air Jordan 4",
+    "shortName": "AJ4",
+    "colorway": "A Ma Maniere",
+    "date": "2026-09-25"
+  },
+  "precomputedPreviousWorn": {
     "key": "4_What the 4",
     "shoeId": 4,
     "shoeName": "Air Jordan 4",
@@ -3181,22 +3193,21 @@
     "colorway": "What the 4",
     "date": "2026-09-19"
   },
-  "precomputedPreviousWorn": {
-    "key": "7_Cardinal",
-    "shoeId": 7,
-    "shoeName": "Air Jordan 7",
-    "shortName": "AJ7",
-    "colorway": "Cardinal",
-    "date": "2026-09-18"
-  },
   "precomputedUpNext": {
+    "key": "17_Air Max Day (Royal Volt)",
+    "shoeId": 17,
+    "shoeName": "Air Max 86",
+    "shortName": "AM86",
+    "colorway": "Air Max Day (Royal Volt)",
+    "date": "2025-11-28"
+  },
+  "precomputedOnFeetToday": {
     "key": "4_A Ma Maniere",
     "shoeId": 4,
     "shoeName": "Air Jordan 4",
     "shortName": "AJ4",
     "colorway": "A Ma Maniere",
-    "date": "2025-11-27"
+    "date": "2026-09-25"
   },
-  "precomputedOnFeetToday": null,
-  "builtAt": "2026-09-21T11:24:36.985746Z"
+  "builtAt": "2026-09-25T11:01:09.640798Z"
 }
