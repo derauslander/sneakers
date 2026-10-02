@@ -662,6 +662,10 @@
       {
         "date": "2025-04-17",
         "colorway": "Air Max Day (Royal Volt)"
+      },
+      {
+        "date": "2026-10-02",
+        "colorway": "Air Max Day (Royal Volt)"
       }
     ],
     "21": [
@@ -2776,6 +2780,14 @@
         "lastWorn": "2026-08-01"
       },
       {
+        "shoeId": 17,
+        "shoeName": "Air Max 86",
+        "shortName": "AM86",
+        "colorway": "Air Max Day (Royal Volt)",
+        "count": 6,
+        "lastWorn": "2026-10-02"
+      },
+      {
         "shoeId": 4,
         "shoeName": "Air Jordan 4",
         "shortName": "AJ4",
@@ -2838,14 +2850,6 @@
         "colorway": "Volt",
         "count": 5,
         "lastWorn": "2025-12-06"
-      },
-      {
-        "shoeId": 17,
-        "shoeName": "Air Max 86",
-        "shortName": "AM86",
-        "colorway": "Air Max Day (Royal Volt)",
-        "count": 5,
-        "lastWorn": "2025-11-28"
       }
     ],
     "priceRanked": [
@@ -2919,18 +2923,18 @@
         "wears": 5
       },
       {
+        "shoeId": 17,
+        "shoeName": "Air Max 86",
+        "shortName": "AM86",
+        "colorway": "Air Max Day (Royal Volt)",
+        "wears": 6
+      },
+      {
         "shoeId": 3,
         "shoeName": "Air Jordan 3",
         "shortName": "AJ3",
         "colorway": "White Cement Reimagined",
         "wears": 7
-      },
-      {
-        "shoeId": 17,
-        "shoeName": "Air Max 86",
-        "shortName": "AM86",
-        "colorway": "Air Max Day (Royal Volt)",
-        "wears": 5
       },
       {
         "shoeId": 2,
@@ -3178,30 +3182,14 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "4_A Ma Maniere",
-    "shoeId": 4,
-    "shoeName": "Air Jordan 4",
-    "shortName": "AJ4",
-    "colorway": "A Ma Maniere",
-    "date": "2026-09-25"
-  },
-  "precomputedPreviousWorn": {
-    "key": "4_What the 4",
-    "shoeId": 4,
-    "shoeName": "Air Jordan 4",
-    "shortName": "AJ4",
-    "colorway": "What the 4",
-    "date": "2026-09-19"
-  },
-  "precomputedUpNext": {
     "key": "17_Air Max Day (Royal Volt)",
     "shoeId": 17,
     "shoeName": "Air Max 86",
     "shortName": "AM86",
     "colorway": "Air Max Day (Royal Volt)",
-    "date": "2025-11-28"
+    "date": "2026-10-02"
   },
-  "precomputedOnFeetToday": {
+  "precomputedPreviousWorn": {
     "key": "4_A Ma Maniere",
     "shoeId": 4,
     "shoeName": "Air Jordan 4",
@@ -3209,5 +3197,21 @@
     "colorway": "A Ma Maniere",
     "date": "2026-09-25"
   },
-  "builtAt": "2026-09-25T11:01:09.640798Z"
+  "precomputedUpNext": {
+    "key": "16_Volt",
+    "shoeId": 16,
+    "shoeName": "Air Trainer SC2",
+    "shortName": "SC2",
+    "colorway": "Volt",
+    "date": "2025-12-06"
+  },
+  "precomputedOnFeetToday": {
+    "key": "17_Air Max Day (Royal Volt)",
+    "shoeId": 17,
+    "shoeName": "Air Max 86",
+    "shortName": "AM86",
+    "colorway": "Air Max Day (Royal Volt)",
+    "date": "2026-10-02"
+  },
+  "builtAt": "2026-10-02T11:23:05.342151Z"
 }
