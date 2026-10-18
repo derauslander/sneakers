@@ -88,13 +88,12 @@ def compute_rankings(data):
             if entry["date"] > wear_counts[key]["lastWorn"]:
                 wear_counts[key]["lastWorn"] = entry["date"]
 
-    def _invert_date(d):
-        """Invert an ISO date string for descending sort."""
-        return [-ord(c) for c in d]
-
+    # Tie on wear count → the pair whose last wear is furthest in the past
+    # ranks higher. lastWorn is an ISO date string, so a plain ascending
+    # sort puts the oldest last-worn date first.
     worn_ranked = sorted(
         wear_counts.values(),
-        key=lambda x: (-x["count"], _invert_date(x["lastWorn"]))
+        key=lambda x: (-x["count"], x["lastWorn"])
     )[:10]
 
     # ── 2. Most Expensive ───────────────────────────────────────────────────

@@ -2784,14 +2784,6 @@
         "lastWorn": "2026-08-01"
       },
       {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Fire Red",
-        "count": 6,
-        "lastWorn": "2026-10-18"
-      },
-      {
         "shoeId": 17,
         "shoeName": "Air Max 86",
         "shortName": "AM86",
@@ -2803,41 +2795,17 @@
         "shoeId": 4,
         "shoeName": "Air Jordan 4",
         "shortName": "AJ4",
-        "colorway": "A Ma Maniere",
-        "count": 5,
-        "lastWorn": "2026-09-25"
+        "colorway": "Fire Red",
+        "count": 6,
+        "lastWorn": "2026-10-18"
       },
       {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Military Blue",
+        "shoeId": 16,
+        "shoeName": "Air Trainer SC2",
+        "shortName": "SC2",
+        "colorway": "Volt",
         "count": 5,
-        "lastWorn": "2026-07-16"
-      },
-      {
-        "shoeId": 1,
-        "shoeName": "Air Jordan 1",
-        "shortName": "AJ1",
-        "colorway": "Royal Reimagined",
-        "count": 5,
-        "lastWorn": "2026-07-10"
-      },
-      {
-        "shoeId": 2,
-        "shoeName": "Air Jordan 2",
-        "shortName": "AJ2",
-        "colorway": "Black Cement",
-        "count": 5,
-        "lastWorn": "2026-07-02"
-      },
-      {
-        "shoeId": 12,
-        "shoeName": "Air Jordan 13",
-        "shortName": "AJ13",
-        "colorway": "Black Flint",
-        "count": 5,
-        "lastWorn": "2026-04-04"
+        "lastWorn": "2025-12-06"
       },
       {
         "shoeId": 4,
@@ -2848,12 +2816,44 @@
         "lastWorn": "2025-12-24"
       },
       {
-        "shoeId": 16,
-        "shoeName": "Air Trainer SC2",
-        "shortName": "SC2",
-        "colorway": "Volt",
+        "shoeId": 12,
+        "shoeName": "Air Jordan 13",
+        "shortName": "AJ13",
+        "colorway": "Black Flint",
         "count": 5,
-        "lastWorn": "2025-12-06"
+        "lastWorn": "2026-04-04"
+      },
+      {
+        "shoeId": 2,
+        "shoeName": "Air Jordan 2",
+        "shortName": "AJ2",
+        "colorway": "Black Cement",
+        "count": 5,
+        "lastWorn": "2026-07-02"
+      },
+      {
+        "shoeId": 1,
+        "shoeName": "Air Jordan 1",
+        "shortName": "AJ1",
+        "colorway": "Royal Reimagined",
+        "count": 5,
+        "lastWorn": "2026-07-10"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "Military Blue",
+        "count": 5,
+        "lastWorn": "2026-07-16"
+      },
+      {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "A Ma Maniere",
+        "count": 5,
+        "lastWorn": "2026-09-25"
       }
     ],
     "priceRanked": [
@@ -3217,5 +3217,5 @@
     "colorway": "Fire Red",
     "date": "2026-10-18"
   },
-  "builtAt": "2026-10-18T21:19:26.994826Z"
+  "builtAt": "2026-10-18T21:48:56.082320Z"
 }
