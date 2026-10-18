@@ -408,6 +408,10 @@
       {
         "date": "2026-09-25",
         "colorway": "A Ma Maniere"
+      },
+      {
+        "date": "2026-10-18",
+        "colorway": "Fire Red"
       }
     ],
     "5": [
@@ -2780,6 +2784,14 @@
         "lastWorn": "2026-08-01"
       },
       {
+        "shoeId": 4,
+        "shoeName": "Air Jordan 4",
+        "shortName": "AJ4",
+        "colorway": "Fire Red",
+        "count": 6,
+        "lastWorn": "2026-10-18"
+      },
+      {
         "shoeId": 17,
         "shoeName": "Air Max 86",
         "shortName": "AM86",
@@ -2826,14 +2838,6 @@
         "colorway": "Black Flint",
         "count": 5,
         "lastWorn": "2026-04-04"
-      },
-      {
-        "shoeId": 4,
-        "shoeName": "Air Jordan 4",
-        "shortName": "AJ4",
-        "colorway": "Fire Red",
-        "count": 5,
-        "lastWorn": "2026-01-16"
       },
       {
         "shoeId": 4,
@@ -3182,20 +3186,20 @@
     ]
   },
   "precomputedLastWorn": {
+    "key": "4_Fire Red",
+    "shoeId": 4,
+    "shoeName": "Air Jordan 4",
+    "shortName": "AJ4",
+    "colorway": "Fire Red",
+    "date": "2026-10-18"
+  },
+  "precomputedPreviousWorn": {
     "key": "17_Air Max Day (Royal Volt)",
     "shoeId": 17,
     "shoeName": "Air Max 86",
     "shortName": "AM86",
     "colorway": "Air Max Day (Royal Volt)",
     "date": "2026-10-02"
-  },
-  "precomputedPreviousWorn": {
-    "key": "4_A Ma Maniere",
-    "shoeId": 4,
-    "shoeName": "Air Jordan 4",
-    "shortName": "AJ4",
-    "colorway": "A Ma Maniere",
-    "date": "2026-09-25"
   },
   "precomputedUpNext": {
     "key": "16_Volt",
@@ -3206,12 +3210,12 @@
     "date": "2025-12-06"
   },
   "precomputedOnFeetToday": {
-    "key": "17_Air Max Day (Royal Volt)",
-    "shoeId": 17,
-    "shoeName": "Air Max 86",
-    "shortName": "AM86",
-    "colorway": "Air Max Day (Royal Volt)",
-    "date": "2026-10-02"
+    "key": "4_Fire Red",
+    "shoeId": 4,
+    "shoeName": "Air Jordan 4",
+    "shortName": "AJ4",
+    "colorway": "Fire Red",
+    "date": "2026-10-18"
   },
-  "builtAt": "2026-10-02T11:23:05.342151Z"
+  "builtAt": "2026-10-18T21:19:26.994826Z"
 }
