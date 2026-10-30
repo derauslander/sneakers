@@ -140,6 +140,27 @@
       from { opacity: 0; transform: translateY(12px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+    /* ── Roulette animations ── */
+    @keyframes rouletteOverlayIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes rouletteSlotSpin {
+      0%   { transform: translateY(0); }
+      100% { transform: translateY(-100%); }
+    }
+    @keyframes rouletteWinnerReveal {
+      from { opacity: 0; transform: scale(0.8) translateY(20px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes rouletteWinnerGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(230,57,70,0.3), 0 0 60px rgba(230,57,70,0.1); }
+      50%      { box-shadow: 0 0 30px rgba(230,57,70,0.6), 0 0 80px rgba(230,57,70,0.2); }
+    }
+    @keyframes rouletteZonePulse {
+      0%, 100% { opacity: 0.7; }
+      50%      { opacity: 1; }
+    }
     /* Respect reduced-motion preference */
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
@@ -1960,6 +1981,11 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
     const [metaForm, setMetaForm] = useState({ purchaseDate: "", purchasePrice: "", retailer: "", size: "", notes: "", ogYear: "", story: "", saleDate: "", saleTime: "", comfortRating: "", releaseYear: "" });
     const [bannerIdx, setBannerIdx] = useState(0);
     const [bannerPaused, setBannerPaused] = useState(false);
+    const [rouletteOpen, setRouletteOpen] = useState(false);
+    const [roulettePhase, setRoulettePhase] = useState("idle");
+    const [rouletteWinner, setRouletteWinner] = useState(null);
+    const rouletteTimers = useRef([]);
+    const rouletteSlotNames = useRef([]);
     const [collectionFilter, setCollectionFilter] = useState("all");
     const [top10Filter, setTop10Filter] = useState("worn");
     const [timeTravelDate, setTimeTravelDate] = useState(null);
@@ -2167,6 +2193,100 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       const gapRanked = gapEntries.sort((a, b) => b.days !== a.days ? b.days - a.days : a.from < b.from ? -1 : 1).slice(0, 10);
       return { wornRanked, priceRanked, valueRanked, iceRanked, gapRanked };
     }, [inventory, wearLog, colorwayMeta, tierMeta, colorwayOwned, colorways, publicData]);
+    const roulettePool = React.useMemo(() => {
+      if (!ADMIN_MODE) return [];
+      const today = localDateStr();
+      const pool = [];
+      inventory.forEach((shoe) => {
+        (colorways[shoe.shortName] || []).forEach((cw) => {
+          const key = `${shoe.id}_${cw}`;
+          if (tierExcludedFromRotation(tierOf(tierMeta, key))) return;
+          if (colorwayOwned[key] === false) return;
+          const meta = colorwayMeta[key] || {};
+          if (meta.retireDate) return;
+          const wears = (wearLog[shoe.id] || []).filter((e) => e.colorway === cw);
+          let daysSince;
+          if (wears.length > 0) {
+            const lastWorn = wears.reduce((mx, e) => e.date > mx ? e.date : mx, wears[0].date);
+            daysSince = daysBetween(lastWorn, today);
+          } else if (meta.purchaseDate) {
+            daysSince = daysBetween(meta.purchaseDate, today);
+          } else {
+            daysSince = null;
+          }
+          pool.push({ shoeId: shoe.id, shortName: shoe.shortName, colorway: cw, key, daysSince, wearCount: wears.length });
+        });
+      });
+      const known = pool.filter((p) => p.daysSince !== null).map((p) => p.daysSince).sort((a, b) => a - b);
+      const median = known.length ? known[Math.floor(known.length / 2)] : 30;
+      pool.forEach((p) => {
+        if (p.daysSince === null) p.daysSince = median;
+      });
+      pool.sort((a, b) => b.daysSince - a.daysSince);
+      const ZONE1 = [20, 17, 14, 11, 8];
+      const ZONE2 = [6, 5, 4, 3, 2];
+      const n3 = Math.max(pool.length - 10, 0);
+      pool.forEach((p, i) => {
+        if (i < 5) {
+          p.prob = ZONE1[i];
+          p.zone = "UP NEXT";
+          p.zoneRank = i + 1;
+        } else if (i < 10) {
+          p.prob = ZONE2[i - 5];
+          p.zone = "ON DECK";
+          p.zoneRank = i - 4;
+        } else {
+          if (n3 <= 1) {
+            p.prob = 10;
+          } else {
+            const d = 10 / (n3 * (n3 + 2) / 2);
+            const a = 15 / n3;
+            const last = 5 / n3;
+            const step = n3 > 1 ? (a - last) / (n3 - 1) : 0;
+            p.prob = a - (i - 10) * step;
+          }
+          p.zone = "THE FIELD";
+          p.zoneRank = i - 9;
+        }
+      });
+      return pool;
+    }, [inventory, colorways, tierMeta, colorwayOwned, colorwayMeta, wearLog]);
+    const spinRoulette = () => {
+      if (roulettePool.length === 0) return;
+      rouletteTimers.current.forEach((t2) => clearTimeout(t2));
+      rouletteTimers.current = [];
+      const names = [];
+      for (let i = 0; i < 40; i++) names.push(roulettePool[i % roulettePool.length]);
+      for (let i = names.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [names[i], names[j]] = [names[j], names[i]];
+      }
+      rouletteSlotNames.current = names;
+      setRoulettePhase("spinning");
+      setRouletteWinner(null);
+      const totalProb = roulettePool.reduce((s, p) => s + p.prob, 0);
+      let r = Math.random() * totalProb;
+      let winner = roulettePool[0];
+      for (const p of roulettePool) {
+        r -= p.prob;
+        if (r <= 0) {
+          winner = p;
+          break;
+        }
+      }
+      const t = setTimeout(() => {
+        setRouletteWinner(winner);
+        setRoulettePhase("reveal");
+      }, 2400);
+      rouletteTimers.current.push(t);
+    };
+    const closeRoulette = () => {
+      rouletteTimers.current.forEach((t) => clearTimeout(t));
+      rouletteTimers.current = [];
+      setRouletteOpen(false);
+      setRoulettePhase("idle");
+      setRouletteWinner(null);
+    };
     const orderedWishlistCards = React.useMemo(() => {
       const shoeMap = {};
       inventory.forEach((shoe) => {
@@ -2669,7 +2789,11 @@ Make sure server.py is running, then try again.`);
       textAlign: isMobilePublic ? "center" : void 0,
       whiteSpace: "nowrap",
       animation: v === "wishlist" && wishlistHasSale && view !== "wishlist" ? "saleGlow 1.5s ease-in-out infinite" : "none"
-    } }, v === "stats" ? "top 10" : v === "tierlist" ? "tier list" : v === "review" ? `${(/* @__PURE__ */ new Date()).getFullYear() - 1} review` : v === "vr" ? "\u{1F97D} VR" : v)), !isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { marginLeft: "auto", display: "flex", alignItems: "center", gap: "20px", padding: "0 20px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "16px", alignItems: "center" } }, (ADMIN_MODE ? [["PAIRS", total], ["OPEN BOXES", empty], ["WISHLIST", wishlistCount]] : [["PAIRS", total], ["WISHLIST", wishlistCount]]).map(([label, val]) => /* @__PURE__ */ React.createElement("div", { key: label, style: { display: "flex", alignItems: "center", gap: "6px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "14px", fontWeight: "bold", color: "var(--vault-red)" } }, val), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "9px", letterSpacing: "2px", color: T.text5 } }, label)))), /* @__PURE__ */ React.createElement("button", { onClick: () => setDark((d) => !d), style: { background: "transparent", border: "none", color: T.text4, cursor: "pointer", fontSize: "16px", padding: "0", lineHeight: 1 }, title: dark ? "Switch to light mode" : "Switch to dark mode" }, dark ? "\u2600" : "\u263E"))), !isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { borderBottom: `1px solid ${T.border}` } }), isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", alignItems: "center", gap: "20px", padding: "8px 16px", background: T.navBg, borderBottom: `1px solid ${T.border}` } }, [["PAIRS", total], ["WISHLIST", wishlistCount]].map(([label, val]) => /* @__PURE__ */ React.createElement("div", { key: label, style: { display: "flex", alignItems: "center", gap: "5px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "12px", fontWeight: "bold", color: "var(--vault-red)" } }, val), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "8px", letterSpacing: "2px", color: T.text5 } }, label))), /* @__PURE__ */ React.createElement("button", { onClick: () => setDark((d) => !d), style: { background: "transparent", border: "none", color: T.text4, cursor: "pointer", fontSize: "14px", padding: "0", lineHeight: 1 }, title: dark ? "Switch to light mode" : "Switch to dark mode" }, dark ? "\u2600" : "\u263E")), /* @__PURE__ */ React.createElement("div", { style: { padding: isMobilePublic ? "16px" : "32px" } }, view === "collection" && /* @__PURE__ */ React.createElement("div", null, timeTravelDate && /* @__PURE__ */ React.createElement("div", { style: { background: dark ? "linear-gradient(90deg,#1a1a2a,#111122)" : "linear-gradient(90deg,#f0f8ff,#e8f4ff)", border: "1px solid var(--tier-diamond)", padding: "16px 24px", marginBottom: "24px", display: "flex", alignItems: "center", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "16px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px" } }, "\u23F3"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "4px", color: "var(--tier-diamond)", marginBottom: "4px" } }, "TIME MACHINE"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: isMobilePublic ? "13px" : "16px", fontWeight: "bold", color: T.text } }, "The Vault on ", formatDate(timeTravelDate)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "10px", color: T.text3, marginTop: "2px" } }, (() => {
+    } }, v === "stats" ? "top 10" : v === "tierlist" ? "tier list" : v === "review" ? `${(/* @__PURE__ */ new Date()).getFullYear() - 1} review` : v === "vr" ? "\u{1F97D} VR" : v)), !isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { marginLeft: "auto", display: "flex", alignItems: "center", gap: "20px", padding: "0 20px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "16px", alignItems: "center" } }, (ADMIN_MODE ? [["PAIRS", total], ["OPEN BOXES", empty], ["WISHLIST", wishlistCount]] : [["PAIRS", total], ["WISHLIST", wishlistCount]]).map(([label, val]) => /* @__PURE__ */ React.createElement("div", { key: label, style: { display: "flex", alignItems: "center", gap: "6px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "14px", fontWeight: "bold", color: "var(--vault-red)" } }, val), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "9px", letterSpacing: "2px", color: T.text5 } }, label)))), ADMIN_MODE && /* @__PURE__ */ React.createElement("button", { onClick: () => {
+      setRouletteOpen(true);
+      setRoulettePhase("idle");
+      setRouletteWinner(null);
+    }, style: { background: "transparent", border: "none", color: T.text4, cursor: "pointer", fontSize: "16px", padding: "0", lineHeight: 1 }, title: "Sneaker Roulette" }, "\u{1F3B2}"), /* @__PURE__ */ React.createElement("button", { onClick: () => setDark((d) => !d), style: { background: "transparent", border: "none", color: T.text4, cursor: "pointer", fontSize: "16px", padding: "0", lineHeight: 1 }, title: dark ? "Switch to light mode" : "Switch to dark mode" }, dark ? "\u2600" : "\u263E"))), !isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { borderBottom: `1px solid ${T.border}` } }), isMobilePublic && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", alignItems: "center", gap: "20px", padding: "8px 16px", background: T.navBg, borderBottom: `1px solid ${T.border}` } }, [["PAIRS", total], ["WISHLIST", wishlistCount]].map(([label, val]) => /* @__PURE__ */ React.createElement("div", { key: label, style: { display: "flex", alignItems: "center", gap: "5px" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: "12px", fontWeight: "bold", color: "var(--vault-red)" } }, val), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "8px", letterSpacing: "2px", color: T.text5 } }, label))), /* @__PURE__ */ React.createElement("button", { onClick: () => setDark((d) => !d), style: { background: "transparent", border: "none", color: T.text4, cursor: "pointer", fontSize: "14px", padding: "0", lineHeight: 1 }, title: dark ? "Switch to light mode" : "Switch to dark mode" }, dark ? "\u2600" : "\u263E")), /* @__PURE__ */ React.createElement("div", { style: { padding: isMobilePublic ? "16px" : "32px" } }, view === "collection" && /* @__PURE__ */ React.createElement("div", null, timeTravelDate && /* @__PURE__ */ React.createElement("div", { style: { background: dark ? "linear-gradient(90deg,#1a1a2a,#111122)" : "linear-gradient(90deg,#f0f8ff,#e8f4ff)", border: "1px solid var(--tier-diamond)", padding: "16px 24px", marginBottom: "24px", display: "flex", alignItems: "center", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "16px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px" } }, "\u23F3"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "4px", color: "var(--tier-diamond)", marginBottom: "4px" } }, "TIME MACHINE"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: isMobilePublic ? "13px" : "16px", fontWeight: "bold", color: T.text } }, "The Vault on ", formatDate(timeTravelDate)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "10px", color: T.text3, marginTop: "2px" } }, (() => {
       const allPD = [];
       inventory.forEach((shoe) => {
         (colorways[shoe.shortName] || []).forEach((cw) => {
@@ -4274,6 +4398,125 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
           background: i === index ? "var(--vault-red)" : "rgba(255,255,255,0.2)",
           transition: "background 0.3s ease"
         } }))));
+      })(),
+      document.body
+    ), ADMIN_MODE && rouletteOpen && ReactDOM.createPortal(
+      (() => {
+        const pool = roulettePool;
+        const phase = roulettePhase;
+        const winner = rouletteWinner;
+        const slotNames = rouletteSlotNames.current;
+        const zoneColor = (zone) => zone === "UP NEXT" ? "var(--vault-red)" : zone === "ON DECK" ? "var(--tier-gold)" : "#4cc9f0";
+        const winnerImg = winner ? images[winner.key] || null : null;
+        return /* @__PURE__ */ React.createElement("div", { onClick: (e) => {
+          if (e.target === e.currentTarget) closeRoulette();
+        }, style: {
+          position: "fixed",
+          inset: 0,
+          zIndex: 99999,
+          background: "rgba(0,0,0,0.92)",
+          backdropFilter: "blur(8px)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          animation: "rouletteOverlayIn 0.3s ease"
+        } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "6px", color: "var(--vault-red)", marginBottom: "32px", textTransform: "uppercase" } }, "SNEAKER ROULETTE"), phase === "idle" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: "24px" } }, /* @__PURE__ */ React.createElement(
+          "div",
+          {
+            style: { fontSize: "64px", cursor: "pointer", transition: "transform 0.2s" },
+            onMouseEnter: (e) => e.currentTarget.style.transform = "scale(1.2) rotate(15deg)",
+            onMouseLeave: (e) => e.currentTarget.style.transform = "scale(1)",
+            onClick: spinRoulette
+          },
+          "\u{1F3B2}"
+        ), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "11px", letterSpacing: "3px", color: "#888" } }, pool.length, " SNEAKERS IN ROTATION"), /* @__PURE__ */ React.createElement("button", { onClick: spinRoulette, style: {
+          background: "var(--vault-red)",
+          color: "#fff",
+          border: "none",
+          padding: "14px 48px",
+          fontSize: "11px",
+          letterSpacing: "4px",
+          cursor: "pointer",
+          fontFamily: "'Aptos','Segoe UI',sans-serif",
+          fontWeight: "bold"
+        } }, "SPIN")), phase === "spinning" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: "16px" } }, /* @__PURE__ */ React.createElement("div", { style: {
+          width: "320px",
+          height: "60px",
+          overflow: "hidden",
+          position: "relative",
+          border: "1px solid var(--vault-red)",
+          background: "rgba(230,57,70,0.05)"
+        } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, height: "20px", background: "linear-gradient(to bottom, rgba(0,0,0,0.9), transparent)", zIndex: 2 } }), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", bottom: 0, left: 0, right: 0, height: "20px", background: "linear-gradient(to top, rgba(0,0,0,0.9), transparent)", zIndex: 2 } }), /* @__PURE__ */ React.createElement("div", { style: {
+          animation: "rouletteSlotSpin 2.4s cubic-bezier(0.2, 0, 0.1, 1) forwards",
+          display: "flex",
+          flexDirection: "column"
+        } }, slotNames.map((p, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
+          height: "60px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "13px",
+          letterSpacing: "2px",
+          color: "#fff",
+          whiteSpace: "nowrap",
+          padding: "0 16px"
+        } }, p.shortName, " ", /* @__PURE__ */ React.createElement("span", { style: { color: "#888", marginLeft: "8px" } }, p.colorway))))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "10px", letterSpacing: "3px", color: "#555" } }, "SELECTING...")), phase === "reveal" && winner && /* @__PURE__ */ React.createElement("div", { style: {
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "24px",
+          animation: "rouletteWinnerReveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)"
+        } }, /* @__PURE__ */ React.createElement("div", { style: {
+          fontSize: "9px",
+          letterSpacing: "4px",
+          color: zoneColor(winner.zone),
+          animation: "rouletteZonePulse 2s ease-in-out infinite"
+        } }, winner.zone, " #", winner.zoneRank), /* @__PURE__ */ React.createElement("div", { style: {
+          background: "rgba(26,26,26,0.9)",
+          border: "1px solid var(--vault-red)",
+          padding: "32px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "20px",
+          minWidth: "300px",
+          maxWidth: "400px",
+          animation: "rouletteWinnerGlow 3s ease-in-out infinite"
+        } }, winnerImg && /* @__PURE__ */ React.createElement("div", { style: { width: "200px", height: "140px", display: "flex", alignItems: "center", justifyContent: "center" } }, /* @__PURE__ */ React.createElement("img", { src: winnerImg, alt: `${winner.shortName} ${winner.colorway}`, style: {
+          maxWidth: "100%",
+          maxHeight: "100%",
+          objectFit: "contain"
+        } })), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px", fontWeight: "bold", color: "#fff", letterSpacing: "1px", marginBottom: "4px" } }, winner.shortName), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: "var(--vault-red)", letterSpacing: "2px" } }, winner.colorway)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "32px" } }, /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "4px" } }, "DAYS SINCE"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "20px", fontWeight: "bold", color: "#fff" } }, winner.daysSince)), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "4px" } }, "TOTAL WEARS"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "20px", fontWeight: "bold", color: "#fff" } }, winner.wearCount)), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "4px" } }, "ODDS"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "20px", fontWeight: "bold", color: "#fff" } }, winner.prob < 1 ? winner.prob.toFixed(2) : winner.prob.toFixed(1), "%")))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "16px" } }, /* @__PURE__ */ React.createElement("button", { onClick: spinRoulette, style: {
+          background: "transparent",
+          color: "var(--vault-red)",
+          border: "1px solid var(--vault-red)",
+          padding: "12px 32px",
+          fontSize: "10px",
+          letterSpacing: "3px",
+          cursor: "pointer",
+          fontFamily: "'Aptos','Segoe UI',sans-serif"
+        } }, "SPIN AGAIN"), /* @__PURE__ */ React.createElement("button", { onClick: closeRoulette, style: {
+          background: "var(--vault-red)",
+          color: "#fff",
+          border: "none",
+          padding: "12px 32px",
+          fontSize: "10px",
+          letterSpacing: "3px",
+          cursor: "pointer",
+          fontFamily: "'Aptos','Segoe UI',sans-serif",
+          fontWeight: "bold"
+        } }, "DONE"))), /* @__PURE__ */ React.createElement("button", { onClick: closeRoulette, style: {
+          position: "absolute",
+          top: "24px",
+          right: "24px",
+          background: "transparent",
+          border: "none",
+          color: "#666",
+          fontSize: "24px",
+          cursor: "pointer",
+          lineHeight: 1
+        } }, "\u2715"));
       })(),
       document.body
     ), ADMIN_MODE && contextMenu && ReactDOM.createPortal(

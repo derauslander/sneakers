@@ -412,6 +412,10 @@
       {
         "date": "2026-10-18",
         "colorway": "Fire Red"
+      },
+      {
+        "date": "2026-10-30",
+        "colorway": "Black Cement"
       }
     ],
     "5": [
@@ -2828,8 +2832,8 @@
         "shoeName": "Air Jordan 4",
         "shortName": "AJ4",
         "colorway": "Black Cement",
-        "count": 5,
-        "lastWorn": "2025-12-24"
+        "count": 6,
+        "lastWorn": "2026-10-30"
       },
       {
         "shoeId": 2,
@@ -3194,30 +3198,14 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "12_Black Flint",
-    "shoeId": 12,
-    "shoeName": "Air Jordan 13",
-    "shortName": "AJ13",
-    "colorway": "Black Flint",
-    "date": "2026-10-24"
-  },
-  "precomputedPreviousWorn": {
-    "key": "16_Volt",
-    "shoeId": 16,
-    "shoeName": "Air Trainer SC2",
-    "shortName": "SC2",
-    "colorway": "Volt",
-    "date": "2026-10-23"
-  },
-  "precomputedUpNext": {
     "key": "4_Black Cement",
     "shoeId": 4,
     "shoeName": "Air Jordan 4",
     "shortName": "AJ4",
     "colorway": "Black Cement",
-    "date": "2025-12-24"
+    "date": "2026-10-30"
   },
-  "precomputedOnFeetToday": {
+  "precomputedPreviousWorn": {
     "key": "12_Black Flint",
     "shoeId": 12,
     "shoeName": "Air Jordan 13",
@@ -3225,5 +3213,21 @@
     "colorway": "Black Flint",
     "date": "2026-10-24"
   },
-  "builtAt": "2026-10-24T13:18:36.922513Z"
+  "precomputedUpNext": {
+    "key": "5_A Ma Maniere Dawn",
+    "shoeId": 5,
+    "shoeName": "Air Jordan 5",
+    "shortName": "AJ5",
+    "colorway": "A Ma Maniere Dawn",
+    "date": "2026-01-23"
+  },
+  "precomputedOnFeetToday": {
+    "key": "4_Black Cement",
+    "shoeId": 4,
+    "shoeName": "Air Jordan 4",
+    "shortName": "AJ4",
+    "colorway": "Black Cement",
+    "date": "2026-10-30"
+  },
+  "builtAt": "2026-10-30T10:56:19.748951Z"
 }
