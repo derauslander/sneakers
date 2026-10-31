@@ -1493,7 +1493,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
     const INTRO_MS = 4e3;
     const FLY_PER_MS = 4800;
     const FLY_OVERLAP_MS = 800;
-    const CARD_MS = enableSound ? 15923 : 2500;
+    const CARD_MS = enableSound ? 15923 : 6e3;
     const SHRINK_MS = 1e3;
     const safeImgs = imgs && imgs.length > 0 ? imgs : [null];
     const hasFlythrough = safeImgs.length >= 2 && safeImgs[0] !== null;
