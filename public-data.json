@@ -496,6 +496,10 @@
       {
         "date": "2026-04-11",
         "colorway": "Infrared"
+      },
+      {
+        "date": "2026-11-03",
+        "colorway": "Reverse Infrared"
       }
     ],
     "7": [
@@ -3202,20 +3206,20 @@
     ]
   },
   "precomputedLastWorn": {
+    "key": "6_Reverse Infrared",
+    "shoeId": 6,
+    "shoeName": "Air Jordan 6",
+    "shortName": "AJ6",
+    "colorway": "Reverse Infrared",
+    "date": "2026-11-03"
+  },
+  "precomputedPreviousWorn": {
     "key": "5_A Ma Maniere Dawn",
     "shoeId": 5,
     "shoeName": "Air Jordan 5",
     "shortName": "AJ5",
     "colorway": "A Ma Maniere Dawn",
     "date": "2026-11-02"
-  },
-  "precomputedPreviousWorn": {
-    "key": "4_Black Cement",
-    "shoeId": 4,
-    "shoeName": "Air Jordan 4",
-    "shortName": "AJ4",
-    "colorway": "Black Cement",
-    "date": "2026-10-30"
   },
   "precomputedUpNext": {
     "key": "5_Fire Red",
@@ -3226,12 +3230,12 @@
     "date": "2026-03-19"
   },
   "precomputedOnFeetToday": {
-    "key": "5_A Ma Maniere Dawn",
-    "shoeId": 5,
-    "shoeName": "Air Jordan 5",
-    "shortName": "AJ5",
-    "colorway": "A Ma Maniere Dawn",
-    "date": "2026-11-02"
+    "key": "6_Reverse Infrared",
+    "shoeId": 6,
+    "shoeName": "Air Jordan 6",
+    "shortName": "AJ6",
+    "colorway": "Reverse Infrared",
+    "date": "2026-11-03"
   },
-  "builtAt": "2026-11-02T10:25:49.063443Z"
+  "builtAt": "2026-11-03T22:24:41.754043Z"
 }
