@@ -3229,13 +3229,6 @@
     "colorway": "Fire Red",
     "date": "2026-03-19"
   },
-  "precomputedOnFeetToday": {
-    "key": "6_Reverse Infrared",
-    "shoeId": 6,
-    "shoeName": "Air Jordan 6",
-    "shortName": "AJ6",
-    "colorway": "Reverse Infrared",
-    "date": "2026-11-03"
-  },
-  "builtAt": "2026-11-03T22:24:41.754043Z"
+  "precomputedOnFeetToday": null,
+  "builtAt": "2026-11-04T10:38:12.103617Z"
 }
