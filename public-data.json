@@ -278,6 +278,10 @@
       {
         "date": "2026-09-04",
         "colorway": "A Ma Maniere"
+      },
+      {
+        "date": "2026-11-04",
+        "colorway": "A Ma Maniere WYWS"
       }
     ],
     "4": [
@@ -3007,7 +3011,7 @@
         "shoeName": "Air Jordan 3",
         "shortName": "AJ3",
         "colorway": "A Ma Maniere WYWS",
-        "wears": 4
+        "wears": 5
       }
     ],
     "iceRanked": [
@@ -3206,20 +3210,20 @@
     ]
   },
   "precomputedLastWorn": {
+    "key": "3_A Ma Maniere WYWS",
+    "shoeId": 3,
+    "shoeName": "Air Jordan 3",
+    "shortName": "AJ3",
+    "colorway": "A Ma Maniere WYWS",
+    "date": "2026-11-04"
+  },
+  "precomputedPreviousWorn": {
     "key": "6_Reverse Infrared",
     "shoeId": 6,
     "shoeName": "Air Jordan 6",
     "shortName": "AJ6",
     "colorway": "Reverse Infrared",
     "date": "2026-11-03"
-  },
-  "precomputedPreviousWorn": {
-    "key": "5_A Ma Maniere Dawn",
-    "shoeId": 5,
-    "shoeName": "Air Jordan 5",
-    "shortName": "AJ5",
-    "colorway": "A Ma Maniere Dawn",
-    "date": "2026-11-02"
   },
   "precomputedUpNext": {
     "key": "5_Fire Red",
@@ -3229,6 +3233,13 @@
     "colorway": "Fire Red",
     "date": "2026-03-19"
   },
-  "precomputedOnFeetToday": null,
-  "builtAt": "2026-11-04T13:38:54.664839Z"
+  "precomputedOnFeetToday": {
+    "key": "3_A Ma Maniere WYWS",
+    "shoeId": 3,
+    "shoeName": "Air Jordan 3",
+    "shortName": "AJ3",
+    "colorway": "A Ma Maniere WYWS",
+    "date": "2026-11-04"
+  },
+  "builtAt": "2026-11-05T00:54:20.930537Z"
 }
