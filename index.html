@@ -1984,6 +1984,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
     const [rouletteOpen, setRouletteOpen] = useState(false);
     const [roulettePhase, setRoulettePhase] = useState("idle");
     const [rouletteWinner, setRouletteWinner] = useState(null);
+    const [rouletteLoggedKey, setRouletteLoggedKey] = useState(null);
     const rouletteTimers = useRef([]);
     const rouletteSlotNames = useRef([]);
     const [collectionFilter, setCollectionFilter] = useState("all");
@@ -2204,7 +2205,9 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
           if (colorwayOwned[key] === false) return;
           const meta = colorwayMeta[key] || {};
           if (meta.retireDate) return;
+          if (isNewPickupCheck(meta.purchaseDate)) return;
           const wears = (wearLog[shoe.id] || []).filter((e) => e.colorway === cw);
+          const neverWorn = wears.length === 0;
           let daysSince;
           if (wears.length > 0) {
             const lastWorn = wears.reduce((mx, e) => e.date > mx ? e.date : mx, wears[0].date);
@@ -2214,7 +2217,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
           } else {
             daysSince = null;
           }
-          pool.push({ shoeId: shoe.id, shortName: shoe.shortName, colorway: cw, key, daysSince, wearCount: wears.length });
+          pool.push({ shoeId: shoe.id, shortName: shoe.shortName, colorway: cw, key, daysSince, neverWorn, wearCount: wears.length, seq: pool.length });
         });
       });
       const known = pool.filter((p) => p.daysSince !== null).map((p) => p.daysSince).sort((a, b) => a - b);
@@ -2222,11 +2225,16 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       pool.forEach((p) => {
         if (p.daysSince === null) p.daysSince = median;
       });
-      pool.sort((a, b) => b.daysSince - a.daysSince);
+      pool.sort((a, b) => {
+        if (a.neverWorn !== b.neverWorn) return a.neverWorn ? -1 : 1;
+        if (!a.neverWorn && !b.neverWorn && a.daysSince !== b.daysSince) return b.daysSince - a.daysSince;
+        return a.seq - b.seq;
+      });
       const ZONE1 = [20, 17, 14, 11, 8];
       const ZONE2 = [6, 5, 4, 3, 2];
       const n3 = Math.max(pool.length - 10, 0);
       pool.forEach((p, i) => {
+        p.overallRank = i + 1;
         if (i < 5) {
           p.prob = ZONE1[i];
           p.zone = "UP NEXT";
@@ -2239,7 +2247,6 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
           if (n3 <= 1) {
             p.prob = 10;
           } else {
-            const d = 10 / (n3 * (n3 + 2) / 2);
             const a = 15 / n3;
             const last = 5 / n3;
             const step = n3 > 1 ? (a - last) / (n3 - 1) : 0;
@@ -2264,6 +2271,7 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       rouletteSlotNames.current = names;
       setRoulettePhase("spinning");
       setRouletteWinner(null);
+      setRouletteLoggedKey(null);
       const totalProb = roulettePool.reduce((s, p) => s + p.prob, 0);
       let r = Math.random() * totalProb;
       let winner = roulettePool[0];
@@ -2286,6 +2294,13 @@ Enter a value like "250" or "$250.00". Remove any extra decimal points.`);
       setRouletteOpen(false);
       setRoulettePhase("idle");
       setRouletteWinner(null);
+      setRouletteLoggedKey(null);
+    };
+    const logRouletteWear = (winner) => {
+      if (!winner || rouletteLoggedKey === winner.key) return;
+      const entry = { date: localDateStr(), colorway: winner.colorway };
+      setWearLog((log) => ({ ...log, [winner.shoeId]: [...log[winner.shoeId] || [], entry] }));
+      setRouletteLoggedKey(winner.key);
     };
     const orderedWishlistCards = React.useMemo(() => {
       const shoeMap = {};
@@ -4472,7 +4487,7 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
           letterSpacing: "4px",
           color: zoneColor(winner.zone),
           animation: "rouletteZonePulse 2s ease-in-out infinite"
-        } }, winner.zone, " #", winner.zoneRank), /* @__PURE__ */ React.createElement("div", { style: {
+        } }, winner.zone, " #", winner.zoneRank, " \xB7 #", winner.overallRank, " OF ", pool.length, " IN LINE"), /* @__PURE__ */ React.createElement("div", { style: {
           background: "rgba(26,26,26,0.9)",
           border: "1px solid var(--vault-red)",
           padding: "32px",
@@ -4487,7 +4502,27 @@ ${entry.shoe} \xB7 ${entry.colorway} \xB7 ${entry.date}`)) {
           maxWidth: "100%",
           maxHeight: "100%",
           objectFit: "contain"
-        } })), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px", fontWeight: "bold", color: "#fff", letterSpacing: "1px", marginBottom: "4px" } }, winner.shortName), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: "var(--vault-red)", letterSpacing: "2px" } }, winner.colorway)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "32px" } }, /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "4px" } }, "DAYS SINCE"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "20px", fontWeight: "bold", color: "#fff" } }, winner.daysSince)), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "4px" } }, "TOTAL WEARS"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "20px", fontWeight: "bold", color: "#fff" } }, winner.wearCount)), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "4px" } }, "ODDS"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "20px", fontWeight: "bold", color: "#fff" } }, winner.prob < 1 ? winner.prob.toFixed(2) : winner.prob.toFixed(1), "%")))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "16px" } }, /* @__PURE__ */ React.createElement("button", { onClick: spinRoulette, style: {
+        } })), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "18px", fontWeight: "bold", color: "#fff", letterSpacing: "1px", marginBottom: "4px" } }, winner.shortName), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "14px", color: "var(--vault-red)", letterSpacing: "2px" } }, winner.colorway)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "32px" } }, /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "4px" } }, "DAYS SINCE"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "20px", fontWeight: "bold", color: "#fff" } }, winner.neverWorn ? "NEVER" : winner.daysSince)), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "4px" } }, "TOTAL WEARS"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "20px", fontWeight: "bold", color: "#fff" } }, winner.wearCount)), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: "9px", letterSpacing: "2px", color: "#666", marginBottom: "4px" } }, "ODDS"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: "20px", fontWeight: "bold", color: "#fff" } }, winner.prob < 1 ? winner.prob.toFixed(2) : winner.prob.toFixed(1), "%")))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "16px" } }, rouletteLoggedKey === winner.key ? /* @__PURE__ */ React.createElement("button", { disabled: true, style: {
+          background: "transparent",
+          color: "#4caf50",
+          border: "1px solid #4caf50",
+          padding: "12px 32px",
+          fontSize: "10px",
+          letterSpacing: "3px",
+          cursor: "default",
+          fontFamily: "'Aptos','Segoe UI',sans-serif",
+          fontWeight: "bold"
+        } }, "\u2713 LOGGED TODAY") : /* @__PURE__ */ React.createElement("button", { onClick: () => logRouletteWear(winner), style: {
+          background: "var(--tier-gold)",
+          color: "#000",
+          border: "none",
+          padding: "12px 32px",
+          fontSize: "10px",
+          letterSpacing: "3px",
+          cursor: "pointer",
+          fontFamily: "'Aptos','Segoe UI',sans-serif",
+          fontWeight: "bold"
+        } }, "LOG WEAR"), /* @__PURE__ */ React.createElement("button", { onClick: spinRoulette, style: {
           background: "transparent",
           color: "var(--vault-red)",
           border: "1px solid var(--vault-red)",

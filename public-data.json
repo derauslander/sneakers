@@ -478,6 +478,10 @@
       {
         "date": "2026-11-02",
         "colorway": "A Ma Maniere Dawn"
+      },
+      {
+        "date": "2026-11-14",
+        "colorway": "Fire Red"
       }
     ],
     "6": [
@@ -504,6 +508,10 @@
       {
         "date": "2026-11-03",
         "colorway": "Reverse Infrared"
+      },
+      {
+        "date": "2026-11-10",
+        "colorway": "Infrared"
       }
     ],
     "7": [
@@ -3210,36 +3218,36 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "3_A Ma Maniere WYWS",
-    "shoeId": 3,
-    "shoeName": "Air Jordan 3",
-    "shortName": "AJ3",
-    "colorway": "A Ma Maniere WYWS",
-    "date": "2026-11-04"
-  },
-  "precomputedPreviousWorn": {
-    "key": "6_Reverse Infrared",
-    "shoeId": 6,
-    "shoeName": "Air Jordan 6",
-    "shortName": "AJ6",
-    "colorway": "Reverse Infrared",
-    "date": "2026-11-03"
-  },
-  "precomputedUpNext": {
     "key": "5_Fire Red",
     "shoeId": 5,
     "shoeName": "Air Jordan 5",
     "shortName": "AJ5",
     "colorway": "Fire Red",
-    "date": "2026-03-19"
+    "date": "2026-11-14"
+  },
+  "precomputedPreviousWorn": {
+    "key": "6_Infrared",
+    "shoeId": 6,
+    "shoeName": "Air Jordan 6",
+    "shortName": "AJ6",
+    "colorway": "Infrared",
+    "date": "2026-11-10"
+  },
+  "precomputedUpNext": {
+    "key": "21_Purple",
+    "shoeId": 21,
+    "shoeName": "Air Force Max CB",
+    "shortName": "AFMCB",
+    "colorway": "Purple",
+    "date": "2026-04-10"
   },
   "precomputedOnFeetToday": {
-    "key": "3_A Ma Maniere WYWS",
-    "shoeId": 3,
-    "shoeName": "Air Jordan 3",
-    "shortName": "AJ3",
-    "colorway": "A Ma Maniere WYWS",
-    "date": "2026-11-04"
+    "key": "5_Fire Red",
+    "shoeId": 5,
+    "shoeName": "Air Jordan 5",
+    "shortName": "AJ5",
+    "colorway": "Fire Red",
+    "date": "2026-11-14"
   },
-  "builtAt": "2026-11-05T00:54:20.930537Z"
+  "builtAt": "2026-11-14T18:11:54.405733Z"
 }
