@@ -610,6 +610,10 @@
       {
         "date": "2026-06-05",
         "colorway": "Flint Grey"
+      },
+      {
+        "date": "2026-11-19",
+        "colorway": "Flint Grey"
       }
     ],
     "14": [
@@ -2998,6 +3002,13 @@
         "wears": 5
       },
       {
+        "shoeId": 13,
+        "shoeName": "Air Jordan 14",
+        "shortName": "AJ14",
+        "colorway": "Flint Grey",
+        "wears": 5
+      },
+      {
         "shoeId": 4,
         "shoeName": "Air Jordan 4",
         "shortName": "AJ4",
@@ -3010,13 +3021,6 @@
         "shortName": "AJ5",
         "colorway": "A Ma Maniere Dawn",
         "wears": 5
-      },
-      {
-        "shoeId": 13,
-        "shoeName": "Air Jordan 14",
-        "shortName": "AJ14",
-        "colorway": "Flint Grey",
-        "wears": 4
       },
       {
         "shoeId": 3,
@@ -3222,20 +3226,20 @@
     ]
   },
   "precomputedLastWorn": {
+    "key": "13_Flint Grey",
+    "shoeId": 13,
+    "shoeName": "Air Jordan 14",
+    "shortName": "AJ14",
+    "colorway": "Flint Grey",
+    "date": "2026-11-19"
+  },
+  "precomputedPreviousWorn": {
     "key": "15_Hot Lava",
     "shoeId": 15,
     "shoeName": "Air Tech Challenge 2",
     "shortName": "ATC2",
     "colorway": "Hot Lava",
     "date": "2026-11-18"
-  },
-  "precomputedPreviousWorn": {
-    "key": "5_Fire Red",
-    "shoeId": 5,
-    "shoeName": "Air Jordan 5",
-    "shortName": "AJ5",
-    "colorway": "Fire Red",
-    "date": "2026-11-14"
   },
   "precomputedUpNext": {
     "key": "21_Purple",
@@ -3246,12 +3250,12 @@
     "date": "2026-04-10"
   },
   "precomputedOnFeetToday": {
-    "key": "15_Hot Lava",
-    "shoeId": 15,
-    "shoeName": "Air Tech Challenge 2",
-    "shortName": "ATC2",
-    "colorway": "Hot Lava",
-    "date": "2026-11-18"
+    "key": "13_Flint Grey",
+    "shoeId": 13,
+    "shoeName": "Air Jordan 14",
+    "shortName": "AJ14",
+    "colorway": "Flint Grey",
+    "date": "2026-11-19"
   },
-  "builtAt": "2026-11-18T12:51:59.181299Z"
+  "builtAt": "2026-11-19T12:26:54.804476Z"
 }
