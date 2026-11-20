@@ -716,6 +716,10 @@
       {
         "date": "2026-04-10",
         "colorway": "Purple"
+      },
+      {
+        "date": "2026-11-20",
+        "colorway": "Purple"
       }
     ],
     "1773621809428": [
@@ -3226,30 +3230,14 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "13_Flint Grey",
-    "shoeId": 13,
-    "shoeName": "Air Jordan 14",
-    "shortName": "AJ14",
-    "colorway": "Flint Grey",
-    "date": "2026-11-19"
-  },
-  "precomputedPreviousWorn": {
-    "key": "15_Hot Lava",
-    "shoeId": 15,
-    "shoeName": "Air Tech Challenge 2",
-    "shortName": "ATC2",
-    "colorway": "Hot Lava",
-    "date": "2026-11-18"
-  },
-  "precomputedUpNext": {
     "key": "21_Purple",
     "shoeId": 21,
     "shoeName": "Air Force Max CB",
     "shortName": "AFMCB",
     "colorway": "Purple",
-    "date": "2026-04-10"
+    "date": "2026-11-20"
   },
-  "precomputedOnFeetToday": {
+  "precomputedPreviousWorn": {
     "key": "13_Flint Grey",
     "shoeId": 13,
     "shoeName": "Air Jordan 14",
@@ -3257,5 +3245,21 @@
     "colorway": "Flint Grey",
     "date": "2026-11-19"
   },
-  "builtAt": "2026-11-19T12:26:54.804476Z"
+  "precomputedUpNext": {
+    "key": "5_Black Metallic Reimagined",
+    "shoeId": 5,
+    "shoeName": "Air Jordan 5",
+    "shortName": "AJ5",
+    "colorway": "Black Metallic Reimagined",
+    "date": "2026-05-01"
+  },
+  "precomputedOnFeetToday": {
+    "key": "21_Purple",
+    "shoeId": 21,
+    "shoeName": "Air Force Max CB",
+    "shortName": "AFMCB",
+    "colorway": "Purple",
+    "date": "2026-11-20"
+  },
+  "builtAt": "2026-11-20T12:55:33.434628Z"
 }
