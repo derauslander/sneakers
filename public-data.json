@@ -486,6 +486,10 @@
       {
         "date": "2026-11-21",
         "colorway": "Black Tongue"
+      },
+      {
+        "date": "2026-11-25",
+        "colorway": "Black Metallic Reimagined"
       }
     ],
     "6": [
@@ -3234,30 +3238,14 @@
     ]
   },
   "precomputedLastWorn": {
-    "key": "5_Black Tongue",
-    "shoeId": 5,
-    "shoeName": "Air Jordan 5",
-    "shortName": "AJ5",
-    "colorway": "Black Tongue",
-    "date": "2026-11-21"
-  },
-  "precomputedPreviousWorn": {
-    "key": "21_Purple",
-    "shoeId": 21,
-    "shoeName": "Air Force Max CB",
-    "shortName": "AFMCB",
-    "colorway": "Purple",
-    "date": "2026-11-20"
-  },
-  "precomputedUpNext": {
     "key": "5_Black Metallic Reimagined",
     "shoeId": 5,
     "shoeName": "Air Jordan 5",
     "shortName": "AJ5",
     "colorway": "Black Metallic Reimagined",
-    "date": "2026-05-01"
+    "date": "2026-11-25"
   },
-  "precomputedOnFeetToday": {
+  "precomputedPreviousWorn": {
     "key": "5_Black Tongue",
     "shoeId": 5,
     "shoeName": "Air Jordan 5",
@@ -3265,5 +3253,21 @@
     "colorway": "Black Tongue",
     "date": "2026-11-21"
   },
-  "builtAt": "2026-11-21T11:12:24.579254Z"
+  "precomputedUpNext": {
+    "key": "8_Playoffs",
+    "shoeId": 8,
+    "shoeName": "Air Jordan 8",
+    "shortName": "AJ8",
+    "colorway": "Playoffs",
+    "date": "2026-05-08"
+  },
+  "precomputedOnFeetToday": {
+    "key": "5_Black Metallic Reimagined",
+    "shoeId": 5,
+    "shoeName": "Air Jordan 5",
+    "shortName": "AJ5",
+    "colorway": "Black Metallic Reimagined",
+    "date": "2026-11-25"
+  },
+  "builtAt": "2026-11-25T09:41:14.425256Z"
 }
