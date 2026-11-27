@@ -554,6 +554,10 @@
       {
         "date": "2026-05-22",
         "colorway": "Olive"
+      },
+      {
+        "date": "2026-11-27",
+        "colorway": "Olive"
       }
     ],
     "10": [
@@ -3238,20 +3242,20 @@
     ]
   },
   "precomputedLastWorn": {
+    "key": "9_Olive",
+    "shoeId": 9,
+    "shoeName": "Air Jordan 9",
+    "shortName": "AJ9",
+    "colorway": "Olive",
+    "date": "2026-11-27"
+  },
+  "precomputedPreviousWorn": {
     "key": "5_Black Metallic Reimagined",
     "shoeId": 5,
     "shoeName": "Air Jordan 5",
     "shortName": "AJ5",
     "colorway": "Black Metallic Reimagined",
     "date": "2026-11-25"
-  },
-  "precomputedPreviousWorn": {
-    "key": "5_Black Tongue",
-    "shoeId": 5,
-    "shoeName": "Air Jordan 5",
-    "shortName": "AJ5",
-    "colorway": "Black Tongue",
-    "date": "2026-11-21"
   },
   "precomputedUpNext": {
     "key": "8_Playoffs",
@@ -3262,12 +3266,12 @@
     "date": "2026-05-08"
   },
   "precomputedOnFeetToday": {
-    "key": "5_Black Metallic Reimagined",
-    "shoeId": 5,
-    "shoeName": "Air Jordan 5",
-    "shortName": "AJ5",
-    "colorway": "Black Metallic Reimagined",
-    "date": "2026-11-25"
+    "key": "9_Olive",
+    "shoeId": 9,
+    "shoeName": "Air Jordan 9",
+    "shortName": "AJ9",
+    "colorway": "Olive",
+    "date": "2026-11-27"
   },
-  "builtAt": "2026-11-25T09:41:14.425256Z"
+  "builtAt": "2026-11-27T16:16:26.427480Z"
 }
